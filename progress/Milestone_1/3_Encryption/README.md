@@ -1,5 +1,7 @@
 # Cryptography
 
+![Deliverable 3](https://user-images.githubusercontent.com/98888366/170701371-64966c5b-05ae-465a-8ebd-50a06160d98a.png)
+
 ### Encryption
 When stored in the repository, EHR documents are pre-encrypted using the ChaCha20-Poly1305 streaming algorithm with message authentication. The protocol is standardized by IETF in RFC 7539, in software implementations it is much more efficient and faster than AES. To encrypt each document a unique key is generated - a random sequence of 256 bits (32 bytes) + a unique 96 bits (12 bytes). Document ID is used as an authentication tag.
 
