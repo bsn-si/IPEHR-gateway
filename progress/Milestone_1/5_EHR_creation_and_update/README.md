@@ -1,3 +1,5 @@
+![HMS gateway](https://user-images.githubusercontent.com/8058268/170997404-c1a20845-a7c5-4663-a291-9f088c0d05ae.png)
+
 IPEHR-gateway implements functions for creating and updating documents according to openEHR standards.
 
 The EHR Information Model version 1.1.0, the latest stable version at the time of development, was used.
