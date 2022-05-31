@@ -68,7 +68,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, doc)
+	respondWithDocOrHeaders(doc, c)
 }
 
 func (h EhrHandler) CreateWithId(c *gin.Context) {
@@ -132,7 +132,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newDoc)
+	respondWithDocOrHeaders(newDoc, c)
 }
 
 func (h EhrHandler) GetById(c *gin.Context) {
@@ -165,4 +165,17 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/json", docDecrypted)
+}
+
+func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
+	// TODO take baseUrl from config
+	c.Header("Location", "{baseUrl}/v1/ehr/"+doc.EhrId.Value)
+	c.Header("ETag", doc.EhrId.Value)
+
+	prefer := c.Request.Header.Get("Prefer")
+	if prefer == "return=representation" {
+		c.JSON(http.StatusOK, doc)
+	} else {
+		c.JSON(http.StatusOK, nil)
+	}
 }
