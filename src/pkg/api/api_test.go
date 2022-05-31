@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
 )
@@ -21,6 +22,7 @@ func Test_API(t *testing.T) {
 	r.Use(api.Auth)
 	r.GET("/v1/ehr/:ehrid", api.Ehr.GetById)
 	r.POST("/v1/ehr", api.Ehr.Create)
+	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
 	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
 
@@ -32,30 +34,11 @@ func Test_API(t *testing.T) {
 		ehrId       string
 		ehrStatusId string
 		testUserId  = "11111111-1111-1111-1111-111111111111"
+		testUserId2 = "22222222-2222-2222-2222-222222222222"
 	)
 
 	t.Run("EHR creating", func(t *testing.T) {
-		req := []byte(`{
-		  "_type": "EHR_STATUS",
-		  "archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
-		  "name": {
-			"value": "EHR Status"
-		  },
-		  "subject": {
-			"external_ref": {
-			  "id": {
-				"_type": "GENERIC_ID",
-				"value": "ins01",
-				"scheme": "id_scheme"
-			  },
-			  "namespace": "examples",
-			  "type": "PERSON"
-			}
-		  },
-		  "is_modifiable": true,
-		  "is_queryable": true
-		}`)
-		request, err := http.NewRequest(http.MethodPost, ts.URL+"/v1/ehr", bytes.NewReader(req))
+		request, err := http.NewRequest(http.MethodPost, ts.URL+"/v1/ehr", ehrCreateBodyRequest())
 		if err != nil {
 			t.Error(err)
 			return
@@ -91,6 +74,69 @@ func Test_API(t *testing.T) {
 		ehrId = ehr.EhrId.Value
 		if ehrId == "" {
 			t.Error("EhrId missing")
+			return
+		}
+	})
+
+	t.Run("EHR creating with id", func(t *testing.T) {
+		ehrId2 := uuid.New().String()
+
+		request, err := http.NewRequest(http.MethodPut, ts.URL+"/v1/ehr/"+ehrId2, ehrCreateBodyRequest())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testUserId2)
+
+		response, err := httpClient.Do(request)
+		if err != nil {
+			t.Errorf("Expected nil, received %s", err.Error())
+			return
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Errorf("Response body read error: %v", err)
+			return
+		}
+		response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+			return
+		}
+
+		var ehr model.EHR
+		if err = json.Unmarshal(data, &ehr); err != nil {
+			t.Error(err)
+			return
+		}
+
+		newEhrId := ehr.EhrId.Value
+		if newEhrId != ehrId2 {
+			t.Error("EhrId is not matched")
+			return
+		}
+	})
+
+	t.Run("EHR creating with id for the same user", func(t *testing.T) {
+		ehrId3 := uuid.New().String()
+
+		request, err := http.NewRequest(http.MethodPut, ts.URL+"/v1/ehr/"+ehrId3, ehrCreateBodyRequest())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testUserId2)
+
+		response, err := httpClient.Do(request)
+
+		if response.StatusCode != http.StatusConflict {
+			t.Errorf("Expected %d, received %d", http.StatusConflict, response.StatusCode)
 			return
 		}
 	})
@@ -248,4 +294,29 @@ func Test_API(t *testing.T) {
 			return
 		}
 	})
+
+}
+
+func ehrCreateBodyRequest() *bytes.Reader {
+	req := []byte(`{
+			"_type": "EHR_STATUS",
+			"archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
+			"name": {
+			  "value": "EHR Status"
+			},
+			"subject": {
+			  "external_ref": {
+				"id": {
+				  "_type": "GENERIC_ID",
+				  "value": "ins01",
+				  "scheme": "id_scheme"
+				},
+				"namespace": "examples",
+				"type": "PERSON"
+			  }
+			},
+			"is_modifiable": true,
+			"is_queryable": true
+		  }`)
+	return bytes.NewReader(req)
 }
