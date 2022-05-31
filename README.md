@@ -4,6 +4,7 @@ The project is under active development and will gradually be supplemented.
 
 ## Description
 Today common HMS applications store patients’ data in a local or a cloud DB which creates significant security, reliability and operational risks. Centralized storage and access rights administration of sensitive medical data creates additional challenges:
+
 -	Administrative overheard due to the rights provisioning on per patients/per record level.
 -	Patients lack control and visibility over who has access to their data which goes against natural data subject rights announced in GDPR (General Data Protection Regulation, chapter 3).
 -	Super user access for DB and LDAP (access rights catalogue) create additional security risks.
