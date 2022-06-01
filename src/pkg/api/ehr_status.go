@@ -41,8 +41,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 	docIndexLast, err := h.service.Doc.DocsIndex.GetLastByType(ehrId, types.EHR_STATUS)
 	if err != nil {
 		if errors.Is(err, errors.IsNotExist) {
-			c.Writer.Header().Set("Location", "") //TODO
-			c.Writer.Header().Set("ETag", "")
+			setLocationAndETagHeaders(ehrId, "", c)
 			c.AbortWithStatus(http.StatusPreconditionFailed)
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Find previous EHR_STATUS error: " + err.Error()})
@@ -69,12 +68,10 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
 	}
-	//TODO baseUrl
-	c.Writer.Header().Set("Location", "{baseUrl}/ehr/"+ehrId+"/ehr_status/"+docLast.Uid.Value)
-	c.Writer.Header().Set("ETag", docLast.Uid.Value)
 
 	// Checking If-Match header
 	if IfMatch != docLast.Uid.Value {
+		setLocationAndETagHeaders(ehrId, docLast.Uid.Value, c)
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
 	}
@@ -101,7 +98,16 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	c.Data(http.StatusOK, "application/json", data)
+	setLocationAndETagHeaders(ehrId, update.Uid.Value, c)
+
+	switch c.Request.Header.Get("Prefer") {
+	case "return=representation":
+		c.Data(http.StatusOK, "application/json", data)
+	case "return=minimal":
+		fallthrough
+	default:
+		c.JSON(http.StatusNoContent, nil)
+	}
 }
 
 func (h EhrStatusHandler) GetById(c *gin.Context) {
@@ -138,4 +144,10 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/json", data)
+}
+
+func setLocationAndETagHeaders(ehrId string, ehrStatusId string, c *gin.Context) {
+	//TODO baseUrl
+	c.Header("Location", "{baseUrl}/ehr/"+ehrId+"/ehr_status/"+ehrStatusId)
+	c.Header("ETag", ehrStatusId)
 }

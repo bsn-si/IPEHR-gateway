@@ -38,10 +38,14 @@ func (s EhrService) MarshalJson(doc *model.EHR) ([]byte, error) {
 }
 
 func (s EhrService) Create(request *model.EhrCreateRequest) *model.EHR {
+	return s.CreateWithId(uuid.New().String(), request)
+}
+
+func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) *model.EHR {
 	var ehr model.EHR
 
 	ehr.SystemId.Value = s.Doc.GetSystemId() //TODO
-	ehr.EhrId.Value = uuid.New().String()
+	ehr.EhrId.Value = ehrId
 
 	ehr.EhrStatus.Id.Type = "OBJECT_VERSION_ID"
 	ehr.EhrStatus.Id.Value = uuid.New().String() + "::openEHRSys.example.com::1"
