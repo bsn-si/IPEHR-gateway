@@ -3,49 +3,39 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
+	"hms/gateway/pkg/indexer/service/doc"
+	"hms/gateway/pkg/indexer/service/user_access"
 
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
 )
 
 type DefaultDocumentService struct {
-	EhrsIndex   indexer.Indexer
-	DocsIndex   indexer.Indexer
-	AccessIndex indexer.Indexer
-	Storage     storage.Storager
-	Keystore    *keystore.KeyStore
+	Storage         storage.Storager
+	Keystore        *keystore.KeyStore
+	userAccessIndex user_access.UserAccessIndex
+	docIndex        doc.DocIndex
 }
 
 func NewDefaultDocumentService() *DefaultDocumentService {
 	return &DefaultDocumentService{
-		EhrsIndex:   indexer.Init("ehrs"),
-		DocsIndex:   indexer.Init("docs"),
-		AccessIndex: indexer.Init("access"),
-		Storage:     storage.Init(),
-		Keystore:    keystore.New(),
+		Storage:         storage.Init(),
+		Keystore:        keystore.New(),
+		userAccessIndex: *user_access.New(),
+		docIndex:        *doc.New(),
 	}
-}
-
-func (d *DefaultDocumentService) GetEhrDocIndexes(ehrId string) ([]*model.DocumentMeta, error) {
-	var docIndexes []*model.DocumentMeta
-	if err := d.DocsIndex.GetById(ehrId, &docIndexes); err != nil {
-		return nil, err
-	}
-	return docIndexes, nil
 }
 
 func (d *DefaultDocumentService) GetLastDocIndexByType(ehrId string, docTypeCode types.DocumentType) (doc *model.DocumentMeta, err error) {
-	var docIndexes []*model.DocumentMeta
-	if err = d.DocsIndex.GetById(ehrId, &docIndexes); err != nil {
+	docIndexes, err := d.docIndex.Get(ehrId)
+	if err != nil {
 		return nil, err
 	}
 
@@ -79,8 +69,8 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		return nil, err
 	}
 
-	var docIndexes []*model.DocumentMeta
-	if err = d.DocsIndex.GetById(ehrId, &docIndexes); err != nil {
+	docIndexes, err := d.docIndex.Get(ehrId)
+	if err != nil {
 		return nil, err
 	}
 
@@ -90,15 +80,14 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		}
 
 		// Getting access key
-		var keyEncrypted []byte
 		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
-		err = d.AccessIndex.GetById(indexKeyStr, &keyEncrypted)
+		keyEncrypted, err := d.userAccessIndex.Get(indexKeyStr)
 		if err != nil {
 			return nil, err
 		}
 
-		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
+		keyDecrypted, err := keybox.OpenAnonymous(*keyEncrypted, userPubKey, userPrivKey)
 		if err != nil {
 			return nil, err
 		}
@@ -124,12 +113,12 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 }
 
 func (d *DefaultDocumentService) AddEhrDocIndex(ehrId string, docIndex *model.DocumentMeta) error {
-	docIndexes, err := d.GetEhrDocIndexes(ehrId)
+	docIndexes, err := d.docIndex.Get(ehrId)
 	if err != nil {
 		return err
 	}
 	docIndexes = append(docIndexes, docIndex)
-	if err = d.DocsIndex.Replace(ehrId, docIndexes); err != nil {
+	if err = d.docIndex.Replace(ehrId, docIndexes); err != nil {
 		return err
 	}
 	return nil
@@ -142,10 +131,9 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	}
 
 	// Getting access key
-	var keyEncrypted []byte
 	indexKey := sha3.Sum256(append(storageId[:], userUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
-	err = d.AccessIndex.GetById(indexKeyStr, &keyEncrypted)
+	keyEncrypted, err := d.userAccessIndex.Get(indexKeyStr)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +144,7 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 
-	keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
+	keyDecrypted, err := keybox.OpenAnonymous(*keyEncrypted, userPubKey, userPrivKey)
 	if err != nil {
 		return nil, err
 	}
@@ -178,35 +166,6 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 	return docDecrypted, nil
-}
-
-func (d *DefaultDocumentService) AddAccessIndex(userId string, docStorageId *[32]byte, docKey []byte) error {
-	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return err
-	}
-
-	// Getting user privateKey
-	userPubKey, _, err := d.Keystore.Get(userId)
-	if err != nil {
-		return err
-	}
-
-	// Document key encryption
-	keyEncrypted, err := keybox.SealAnonymous(docKey, userPubKey)
-	if err != nil {
-		return err
-	}
-
-	// Index doc_id -> encrypted_doc_key
-	indexKey := sha3.Sum256(append(docStorageId[:], userUUID[:]...))
-	indexKeyStr := hex.EncodeToString(indexKey[:])
-
-	if err = d.AccessIndex.Add(indexKeyStr, keyEncrypted); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (d *DefaultDocumentService) GetSystemId() string {

@@ -2,6 +2,9 @@ package ehr
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/indexer/service/doc"
+	"hms/gateway/pkg/indexer/service/doc_access"
+	"hms/gateway/pkg/indexer/service/user_access"
 	"log"
 	"time"
 
@@ -15,12 +18,18 @@ import (
 )
 
 type EhrService struct {
-	DocService *service.DefaultDocumentService
+	DocService      *service.DefaultDocumentService
+	userAccessIndex *user_access.UserAccessIndex
+	docAccessIndex  *doc_access.DocAccessIndex
+	docIndex        *doc.DocIndex
 }
 
 func NewEhrService(docService *service.DefaultDocumentService) *EhrService {
 	return &EhrService{
-		DocService: docService,
+		DocService:      docService,
+		userAccessIndex: user_access.New(),
+		docAccessIndex:  doc_access.New(),
+		docIndex:        doc.New(),
 	}
 }
 
@@ -83,7 +92,7 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 	}
 
 	// Index EHR userId -> docStorageId
-	if err = s.DocService.EhrsIndex.Add(userId, *docStorageId); err != nil {
+	if err = s.docAccessIndex.Add(userId, docStorageId); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -97,13 +106,13 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 		},
 	}
 	// First record in doc index
-	if err = s.DocService.DocsIndex.Add(doc.EhrId.Value, docIndexes); err != nil {
+	if err = s.docIndex.Add(doc.EhrId.Value, docIndexes); err != nil {
 		log.Println(err)
 		return err
 	}
 
 	// Index Access
-	if err = s.DocService.AddAccessIndex(userId, docStorageId, key.Bytes()); err != nil {
+	if err = s.userAccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
 		log.Println(err)
 		return err
 	}
