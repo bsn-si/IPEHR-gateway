@@ -7,8 +7,11 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
 )
+
+var AppConfig *config.Config
 
 type API struct {
 	Ehr       *EhrHandler
@@ -19,6 +22,8 @@ type API struct {
 
 func NewAPI() *API {
 	docService := service.NewDefaultDocumentService()
+	// Get config from the root of the project
+	AppConfig = config.GetConfig("../../../config.json")
 
 	return &API{
 		Ehr:       NewEhrHandler(docService),
