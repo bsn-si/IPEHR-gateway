@@ -52,8 +52,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	var docStorageId *[32]byte
-	err = h.service.DocService.EhrsIndex.GetById(userId, docStorageId)
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if !errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return
@@ -137,7 +136,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 
 func (h EhrHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.DocService.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -149,7 +148,7 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	}
 
 	// Getting docStorageId
-	doc, err := h.service.DocService.GetLastDocIndexByType(ehrId, types.EHR)
+	doc, err := h.service.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
 	if err != nil {
 		log.Println("GetLastDocIndexByType", "ehrId", ehrId, err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -157,7 +156,7 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	}
 
 	// Getting doc from storage
-	docDecrypted, err := h.service.DocService.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
+	docDecrypted, err := h.service.Doc.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
 	if err != nil {
 		//TODO some logging
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
