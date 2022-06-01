@@ -174,8 +174,8 @@ func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
 
 	prefer := c.Request.Header.Get("Prefer")
 	if prefer == "return=representation" {
-		c.JSON(http.StatusOK, doc)
+		c.JSON(http.StatusCreated, doc)
 	} else {
-		c.JSON(http.StatusOK, nil)
+		c.AbortWithStatus(http.StatusCreated)
 	}
 }

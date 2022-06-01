@@ -47,6 +47,7 @@ func Test_API(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testUserId)
+		request.Header.Set("Prefer", "return=representation")
 
 		response, err := httpClient.Do(request)
 		if err != nil {
@@ -61,8 +62,8 @@ func Test_API(t *testing.T) {
 		}
 		response.Body.Close()
 
-		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+		if response.StatusCode != http.StatusCreated {
+			t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
 			return
 		}
 
@@ -105,8 +106,8 @@ func Test_API(t *testing.T) {
 		}
 		response.Body.Close()
 
-		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+		if response.StatusCode != http.StatusCreated {
+			t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
 			return
 		}
 
