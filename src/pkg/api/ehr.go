@@ -74,7 +74,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 	ehrId := c.Param("ehrid")
 
 	// Checking EHR does not exist
-	doc, err := h.service.DocService.GetLastDocIndexByType(ehrId, types.EHR)
+	doc, err := h.service.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
 	if err != nil && !errors.Is(err, errors.IsNotExist) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "EHR retrieve error"})
 		return
@@ -84,7 +84,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 		return
 	}
 
-	if h.service.DocService.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
@@ -115,8 +115,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	var docStorageId *[32]byte
-	err = h.service.DocService.EhrsIndex.GetById(userId, docStorageId)
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if !errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return
