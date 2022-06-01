@@ -22,6 +22,7 @@ func (u *EhrsIndex) Add(userId string, docStorageId *[32]byte) error {
 
 // Get document storage Id for user
 func (u *EhrsIndex) Get(userId string) (docStorageId *[32]byte, err error) {
+	docStorageId = &[32]byte{}
 	err = u.index.GetById(userId, docStorageId)
 	return
 }
