@@ -3,8 +3,6 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/google/uuid"
-	"golang.org/x/crypto/sha3"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -16,45 +14,29 @@ import (
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
 )
 
 type DefaultDocumentService struct {
-	EhrsIndex    ehrs.EhrsIndex
-	DocsIndex    docs.DocsIndex
-	AccessIndex  access.AccessIndex
-	SubjectIndex subject.SubjectIndex
 	Storage      storage.Storager
+	EhrsIndex    *ehrs.EhrsIndex
+	DocsIndex    *docs.DocsIndex
+	AccessIndex  *access.AccessIndex
+	SubjectIndex *subject.SubjectIndex
 	Keystore     *keystore.KeyStore
 }
 
 func NewDefaultDocumentService() *DefaultDocumentService {
 	return &DefaultDocumentService{
-		EhrsIndex:    *ehrs.New(),
-		DocsIndex:    *docs.New(),
-		AccessIndex:  *access.New(),
-		SubjectIndex: *subject.New(),
+		EhrsIndex:    ehrs.New(),
+		DocsIndex:    docs.New(),
+		AccessIndex:  access.New(),
+		SubjectIndex: subject.New(),
 		Storage:      storage.Init(),
 		Keystore:     keystore.New(),
 	}
-}
-
-func (d *DefaultDocumentService) GetLastDocIndexByType(ehrId string, docTypeCode types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.DocsIndex.Get(ehrId)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docTypeCode {
-			if doc == nil || docIndex.Timestamp > doc.Timestamp {
-				doc = docIndex
-			}
-		}
-	}
-	if doc == nil {
-		return nil, errors.IsNotExist
-	}
-	return doc, nil
 }
 
 func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
@@ -115,18 +97,6 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		}
 	}
 	return nil, errors.IsNotExist
-}
-
-func (d *DefaultDocumentService) AddEhrDocIndex(ehrId string, docIndex *model.DocumentMeta) error {
-	docIndexes, err := d.DocsIndex.Get(ehrId)
-	if err != nil {
-		return err
-	}
-	docIndexes = append(docIndexes, docIndex)
-	if err = d.DocsIndex.Replace(ehrId, docIndexes); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId *[32]byte, authData []byte) (docBytes []byte, err error) {
