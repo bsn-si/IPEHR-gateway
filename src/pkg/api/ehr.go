@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/indexer/service/doc_access"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,14 +16,12 @@ import (
 )
 
 type EhrHandler struct {
-	service        *ehr.EhrService
-	docAccessIndex *doc_access.DocAccessIndex
+	service *ehr.EhrService
 }
 
 func NewEhrHandler(docService *service.DefaultDocumentService) *EhrHandler {
 	return &EhrHandler{
-		service:        ehr.NewEhrService(docService),
-		docAccessIndex: doc_access.New(),
+		service: ehr.NewEhrService(docService),
 	}
 }
 
@@ -55,7 +52,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err = h.docAccessIndex.Get(userId)
+	_, err = h.service.DocService.EhrsIndex.Get(userId)
 	if !errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return

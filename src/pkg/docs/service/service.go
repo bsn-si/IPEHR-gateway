@@ -5,36 +5,41 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
-	"hms/gateway/pkg/indexer/service/doc"
-	"hms/gateway/pkg/indexer/service/user_access"
-
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer/service/access"
+	"hms/gateway/pkg/indexer/service/docs"
+	"hms/gateway/pkg/indexer/service/ehrs"
+	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
 )
 
 type DefaultDocumentService struct {
-	Storage         storage.Storager
-	Keystore        *keystore.KeyStore
-	userAccessIndex user_access.UserAccessIndex
-	docIndex        doc.DocIndex
+	EhrsIndex    ehrs.EhrsIndex
+	DocsIndex    docs.DocsIndex
+	AccessIndex  access.AccessIndex
+	SubjectIndex subject.SubjectIndex
+	Storage      storage.Storager
+	Keystore     *keystore.KeyStore
 }
 
 func NewDefaultDocumentService() *DefaultDocumentService {
 	return &DefaultDocumentService{
-		Storage:         storage.Init(),
-		Keystore:        keystore.New(),
-		userAccessIndex: *user_access.New(),
-		docIndex:        *doc.New(),
+		EhrsIndex:    *ehrs.New(),
+		DocsIndex:    *docs.New(),
+		AccessIndex:  *access.New(),
+		SubjectIndex: *subject.New(),
+		Storage:      storage.Init(),
+		Keystore:     keystore.New(),
 	}
 }
 
 func (d *DefaultDocumentService) GetLastDocIndexByType(ehrId string, docTypeCode types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.docIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrId)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +74,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		return nil, err
 	}
 
-	docIndexes, err := d.docIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrId)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +87,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		// Getting access key
 		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
-		keyEncrypted, err := d.userAccessIndex.Get(indexKeyStr)
+		keyEncrypted, err := d.AccessIndex.Get(indexKeyStr)
 		if err != nil {
 			return nil, err
 		}
@@ -113,12 +118,12 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 }
 
 func (d *DefaultDocumentService) AddEhrDocIndex(ehrId string, docIndex *model.DocumentMeta) error {
-	docIndexes, err := d.docIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrId)
 	if err != nil {
 		return err
 	}
 	docIndexes = append(docIndexes, docIndex)
-	if err = d.docIndex.Replace(ehrId, docIndexes); err != nil {
+	if err = d.DocsIndex.Replace(ehrId, docIndexes); err != nil {
 		return err
 	}
 	return nil
@@ -133,7 +138,7 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	// Getting access key
 	indexKey := sha3.Sum256(append(storageId[:], userUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
-	keyEncrypted, err := d.userAccessIndex.Get(indexKeyStr)
+	keyEncrypted, err := d.AccessIndex.Get(indexKeyStr)
 	if err != nil {
 		return nil, err
 	}

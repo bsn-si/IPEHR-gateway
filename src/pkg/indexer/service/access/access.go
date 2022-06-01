@@ -1,5 +1,5 @@
-// Package user_access User document keys index
-package user_access
+// Package access User document keys index
+package access
 
 import (
 	"encoding/hex"
@@ -10,20 +10,20 @@ import (
 	"hms/gateway/pkg/keystore"
 )
 
-type UserAccessIndex struct {
+type AccessIndex struct {
 	index    indexer.Indexer
 	keystore *keystore.KeyStore
 }
 
-func New() *UserAccessIndex {
-	return &UserAccessIndex{
+func New() *AccessIndex {
+	return &AccessIndex{
 		index:    indexer.Init("access"),
 		keystore: keystore.New(),
 	}
 }
 
 // Add user's document key
-func (u *UserAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byte) error {
+func (u *AccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byte) error {
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (u *UserAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []by
 }
 
 // Get user key
-func (u *UserAccessIndex) Get(userId string) (*[]byte, error) {
+func (u *AccessIndex) Get(userId string) (*[]byte, error) {
 	var keyEncrypted []byte
 	err := u.index.GetById(userId, &keyEncrypted)
 	return &keyEncrypted, err
