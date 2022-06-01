@@ -168,8 +168,7 @@ func (h EhrHandler) GetById(c *gin.Context) {
 }
 
 func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
-	// TODO take baseUrl from config
-	c.Header("Location", "{baseUrl}/v1/ehr/"+doc.EhrId.Value)
+	c.Header("Location", AppConfig.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
 	c.Header("ETag", doc.EhrId.Value)
 
 	prefer := c.Request.Header.Get("Prefer")
