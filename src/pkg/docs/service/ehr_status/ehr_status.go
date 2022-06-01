@@ -2,6 +2,7 @@ package ehr_status
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/indexer/service/user_access"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,12 +15,14 @@ import (
 )
 
 type EhrStatusService struct {
-	DocService *service.DefaultDocumentService
+	DocService      *service.DefaultDocumentService
+	userAccessIndex *user_access.UserAccessIndex
 }
 
 func NewEhrStatusService(docService *service.DefaultDocumentService) *EhrStatusService {
 	return &EhrStatusService{
-		DocService: docService,
+		DocService:      docService,
+		userAccessIndex: user_access.New(),
 	}
 }
 
@@ -107,7 +110,7 @@ func (s *EhrStatusService) Save(ehrId, userId string, doc *model.EhrStatus) erro
 	}
 
 	// Index Access
-	if err = s.DocService.AddAccessIndex(userId, docStorageId, key.Bytes()); err != nil {
+	if err = s.userAccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
 		return err
 	}
 	return nil

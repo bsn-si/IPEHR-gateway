@@ -1,4 +1,4 @@
-package ehr_subject_index
+package ehr_subject
 
 import (
 	"testing"

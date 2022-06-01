@@ -20,39 +20,44 @@ type Index struct {
 	storage storage.Storager
 }
 
+var instances = make(map[string]*Index)
+
 func Init(name string) *Index {
 	if name == "" {
 		log.Fatal("name is empty")
 		return nil
 	}
 
-	id := sha3.Sum256([]byte(name))
+	if nil == instances[name] {
+		id := sha3.Sum256([]byte(name))
 
-	stor := storage.Init()
+		stor := storage.Init()
 
-	data, err := stor.Get(&id)
-	if err != nil && !commonerr.Is(err, errors.IsNotExist) {
-		log.Fatal(err)
-		return nil
-	}
-
-	var cache map[string][]byte
-	if commonerr.Is(err, errors.IsNotExist) {
-		cache = make(map[string][]byte)
-	} else {
-		err = msgpack.Unmarshal(data, &cache)
-		if err != nil {
+		data, err := stor.Get(&id)
+		if err != nil && !commonerr.Is(err, errors.IsNotExist) {
 			log.Fatal(err)
 			return nil
 		}
-	}
 
-	return &Index{
-		id:      &id,
-		name:    name,
-		cache:   cache,
-		storage: stor,
+		var cache map[string][]byte
+		if commonerr.Is(err, errors.IsNotExist) {
+			cache = make(map[string][]byte)
+		} else {
+			err = msgpack.Unmarshal(data, &cache)
+			if err != nil {
+				log.Fatal(err)
+				return nil
+			}
+		}
+
+		instances[name] = &Index{
+			id:      &id,
+			name:    name,
+			cache:   cache,
+			storage: stor,
+		}
 	}
+	return instances[name]
 }
 
 func (i *Index) Add(itemId string, item interface{}) (err error) {
