@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +47,7 @@ func Test_API(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testUserId)
+		request.Header.Set("Prefer", "return=representation")
 
 		response, err := httpClient.Do(request)
 		if err != nil {
@@ -60,8 +62,8 @@ func Test_API(t *testing.T) {
 		}
 		response.Body.Close()
 
-		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+		if response.StatusCode != http.StatusCreated {
+			t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
 			return
 		}
 
@@ -71,7 +73,7 @@ func Test_API(t *testing.T) {
 			return
 		}
 
-		ehrId = ehr.EhrId.Value
+		ehrId = response.Header.Get("ETag")
 		if ehrId == "" {
 			t.Error("EhrId missing")
 			return
@@ -89,6 +91,7 @@ func Test_API(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testUserId2)
+		request.Header.Set("Prefer", "return=representation")
 
 		response, err := httpClient.Do(request)
 		if err != nil {
@@ -103,8 +106,8 @@ func Test_API(t *testing.T) {
 		}
 		response.Body.Close()
 
-		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+		if response.StatusCode != http.StatusCreated {
+			t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
 			return
 		}
 
@@ -222,6 +225,9 @@ func Test_API(t *testing.T) {
 	})
 
 	t.Run("EHR_STATUS update", func(t *testing.T) {
+		// replace substring in ehrStatusId
+		newEhrStatusId := strings.Replace(ehrStatusId, "::openEHRSys.example.com::1", "::openEHRSys.example.com::2", 1)
+
 		req := []byte(fmt.Sprintf(`{
 		  "_type": "EHR_STATUS",
 		  "archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
@@ -230,7 +236,7 @@ func Test_API(t *testing.T) {
 		  },
 		  "uid": {
 			"_type": "OBJECT_VERSION_ID",
-			"value": "%s::openEHRSys.example.com::2"
+			"value": "%s"
 		  },
 		  "subject": {
 			"external_ref": {
@@ -252,7 +258,7 @@ func Test_API(t *testing.T) {
 		  },
 		  "is_modifiable": true,
 		  "is_queryable": true
-		}`, ehrStatusId))
+		}`, newEhrStatusId))
 
 		request, err := http.NewRequest(http.MethodPut, ts.URL+fmt.Sprintf("/v1/ehr/%s/ehr_status", ehrId), bytes.NewReader(req))
 		if err != nil {
@@ -263,6 +269,7 @@ func Test_API(t *testing.T) {
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testUserId)
 		request.Header.Set("If-Match", ehrStatusId)
+		request.Header.Set("Prefer", "return=representation")
 
 		response, err := httpClient.Do(request)
 		if err != nil {
@@ -288,7 +295,9 @@ func Test_API(t *testing.T) {
 			return
 		}
 
-		if ehrStatus.Uid.Value != ehrStatusId+"::openEHRSys.example.com::2" {
+		updatedEhrStatusId := response.Header.Get("ETag")
+
+		if updatedEhrStatusId != newEhrStatusId {
 			t.Log("Response body:", string(data))
 			t.Error("EHR_STATUS uid mismatch")
 			return
