@@ -14,12 +14,12 @@ import (
 )
 
 type EhrStatusService struct {
-	DocService *service.DefaultDocumentService
+	Doc *service.DefaultDocumentService
 }
 
 func NewEhrStatusService(docService *service.DefaultDocumentService) *EhrStatusService {
 	return &EhrStatusService{
-		DocService: docService,
+		Doc: docService,
 	}
 }
 
@@ -80,7 +80,7 @@ func (s *EhrStatusService) Save(ehrId, userId string, doc *model.EhrStatus) erro
 	}
 
 	// Storage saving
-	docStorageId, err := s.DocService.Storage.Add(docEncrypted)
+	docStorageId, err := s.Doc.Storage.Add(docEncrypted)
 	if err != nil {
 		return err
 	}
@@ -102,12 +102,12 @@ func (s *EhrStatusService) Save(ehrId, userId string, doc *model.EhrStatus) erro
 		DocIdEncrypted: docIdEncrypted,
 		Timestamp:      uint32(time.Now().Unix()),
 	}
-	if err = s.DocService.AddEhrDocIndex(ehrId, docIndex); err != nil {
+	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
 		return err
 	}
 
 	// Index Access
-	if err = s.DocService.AccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
+	if err = s.Doc.AccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
 		return err
 	}
 	return nil

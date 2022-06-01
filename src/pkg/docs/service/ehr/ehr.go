@@ -15,12 +15,12 @@ import (
 )
 
 type EhrService struct {
-	DocService *service.DefaultDocumentService
+	Doc *service.DefaultDocumentService
 }
 
 func NewEhrService(docService *service.DefaultDocumentService) *EhrService {
 	return &EhrService{
-		DocService: docService,
+		Doc: docService,
 	}
 }
 
@@ -44,7 +44,7 @@ func (s EhrService) Create(request *model.EhrCreateRequest) *model.EHR {
 func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) *model.EHR {
 	var ehr model.EHR
 
-	ehr.SystemId.Value = s.DocService.GetSystemId() //TODO
+	ehr.SystemId.Value = s.Doc.GetSystemId() //TODO
 	ehr.EhrId.Value = ehrId
 
 	ehr.EhrStatus.Id.Type = "OBJECT_VERSION_ID"
@@ -80,40 +80,38 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 	}
 
 	// Storage saving
-	docStorageId, err := s.DocService.Storage.Add(docEncrypted)
+	docStorageId, err := s.Doc.Storage.Add(docEncrypted)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
 	// Index EHR userId -> docStorageId
-	if err = s.DocService.EhrsIndex.Add(userId, docStorageId); err != nil {
+	if err = s.Doc.EhrsIndex.Add(userId, docStorageId); err != nil {
 		log.Println(err)
 		return err
 	}
 
 	// Index Docs ehr_id -> doc_meta
-	docIndexes := []model.DocumentMeta{
-		model.DocumentMeta{
-			TypeCode:  types.EHR,
-			StorageId: docStorageId,
-			Timestamp: uint32(time.Now().Unix()),
-		},
+	docIndex := &model.DocumentMeta{
+		TypeCode:  types.EHR,
+		StorageId: docStorageId,
+		Timestamp: uint32(time.Now().Unix()),
 	}
 	// First record in doc index
-	if err = s.DocService.DocsIndex.Add(doc.EhrId.Value, docIndexes); err != nil {
+	if err = s.Doc.DocsIndex.Add(doc.EhrId.Value, docIndex); err != nil {
 		log.Println(err)
 		return err
 	}
 
 	// Index Access
-	if err = s.DocService.AccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
+	if err = s.Doc.AccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
 		log.Println(err)
 		return err
 	}
 
 	// Creating EHR_STATUS base
-	ehrStatusService := ehr_status.NewEhrStatusService(s.DocService)
+	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
 	ehrStatusDoc := ehrStatusService.Create(doc.EhrId.Value, doc.EhrStatus.Id.Value)
 
 	if err = ehrStatusService.Save(doc.EhrId.Value, userId, ehrStatusDoc); err != nil {
