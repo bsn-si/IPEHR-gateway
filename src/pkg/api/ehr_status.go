@@ -147,7 +147,6 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 }
 
 func setLocationAndETagHeaders(ehrId string, ehrStatusId string, c *gin.Context) {
-	//TODO baseUrl
-	c.Header("Location", "{baseUrl}/ehr/"+ehrId+"/ehr_status/"+ehrStatusId)
+	c.Header("Location", AppConfig.BaseUrl+"/ehr/"+ehrId+"/ehr_status/"+ehrStatusId)
 	c.Header("ETag", ehrStatusId)
 }
