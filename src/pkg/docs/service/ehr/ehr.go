@@ -37,8 +37,23 @@ func (s EhrService) MarshalJson(doc *model.EHR) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s EhrService) Create(request *model.EhrCreateRequest) *model.EHR {
-	return s.CreateWithId(uuid.New().String(), request)
+func (s EhrService) Create(request *model.EhrCreateRequest) (ehrDoc *model.EHR, err error) {
+	ehrDoc = s.CreateWithId(uuid.New().String(), request)
+
+	err = s.addSubjectIndex(request, ehrDoc)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return
+}
+
+// Add EHR creation request subject index
+func (s EhrService) addSubjectIndex(request *model.EhrCreateRequest, ehrDoc *model.EHR) (err error) {
+	subjectId := request.Subject.ExternalRef.Id.Value
+	subjectNamespace := request.Subject.ExternalRef.Namespace
+	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrDoc.EhrId.Value, subjectId, subjectNamespace)
+	return
 }
 
 func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) *model.EHR {

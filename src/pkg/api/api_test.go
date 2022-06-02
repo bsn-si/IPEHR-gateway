@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"hms/gateway/pkg/common/fake_data"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -307,25 +308,6 @@ func Test_API(t *testing.T) {
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {
-	req := []byte(`{
-			"_type": "EHR_STATUS",
-			"archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
-			"name": {
-			  "value": "EHR Status"
-			},
-			"subject": {
-			  "external_ref": {
-				"id": {
-				  "_type": "GENERIC_ID",
-				  "value": "ins01",
-				  "scheme": "id_scheme"
-				},
-				"namespace": "examples",
-				"type": "PERSON"
-			  }
-			},
-			"is_modifiable": true,
-			"is_queryable": true
-		  }`)
+	req := fake_data.EhrCreateRequest()
 	return bytes.NewReader(req)
 }
