@@ -10,7 +10,6 @@ import (
 )
 
 func TestSave(t *testing.T) {
-	//t.Skip("Not finished")
 	jsonDoc := fake_data.EhrCreateRequest()
 
 	docService := service.NewDefaultDocumentService()
@@ -27,7 +26,11 @@ func TestSave(t *testing.T) {
 	testSubjectId := ehrReq.Subject.ExternalRef.Id.Value
 	testSubjectNamespace := ehrReq.Subject.ExternalRef.Namespace
 
-	ehrDoc, err := ehrService.Create(&ehrReq)
+	ehrDoc := ehrService.Create(&ehrReq)
+
+	testUserId := uuid.New().String()
+
+	err = ehrService.Save(testUserId, ehrDoc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,12 +43,5 @@ func TestSave(t *testing.T) {
 
 	if ehrId != ehrDoc.EhrId.Value {
 		t.Errorf("Incorrect ehrId in SubjectIndex")
-	}
-
-	testUserId := uuid.New().String()
-
-	err = ehrService.Save(testUserId, ehrDoc)
-	if err != nil {
-		t.Fatal(err)
 	}
 }
