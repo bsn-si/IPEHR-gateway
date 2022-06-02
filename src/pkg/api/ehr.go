@@ -61,7 +61,11 @@ func (h EhrHandler) Create(c *gin.Context) {
 	// EHR document creating
 	doc, err := h.service.Create(userId, &request)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
+		if errors.Is(err, errors.AlreadyExist) {
+			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
+		}
 		return
 	}
 
@@ -122,7 +126,11 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 	// EHR document creating
 	newDoc, err := h.service.CreateWithId(userId, ehrId, &request)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
+		if errors.Is(err, errors.AlreadyExist) {
+			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
+		}
 		return
 	}
 
