@@ -37,23 +37,8 @@ func (s EhrService) MarshalJson(doc *model.EHR) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s EhrService) Create(request *model.EhrCreateRequest) (ehrDoc *model.EHR, err error) {
-	ehrDoc = s.CreateWithId(uuid.New().String(), request)
-
-	err = s.addSubjectIndex(request, ehrDoc)
-	if err != nil {
-		log.Println(err)
-	}
-
-	return
-}
-
-// Add EHR creation request subject index
-func (s EhrService) addSubjectIndex(request *model.EhrCreateRequest, ehrDoc *model.EHR) (err error) {
-	subjectId := request.Subject.ExternalRef.Id.Value
-	subjectNamespace := request.Subject.ExternalRef.Namespace
-	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrDoc.EhrId.Value, subjectId, subjectNamespace)
-	return
+func (s EhrService) Create(request *model.EhrCreateRequest) *model.EHR {
+	return s.CreateWithId(uuid.New().String(), request)
 }
 
 func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) *model.EHR {
@@ -73,6 +58,8 @@ func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) 
 	ehr.EhrAccess.Type = "EHR_ACCESS"
 
 	ehr.TimeCreated.Value = time.Now().Format("2006-01-02T15:04:05.999-07:00")
+
+	ehr.Subject.ExternalRef = request.Subject.ExternalRef
 
 	return &ehr
 }
@@ -125,6 +112,12 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 		return err
 	}
 
+	// Subject index
+	err = s.addSubjectIndex(doc)
+	if err != nil {
+		log.Println(err)
+	}
+
 	// Creating EHR_STATUS base
 	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
 	ehrStatusDoc := ehrStatusService.Create(doc.EhrId.Value, doc.EhrStatus.Id.Value)
@@ -135,4 +128,12 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 	}
 
 	return nil
+}
+
+// Add EHR creation request subject index
+func (s EhrService) addSubjectIndex(ehrDoc *model.EHR) (err error) {
+	subjectId := ehrDoc.Subject.ExternalRef.Id.Value
+	subjectNamespace := ehrDoc.Subject.ExternalRef.Namespace
+	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrDoc.EhrId.Value, subjectId, subjectNamespace)
+	return
 }

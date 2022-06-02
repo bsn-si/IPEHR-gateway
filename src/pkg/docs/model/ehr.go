@@ -16,4 +16,9 @@ type EHR struct {
 	Directory     *base.ObjectRef   `json:"directory,omitempty"`
 	TimeCreated   base.DvDateTime   `json:"time_created"`
 	Folders       *[]base.ObjectRef `json:"folders,omitempty"`
+	// "Virtual" Subject field to store external subject within EHR document. Because it is not
+	// described in the official specification
+	Subject struct {
+		ExternalRef ExternalRef
+	} `json:"-"`
 }
