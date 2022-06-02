@@ -59,7 +59,11 @@ func (h EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc := h.service.Create(&request)
+	doc, err := h.service.Create(&request)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
+		return
+	}
 
 	// EHR document saving
 	if err = h.service.Save(userId, doc); err != nil {
