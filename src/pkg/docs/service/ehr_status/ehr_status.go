@@ -36,7 +36,7 @@ func (s *EhrStatusService) MarshalJson(doc *model.EhrStatus) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s *EhrStatusService) Create(ehrId, ehrStatusId string) (doc *model.EhrStatus) {
+func (s *EhrStatusService) Create(ehrStatusId, subjectId, subjectNamespace string) (doc *model.EhrStatus) {
 	doc = &model.EhrStatus{}
 	doc.Type = types.EHR_STATUS.String()
 	doc.ArchetypeNodeId = "openEHR-EHR-EHR_STATUS.generic.v1"
@@ -48,9 +48,9 @@ func (s *EhrStatusService) Create(ehrId, ehrStatusId string) (doc *model.EhrStat
 	doc.Subject.ExternalRef = base.ObjectRef{
 		Id: base.ObjectId{
 			Type:  "HIER_OBJECT_ID",
-			Value: ehrId,
+			Value: subjectId,
 		},
-		Namespace: "DEMOGRAPHIC",
+		Namespace: subjectNamespace,
 		Type:      "PERSON",
 	}
 	doc.IsQueryable = true

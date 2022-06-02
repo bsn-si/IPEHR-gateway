@@ -37,11 +37,11 @@ func (s EhrService) MarshalJson(doc *model.EHR) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s EhrService) Create(request *model.EhrCreateRequest) *model.EHR {
-	return s.CreateWithId(uuid.New().String(), request)
+func (s EhrService) Create(userId string, request *model.EhrCreateRequest) (*model.EHR, error) {
+	return s.CreateWithId(userId, uuid.New().String(), request)
 }
 
-func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) *model.EHR {
+func (s EhrService) CreateWithId(userId, ehrId string, request *model.EhrCreateRequest) (*model.EHR, error) {
 	var ehr model.EHR
 
 	ehr.SystemId.Value = s.Doc.GetSystemId() //TODO
@@ -59,12 +59,21 @@ func (s EhrService) CreateWithId(ehrId string, request *model.EhrCreateRequest) 
 
 	ehr.TimeCreated.Value = time.Now().Format("2006-01-02T15:04:05.999-07:00")
 
-	ehr.Subject.ExternalRef = request.Subject.ExternalRef
+	// Creating EHR_STATUS base
+	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
 
-	return &ehr
+	ehrStatusId := ehr.EhrStatus.Id.Value
+	subjectId := request.Subject.ExternalRef.Id.Value
+	subjectNamespace := request.Subject.ExternalRef.Namespace
+
+	ehrStatusDoc := ehrStatusService.Create(ehrStatusId, subjectId, subjectNamespace)
+
+	err := s.save(userId, &ehr, ehrStatusDoc)
+
+	return &ehr, err
 }
 
-func (s EhrService) Save(userId string, doc *model.EHR) error {
+func (s EhrService) save(userId string, doc *model.EHR, ehrStatusDoc *model.EhrStatus) error {
 	docBytes, err := s.MarshalJson(doc)
 	if err != nil {
 		log.Println(err)
@@ -112,17 +121,16 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 		return err
 	}
 
-	// Subject index
-	err = s.addSubjectIndex(doc)
-	if err != nil {
+	// Saving EHR status
+	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
+	if err = ehrStatusService.Save(doc.EhrId.Value, userId, ehrStatusDoc); err != nil {
 		log.Println(err)
+		return err
 	}
 
-	// Creating EHR_STATUS base
-	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
-	ehrStatusDoc := ehrStatusService.Create(doc.EhrId.Value, doc.EhrStatus.Id.Value)
-
-	if err = ehrStatusService.Save(doc.EhrId.Value, userId, ehrStatusDoc); err != nil {
+	// Subject index
+	err = s.addSubjectIndex(doc.EhrId.Value, ehrStatusDoc)
+	if err != nil {
 		log.Println(err)
 		return err
 	}
@@ -130,10 +138,10 @@ func (s EhrService) Save(userId string, doc *model.EHR) error {
 	return nil
 }
 
-// Add EHR creation request subject index
-func (s EhrService) addSubjectIndex(ehrDoc *model.EHR) (err error) {
-	subjectId := ehrDoc.Subject.ExternalRef.Id.Value
-	subjectNamespace := ehrDoc.Subject.ExternalRef.Namespace
-	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrDoc.EhrId.Value, subjectId, subjectNamespace)
+// Add EHR status subject index
+func (s EhrService) addSubjectIndex(ehrId string, ehrStatusDoc *model.EhrStatus) (err error) {
+	subjectId := ehrStatusDoc.Subject.ExternalRef.Id.Value
+	subjectNamespace := ehrStatusDoc.Subject.ExternalRef.Namespace
+	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrId, subjectId, subjectNamespace)
 	return
 }

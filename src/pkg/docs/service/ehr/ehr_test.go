@@ -26,11 +26,9 @@ func TestSave(t *testing.T) {
 	testSubjectId := ehrReq.Subject.ExternalRef.Id.Value
 	testSubjectNamespace := ehrReq.Subject.ExternalRef.Namespace
 
-	ehrDoc := ehrService.Create(&ehrReq)
-
 	testUserId := uuid.New().String()
 
-	err = ehrService.Save(testUserId, ehrDoc)
+	ehrDoc, err := ehrService.Create(testUserId, &ehrReq)
 	if err != nil {
 		t.Fatal(err)
 	}
