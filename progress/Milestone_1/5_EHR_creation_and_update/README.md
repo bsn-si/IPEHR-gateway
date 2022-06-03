@@ -34,6 +34,6 @@ The document structures are located in the directory `pkg/docs/model`
 Running tests that simulate creating and receiving documents:
 
 ```
-go test -v pkg/api/...
+go test -v ./pkg/api/...
 ```
 
