@@ -114,3 +114,17 @@ index_id -> user_pub_key.Encrypt(doc_storage_id)
 5. Decrypt `doc_keys`
 6. Downloading found documents from the storage
 7. Documents are decrypted using `doc_keys`
+
+## Implementation
+
+At this stage, the implementation of the indexes is done with their storage in the local file storage plus caching in memory.
+
+The next stage involves the development of a special blockchain-based smart contract for working with indexes.
+
+The packages that implement the indexing functionality are located in the `pkg/indexer` project directory.
+
+Running tests to demonstrate the work of the packages:
+
+```
+go test -v ./pkg/indexer/...
+```
