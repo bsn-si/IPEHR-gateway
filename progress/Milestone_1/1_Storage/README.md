@@ -1,3 +1,5 @@
+![HMS gateway](https://user-images.githubusercontent.com/8058268/171821436-ebd013b6-0deb-4f86-8aaa-b5254e913104.png)
+
 ## Document storage
 
 EHR documents are supposed to be stored as separate files.
