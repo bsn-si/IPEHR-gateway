@@ -77,7 +77,7 @@ pathKey  -> DataEntry
 index_id -> user_pub_key.Encrypt(doc_storage_id)
 ```
 
-##Creating EHR
+## Creating EHR
 
 1. An EHR document is created as a json file
 2. The document is encrypted using the unique `doc_key`
