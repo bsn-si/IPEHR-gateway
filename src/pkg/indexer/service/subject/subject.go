@@ -20,7 +20,7 @@ func New() *SubjectIndex {
 // AddEhrSubjectsIndex Add EHR document ID to index by document subject
 func (e *SubjectIndex) AddEhrSubjectsIndex(ehrId, subjectId, namespace string) (err error) {
 	subjectKey := e.subjectKey(subjectId, namespace)
-	err = e.index.Replace(subjectKey, ehrId)
+	err = e.index.Add(subjectKey, ehrId)
 	return
 }
 
