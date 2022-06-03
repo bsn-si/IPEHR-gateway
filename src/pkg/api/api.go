@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -57,10 +58,11 @@ func (a *API) Build() *gin.Engine {
 }
 
 func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
+	log.Println("buildEhrAPI")
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	//r.Use(Recovery, app_errors.ErrHandler)
 	r.GET("/:ehrid", a.Ehr.GetById)
-	//r.GET("/:ehrid", a.EHR.GetBySubjectIdAndNamespace)	//TODO
+	r.GET("/", a.Ehr.GetByQuery)
 
 	// Other methods should be authorized
 	r.Use(a.Auth)

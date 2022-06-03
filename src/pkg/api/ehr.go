@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/api/ehr_by_query"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -179,4 +180,14 @@ func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
 	} else {
 		c.AbortWithStatus(http.StatusCreated)
 	}
+}
+
+func (h EhrHandler) GetByQuery(c *gin.Context) {
+	res, err := ehr_by_query.GetEhrByQuery(c)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", res)
 }

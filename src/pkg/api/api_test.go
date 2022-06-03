@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/ehr"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -27,6 +29,7 @@ func Test_API(t *testing.T) {
 	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
 	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
+	r.GET("/v1/ehr", api.Ehr.GetByQuery)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -305,6 +308,66 @@ func Test_API(t *testing.T) {
 		}
 	})
 
+	t.Run("EHR get by subject", func(t *testing.T) {
+		userId := uuid.New().String()
+		ehrId := uuid.New().String()
+
+		subjectId := uuid.New().String()
+		subjectNamespace := "test_test"
+
+		createRequest := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
+
+		ehrService := ehr.NewEhrService(service.NewDefaultDocumentService())
+
+		var req model.EhrCreateRequest
+		err := json.Unmarshal(createRequest, &req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = ehrService.CreateWithId(userId, ehrId, &req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request, err := http.NewRequest(http.MethodGet, ts.URL+"/v1/ehr?subject_id="+subjectId+"&namespace="+subjectNamespace, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", userId)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err := httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatal(err)
+		}
+
+		var ehrDoc model.EHR
+		err = json.Unmarshal(data, &ehrDoc)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ehrDoc.EhrId.Value != ehrId {
+			t.Error("Got wrong EHR")
+		}
+
+	})
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {
