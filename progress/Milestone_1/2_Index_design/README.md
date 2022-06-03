@@ -1,3 +1,5 @@
+![HMS gateway](https://user-images.githubusercontent.com/8058268/171837801-269660f7-b274-4d97-ab17-30de41e3f962.png)
+
 ### User/patient
 
 - user\_id - unique identifier  
