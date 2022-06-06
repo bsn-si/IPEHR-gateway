@@ -62,7 +62,7 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	//r.Use(Recovery, app_errors.ErrHandler)
 	r.GET("/:ehrid", a.Ehr.GetById)
-	r.GET("/", a.Ehr.GetByQuery)
+	r.GET("/", a.Ehr.GetBySubjectIdAndNamespace)
 
 	// Other methods should be authorized
 	r.Use(a.Auth)

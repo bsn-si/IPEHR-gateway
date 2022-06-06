@@ -29,7 +29,7 @@ func Test_API(t *testing.T) {
 	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
 	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
-	r.GET("/v1/ehr", api.Ehr.GetByQuery)
+	r.GET("/v1/ehr", api.Ehr.GetBySubjectIdAndNamespace)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()

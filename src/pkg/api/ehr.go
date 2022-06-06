@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/api/ehr_by_query"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -182,12 +181,40 @@ func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
 	}
 }
 
-func (h EhrHandler) GetByQuery(c *gin.Context) {
-	res, err := ehr_by_query.GetEhrByQuery(c)
+func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
+	subjectId := c.Query("subject_id")
+	namespace := c.Query("namespace")
+
+	docService := service.NewDefaultDocumentService()
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	ehrId, err := docService.SubjectIndex.GetEhrBySubject(subjectId, namespace)
 	if err != nil {
+		log.Println("Can't get ehrId", "subjectId", subjectId, err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	c.Data(http.StatusOK, "application/json", res)
+	// Getting docStorageId
+	doc, err := docService.DocsIndex.GetLastByType(ehrId, types.EHR)
+	if err != nil {
+		log.Println("Can't get docStorageId by ehrId", "ehrId", ehrId, err)
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	// Getting doc from storage
+	docDecrypted, err := docService.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
+	if err != nil {
+		log.Println("Can't get encrypted doc", err)
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", docDecrypted)
 }
