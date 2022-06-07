@@ -169,23 +169,12 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json", docDecrypted)
 }
 
-func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
-	c.Header("Location", AppConfig.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
-	c.Header("ETag", doc.EhrId.Value)
-
-	prefer := c.Request.Header.Get("Prefer")
-	if prefer == "return=representation" {
-		c.JSON(http.StatusCreated, doc)
-	} else {
-		c.AbortWithStatus(http.StatusCreated)
-	}
-}
-
 func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 	subjectId := c.Query("subject_id")
 	namespace := c.Query("namespace")
 	if subjectId == "" || namespace == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "subject data is not filled correctly"})
+		log.Println("Subject data is not filled correctly")
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
@@ -203,4 +192,16 @@ func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/json", docDecrypted)
+}
+
+func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
+	c.Header("Location", AppConfig.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
+	c.Header("ETag", doc.EhrId.Value)
+
+	prefer := c.Request.Header.Get("Prefer")
+	if prefer == "return=representation" {
+		c.JSON(http.StatusCreated, doc)
+	} else {
+		c.AbortWithStatus(http.StatusCreated)
+	}
 }
