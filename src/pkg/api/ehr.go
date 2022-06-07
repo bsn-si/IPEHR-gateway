@@ -184,8 +184,10 @@ func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
 func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 	subjectId := c.Query("subject_id")
 	namespace := c.Query("namespace")
-
-	docService := service.NewDefaultDocumentService()
+	if subjectId == "" || namespace == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "subject data is not filled correctly"})
+		return
+	}
 
 	userId := c.GetString("userId")
 	if userId == "" {
@@ -193,25 +195,9 @@ func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 		return
 	}
 
-	ehrId, err := docService.SubjectIndex.GetEhrBySubject(subjectId, namespace)
+	docDecrypted, err := h.service.GetDocBySubject(userId, subjectId, namespace)
 	if err != nil {
-		log.Println("Can't get ehrId", "subjectId", subjectId, err)
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	// Getting docStorageId
-	doc, err := docService.DocsIndex.GetLastByType(ehrId, types.EHR)
-	if err != nil {
-		log.Println("Can't get docStorageId by ehrId", "ehrId", ehrId, err)
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	// Getting doc from storage
-	docDecrypted, err := docService.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
-	if err != nil {
-		log.Println("Can't get encrypted doc", err)
+		log.Println("Can't get document by subject", err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

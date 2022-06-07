@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hms/gateway/pkg/common/fake_data"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/ehr"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -309,6 +307,7 @@ func Test_API(t *testing.T) {
 	})
 
 	t.Run("EHR get by subject", func(t *testing.T) {
+		// Adding document with specific subject
 		userId := uuid.New().String()
 		ehrId := uuid.New().String()
 
@@ -317,20 +316,7 @@ func Test_API(t *testing.T) {
 
 		createRequest := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
 
-		ehrService := ehr.NewEhrService(service.NewDefaultDocumentService())
-
-		var req model.EhrCreateRequest
-		err := json.Unmarshal(createRequest, &req)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		_, err = ehrService.CreateWithId(userId, ehrId, &req)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request, err := http.NewRequest(http.MethodGet, ts.URL+"/v1/ehr?subject_id="+subjectId+"&namespace="+subjectNamespace, nil)
+		request, err := http.NewRequest(http.MethodPut, ts.URL+"/v1/ehr/"+ehrId, bytes.NewReader(createRequest))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -341,10 +327,39 @@ func Test_API(t *testing.T) {
 
 		response, err := httpClient.Do(request)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		if response.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
+		}
+
+		// Check document by subject
+
+		request, err = http.NewRequest(http.MethodGet, ts.URL+"/v1/ehr?subject_id="+subjectId+"&namespace="+subjectNamespace, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", userId)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err = httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		data, err = ioutil.ReadAll(response.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
