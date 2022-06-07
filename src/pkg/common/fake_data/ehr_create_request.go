@@ -5,9 +5,12 @@ import (
 )
 
 func EhrCreateRequest() []byte {
-
 	subjectId := uuid.New().String()
 
+	return EhrCreateCustomRequest(subjectId, "test")
+}
+
+func EhrCreateCustomRequest(subjectId, subjectNamespace string) []byte {
 	return []byte(`{
 	  "_type": "EHR_STATUS",
 	  "archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
@@ -21,7 +24,7 @@ func EhrCreateRequest() []byte {
 			"value": "` + subjectId + `",
 			"scheme": "id_scheme"
 		  },
-		  "namespace": "test",
+		  "namespace": "` + subjectNamespace + `",
 		  "type": "PERSON"
 		}
 	  },

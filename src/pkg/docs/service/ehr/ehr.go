@@ -145,3 +145,26 @@ func (s EhrService) addSubjectIndex(ehrId string, ehrStatusDoc *model.EhrStatus)
 	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrId, subjectId, subjectNamespace)
 	return
 }
+
+// GetDocBySubject Get decrypted document by subject
+func (s EhrService) GetDocBySubject(userId, subjectId, namespace string) (docDecrypted []byte, err error) {
+	ehrId, err := s.Doc.SubjectIndex.GetEhrBySubject(subjectId, namespace)
+	if err != nil {
+		log.Println("Can't get ehrId", "subjectId", subjectId, err)
+		return
+	}
+
+	// Getting docStorageId
+	doc, err := s.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
+	if err != nil {
+		log.Println("Can't get docStorageId by ehrId", "ehrId", ehrId, err)
+		return
+	}
+
+	// Getting doc from storage
+	docDecrypted, err = s.Doc.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
+	if err != nil {
+		log.Println("Can't get encrypted doc", err)
+	}
+	return
+}
