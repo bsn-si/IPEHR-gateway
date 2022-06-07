@@ -29,6 +29,7 @@ func Test_API(t *testing.T) {
 	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
 	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.GetStatus)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
+	r.GET("/v1/ehr", api.Ehr.GetBySubjectIdAndNamespace)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -337,6 +338,83 @@ func Test_API(t *testing.T) {
 		}
 	})
 
+	t.Run("EHR get by subject", func(t *testing.T) {
+		// Adding document with specific subject
+		userId := uuid.New().String()
+		ehrId := uuid.New().String()
+
+		subjectId := uuid.New().String()
+		subjectNamespace := "test_test"
+
+		createRequest := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
+
+		request, err := http.NewRequest(http.MethodPut, ts.URL+"/v1/ehr/"+ehrId, bytes.NewReader(createRequest))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", userId)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err := httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		if response.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
+		}
+
+		// Check document by subject
+
+		request, err = http.NewRequest(http.MethodGet, ts.URL+"/v1/ehr?subject_id="+subjectId+"&namespace="+subjectNamespace, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", userId)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err = httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		data, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatal(err)
+		}
+
+		var ehrDoc model.EHR
+		err = json.Unmarshal(data, &ehrDoc)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ehrDoc.EhrId.Value != ehrId {
+			t.Error("Got wrong EHR")
+		}
+
+	})
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {

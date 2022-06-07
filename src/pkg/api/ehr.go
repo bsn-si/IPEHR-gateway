@@ -169,6 +169,31 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json", docDecrypted)
 }
 
+func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
+	subjectId := c.Query("subject_id")
+	namespace := c.Query("namespace")
+	if subjectId == "" || namespace == "" {
+		log.Println("Subject data is not filled correctly")
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	docDecrypted, err := h.service.GetDocBySubject(userId, subjectId, namespace)
+	if err != nil {
+		log.Println("Can't get document by subject", err)
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", docDecrypted)
+}
+
 func respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
 	c.Header("Location", AppConfig.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
 	c.Header("ETag", doc.EhrId.Value)
