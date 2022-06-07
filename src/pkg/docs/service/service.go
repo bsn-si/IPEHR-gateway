@@ -3,6 +3,11 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
+
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -14,9 +19,6 @@ import (
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
-
-	"github.com/google/uuid"
-	"golang.org/x/crypto/sha3"
 )
 
 type DefaultDocumentService struct {
@@ -141,6 +143,37 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 	return docDecrypted, nil
+}
+
+func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time) (doc *model.DocumentMeta, err error) {
+
+	docIndexes, err := d.DocsIndex.Get(ehrId)
+	if err != nil {
+		return nil, err
+	}
+
+	countOfIndexes := len(docIndexes)
+
+	if countOfIndexes == 1 {
+		return docIndexes[0], nil
+	}
+
+	for k := range docIndexes {
+		k = countOfIndexes - 1 - k
+
+		lastDocIndex := docIndexes[k]
+		lastDocIndexTime := time.Unix(int64((*lastDocIndex).Timestamp), 0)
+
+		if lastDocIndexTime == nearestTime || nearestTime.After(lastDocIndexTime) {
+			return lastDocIndex, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (d *DefaultDocumentService) GenerateId() string {
+	return uuid.New().String()
 }
 
 func (d *DefaultDocumentService) GetSystemId() string {

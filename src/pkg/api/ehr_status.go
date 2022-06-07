@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/gin-gonic/gin"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr_status"
 	"hms/gateway/pkg/docs/types"
@@ -8,9 +9,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
+	"time"
 )
+
+const ALLOWED_TIME_FORMAT = "2006-01-02T15:04:05.999-07:00"
 
 type EhrStatusHandler struct {
 	service *ehr_status.EhrStatusService
@@ -20,6 +22,14 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService) *EhrStatusH
 	return &EhrStatusHandler{
 		service: ehr_status.NewEhrStatusService(docService),
 	}
+}
+
+func (h EhrStatusHandler) GetStatus(c *gin.Context) {
+	if ok := c.Query("version_at_time"); ok != "" {
+		h.GetStatusByTime(c)
+		return
+	}
+	return
 }
 
 func (h EhrStatusHandler) Update(c *gin.Context) {
@@ -108,6 +118,51 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 	default:
 		c.JSON(http.StatusNoContent, nil)
 	}
+}
+
+func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
+	ehrId := c.Param("ehrid")
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	versionUid := c.Param("versionid")
+	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+	versionAtTime := c.Query("version_at_time")
+	statusTime, err := time.Parse(ALLOWED_TIME_FORMAT, versionAtTime)
+
+	if err != nil {
+		log.Printf("Incorrect format of time option, use %s", ALLOWED_TIME_FORMAT)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	docIndex, err := h.service.Doc.GetDocIndexByNearestTime(ehrId, statusTime)
+	if err != nil {
+		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
+		// TODO hmmm maybe replace 404 to 200 or 204? this may be confused with a non-existent route
+		c.AbortWithStatus(http.StatusNoContent)
+		return
+	}
+
+	data, err := h.service.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
+	if err != nil {
+		//TODO logging
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", data)
 }
 
 func (h EhrStatusHandler) GetById(c *gin.Context) {

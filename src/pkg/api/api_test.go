@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,6 +27,7 @@ func Test_API(t *testing.T) {
 	r.POST("/v1/ehr", api.Ehr.Create)
 	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
 	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
+	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.GetStatus)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
 
 	ts := httptest.NewServer(r)
@@ -221,6 +223,36 @@ func Test_API(t *testing.T) {
 
 		if ehrStatus.Uid == nil || ehrStatus.Uid.Value != ehrStatusId {
 			t.Error("EHR_STATUS document mismatch")
+			return
+		}
+	})
+
+	t.Run("EHR_STATUS getting by version time", func(t *testing.T) {
+		ehrId := uuid.New().String()
+		versionAtTime := time.Now()
+
+		request, err := http.NewRequest(http.MethodGet, ts.URL+fmt.Sprintf("/v1/ehr/%s/ehr_status", ehrId), nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		q := request.URL.Query()
+		q.Add("version_at_time", versionAtTime.Format(ALLOWED_TIME_FORMAT))
+
+		request.Header.Set("AuthUserId", testUserId)
+		request.URL.RawQuery = q.Encode()
+
+		response, err := httpClient.Do(request)
+		if err != nil {
+			t.Errorf("Expected nil, received %s", err.Error())
+			return
+		}
+
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusNoContent {
+			t.Errorf("Expected %d, received %d", http.StatusNoContent, response.StatusCode)
 			return
 		}
 	})
