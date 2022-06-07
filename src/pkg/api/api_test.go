@@ -251,8 +251,8 @@ func Test_API(t *testing.T) {
 
 		defer response.Body.Close()
 
-		if response.StatusCode != http.StatusNoContent {
-			t.Errorf("Expected %d, received %d", http.StatusNoContent, response.StatusCode)
+		if response.StatusCode != http.StatusNotFound {
+			t.Errorf("Expected %d, received %d", http.StatusNotFound, response.StatusCode)
 			return
 		}
 	})

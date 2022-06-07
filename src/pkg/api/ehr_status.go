@@ -29,7 +29,7 @@ func (h EhrStatusHandler) GetStatus(c *gin.Context) {
 		h.GetStatusByTime(c)
 		return
 	}
-	return
+	c.AbortWithStatus(http.StatusBadRequest)
 }
 
 func (h EhrStatusHandler) Update(c *gin.Context) {
@@ -147,11 +147,10 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.service.Doc.GetDocIndexByNearestTime(ehrId, statusTime)
+	docIndex, err := h.service.Doc.GetDocIndexByNearestTime(ehrId, statusTime, types.EHR_STATUS)
 	if err != nil {
 		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
-		// TODO hmmm maybe replace 404 to 200 or 204? this may be confused with a non-existent route
-		c.AbortWithStatus(http.StatusNoContent)
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 

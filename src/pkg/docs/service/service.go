@@ -145,31 +145,29 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time) (doc *model.DocumentMeta, err error) {
+func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
 
 	docIndexes, err := d.DocsIndex.Get(ehrId)
 	if err != nil {
 		return nil, err
 	}
 
-	countOfIndexes := len(docIndexes)
-
-	if countOfIndexes == 1 {
-		return docIndexes[0], nil
-	}
-
-	for k := range docIndexes {
-		k = countOfIndexes - 1 - k
-
-		lastDocIndex := docIndexes[k]
-		lastDocIndexTime := time.Unix(int64((*lastDocIndex).Timestamp), 0)
-
-		if lastDocIndexTime == nearestTime || nearestTime.After(lastDocIndexTime) {
-			return lastDocIndex, nil
+	t := uint32(nearestTime.Unix())
+	for _, docIndex := range docIndexes {
+		if docIndex.TypeCode == docType {
+			if docIndex.Timestamp <= t {
+				doc = docIndex
+			} else {
+				break
+			}
 		}
 	}
 
-	return nil, nil
+	if doc == nil {
+		err = errors.IsNotExist
+	}
+
+	return doc, err
 }
 
 func (d *DefaultDocumentService) GenerateId() string {
