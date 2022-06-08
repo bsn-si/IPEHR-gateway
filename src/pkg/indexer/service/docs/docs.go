@@ -40,6 +40,23 @@ func (d *DocsIndex) Get(ehrId string) (docIndexes []*model.DocumentMeta, err err
 	return
 }
 
+func (d *DocsIndex) GetByType(ehrId string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
+	docIndexes, err := d.Get(ehrId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, docIndex := range docIndexes {
+		if docIndex.TypeCode == docType {
+			docs = append(docs, docIndex)
+		}
+	}
+	if 0 == len(docs) {
+		return nil, errors.IsNotExist
+	}
+	return docs, nil
+}
+
 func (d *DocsIndex) GetLastByType(ehrId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
 	docIndexes, err := d.Get(ehrId)
 	if err != nil {

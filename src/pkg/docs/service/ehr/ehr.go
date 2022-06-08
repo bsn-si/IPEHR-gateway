@@ -128,22 +128,7 @@ func (s EhrService) save(userId string, doc *model.EHR, ehrStatusDoc *model.EhrS
 		return err
 	}
 
-	// Subject index
-	err = s.addSubjectIndex(doc.EhrId.Value, ehrStatusDoc)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
 	return nil
-}
-
-// Add EHR status subject index
-func (s EhrService) addSubjectIndex(ehrId string, ehrStatusDoc *model.EhrStatus) (err error) {
-	subjectId := ehrStatusDoc.Subject.ExternalRef.Id.Value
-	subjectNamespace := ehrStatusDoc.Subject.ExternalRef.Namespace
-	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrId, subjectId, subjectNamespace)
-	return
 }
 
 // GetDocBySubject Get decrypted document by subject

@@ -64,42 +64,34 @@ func (s *EhrStatusService) Validate(doc *model.EhrStatus) bool {
 	return true
 }
 
-func (s *EhrStatusService) Save(ehrId, userId string, doc *model.EhrStatus) error {
-	docBytes, err := s.MarshalJson(doc)
-	if err != nil {
-		return err
-	}
-
-	// Document encryption key generationg
+func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) error {
+	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
-	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(doc.Uid.Value))
+	statusStorageId, err := s.saveStatusToStorage(status, key, ehrId)
 	if err != nil {
 		return err
 	}
 
-	// Storage saving
-	docStorageId, err := s.Doc.Storage.Add(docEncrypted)
-	if err != nil {
-		return err
-	}
+	subjectId := status.Subject.ExternalRef.Id.Value
+	subjectNamespace := status.Subject.ExternalRef.Namespace
+	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrId, subjectId, subjectNamespace)
 
 	ehrUUID, err := uuid.Parse(ehrId)
 	if err != nil {
 		return err
 	}
 	// Doc id encryption
-	docIdEncrypted, err := key.EncryptWithAuthData([]byte(doc.Uid.Value), ehrUUID[:]) //TODO should reduce doc.Uid.Value?
+	statusIdEncrypted, err := key.EncryptWithAuthData([]byte(status.Uid.Value), ehrUUID[:]) //TODO should reduce doc.Uid.Value?
 	if err != nil {
-		return nil
+		return err
 	}
 
 	// Appending EHR doc index
 	docIndex := &model.DocumentMeta{
 		TypeCode:       types.EHR_STATUS,
-		StorageId:      docStorageId,
-		DocIdEncrypted: docIdEncrypted,
+		StorageId:      statusStorageId,
+		DocIdEncrypted: statusIdEncrypted,
 		Timestamp:      uint32(time.Now().Unix()),
 	}
 	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
@@ -107,8 +99,83 @@ func (s *EhrStatusService) Save(ehrId, userId string, doc *model.EhrStatus) erro
 	}
 
 	// Index Access
-	if err = s.Doc.AccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
+	if err = s.Doc.AccessIndex.Add(userId, statusStorageId, key.Bytes()); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *chacha_poly.Key, ehrId string) (storageId *[32]byte, err error) {
+	statusBytes, err := s.MarshalJson(status)
+	if err != nil {
+		return
+	}
+
+	// Document encryption
+	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(ehrId))
+	if err != nil {
+		return
+	}
+
+	// Storage saving
+	storageId, err = s.Doc.Storage.Add(statusEncrypted)
+	return
+}
+
+// Get current (last) status of EHR document
+func (s *EhrStatusService) Get(userId, ehrId string) (status *model.EhrStatus, err error) {
+	statusMeta, err := s.Doc.DocsIndex.GetLastByType(ehrId, types.EHR_STATUS)
+	if err != nil {
+		return
+	}
+
+	status, err = s.getStatusFromStorage(userId, ehrId, statusMeta.StorageId)
+
+	return
+}
+
+func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace string) (status *model.EhrStatus, err error) {
+	ehrId, err := s.Doc.SubjectIndex.GetEhrBySubject(subjectId, namespace)
+	if err != nil {
+		return
+	}
+
+	statuses, err := s.Doc.DocsIndex.GetByType(ehrId, types.EHR_STATUS)
+	if err != nil {
+		return
+	}
+
+	for _, v := range statuses {
+		status, err = s.getStatusFromStorage(userId, ehrId, v.StorageId)
+		if err != nil {
+			return
+		}
+		if status.Subject.ExternalRef.Id.Value == subjectId && status.Subject.ExternalRef.Namespace == namespace {
+			return
+		}
+	}
+	return
+}
+
+func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, storageId *[32]byte) (status *model.EhrStatus, err error) {
+	statusKeyBytes, err := s.Doc.AccessIndex.GetDocumentKey(userId, storageId)
+	if err != nil {
+		return
+	}
+
+	statusKey, err := chacha_poly.NewKeyFromBytes(statusKeyBytes)
+	if err != nil {
+		return
+	}
+
+	encryptedStatus, err := s.Doc.Storage.Get(storageId)
+
+	statusBytes, err := statusKey.DecryptWithAuthData(encryptedStatus, []byte(ehrId))
+	if err != nil {
+		return
+	}
+
+	status, err = s.ParseJson(statusBytes)
+
+	return
 }
