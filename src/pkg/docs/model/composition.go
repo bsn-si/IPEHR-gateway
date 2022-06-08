@@ -8,11 +8,11 @@ import "hms/gateway/pkg/docs/model/base"
 // signed document.
 // https://specifications.openehr.org/releases/RM/latest/ehr.html#_composition_class
 type Composition struct {
-	Language  base.CodePhrase  `json:"language"`
-	Territory base.CodePhrase  `json:"territory"`
-	Category  base.DvCodedText `json:"category"`
-	Context   *EventContext    `json:"context,omitempty"`
-	Composer  base.PartyProxy  `json:"composer"`
-	Content   []base.Locatable `json:"content"`
+	Language  base.CodePhrase     `json:"language"`
+	Territory base.CodePhrase     `json:"territory"`
+	Category  base.DvCodedText    `json:"category"`
+	Context   *EventContext       `json:"context,omitempty"`
+	Composer  base.PartyProxy     `json:"composer"`
+	Content   *[]base.ContentItem `json:"content,omitempty"`
 	base.Locatable
 }

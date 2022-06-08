@@ -12,6 +12,5 @@ type Locatable struct {
 	Uid              *ObjectId   `json:"uid,omitempty"`
 	Links            *[]Link     `json:"links,omitempty"`
 	ArchetypeDetails *Archetyped `json:"archetype_details,omitempty"`
-	// TODO: Recursion :( need to fix somewhat
-	//FeederAudit      FeederAudit `json:"feeder_audit,omitempty"`
+	Pathable
 }
