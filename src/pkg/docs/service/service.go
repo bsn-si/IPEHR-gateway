@@ -146,7 +146,6 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 }
 
 func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-
 	docIndexes, err := d.DocsIndex.Get(ehrId)
 	if err != nil {
 		return nil, err
