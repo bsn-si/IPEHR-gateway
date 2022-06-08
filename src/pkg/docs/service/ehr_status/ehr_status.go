@@ -112,7 +112,7 @@ func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *cha
 	}
 
 	// Document encryption
-	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(ehrId))
+	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(status.Uid.Value))
 	if err != nil {
 		return
 	}
@@ -129,7 +129,7 @@ func (s *EhrStatusService) Get(userId, ehrId string) (status *model.EhrStatus, e
 		return
 	}
 
-	status, err = s.getStatusFromStorage(userId, ehrId, statusMeta.StorageId)
+	status, err = s.getStatusFromStorage(userId, ehrId, statusMeta)
 
 	return
 }
@@ -146,7 +146,7 @@ func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace strin
 	}
 
 	for _, v := range statuses {
-		status, err = s.getStatusFromStorage(userId, ehrId, v.StorageId)
+		status, err = s.getStatusFromStorage(userId, ehrId, v)
 		if err != nil {
 			return
 		}
@@ -157,8 +157,8 @@ func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace strin
 	return
 }
 
-func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, storageId *[32]byte) (status *model.EhrStatus, err error) {
-	statusKeyBytes, err := s.Doc.AccessIndex.GetDocumentKey(userId, storageId)
+func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, statusMeta *model.DocumentMeta) (status *model.EhrStatus, err error) {
+	statusKeyBytes, err := s.Doc.AccessIndex.GetDocumentKey(userId, statusMeta.StorageId)
 	if err != nil {
 		return
 	}
@@ -168,9 +168,18 @@ func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, storageId 
 		return
 	}
 
-	encryptedStatus, err := s.Doc.Storage.Get(storageId)
+	encryptedStatus, err := s.Doc.Storage.Get(statusMeta.StorageId)
+	if err != nil {
+		return
+	}
 
-	statusBytes, err := statusKey.DecryptWithAuthData(encryptedStatus, []byte(ehrId))
+	ehrUUID, err := uuid.Parse(ehrId)
+	statusId, err := statusKey.DecryptWithAuthData(statusMeta.DocIdEncrypted, ehrUUID[:])
+	if err != nil {
+		return
+	}
+
+	statusBytes, err := statusKey.DecryptWithAuthData(encryptedStatus, statusId)
 	if err != nil {
 		return
 	}
