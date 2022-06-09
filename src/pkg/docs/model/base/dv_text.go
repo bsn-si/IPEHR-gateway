@@ -6,6 +6,7 @@ package base
 // markdown.
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_text_class
 type DvText struct {
+	Type       string         `json:"_type"`
 	Value      string         `json:"value"`
 	Hyperlink  *DvUri         `json:"hyperlink,omitempty"`
 	Formatting string         `json:"formatting,omitempty"`

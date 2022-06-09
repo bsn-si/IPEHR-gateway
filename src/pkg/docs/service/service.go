@@ -76,7 +76,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 			return nil, err
 		}
 
-		keyDecrypted, err := keybox.OpenAnonymous(*keyEncrypted, userPubKey, userPrivKey)
+		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +121,7 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 
-	keyDecrypted, err := keybox.OpenAnonymous(*keyEncrypted, userPubKey, userPrivKey)
+	keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
 	if err != nil {
 		return nil, err
 	}

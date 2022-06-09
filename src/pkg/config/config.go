@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	BaseUrl string `json:"baseUrl"`
+	BaseUrl  string `json:"baseUrl"`
+	DataPath string `json:"dataPath"`
 }
 
 var (

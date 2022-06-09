@@ -31,7 +31,7 @@ func (u *DocAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byt
 		return err
 	}
 
-	// Getting user privateKey
+	// Getting user publicKey
 	userPubKey, _, err := u.keystore.Get(userId)
 	if err != nil {
 		return err
@@ -55,8 +55,8 @@ func (u *DocAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byt
 }
 
 // Get user key
-func (u *DocAccessIndex) Get(userId string) (*[]byte, error) {
+func (u *DocAccessIndex) Get(userId string) ([]byte, error) {
 	var keyEncrypted []byte
 	err := u.index.GetById(userId, &keyEncrypted)
-	return &keyEncrypted, err
+	return keyEncrypted, err
 }
