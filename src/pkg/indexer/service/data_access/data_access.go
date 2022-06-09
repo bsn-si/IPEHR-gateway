@@ -24,6 +24,7 @@ func New() *DataAccessIndex {
 	}
 }
 
+// Add DataAccessIndex key
 func (d *DataAccessIndex) Add(userId, accessGroupId string, accessGroupKey []byte) error {
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
@@ -57,9 +58,21 @@ func (d *DataAccessIndex) Add(userId, accessGroupId string, accessGroupKey []byt
 	return nil
 }
 
-// Get user key
-func (d *DataAccessIndex) Get(userId string) ([]byte, error) {
-	var groupAccessKeyEncrypted []byte
-	err := d.index.GetById(userId, &groupAccessKeyEncrypted)
+// Get DataAccessIndex key
+func (d *DataAccessIndex) Get(userId, accessGroupId string) (groupAccessKeyEncrypted []byte, err error) {
+	userUUID, err := uuid.Parse(userId)
+	if err != nil {
+		return
+	}
+
+	accessGroupUUID, err := uuid.Parse(accessGroupId)
+	if err != nil {
+		return
+	}
+
+	indexKey := sha3.Sum256(append(userUUID[:], accessGroupUUID[:]...))
+	indexKeyStr := hex.EncodeToString(indexKey[:])
+	err = d.index.GetById(indexKeyStr, &groupAccessKeyEncrypted)
+
 	return groupAccessKeyEncrypted, err
 }
