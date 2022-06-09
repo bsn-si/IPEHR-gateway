@@ -10,9 +10,7 @@ import (
 )
 
 func TestStatus(t *testing.T) {
-
 	docService := service.NewDefaultDocumentService()
-	ehrDocService := NewEhrService(docService)
 	statusService := NewEhrStatusService(docService)
 
 	userId := uuid.New().String()
@@ -20,14 +18,7 @@ func TestStatus(t *testing.T) {
 	subjectNamespace := "test_status"
 	subjectId2 := uuid.New().String()
 
-	createRequestByte := fake_data.EhrCreateCustomRequest(subjectId1, subjectNamespace)
-	var createRequest model.EhrCreateRequest
-	err := json.Unmarshal(createRequestByte, &createRequest)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	newEhr, err := ehrDocService.Create(userId, &createRequest)
+	newEhr, err := getNewEhr(docService, userId, subjectId1, subjectNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,5 +52,55 @@ func TestStatus(t *testing.T) {
 	if statusGet2.Uid.Value != statusIdNew {
 		t.Error("Got wrong status by subject")
 	}
+}
 
+func TestStatusUpdate(t *testing.T) {
+	docService := service.NewDefaultDocumentService()
+	statusService := NewEhrStatusService(docService)
+
+	userId := uuid.New().String()
+	subjectNamespace := "test_status"
+	subjectId1 := uuid.New().String()
+	statusId2 := uuid.New().String()
+	subjectId2 := uuid.New().String()
+
+	newEhr, err := getNewEhr(docService, userId, subjectId1, subjectNamespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ehrId := newEhr.EhrId.Value
+
+	statusNew2, err := statusService.Create(userId, ehrId, statusId2, subjectId2, subjectNamespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = statusService.Save(ehrId, userId, statusNew2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	statusGet3, err := statusService.Get(userId, ehrId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if statusGet3.Uid.Value != statusId2 {
+		t.Error("Got wrong updated status")
+	}
+}
+
+func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, subjectNamespace string) (newEhr *model.EHR, err error) {
+	ehrDocService := NewEhrService(docService)
+
+	createRequestByte := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
+	var createRequest model.EhrCreateRequest
+	err = json.Unmarshal(createRequestByte, &createRequest)
+	if err != nil {
+		return
+	}
+
+	newEhr, err = ehrDocService.Create(userId, &createRequest)
+	return
 }
