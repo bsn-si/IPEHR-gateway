@@ -6,5 +6,5 @@ type DocumentMeta struct {
 	TypeCode       types.DocumentType
 	StorageId      *[32]byte
 	DocIdEncrypted []byte
-	Timestamp      uint32
+	Timestamp      uint64
 }

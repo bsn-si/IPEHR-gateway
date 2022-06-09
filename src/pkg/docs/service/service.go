@@ -151,7 +151,7 @@ func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestT
 		return nil, err
 	}
 
-	t := uint32(nearestTime.Unix())
+	t := uint64(nearestTime.UnixNano())
 	for _, docIndex := range docIndexes {
 		if docIndex.TypeCode == docType {
 			if docIndex.Timestamp <= t {

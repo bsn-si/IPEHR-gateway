@@ -1,4 +1,4 @@
-package ehr_status
+package ehr
 
 import (
 	"encoding/json"
@@ -36,7 +36,7 @@ func (s *EhrStatusService) MarshalJson(doc *model.EhrStatus) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s *EhrStatusService) Create(ehrStatusId, subjectId, subjectNamespace string) (doc *model.EhrStatus) {
+func (s *EhrStatusService) Create(userId, ehrId, ehrStatusId, subjectId, subjectNamespace string) (doc *model.EhrStatus, err error) {
 	doc = &model.EhrStatus{}
 	doc.Type = types.EHR_STATUS.String()
 	doc.ArchetypeNodeId = "openEHR-EHR-EHR_STATUS.generic.v1"
@@ -56,7 +56,15 @@ func (s *EhrStatusService) Create(ehrStatusId, subjectId, subjectNamespace strin
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	return doc
+	err = s.Save(ehrId, userId, doc)
+	if err != nil {
+		return
+	}
+
+	ehrService := NewEhrService(s.Doc)
+	err = ehrService.UpdateDocumentStatus(userId, ehrId, *doc)
+
+	return
 }
 
 func (s *EhrStatusService) Validate(doc *model.EhrStatus) bool {
@@ -92,7 +100,7 @@ func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) e
 		TypeCode:       types.EHR_STATUS,
 		StorageId:      statusStorageId,
 		DocIdEncrypted: statusIdEncrypted,
-		Timestamp:      uint32(time.Now().Unix()),
+		Timestamp:      uint64(time.Now().UnixNano()),
 	}
 	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
 		return err

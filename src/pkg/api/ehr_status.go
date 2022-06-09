@@ -10,18 +10,18 @@ import (
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/ehr_status"
+	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
 type EhrStatusHandler struct {
-	service *ehr_status.EhrStatusService
+	service *ehr.EhrStatusService
 }
 
 func NewEhrStatusHandler(docService *service.DefaultDocumentService) *EhrStatusHandler {
 	return &EhrStatusHandler{
-		service: ehr_status.NewEhrStatusService(docService),
+		service: ehr.NewEhrStatusService(docService),
 	}
 }
 
