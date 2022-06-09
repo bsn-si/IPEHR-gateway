@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/ehr_status"
+	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"io/ioutil"
@@ -15,12 +15,12 @@ import (
 const ALLOWED_TIME_FORMAT = "2006-01-02T15:04:05.999-07:00"
 
 type EhrStatusHandler struct {
-	service *ehr_status.EhrStatusService
+	service *ehr.EhrStatusService
 }
 
 func NewEhrStatusHandler(docService *service.DefaultDocumentService) *EhrStatusHandler {
 	return &EhrStatusHandler{
-		service: ehr_status.NewEhrStatusService(docService),
+		service: ehr.NewEhrStatusService(docService),
 	}
 }
 
