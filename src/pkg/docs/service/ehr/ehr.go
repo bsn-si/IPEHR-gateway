@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
@@ -57,7 +58,7 @@ func (s EhrService) CreateWithId(userId, ehrId string, request *model.EhrCreateR
 	ehr.EhrAccess.Namespace = "local"
 	ehr.EhrAccess.Type = "EHR_ACCESS"
 
-	ehr.TimeCreated.Value = time.Now().Format("2006-01-02T15:04:05.999-07:00")
+	ehr.TimeCreated.Value = time.Now().Format(common.OPENEHR_TIME_FORMAT)
 
 	// Creating EHR_STATUS base
 	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)

@@ -8,13 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr_status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
-
-const ALLOWED_TIME_FORMAT = "2006-01-02T15:04:05.999-07:00"
 
 type EhrStatusHandler struct {
 	service *ehr_status.EhrStatusService
@@ -141,9 +140,9 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 	versionAtTime := c.Query("version_at_time")
-	statusTime, err := time.Parse(ALLOWED_TIME_FORMAT, versionAtTime)
+	statusTime, err := time.Parse(common.OPENEHR_TIME_FORMAT, versionAtTime)
 	if err != nil {
-		log.Printf("Incorrect format of time option, use %s", ALLOWED_TIME_FORMAT)
+		log.Printf("Incorrect format of time option, use %s", common.OPENEHR_TIME_FORMAT)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

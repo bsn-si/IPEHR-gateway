@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/common/fake_data"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/common/fake_data"
 	"hms/gateway/pkg/docs/model"
 )
 
@@ -239,7 +240,7 @@ func Test_API(t *testing.T) {
 		}
 
 		q := request.URL.Query()
-		q.Add("version_at_time", versionAtTime.Format(ALLOWED_TIME_FORMAT))
+		q.Add("version_at_time", versionAtTime.Format(common.OPENEHR_TIME_FORMAT))
 
 		request.Header.Set("AuthUserId", testUserId)
 		request.URL.RawQuery = q.Encode()
