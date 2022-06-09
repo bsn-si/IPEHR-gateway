@@ -13,7 +13,7 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/service/access"
+	"hms/gateway/pkg/indexer/service/doc_access"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
 	"hms/gateway/pkg/indexer/service/subject"
@@ -22,22 +22,22 @@ import (
 )
 
 type DefaultDocumentService struct {
-	Storage      storage.Storager
-	EhrsIndex    *ehrs.EhrsIndex
-	DocsIndex    *docs.DocsIndex
-	AccessIndex  *access.AccessIndex
-	SubjectIndex *subject.SubjectIndex
-	Keystore     *keystore.KeyStore
+	Storage        storage.Storager
+	EhrsIndex      *ehrs.EhrsIndex
+	DocsIndex      *docs.DocsIndex
+	DocAccessIndex *doc_access.DocAccessIndex
+	SubjectIndex   *subject.SubjectIndex
+	Keystore       *keystore.KeyStore
 }
 
 func NewDefaultDocumentService() *DefaultDocumentService {
 	return &DefaultDocumentService{
-		EhrsIndex:    ehrs.New(),
-		DocsIndex:    docs.New(),
-		AccessIndex:  access.New(),
-		SubjectIndex: subject.New(),
-		Storage:      storage.Init(),
-		Keystore:     keystore.New(),
+		EhrsIndex:      ehrs.New(),
+		DocsIndex:      docs.New(),
+		DocAccessIndex: doc_access.New(),
+		SubjectIndex:   subject.New(),
+		Storage:        storage.Init(),
+		Keystore:       keystore.New(),
 	}
 }
 
@@ -71,7 +71,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		// Getting access key
 		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
-		keyEncrypted, err := d.AccessIndex.Get(indexKeyStr)
+		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	// Getting access key
 	indexKey := sha3.Sum256(append(storageId[:], userUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
-	keyEncrypted, err := d.AccessIndex.Get(indexKeyStr)
+	keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
 	if err != nil {
 		return nil, err
 	}

@@ -107,7 +107,7 @@ func (s *EhrStatusService) Save(ehrId, userId string, doc *model.EhrStatus) erro
 	}
 
 	// Index Access
-	if err = s.Doc.AccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
+	if err = s.Doc.DocAccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
 		return err
 	}
 	return nil

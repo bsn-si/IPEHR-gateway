@@ -1,29 +1,31 @@
-// Package access User document keys index
-package access
+// Package doc_access User document keys index
+package doc_access
 
 import (
 	"encoding/hex"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
+
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
 )
 
-type AccessIndex struct {
+type DocAccessIndex struct {
 	index    indexer.Indexer
 	keystore *keystore.KeyStore
 }
 
-func New() *AccessIndex {
-	return &AccessIndex{
-		index:    indexer.Init("access"),
+func New() *DocAccessIndex {
+	return &DocAccessIndex{
+		index:    indexer.Init("doc_access"),
 		keystore: keystore.New(),
 	}
 }
 
 // Add user's document key
-func (u *AccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byte) error {
+func (u *DocAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byte) error {
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		return err
@@ -53,7 +55,7 @@ func (u *AccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byte) 
 }
 
 // Get user key
-func (u *AccessIndex) Get(userId string) (*[]byte, error) {
+func (u *DocAccessIndex) Get(userId string) (*[]byte, error) {
 	var keyEncrypted []byte
 	err := u.index.GetById(userId, &keyEncrypted)
 	return &keyEncrypted, err
