@@ -11,7 +11,6 @@ import (
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/ehr_status"
 	"hms/gateway/pkg/docs/types"
 )
 
@@ -60,28 +59,35 @@ func (s EhrService) CreateWithId(userId, ehrId string, request *model.EhrCreateR
 
 	ehr.TimeCreated.Value = time.Now().Format(common.OPENEHR_TIME_FORMAT)
 
-	// Creating EHR_STATUS base
-	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
+	err := s.SaveDoc(userId, &ehr)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	// Creating EHR_STATUS
+	ehrStatusService := NewEhrStatusService(s.Doc)
 
 	ehrStatusId := ehr.EhrStatus.Id.Value
 	subjectId := request.Subject.ExternalRef.Id.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
-	ehrStatusDoc := ehrStatusService.Create(ehrStatusId, subjectId, subjectNamespace)
-
-	err := s.save(userId, &ehr, ehrStatusDoc)
+	_, err = ehrStatusService.Create(userId, ehrId, ehrStatusId, subjectId, subjectNamespace)
+	if err != nil {
+		log.Println(err)
+	}
 
 	return &ehr, err
 }
 
-func (s EhrService) save(userId string, doc *model.EHR, ehrStatusDoc *model.EhrStatus) error {
+func (s EhrService) SaveDoc(userId string, doc *model.EHR) error {
 	docBytes, err := s.MarshalJson(doc)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	// Document encryption key generationg
+	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
 	// Document encryption
@@ -99,7 +105,7 @@ func (s EhrService) save(userId string, doc *model.EHR, ehrStatusDoc *model.EhrS
 	}
 
 	// Index EHR userId -> docStorageId
-	if err = s.Doc.EhrsIndex.Add(userId, docStorageId); err != nil {
+	if err = s.Doc.EhrsIndex.Replace(userId, docStorageId); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -108,7 +114,7 @@ func (s EhrService) save(userId string, doc *model.EHR, ehrStatusDoc *model.EhrS
 	docIndex := &model.DocumentMeta{
 		TypeCode:  types.EHR,
 		StorageId: docStorageId,
-		Timestamp: uint32(time.Now().Unix()),
+		Timestamp: uint64(time.Now().UnixNano()),
 	}
 	// First record in doc index
 	if err = s.Doc.DocsIndex.Add(doc.EhrId.Value, docIndex); err != nil {
@@ -122,29 +128,7 @@ func (s EhrService) save(userId string, doc *model.EHR, ehrStatusDoc *model.EhrS
 		return err
 	}
 
-	// Saving EHR status
-	ehrStatusService := ehr_status.NewEhrStatusService(s.Doc)
-	if err = ehrStatusService.Save(doc.EhrId.Value, userId, ehrStatusDoc); err != nil {
-		log.Println(err)
-		return err
-	}
-
-	// Subject index
-	err = s.addSubjectIndex(doc.EhrId.Value, ehrStatusDoc)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
 	return nil
-}
-
-// Add EHR status subject index
-func (s EhrService) addSubjectIndex(ehrId string, ehrStatusDoc *model.EhrStatus) (err error) {
-	subjectId := ehrStatusDoc.Subject.ExternalRef.Id.Value
-	subjectNamespace := ehrStatusDoc.Subject.ExternalRef.Namespace
-	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrId, subjectId, subjectNamespace)
-	return
 }
 
 // GetDocBySubject Get decrypted document by subject
@@ -167,5 +151,29 @@ func (s EhrService) GetDocBySubject(userId, subjectId, namespace string) (docDec
 	if err != nil {
 		log.Println("Can't get encrypted doc", err)
 	}
+	return
+}
+
+func (s *EhrService) UpdateDocumentStatus(userId, ehrId string, status *model.EhrStatus) (err error) {
+	docMeta, err := s.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
+	if err != nil {
+		return
+	}
+
+	docDecrypted, err := s.Doc.GetDocFromStorageById(userId, docMeta.StorageId, []byte(ehrId))
+	if err != nil {
+		return
+	}
+
+	ehrDoc, err := s.ParseJson(docDecrypted)
+	if err != nil {
+		return
+	}
+
+	if status.Uid.Value != ehrDoc.EhrStatus.Id.Value {
+		ehrDoc.EhrStatus.Id.Value = status.Uid.Value
+		err = s.SaveDoc(userId, ehrDoc)
+	}
+
 	return
 }

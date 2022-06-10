@@ -60,3 +60,25 @@ func (u *DocAccessIndex) Get(userId string) ([]byte, error) {
 	err := u.index.GetById(userId, &keyEncrypted)
 	return keyEncrypted, err
 }
+
+func (u *DocAccessIndex) GetDocumentKey(userId string, docStorageId *[32]byte) (docKey []byte, err error) {
+	userUUID, err := uuid.Parse(userId)
+	if err != nil {
+		return
+	}
+
+	userPubKey, userPrivateKey, err := u.keystore.Get(userId)
+	if err != nil {
+		return
+	}
+
+	indexKey := sha3.Sum256(append(docStorageId[:], userUUID[:]...))
+	indexKeyStr := hex.EncodeToString(indexKey[:])
+
+	var keyEncrypted []byte
+	err = u.index.GetById(indexKeyStr, &keyEncrypted)
+
+	docKey, err = keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivateKey)
+
+	return
+}

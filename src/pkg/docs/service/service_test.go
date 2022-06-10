@@ -44,7 +44,7 @@ func TestGetDocIndexByNearestTime(t *testing.T) {
 
 	// Test: resulted docIndex should be nil if the specified time is less among existing
 	firstDocIndex := &docIndexes[0]
-	firstDocIndexTime := time.Unix(int64((*firstDocIndex).Timestamp), 0)
+	firstDocIndexTime := time.Unix(0, int64((*firstDocIndex).Timestamp))
 
 	DocIndexTimeLessThanExist := firstDocIndexTime.Add(-24 * time.Hour)
 	docIndex, err = docService.GetDocIndexByNearestTime(ehrId, DocIndexTimeLessThanExist, types.EHR_STATUS)
@@ -71,7 +71,7 @@ func fillDocIndexes(count int, ehrId string, service *DefaultDocumentService) (e
 		docIndex := model.DocumentMeta{
 			TypeCode:  types.EHR_STATUS,
 			StorageId: docStorageId,
-			Timestamp: uint32(timeFrom.Unix()),
+			Timestamp: uint64(time.Now().UnixNano()),
 		}
 
 		err = service.DocsIndex.Add(ehrId, &docIndex)

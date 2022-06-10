@@ -26,3 +26,8 @@ func (u *EhrsIndex) Get(userId string) (docStorageId *[32]byte, err error) {
 	err = u.index.GetById(userId, docStorageId)
 	return
 }
+
+// Replace document storage Id for user
+func (u *EhrsIndex) Replace(userId string, docStorageId *[32]byte) error {
+	return u.index.Replace(userId, docStorageId)
+}
