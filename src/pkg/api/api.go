@@ -7,10 +7,26 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
 )
+
+// @title        IPEHR Gateway API
+// @version      0.1
+// @description  The IPEHR Gateway is an openEHR compliant EHR server implementation that stores encrypted medical data in a Filecoin distributed file storage.
+
+// @contact.name   API Support
+// @contact.url    https://bsn.si/blockchain
+// @contact.email  support@bsn.si
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /v1
 
 var AppConfig *config.Config
 
@@ -21,7 +37,7 @@ type API struct {
 	fs http.FileSystem
 }
 
-func NewAPI() *API {
+func New() *API {
 	docService := service.NewDefaultDocumentService()
 	// Get config from the root of the project
 	AppConfig = config.GetConfig("../../../config.json")
@@ -53,6 +69,8 @@ func (a *API) Build() *gin.Engine {
 
 	a.setRedirections(r).
 		buildEhrAPI(ehr)
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }

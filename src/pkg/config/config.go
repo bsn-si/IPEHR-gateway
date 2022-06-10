@@ -10,6 +10,7 @@ import (
 type Config struct {
 	BaseUrl  string `json:"baseUrl"`
 	DataPath string `json:"dataPath"`
+	Host     string `json:"host"`
 }
 
 var (

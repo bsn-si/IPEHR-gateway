@@ -4,6 +4,7 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 )
 
+// EHR model info
 // The EHR object is the root object and access point of an EHR for a subject of care
 // https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_class
 type EHR struct {
