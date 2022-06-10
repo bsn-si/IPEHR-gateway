@@ -317,7 +317,10 @@ func Test_API(t *testing.T) {
 			t.Errorf("Response body read error: %v", err)
 			return
 		}
-		response.Body.Close()
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if response.StatusCode != http.StatusOK {
 			t.Errorf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
@@ -354,7 +357,10 @@ func Test_API(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
-		response.Body.Close()
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if response.StatusCode != http.StatusOK {
 			t.Fatalf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)

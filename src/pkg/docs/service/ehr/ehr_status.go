@@ -61,9 +61,6 @@ func (s *EhrStatusService) Create(userId, ehrId, ehrStatusId, subjectId, subject
 		return
 	}
 
-	ehrService := NewEhrService(s.Doc)
-	err = ehrService.UpdateDocumentStatus(userId, ehrId, *doc)
-
 	return
 }
 
@@ -110,6 +107,13 @@ func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) e
 	if err = s.Doc.DocAccessIndex.Add(userId, statusStorageId, key.Bytes()); err != nil {
 		return err
 	}
+
+	ehrService := NewEhrService(s.Doc)
+	err = ehrService.UpdateDocumentStatus(userId, ehrId, *status)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -120,7 +124,6 @@ func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *cha
 	}
 
 	// Document encryption
-	//statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(ehrId))
 	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(status.Uid.Value))
 	if err != nil {
 		return
@@ -166,8 +169,6 @@ func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace strin
 	return
 }
 
-//func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, storageId *[32]byte) (status *model.EhrStatus, err error) {
-//statusKeyBytes, err := s.Doc.DocAccessIndex.GetDocumentKey(userId, storageId)
 func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, statusMeta *model.DocumentMeta) (status *model.EhrStatus, err error) {
 	statusKeyBytes, err := s.Doc.DocAccessIndex.GetDocumentKey(userId, statusMeta.StorageId)
 	if err != nil {
