@@ -154,7 +154,7 @@ func (s EhrService) GetDocBySubject(userId, subjectId, namespace string) (docDec
 	return
 }
 
-func (s *EhrService) UpdateDocumentStatus(userId, ehrId string, status model.EhrStatus) (err error) {
+func (s *EhrService) UpdateDocumentStatus(userId, ehrId string, status *model.EhrStatus) (err error) {
 	docMeta, err := s.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
 	if err != nil {
 		return

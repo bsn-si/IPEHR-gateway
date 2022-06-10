@@ -81,6 +81,9 @@ func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) e
 	subjectId := status.Subject.ExternalRef.Id.Value
 	subjectNamespace := status.Subject.ExternalRef.Namespace
 	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrId, subjectId, subjectNamespace)
+	if err != nil {
+		return err
+	}
 
 	ehrUUID, err := uuid.Parse(ehrId)
 	if err != nil {
@@ -109,7 +112,7 @@ func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) e
 	}
 
 	ehrService := NewEhrService(s.Doc)
-	err = ehrService.UpdateDocumentStatus(userId, ehrId, *status)
+	err = ehrService.UpdateDocumentStatus(userId, ehrId, status)
 	if err != nil {
 		return err
 	}
