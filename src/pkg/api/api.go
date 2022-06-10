@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/gin-swagger"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
 	"hms/gateway/pkg/config"
@@ -28,19 +28,21 @@ import (
 // @host      localhost:8080
 // @BasePath  /v1
 
-var AppConfig *config.Config
-
 type API struct {
 	Ehr       *EhrHandler
 	EhrStatus *EhrStatusHandler
 
-	fs http.FileSystem
+	fs  http.FileSystem
+	cfg *config.Config
 }
 
-func New() *API {
+var AppConfig *config.Config
+
+func New(cfg *config.Config) *API {
 	docService := service.NewDefaultDocumentService()
 	// Get config from the root of the project
-	AppConfig = config.GetConfig("../../../config.json")
+
+	AppConfig = cfg
 
 	return &API{
 		Ehr:       NewEhrHandler(docService),

@@ -16,13 +16,21 @@ import (
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 )
 
 func Test_API(t *testing.T) {
 	r := gin.New()
 
-	api := NewAPI()
+	cfgPath := "../../../config.json.example"
+	cfg := &config.Config{}
+	err := config.Reload(cfgPath, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	api := New(cfg)
 	r.Use(api.Auth)
 	r.GET("/v1/ehr/:ehrid", api.Ehr.GetById)
 	r.POST("/v1/ehr", api.Ehr.Create)
