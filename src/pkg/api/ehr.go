@@ -25,6 +25,27 @@ func NewEhrHandler(docService *service.DefaultDocumentService) *EhrHandler {
 	}
 }
 
+// Create
+// @Summary      Create EHR
+// @Description  Create a new EHR with an auto-generated identifier.
+// @Description  An EHR_STATUS resource needs to be always created and committed in the new EHR. This resource MAY be also supplied by the client as the request body. If not supplied, a default EHR_STATUS will be used by the service with following attributes:
+// @Description  - `is_queryable`: true
+// @Description  - `is_modifiable`: true
+// @Description  - `subject`: a PARTY_SELF object
+// @Description
+// @Description  All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
+// @Tags         EHR
+// @Accept       json
+// @Produce      json
+// @Param        AuthUserId         header    string  true  "UserId UUID"
+// @Param        Prefer      header    string  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Success      201         {object}  model.EhrSummary
+// @Header       201         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201         {string}  ETag      "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Failure      400         "Is returned when the request body (if provided) could not be parsed."
+// @Failure      409         "Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
+// @Failure      500         "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr [post]
 func (h EhrHandler) Create(c *gin.Context) {
 	data, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
@@ -72,6 +93,28 @@ func (h EhrHandler) Create(c *gin.Context) {
 	respondWithDocOrHeaders(doc, c)
 }
 
+// CreateWithId
+// @Summary      Create EHR with id
+// @Description  Create a new EHR with the specified ehr_id identifier.
+// @Description  The value of the ehr_id unique identifier MUST be valid HIER_OBJECT_ID value. It is strongly RECOMMENDED that an UUID always be used for this.
+// @Description  An EHR_STATUS resource needs to be always created and committed in the new EHR. This resource MAY be also supplied by the client as the request body. If not supplied, a default EHR_STATUS will be used by the service with following attributes:
+// @Description  - `is_queryable`: true
+// @Description  - `is_modifiable`: true
+// @Description  - `subject`: a PARTY_SELF object
+// @Description
+// @Description  All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
+// @Tags         EHR
+// @Accept       json
+// @Produce      json
+// @Param        AuthUserId  header    string  true  "UserId UUID"
+// @Param        ehr_id      path      string  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Success      201         {object}  model.EhrSummary
+// @Header       201         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201         {string}  ETag      "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Failure      400         "Is returned when the request body (if provided) could not be parsed."
+// @Failure      409         "Unable to create a new EHR due to a conflict with an already existing EHR. Can happen when the supplied ehr_id is already used by an existing EHR."
+// @Failure      500         "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr/{ehr_id} [put]
 func (h EhrHandler) CreateWithId(c *gin.Context) {
 	ehrId := c.Param("ehrid")
 
@@ -137,6 +180,19 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 	respondWithDocOrHeaders(newDoc, c)
 }
 
+// GetById
+// @Summary      Get EHR summary by id
+// @Description  Retrieve the EHR with the specified ehr_id
+// @Tags         EHR
+// @Accept       json
+// @Produce      json
+// @Param        ehr_id      path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        AuthUserId  header    string  true  "UserId UUID"
+// @Success      200                {object}  model.EhrSummary
+// @Failure      400                "Is returned when userId is empty"
+// @Failure      404                "Is returned when an EHR with ehr_id does not exist."
+// @Failure      500         "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr/{ehr_id} [get]
 func (h EhrHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
 	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
@@ -169,6 +225,21 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json", docDecrypted)
 }
 
+// GetBySubjectIdAndNamespace
+// @Summary      Get EHR summary by subject id
+// @Description  Retrieve the EHR with the specified subject_id and subject_namespace.
+// @Description  These subject parameters will be matched against EHR’s
+// @Description  EHR_STATUS.subject.external_ref.id.value and EHR_STATUS.subject.external_ref.namespace values.
+// @Tags         EHR
+// @Accept       json
+// @Produce      json
+// @Param        subject_id         query     string  true  "subject id. Example: ins01"
+// @Param        subject_namespace  query     string  true  "id namespace. Example: examples"
+// @Param        AuthUserId  header    string  true  "UserId UUID"
+// @Success      200         {object}  model.EhrSummary
+// @Failure      400         "Is returned when userId is empty"
+// @Failure      404         "Is returned when an EHR with ehr_id does not exist."
+// @Router       /ehr [get]
 func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 	subjectId := c.Query("subject_id")
 	namespace := c.Query("namespace")
