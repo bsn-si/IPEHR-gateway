@@ -74,7 +74,7 @@ go build -o ../bin/ipehr-gateway cmd/ipehrgw/main.go
 ## Run IPEHR-gateway
 
 ```
-./bin/ipehr-gateway
+./bin/ipehr-gateway -config=./config.json
 ```
 
 ## Get swagger UI API documentation
