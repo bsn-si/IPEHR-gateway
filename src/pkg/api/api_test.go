@@ -334,9 +334,43 @@ func Test_API(t *testing.T) {
 
 		if updatedEhrStatusId != newEhrStatusId {
 			t.Log("Response body:", string(data))
-			t.Error("EHR_STATUS uid mismatch")
+			t.Error("EHR_STATUS uid in ETag mismatch")
 			return
 		}
+
+		// Checking EHR_STATUS changes
+		request, err = http.NewRequest(http.MethodGet, ts.URL+"/v1/ehr/"+ehrId, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		request.Header.Set("AuthUserId", testUserId)
+
+		response, err = httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var ehr model.EHR
+		if err = json.Unmarshal(data, &ehr); err != nil {
+			t.Fatal(err)
+			return
+		}
+
+		if ehr.EhrStatus.Id.Value != updatedEhrStatusId {
+			t.Fatalf("EHR_STATUS id mismatch. Expected %s, received %s", updatedEhrStatusId, ehr.EhrStatus.Id.Value)
+			return
+		}
+
 	})
 
 	t.Run("EHR get by subject", func(t *testing.T) {
