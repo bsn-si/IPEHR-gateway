@@ -166,6 +166,9 @@ func (s *EhrService) UpdateDocumentStatus(userId, ehrId string, status *model.Eh
 	}
 
 	ehrDoc, err := s.ParseJson(docDecrypted)
+	if err != nil {
+		return
+	}
 
 	if status.Uid.Value != ehrDoc.EhrStatus.Id.Value {
 		ehrDoc.EhrStatus.Id.Value = status.Uid.Value
