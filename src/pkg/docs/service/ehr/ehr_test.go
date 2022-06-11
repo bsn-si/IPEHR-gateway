@@ -2,11 +2,13 @@ package ehr
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/google/uuid"
+
 	"hms/gateway/pkg/common/fake_data"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	"testing"
 )
 
 func TestSave(t *testing.T) {
@@ -14,7 +16,7 @@ func TestSave(t *testing.T) {
 
 	docService := service.NewDefaultDocumentService()
 
-	ehrService := NewEhrService(docService)
+	ehrService := NewEhrService(docService, nil)
 
 	var ehrReq model.EhrCreateRequest
 
@@ -28,7 +30,7 @@ func TestSave(t *testing.T) {
 
 	testUserId := uuid.New().String()
 
-	ehrDoc, err := ehrService.Create(testUserId, &ehrReq)
+	ehrDoc, err := ehrService.EhrCreate(testUserId, &ehrReq)
 	if err != nil {
 		t.Fatal(err)
 	}

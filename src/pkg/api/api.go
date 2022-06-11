@@ -32,21 +32,14 @@ type API struct {
 	Ehr       *EhrHandler
 	EhrStatus *EhrStatusHandler
 
-	fs  http.FileSystem
-	cfg *config.Config
+	fs http.FileSystem
 }
-
-var AppConfig *config.Config
 
 func New(cfg *config.Config) *API {
 	docService := service.NewDefaultDocumentService()
-	// Get config from the root of the project
-
-	AppConfig = cfg
-
 	return &API{
-		Ehr:       NewEhrHandler(docService),
-		EhrStatus: NewEhrStatusHandler(docService),
+		Ehr:       NewEhrHandler(docService, cfg),
+		EhrStatus: NewEhrStatusHandler(docService, cfg),
 	}
 }
 
@@ -90,7 +83,7 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	r.PUT("/:ehrid", a.Ehr.CreateWithId)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
 	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
-	r.GET("/v1/ehr/:ehrid/ehr_status", a.EhrStatus.GetStatus)
+	r.GET("/v1/ehr/:ehrid/ehr_status", a.EhrStatus.Get)
 
 	return a
 }

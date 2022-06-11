@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
@@ -16,11 +17,13 @@ import (
 
 type EhrService struct {
 	Doc *service.DefaultDocumentService
+	Cfg *config.Config
 }
 
-func NewEhrService(docService *service.DefaultDocumentService) *EhrService {
+func NewEhrService(docService *service.DefaultDocumentService, cfg *config.Config) *EhrService {
 	return &EhrService{
 		Doc: docService,
+		Cfg: cfg,
 	}
 }
 
@@ -37,11 +40,11 @@ func (s EhrService) MarshalJson(doc *model.EHR) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s EhrService) Create(userId string, request *model.EhrCreateRequest) (*model.EHR, error) {
-	return s.CreateWithId(userId, uuid.New().String(), request)
+func (s EhrService) EhrCreate(userId string, request *model.EhrCreateRequest) (*model.EHR, error) {
+	return s.EhrCreateWithId(userId, uuid.New().String(), request)
 }
 
-func (s EhrService) CreateWithId(userId, ehrId string, request *model.EhrCreateRequest) (*model.EHR, error) {
+func (s EhrService) EhrCreateWithId(userId, ehrId string, request *model.EhrCreateRequest) (*model.EHR, error) {
 	var ehr model.EHR
 
 	ehr.SystemId.Value = s.Doc.GetSystemId() //TODO
@@ -66,7 +69,7 @@ func (s EhrService) CreateWithId(userId, ehrId string, request *model.EhrCreateR
 	}
 
 	// Creating EHR_STATUS
-	ehrStatusService := NewEhrStatusService(s.Doc)
+	ehrStatusService := NewEhrStatusService(s.Doc, s.Cfg)
 
 	ehrStatusId := ehr.EhrStatus.Id.Value
 	subjectId := request.Subject.ExternalRef.Id.Value

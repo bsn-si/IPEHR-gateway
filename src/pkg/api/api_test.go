@@ -24,8 +24,8 @@ func Test_API(t *testing.T) {
 	r := gin.New()
 
 	cfgPath := "../../../config.json.example"
-	cfg := &config.Config{}
-	err := config.Reload(cfgPath, cfg)
+	cfg := config.New(cfgPath)
+	err := cfg.Reload()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func Test_API(t *testing.T) {
 	r.POST("/v1/ehr", api.Ehr.Create)
 	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
 	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
-	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.GetStatus)
+	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Get)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
 	r.GET("/v1/ehr", api.Ehr.GetBySubjectIdAndNamespace)
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
@@ -15,11 +16,13 @@ import (
 
 type EhrStatusService struct {
 	Doc *service.DefaultDocumentService
+	Cfg *config.Config
 }
 
-func NewEhrStatusService(docService *service.DefaultDocumentService) *EhrStatusService {
+func NewEhrStatusService(docService *service.DefaultDocumentService, cfg *config.Config) *EhrStatusService {
 	return &EhrStatusService{
 		Doc: docService,
+		Cfg: cfg,
 	}
 }
 
@@ -56,7 +59,7 @@ func (s *EhrStatusService) Create(userId, ehrId, ehrStatusId, subjectId, subject
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	err = s.Save(ehrId, userId, doc)
+	err = s.SaveStatus(ehrId, userId, doc)
 	if err != nil {
 		return
 	}
@@ -69,7 +72,7 @@ func (s *EhrStatusService) Validate(doc *model.EhrStatus) bool {
 	return true
 }
 
-func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) error {
+func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrStatus) error {
 	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
@@ -111,7 +114,7 @@ func (s *EhrStatusService) Save(ehrId, userId string, status *model.EhrStatus) e
 		return err
 	}
 
-	ehrService := NewEhrService(s.Doc)
+	ehrService := NewEhrService(s.Doc, s.Cfg)
 	err = ehrService.UpdateDocumentStatus(userId, ehrId, status)
 	if err != nil {
 		return err
@@ -138,7 +141,7 @@ func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *cha
 }
 
 // Get current (last) status of EHR document
-func (s *EhrStatusService) Get(userId, ehrId string) (status *model.EhrStatus, err error) {
+func (s *EhrStatusService) GetStatus(userId, ehrId string) (status *model.EhrStatus, err error) {
 	statusMeta, err := s.Doc.DocsIndex.GetLastByType(ehrId, types.EHR_STATUS)
 	if err != nil {
 		return

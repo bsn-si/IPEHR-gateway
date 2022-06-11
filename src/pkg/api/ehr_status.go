@@ -9,22 +9,23 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
 )
 
 type EhrStatusHandler struct {
-	ehrStatusService *ehr.EhrStatusService
+	*ehr.EhrStatusService
 }
 
-func NewEhrStatusHandler(docService *service.DefaultDocumentService) *EhrStatusHandler {
+func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config.Config) *EhrStatusHandler {
 	return &EhrStatusHandler{
-		ehrStatusService: ehr.NewEhrStatusService(docService),
+		ehr.NewEhrStatusService(docService, cfg),
 	}
 }
 
-func (h EhrStatusHandler) GetStatus(c *gin.Context) {
+func (h EhrStatusHandler) Get(c *gin.Context) {
 	if ok := c.Query("version_at_time"); ok != "" {
 		h.GetStatusByTime(c)
 		return
@@ -55,7 +56,7 @@ func (h EhrStatusHandler) GetStatus(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.ehrStatusService.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -67,7 +68,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 	}
 
 	IfMatch := c.Request.Header.Get("If-Match")
-	docLast, err := h.ehrStatusService.Get(userId, ehrId)
+	docLast, err := h.GetStatus(userId, ehrId)
 	if err != nil {
 		log.Println("ehrStatusService.Get error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting last EHR document status"})
@@ -80,7 +81,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 
 	// Checking If-Match header
 	if IfMatch != docLast.Uid.Value {
-		setLocationAndETagHeaders(ehrId, docLast.Uid.Value, c)
+		h.setLocationAndETagHeaders(ehrId, docLast.Uid.Value, c)
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
 	}
@@ -96,22 +97,22 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	update, err := h.ehrStatusService.ParseJson(data)
+	update, err := h.ParseJson(data)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request content is invalid"})
 		return
 	}
 
-	if !h.ehrStatusService.Validate(update) {
+	if !h.Validate(update) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err = h.ehrStatusService.Save(ehrId, userId, update); err != nil {
+	if err = h.SaveStatus(ehrId, userId, update); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR_STATUS saving error"})
 		return
 	}
 
-	setLocationAndETagHeaders(ehrId, update.Uid.Value, c)
+	h.setLocationAndETagHeaders(ehrId, update.Uid.Value, c)
 
 	switch c.Request.Header.Get("Prefer") {
 	case "return=representation":
@@ -139,13 +140,13 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status [get]
 func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.ehrStatusService.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	versionUid := c.Param("versionid")
-	if h.ehrStatusService.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+	if h.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -163,14 +164,14 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.ehrStatusService.Doc.GetDocIndexByNearestTime(ehrId, statusTime, types.EHR_STATUS)
+	docIndex, err := h.Doc.GetDocIndexByNearestTime(ehrId, statusTime, types.EHR_STATUS)
 	if err != nil {
 		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	data, err := h.ehrStatusService.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
+	data, err := h.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
 	if err != nil {
 		//TODO logging
 		c.AbortWithStatus(http.StatusNotFound)
@@ -196,13 +197,13 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h EhrStatusHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.ehrStatusService.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	versionUid := c.Param("versionid")
-	if h.ehrStatusService.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+	if h.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -213,14 +214,14 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.ehrStatusService.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, types.EHR_STATUS)
+	docIndex, err := h.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, types.EHR_STATUS)
 	if err != nil {
 		log.Printf("GetDocIndexByDocId userId: %s ehrId: %s versionId: %s error: %v", userId, ehrId, versionUid, err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	data, err := h.ehrStatusService.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
+	data, err := h.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
 	if err != nil {
 		//TODO logging
 		c.AbortWithStatus(http.StatusNotFound)
@@ -230,7 +231,7 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json", data)
 }
 
-func setLocationAndETagHeaders(ehrId string, ehrStatusId string, c *gin.Context) {
-	c.Header("Location", AppConfig.BaseUrl+"/ehr/"+ehrId+"/ehr_status/"+ehrStatusId)
+func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrId string, ehrStatusId string, c *gin.Context) {
+	c.Header("Location", h.Cfg.BaseUrl+"/ehr/"+ehrId+"/ehr_status/"+ehrStatusId)
 	c.Header("ETag", ehrStatusId)
 }

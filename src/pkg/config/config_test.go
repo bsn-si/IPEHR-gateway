@@ -5,10 +5,11 @@ import "testing"
 func Test_Config(t *testing.T) {
 
 	t.Run("GetConfig fallback to example config file", func(t *testing.T) {
-		cfg := &Config{}
-		err := Reload("../../../config.json.example", cfg)
+		configPath := "../../../config.json.example"
+		cfg := New(configPath)
+		err := cfg.Reload()
 		if err != nil {
-			//
+			t.Fatal(err)
 		}
 
 		defaultUrl := "http://localhost:8080"

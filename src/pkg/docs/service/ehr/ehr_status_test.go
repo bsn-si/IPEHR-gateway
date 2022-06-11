@@ -2,16 +2,17 @@ package ehr
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"hms/gateway/pkg/common/fake_data"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestStatus(t *testing.T) {
 	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService)
+	statusService := NewEhrStatusService(docService, nil)
 
 	userId := uuid.New().String()
 	subjectId1 := uuid.New().String()
@@ -34,7 +35,7 @@ func TestStatus(t *testing.T) {
 
 	// get current EHR status
 
-	statusGet, err := statusService.Get(userId, ehrId)
+	statusGet, err := statusService.GetStatus(userId, ehrId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +57,7 @@ func TestStatus(t *testing.T) {
 
 func TestStatusUpdate(t *testing.T) {
 	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService)
+	statusService := NewEhrStatusService(docService, nil)
 
 	userId := uuid.New().String()
 	subjectNamespace := "test_status"
@@ -76,12 +77,12 @@ func TestStatusUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = statusService.Save(ehrId, userId, statusNew2)
+	err = statusService.SaveStatus(ehrId, userId, statusNew2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	statusGet3, err := statusService.Get(userId, ehrId)
+	statusGet3, err := statusService.GetStatus(userId, ehrId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,7 +93,7 @@ func TestStatusUpdate(t *testing.T) {
 }
 
 func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, subjectNamespace string) (newEhr *model.EHR, err error) {
-	ehrDocService := NewEhrService(docService)
+	ehrDocService := NewEhrService(docService, nil)
 
 	createRequestByte := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
 	var createRequest model.EhrCreateRequest
@@ -101,6 +102,6 @@ func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, su
 		return
 	}
 
-	newEhr, err = ehrDocService.Create(userId, &createRequest)
+	newEhr, err = ehrDocService.EhrCreate(userId, &createRequest)
 	return
 }
