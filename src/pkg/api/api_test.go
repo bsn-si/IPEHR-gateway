@@ -39,6 +39,7 @@ func Test_API(t *testing.T) {
 	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Get)
 	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
 	r.GET("/v1/ehr", api.Ehr.GetBySubjectIdAndNamespace)
+	r.POST("/v1/ehr/:ehrid/composition", api.Composition.Create)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -394,6 +395,16 @@ func Test_API(t *testing.T) {
 
 		subjectId := uuid.New().String()
 		subjectNamespace := "test_test"
+		// TODO
+
+		//FakerFactory = Faker.CreateFactory('ehr');
+		//FakerFactory.Create();
+		//FakerFactory.CreateWithOptions(arr...*model EhrCreateRequest);
+		// Marshal Parser Unmarshal
+
+		//o := new(ehr_create_request.Circle)
+		//_ = ehr_create_request.GetRequest(o)
+		//faker.FakerRequest().GetRequest()
 
 		createRequest := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
 
@@ -464,9 +475,59 @@ func Test_API(t *testing.T) {
 		}
 
 	})
+
+	t.Run("Composition: creating", func(t *testing.T) {
+		ehrId = uuid.New().String()
+
+		_, err := http.NewRequest(http.MethodPost, ts.URL+"/v1/ehr/"+ehrId+"/composition", compositionCreateBodyRequest())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		//request.Header.Set("Content-type", "application/json")
+		//request.Header.Set("AuthUserId", testUserId2)
+		//request.Header.Set("Prefer", "return=representation")
+		//
+		//response, err := httpClient.Do(request)
+		//if err != nil {
+		//	t.Errorf("Expected nil, received %s", err.Error())
+		//	return
+		//}
+		//
+		//data, err := ioutil.ReadAll(response.Body)
+		//if err != nil {
+		//	t.Errorf("Response body read error: %v", err)
+		//	return
+		//}
+		//response.Body.Close()
+		//
+		//if response.StatusCode != http.StatusCreated {
+		//	t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
+		//	return
+		//}
+		//
+		//var ehr model.EHR
+		//if err = json.Unmarshal(data, &ehr); err != nil {
+		//	t.Error(err)
+		//	return
+		//}
+		//
+		//newEhrId := ehr.EhrId.Value
+		//if newEhrId != ehrId2 {
+		//	t.Error("EhrId is not matched")
+		//	return
+		//}
+	})
+
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {
 	req := fake_data.EhrCreateRequest()
+	return bytes.NewReader(req)
+}
+
+func compositionCreateBodyRequest() *bytes.Reader {
+	req := fake_data.CompositionCreateRequest()
 	return bytes.NewReader(req)
 }
