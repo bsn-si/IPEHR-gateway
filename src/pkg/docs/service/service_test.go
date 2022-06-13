@@ -27,7 +27,7 @@ func TestGetDocIndexByNearestTime(t *testing.T) {
 	}
 
 	lastDocIndex := &docIndexes[len(docIndexes)-1]
-	lastDocIndexTime := time.Unix(int64((*lastDocIndex).Timestamp), 0)
+	lastDocIndexTime := time.Unix(0, int64((*lastDocIndex).Timestamp))
 
 	// Test: resulted docIndex should be last one if the specified time is equal with last dateIndex time value
 	docIndex, err := docService.GetDocIndexByNearestTime(ehrId, lastDocIndexTime, types.EHR_STATUS)
