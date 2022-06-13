@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "develop" ]
 
+defaults:
+  run:
+    working-directory: src
+
 jobs:
 
   build:
@@ -19,7 +23,7 @@ jobs:
         go-version: 1.18
 
     - name: Build
-      run: cd src ; go build -v ./...
+      run: go build -v ./...
 
     - name: Test
       run: go test -v ./...
