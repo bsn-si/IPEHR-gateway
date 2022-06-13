@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "develop", "hotfix/IPEHR-50" ]
   pull_request:
     branches: [ "develop" ]
 
