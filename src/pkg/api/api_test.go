@@ -395,16 +395,6 @@ func Test_API(t *testing.T) {
 
 		subjectId := uuid.New().String()
 		subjectNamespace := "test_test"
-		// TODO
-
-		//FakerFactory = Faker.CreateFactory('ehr');
-		//FakerFactory.Create();
-		//FakerFactory.CreateWithOptions(arr...*model EhrCreateRequest);
-		// Marshal Parser Unmarshal
-
-		//o := new(ehr_create_request.Circle)
-		//_ = ehr_create_request.GetRequest(o)
-		//faker.FakerRequest().GetRequest()
 
 		createRequest := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
 
