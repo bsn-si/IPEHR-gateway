@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "test_workflow" ]
   pull_request:
     branches: [ "develop" ]
 
