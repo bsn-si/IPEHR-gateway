@@ -503,7 +503,7 @@ func prepareTest(t *testing.T) (ts *httptest.Server) {
 	return ts
 }
 
-func TestCreateComposition(t *testing.T) {
+func TestAPICreateComposition(t *testing.T) {
 
 	var httpClient http.Client
 	testServer := prepareTest(t)
