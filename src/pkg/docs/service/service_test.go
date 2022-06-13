@@ -14,16 +14,16 @@ func TestGetDocIndexByNearestTime(t *testing.T) {
 
 	// Test: docIndex is not exist yet
 	if _, err := docService.GetDocIndexByNearestTime(ehrId, time.Now(), types.EHR_STATUS); err == nil {
-		t.Error("DocService contains indexes")
+		t.Fatal("DocService contains indexes:", err)
 	}
 
 	if err := fillDocIndexes(5, ehrId, docService); err != nil {
-		t.Error("DocService contains indexes")
+		t.Fatal("DocService contains indexes:", err)
 	}
 
 	docIndexes, err := docService.DocsIndex.Get(ehrId)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	lastDocIndex := &docIndexes[len(docIndexes)-1]
@@ -32,14 +32,14 @@ func TestGetDocIndexByNearestTime(t *testing.T) {
 	// Test: resulted docIndex should be last one if the specified time is equal with last dateIndex time value
 	docIndex, err := docService.GetDocIndexByNearestTime(ehrId, lastDocIndexTime, types.EHR_STATUS)
 	if err != nil || docIndex == nil {
-		t.Error("DocService not contains indexes", err)
+		t.Fatal("DocService not contains indexes:", err)
 	}
 
 	// Test: resulted docIndex should be last one again if the specified time is greater that exist
 	DocIndexTimeMoreThanExist := lastDocIndexTime.Add(time.Hour)
 	docIndex, err = docService.GetDocIndexByNearestTime(ehrId, DocIndexTimeMoreThanExist, types.EHR_STATUS)
 	if err != nil || docIndex == nil {
-		t.Error("DocService not contains indexes", err)
+		t.Fatal("DocService not contains indexes:", err)
 	}
 
 	// Test: resulted docIndex should be nil if the specified time is less among existing
@@ -49,7 +49,7 @@ func TestGetDocIndexByNearestTime(t *testing.T) {
 	DocIndexTimeLessThanExist := firstDocIndexTime.Add(-24 * time.Hour)
 	docIndex, err = docService.GetDocIndexByNearestTime(ehrId, DocIndexTimeLessThanExist, types.EHR_STATUS)
 	if err == nil || docIndex != nil {
-		t.Error("docIndex should not be nil")
+		t.Fatal("docIndex should not be nil:", err)
 	}
 }
 
