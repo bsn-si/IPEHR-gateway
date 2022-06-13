@@ -67,7 +67,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 
 	// Checking EHR does not exist
 	_, err = h.service.Doc.EhrsIndex.Get(userId)
-	if !errors.Is(err, errors.IsNotExist) {
+	if errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return
 	}
