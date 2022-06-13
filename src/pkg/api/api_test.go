@@ -475,51 +475,79 @@ func Test_API(t *testing.T) {
 		}
 
 	})
+}
 
-	t.Run("Composition: creating", func(t *testing.T) {
-		ehrId = uuid.New().String()
+func prepareTest(t *testing.T) (ts *httptest.Server) {
+	r := gin.New()
 
-		_, err := http.NewRequest(http.MethodPost, ts.URL+"/v1/ehr/"+ehrId+"/composition", compositionCreateBodyRequest())
+	cfgPath := "../../../config.json.example"
+	cfg := config.New(cfgPath)
+	err := cfg.Reload()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	api := New(cfg)
+	r.Use(api.Auth)
+	r.GET("/v1/ehr/:ehrid", api.Ehr.GetById)
+	r.POST("/v1/ehr", api.Ehr.Create)
+	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
+	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
+	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Get)
+	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
+	r.GET("/v1/ehr", api.Ehr.GetBySubjectIdAndNamespace)
+	r.POST("/v1/ehr/:ehrid/composition", api.Composition.Create)
+
+	ts = httptest.NewServer(r)
+
+	return ts
+}
+
+func TestCreateComposition(t *testing.T) {
+
+	var httpClient http.Client
+	testServer := prepareTest(t)
+
+	testWrap := &testWrap{
+		server:     testServer,
+		httpClient: &httpClient,
+	}
+	defer testWrap.server.Close()
+
+	t.Run("Composition: creating", testWrap.compositionCreateFail())
+}
+
+type testWrap struct {
+	server     *httptest.Server
+	httpClient *http.Client
+}
+
+func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
+	return func(t *testing.T) {
+		userId := uuid.New().String()
+		ehrId := uuid.New().String()
+
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+ehrId+"/composition", compositionCreateBodyRequest())
 		if err != nil {
 			t.Error(err)
 			return
 		}
 
-		//request.Header.Set("Content-type", "application/json")
-		//request.Header.Set("AuthUserId", testUserId2)
-		//request.Header.Set("Prefer", "return=representation")
-		//
-		//response, err := httpClient.Do(request)
-		//if err != nil {
-		//	t.Errorf("Expected nil, received %s", err.Error())
-		//	return
-		//}
-		//
-		//data, err := ioutil.ReadAll(response.Body)
-		//if err != nil {
-		//	t.Errorf("Response body read error: %v", err)
-		//	return
-		//}
-		//response.Body.Close()
-		//
-		//if response.StatusCode != http.StatusCreated {
-		//	t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
-		//	return
-		//}
-		//
-		//var ehr model.EHR
-		//if err = json.Unmarshal(data, &ehr); err != nil {
-		//	t.Error(err)
-		//	return
-		//}
-		//
-		//newEhrId := ehr.EhrId.Value
-		//if newEhrId != ehrId2 {
-		//	t.Error("EhrId is not matched")
-		//	return
-		//}
-	})
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", userId)
+		request.Header.Set("Prefer", "return=representation")
 
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Errorf("Expected nil, received %s", err.Error())
+			return
+		}
+
+		if response.StatusCode == http.StatusCreated {
+			t.Errorf("Expected error, received status: %d", http.StatusCreated)
+		}
+
+	}
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {
