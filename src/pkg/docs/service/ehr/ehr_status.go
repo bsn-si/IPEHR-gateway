@@ -60,9 +60,6 @@ func (s *EhrStatusService) Create(userId, ehrId, ehrStatusId, subjectId, subject
 	doc.IsModifable = true
 
 	err = s.SaveStatus(ehrId, userId, doc)
-	if err != nil {
-		return
-	}
 
 	return
 }
@@ -76,7 +73,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
-	statusStorageId, err := s.saveStatusToStorage(status, key, ehrId)
+	statusStorageId, err := s.saveStatusToStorage(status, key)
 	if err != nil {
 		return err
 	}
@@ -123,7 +120,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 	return nil
 }
 
-func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *chacha_poly.Key, ehrId string) (storageId *[32]byte, err error) {
+func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *chacha_poly.Key) (storageId *[32]byte, err error) {
 	statusBytes, err := s.MarshalJson(status)
 	if err != nil {
 		return
@@ -140,7 +137,7 @@ func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *cha
 	return
 }
 
-// Get current (last) status of EHR document
+// GetStatus Get current (last) status of EHR document
 func (s *EhrStatusService) GetStatus(userId, ehrId string) (status *model.EhrStatus, err error) {
 	statusMeta, err := s.Doc.DocsIndex.GetLastByType(ehrId, types.EHR_STATUS)
 	if err != nil {
@@ -176,17 +173,12 @@ func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace strin
 }
 
 func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, statusMeta *model.DocumentMeta) (status *model.EhrStatus, err error) {
-	statusKeyBytes, err := s.Doc.DocAccessIndex.GetDocumentKey(userId, statusMeta.StorageId)
-	if err != nil {
-		return
-	}
-
-	statusKey, err := chacha_poly.NewKeyFromBytes(statusKeyBytes)
-	if err != nil {
-		return
-	}
-
 	encryptedStatus, err := s.Doc.Storage.Get(statusMeta.StorageId)
+	if err != nil {
+		return
+	}
+
+	statusKey, err := s.Doc.DocAccessIndex.GetDocumentKey(userId, statusMeta.StorageId)
 	if err != nil {
 		return
 	}
