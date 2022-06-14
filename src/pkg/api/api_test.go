@@ -58,6 +58,25 @@ func Test_API(t *testing.T) {
 	t.Run("EHR get by subject", testWrap.ehrGetBySubject(&testData))
 }
 
+func TestAPICreateComposition(t *testing.T) {
+
+	var httpClient http.Client
+	testServer := prepareTest(t)
+
+	testWrap := &testWrap{
+		server:     testServer,
+		httpClient: &httpClient,
+	}
+	defer testWrap.server.Close()
+
+	testData := testData{
+		testUserId: uuid.New().String(),
+	}
+
+	t.Run("Composition create: expected fail with wrong EhrId", testWrap.compositionCreateFail(&testData))
+	t.Run("Composition create: expected success with correct EhrId", testWrap.compositionCreateSuccess(&testData))
+}
+
 func prepareTest(t *testing.T) (ts *httptest.Server) {
 	r := gin.New()
 
@@ -514,21 +533,7 @@ func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T)
 	}
 }
 
-func TestAPICreateComposition(t *testing.T) {
-
-	var httpClient http.Client
-	testServer := prepareTest(t)
-
-	testWrap := &testWrap{
-		server:     testServer,
-		httpClient: &httpClient,
-	}
-	defer testWrap.server.Close()
-
-	t.Run("Composition: creating", testWrap.compositionCreateFail())
-}
-
-func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
+func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		userId := uuid.New().String()
 		ehrId := uuid.New().String()
@@ -541,6 +546,35 @@ func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", userId)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Errorf("Expected nil, received %s", err.Error())
+			return
+		}
+
+		if response.StatusCode == http.StatusCreated {
+			t.Errorf("Expected error, received status: %d", http.StatusCreated)
+		}
+
+	}
+}
+
+func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *testing.T) {
+	//println(self)
+	return func(t *testing.T) {
+		//testWrap.ehrCreate(testData)
+		(testWrap.ehrCreate(testData))(t)
+
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition", compositionCreateBodyRequest())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testData.testUserId)
 		request.Header.Set("Prefer", "return=representation")
 
 		response, err := testWrap.httpClient.Do(request)
