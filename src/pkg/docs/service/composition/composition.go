@@ -38,26 +38,26 @@ func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) 
 	return json.Marshal(doc)
 }
 
-func (s CompositionService) Create(userId string, request *model.CompositionCreateRequest) (*model.Composition, error) {
+func (s CompositionService) Create(userId string, request *model.Composition) (*model.Composition, error) {
 	return s.CreateWithId(userId, uuid.New().String(), request) // TODO no new???
 }
 
-func (s CompositionService) CreateWithId(userId, ehrId string, request *model.CompositionCreateRequest) (composition *model.Composition, err error) {
+func (s CompositionService) CreateWithId(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
 	composition = &model.Composition{}
 
 	composition.Type = types.COMPOSITION.String()
 	// TODO cant comprehend should we use data from request (because validation) or create new one?
-	composition.ArchetypeNodeId = request.ArchetypeNodeID
+	composition.ArchetypeNodeId = request.ArchetypeNodeId
 	composition.Name.Value = request.Name.Value
 	composition.Uid = &base.ObjectId{
-		Type:  request.UID.Type,
-		Value: request.UID.Value,
+		Type:  request.Uid.Type,
+		Value: request.Uid.Type,
 	}
 	composition.ArchetypeDetails = &base.Archetyped{
 		ArchetypeId: base.ObjectId{
-			Value: request.ArchetypeDetails.ArchetypeID.Value,
+			Value: request.ArchetypeDetails.ArchetypeId.Type,
 		},
-		TemplateId: &base.ObjectId{Value: request.ArchetypeDetails.TemplateID.Value},
+		TemplateId: &base.ObjectId{Value: request.ArchetypeDetails.TemplateId.Value},
 		RmVersion:  request.ArchetypeDetails.RmVersion,
 	}
 
