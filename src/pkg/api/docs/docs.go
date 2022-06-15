@@ -433,6 +433,98 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/access/group": {
+            "post": {
+                "description": "Creates new access group for use with part of users data and return this group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GROUP_ACCESS"
+                ],
+                "summary": "Create new access group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "DTO with data to create group access",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccessCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/v1/access/group/{group_id}": {
+            "get": {
+                "description": "Return access group object",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GROUP_ACCESS"
+                ],
+                "summary": "Get access group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -563,6 +655,25 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.GroupAccess": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.GroupAccessCreateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
                     "type": "string"
                 }
             }
