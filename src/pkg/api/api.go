@@ -25,13 +25,14 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      https://gateway.ipehr.stage.bsn.si
+// @host      gateway.ipehr.stage.bsn.si
 // @BasePath  /v1
 
 type API struct {
 	Ehr         *EhrHandler
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
+	Query       *QueryHandler
 
 	fs http.FileSystem
 }
@@ -42,6 +43,7 @@ func New(cfg *config.Config) *API {
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),
 		Composition: NewCompositionHandler(docService, cfg),
+		Query:       NewQueryHandler(docService, cfg),
 	}
 }
 
@@ -63,9 +65,11 @@ func (a *API) Build() *gin.Engine {
 
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")
+	query := v1.Group("query")
 
 	a.setRedirections(r).
-		buildEhrAPI(ehr)
+		buildEhrAPI(ehr).
+		buildQueryAPI(query)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -87,6 +91,13 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
 	r.GET("/:ehrid/ehr_status", a.EhrStatus.Get)
 	r.POST("/:ehrid/composition", a.Composition.Create)
+
+	return a
+}
+
+func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
+	r.Use(a.Auth)
+	r.POST("/", a.Query.ExecPost)
 
 	return a
 }

@@ -1012,7 +1012,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "0.1",
-	Host:             "https://gateway.ipehr.stage.bsn.si",
+	Host:             "gateway.ipehr.stage.bsn.si",
 	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "IPEHR Gateway API",
