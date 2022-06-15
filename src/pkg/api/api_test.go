@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"hms/gateway/pkg/storage"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
@@ -30,18 +33,20 @@ type testData struct {
 type testWrap struct {
 	server     *httptest.Server
 	httpClient *http.Client
+	storage    *storage.Storager
 }
 
 func Test_API(t *testing.T) {
 
 	var httpClient http.Client
-	testServer := prepareTest(t)
+	testServer, storager := prepareTest(t)
 
 	testWrap := &testWrap{
 		server:     testServer,
 		httpClient: &httpClient,
+		storage:    &storager,
 	}
-	defer testWrap.server.Close()
+	defer tearDown(*testWrap)
 
 	testData := testData{
 		testUserId:  "11111111-1111-1111-1111-111111111111",
@@ -61,13 +66,14 @@ func Test_API(t *testing.T) {
 func TestAPICreateComposition(t *testing.T) {
 
 	var httpClient http.Client
-	testServer := prepareTest(t)
+	testServer, storager := prepareTest(t)
 
 	testWrap := &testWrap{
 		server:     testServer,
 		httpClient: &httpClient,
+		storage:    &storager,
 	}
-	defer testWrap.server.Close()
+	defer tearDown(*testWrap)
 
 	testData := testData{
 		testUserId: uuid.New().String(),
@@ -77,9 +83,7 @@ func TestAPICreateComposition(t *testing.T) {
 	t.Run("Composition create: expected success with correct EhrId", testWrap.compositionCreateSuccess(&testData))
 }
 
-func prepareTest(t *testing.T) (ts *httptest.Server) {
-	r := gin.New()
-
+func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
 	cfgPath := "../../../config.json.example"
 	cfg := config.New(cfgPath)
 	err := cfg.Reload()
@@ -87,26 +91,32 @@ func prepareTest(t *testing.T) (ts *httptest.Server) {
 		t.Fatal(err)
 	}
 
-	api := New(cfg)
-	r.Use(api.Auth)
-	r.GET("/v1/ehr/:ehrid", api.Ehr.GetById)
-	r.POST("/v1/ehr", api.Ehr.Create)
-	r.PUT("/v1/ehr/:ehrid", api.Ehr.CreateWithId)
-	r.GET("/v1/ehr/:ehrid/ehr_status/:versionid", api.EhrStatus.GetById)
-	r.GET("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Get)
-	r.PUT("/v1/ehr/:ehrid/ehr_status", api.EhrStatus.Update)
-	r.GET("/v1/ehr", api.Ehr.GetBySubjectIdAndNamespace)
-	r.POST("/v1/ehr/:ehrid/composition", api.Composition.Create)
+	storageName := "test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	err = os.Setenv("STORAGE_NAME", storageName)
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	testStorage := storage.Init()
+
+	r := New(cfg).Build()
 	ts = httptest.NewServer(r)
 
-	return ts
+	return ts, testStorage
+}
+
+func tearDown(testWrap testWrap) {
+	testWrap.server.Close()
+	err := (*testWrap.storage).Clean()
+	if err != nil {
+		log.Panicln(err)
+	}
 }
 
 func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr", ehrCreateBodyRequest())
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/", ehrCreateBodyRequest())
 		if err != nil {
 			t.Error(err)
 			return
@@ -208,6 +218,10 @@ func (testWrap *testWrap) ehrCreateWithIdForSameUser(testData *testData) func(t 
 		request.Header.Set("AuthUserId", testData.testUserId2)
 
 		response, err := testWrap.httpClient.Do(request)
+		err = response.Body.Close()
+		if err != nil {
+			t.Error(err)
+		}
 
 		if response.StatusCode != http.StatusConflict {
 			t.Errorf("Expected %d, received %d", http.StatusConflict, response.StatusCode)
@@ -562,9 +576,7 @@ func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *test
 }
 
 func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *testing.T) {
-	//println(self)
 	return func(t *testing.T) {
-		//testWrap.ehrCreate(testData)
 		(testWrap.ehrCreate(testData))(t)
 
 		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition", compositionCreateBodyRequest())
@@ -586,7 +598,6 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 		if response.StatusCode == http.StatusCreated {
 			t.Errorf("Expected error, received status: %d", http.StatusCreated)
 		}
-
 	}
 }
 
