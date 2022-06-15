@@ -81,3 +81,18 @@ go build -o ../bin/ipehr-gateway cmd/ipehrgw/main.go
 
 <http://localhost:8080/swagger/index.html>
 
+## Docker
+You can start a project in Docker
+
+Before building the image, you need to create config.json (take config.json.example as a basis)
+
+The repository contains a Dockerfile
+At the root of the project run the command 
+```
+docker build -t ipehr:v1 .
+```
+
+After building the image, start the container
+```
+docker run -d --restart always --network host --name ipehr-gateway ipehr:v1
+```
