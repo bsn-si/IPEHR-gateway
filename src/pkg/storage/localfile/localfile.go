@@ -3,9 +3,9 @@ package localfile
 import (
 	"encoding/hex"
 	"fmt"
-	"os"
-
 	"golang.org/x/crypto/sha3"
+	"log"
+	"os"
 
 	"hms/gateway/pkg/errors"
 )
@@ -150,4 +150,21 @@ func (s *LocalFileStorage) filepath(id string) (path string) {
 		i += 2
 	}
 	return path + id
+}
+
+func (s *LocalFileStorage) Clean() (err error) {
+	if s.basePath == "/" {
+		log.Panicln("Can not clean the base folder is root!")
+	}
+
+	_, err = os.Stat(s.basePath)
+	if err != nil {
+		return nil
+	}
+
+	if err = os.RemoveAll(s.basePath); err != nil {
+		return err
+	}
+
+	return nil
 }

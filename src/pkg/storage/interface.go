@@ -5,4 +5,5 @@ type Storager interface {
 	AddWithId(id *[32]byte, data []byte) (err error)
 	ReplaceWithId(id *[32]byte, data []byte) (err error)
 	Get(id *[32]byte) (data []byte, err error)
+	Clean() (err error)
 }
