@@ -86,7 +86,7 @@ go build -o ../bin/ipehr-gateway cmd/ipehrgw/main.go
 
 ## Get swagger UI API documentation
 
-[Swagger UI API docs](http://ipehr.org/swagger/index.html)
+[Swagger UI API docs](http://gateway.iprhr.org/swagger/index.html)
 
 The following methods are based on the [standard specification of OpenEHR](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/ehr.html)
 
@@ -94,7 +94,7 @@ The following methods are based on the [standard specification of OpenEHR](https
 
 The following workflow is showing how to create, update and find EHR information using swagger
 
-Precondition: go to [Swagger](http://ipehr.org/swagger/index.html)
+Precondition: go to [Swagger](http://gateway.iprhr.org/swagger/index.html)
 
 ### Create an EHR
 1. Click `POST /ehr Create EHR` method
