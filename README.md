@@ -89,10 +89,10 @@ Before building the image, you need to create config.json (take config.json.exam
 The repository contains a Dockerfile
 At the root of the project run the command 
 ```
-docker build -t ipehr:v1 .
+docker build -t ipehr:gtw .
 ```
 
 After building the image, start the container
 ```
-docker run -d --restart always --network host --name ipehr-gateway ipehr:v1
+docker run -d --restart always -p 8080:8080 --name ipehr-gateway ipehr:gtw
 ```
