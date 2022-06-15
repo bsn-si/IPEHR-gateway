@@ -327,7 +327,7 @@ definitions:
       type:
         type: string
     type: object
-host: gateway.ipehr.stage.bsn.si
+host: gateway.ipehr.org
 info:
   contact:
     email: support@bsn.si
