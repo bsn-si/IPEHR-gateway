@@ -595,7 +595,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 			return
 		}
 
-		if response.StatusCode == http.StatusCreated {
+		if response.StatusCode != http.StatusCreated {
 			t.Errorf("Expected error, received status: %d", http.StatusCreated)
 		}
 	}

@@ -54,7 +54,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 
 	data, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
 		return
 	}
 
@@ -86,12 +86,12 @@ func (h CompositionHandler) Create(c *gin.Context) {
 	// Checking EHR does not exist
 	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if errors.Is(err, errors.IsNotExist) {
-		c.AbortWithStatus(http.StatusConflict)
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(userId, &request)
+	doc, err := h.service.Create(userId, ehrId, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return

@@ -2,7 +2,6 @@ package composition
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
@@ -38,11 +37,7 @@ func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) 
 	return json.Marshal(doc)
 }
 
-func (s CompositionService) Create(userId string, request *model.Composition) (*model.Composition, error) {
-	return s.CreateWithId(userId, uuid.New().String(), request) // TODO no new???
-}
-
-func (s CompositionService) CreateWithId(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
+func (s CompositionService) Create(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
 	composition = &model.Composition{}
 
 	composition.Type = types.COMPOSITION.String()
@@ -81,7 +76,7 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 		return err
 	}
 
-	// Document encryption key generationg
+	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
 	// Document encryption
@@ -97,12 +92,6 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 		log.Println(err)
 		return err
 	}
-	//
-	// Index EHR userId -> docStorageId
-	if err = s.Doc.EhrsIndex.Add(userId, docStorageId); err != nil {
-		log.Println(err)
-		return err
-	}
 
 	// Index Docs ehr_id -> doc_meta
 	docIndex := &model.DocumentMeta{
@@ -110,6 +99,7 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 		StorageId: docStorageId,
 		Timestamp: uint64(time.Now().UnixNano()),
 	}
+
 	// First record in doc index
 	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
 		log.Println(err)
