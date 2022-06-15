@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"hms/gateway/pkg/indexer/service/group_access"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,22 +23,24 @@ import (
 )
 
 type DefaultDocumentService struct {
-	Storage        storage.Storager
-	EhrsIndex      *ehrs.EhrsIndex
-	DocsIndex      *docs.DocsIndex
-	DocAccessIndex *doc_access.DocAccessIndex
-	SubjectIndex   *subject.SubjectIndex
-	Keystore       *keystore.KeyStore
+	Storage          storage.Storager
+	EhrsIndex        *ehrs.EhrsIndex
+	DocsIndex        *docs.DocsIndex
+	DocAccessIndex   *doc_access.DocAccessIndex
+	SubjectIndex     *subject.SubjectIndex
+	GroupAccessIndex *group_access.GroupAccessIndex
+	Keystore         *keystore.KeyStore
 }
 
 func NewDefaultDocumentService() *DefaultDocumentService {
 	return &DefaultDocumentService{
-		EhrsIndex:      ehrs.New(),
-		DocsIndex:      docs.New(),
-		DocAccessIndex: doc_access.New(),
-		SubjectIndex:   subject.New(),
-		Storage:        storage.Init(),
-		Keystore:       keystore.New(),
+		EhrsIndex:        ehrs.New(),
+		DocsIndex:        docs.New(),
+		DocAccessIndex:   doc_access.New(),
+		SubjectIndex:     subject.New(),
+		GroupAccessIndex: group_access.New(),
+		Storage:          storage.Init(),
+		Keystore:         keystore.New(),
 	}
 }
 

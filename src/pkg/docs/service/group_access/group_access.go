@@ -5,23 +5,23 @@ import (
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/indexer/service/group_access"
+	"hms/gateway/pkg/docs/service"
 )
 
 type GroupAccessService struct {
-	GroupAccessIndex *group_access.GroupAccessIndex
-	Cfg              *config.Config
+	Doc *service.DefaultDocumentService
+	Cfg *config.Config
 }
 
-func NewGroupAccessService(cfg *config.Config) *GroupAccessService {
+func NewGroupAccessService(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessService {
 	return &GroupAccessService{
-		Cfg:              cfg,
-		GroupAccessIndex: group_access.New(),
+		Doc: docService,
+		Cfg: cfg,
 	}
 }
 
 func (g *GroupAccessService) Get(userId, groupId string) (groupAccess *model.GroupAccess, err error) {
-	groupAccess, err = g.GroupAccessIndex.Get(userId, groupId)
+	groupAccess, err = g.Doc.GroupAccessIndex.Get(userId, groupId)
 	return
 }
 
@@ -37,7 +37,7 @@ func (g *GroupAccessService) Create(userId string, c *model.GroupAccessCreateReq
 		Key:         chacha_poly.GenerateKey(),
 	}
 
-	err = g.GroupAccessIndex.Add(userId, groupAccess)
+	err = g.Doc.GroupAccessIndex.Add(userId, groupAccess)
 
 	return
 }

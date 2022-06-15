@@ -41,7 +41,7 @@ func New(cfg *config.Config) *API {
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),
-		GroupAccess: NewGroupAccessHandler(cfg),
+		GroupAccess: NewGroupAccessHandler(docService, cfg),
 	}
 }
 

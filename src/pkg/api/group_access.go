@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/group_access"
 	"io"
 	"io/ioutil"
@@ -15,9 +16,9 @@ type GroupAccessHandler struct {
 	*group_access.GroupAccessService
 }
 
-func NewGroupAccessHandler(cfg *config.Config) *GroupAccessHandler {
+func NewGroupAccessHandler(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessHandler {
 	return &GroupAccessHandler{
-		group_access.NewGroupAccessService(cfg),
+		group_access.NewGroupAccessService(docService, cfg),
 	}
 }
 

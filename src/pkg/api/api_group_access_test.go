@@ -80,25 +80,54 @@ func TestGroupAccessAPI(t *testing.T) {
 		groupAccessId = groupAccess.GroupId
 	})
 
-	t.Run("Group Access getting", func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodGet, ts.URL+"/v1/access/group/"+groupAccessId, nil)
+	t.Run("Wrong Group Access getting", func(t *testing.T) {
+		groupAccessIdWrong, err := uuid.NewUUID()
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
+		}
+
+		request, err := http.NewRequest(http.MethodGet, ts.URL+"/v1/access/group/"+groupAccessIdWrong.String(), nil)
+		if err != nil {
+			t.Fatal(err)
 		}
 
 		request.Header.Set("AuthUserId", testUserId.String())
 
 		response, err := httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			t.Errorf("Response body read error: %v", err)
-			return
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusNotFound {
+			t.Fatalf("Expected %d, received %d body: %s", http.StatusNotFound, response.StatusCode, data)
+		}
+	})
+
+	t.Run("Group Access getting", func(t *testing.T) {
+		request, err := http.NewRequest(http.MethodGet, ts.URL+"/v1/access/group/"+groupAccessId, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testUserId.String())
+
+		response, err := httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
 		}
 		err = response.Body.Close()
 		if err != nil {
@@ -106,19 +135,16 @@ func TestGroupAccessAPI(t *testing.T) {
 		}
 
 		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
-			return
+			t.Fatalf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
 		}
 
 		var groupAccessGot model.GroupAccess
 		if err = json.Unmarshal(data, &groupAccessGot); err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		if groupAccessId != groupAccessGot.GroupId {
-			t.Error("Got wrong group")
-			return
+			t.Fatal("Got wrong group")
 		}
 	})
 }
