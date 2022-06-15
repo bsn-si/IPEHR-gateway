@@ -16,3 +16,8 @@ type Composition struct {
 	Content   *[]base.ContentItem `json:"content,omitempty"`
 	base.Locatable
 }
+
+func (e *Composition) Validate() bool {
+	//TODO
+	return true
+}

@@ -29,8 +29,9 @@ import (
 // @BasePath  /v1
 
 type API struct {
-	Ehr       *EhrHandler
-	EhrStatus *EhrStatusHandler
+	Ehr         *EhrHandler
+	EhrStatus   *EhrStatusHandler
+	Composition *CompositionHandler
 
 	fs http.FileSystem
 }
@@ -38,8 +39,9 @@ type API struct {
 func New(cfg *config.Config) *API {
 	docService := service.NewDefaultDocumentService()
 	return &API{
-		Ehr:       NewEhrHandler(docService, cfg),
-		EhrStatus: NewEhrStatusHandler(docService, cfg),
+		Ehr:         NewEhrHandler(docService, cfg),
+		EhrStatus:   NewEhrStatusHandler(docService, cfg),
+		Composition: NewCompositionHandler(docService, cfg),
 	}
 }
 
@@ -74,16 +76,17 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	log.Println("buildEhrAPI")
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	//r.Use(Recovery, app_errors.ErrHandler)
-	r.GET("/:ehrid", a.Ehr.GetById)
-	r.GET("/", a.Ehr.GetBySubjectIdAndNamespace)
 
 	// Other methods should be authorized
 	r.Use(a.Auth)
 	r.POST("/", a.Ehr.Create)
+	r.GET("/", a.Ehr.GetBySubjectIdAndNamespace)
 	r.PUT("/:ehrid", a.Ehr.CreateWithId)
+	r.GET("/:ehrid", a.Ehr.GetById)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
 	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
-	r.GET("/v1/ehr/:ehrid/ehr_status", a.EhrStatus.Get)
+	r.GET("/:ehrid/ehr_status", a.EhrStatus.Get)
+	r.POST("/:ehrid/composition", a.Composition.Create)
 
 	return a
 }
