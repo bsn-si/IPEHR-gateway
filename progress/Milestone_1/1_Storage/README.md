@@ -15,7 +15,7 @@ According to the openEHR information model, there are 6 basic types of documents
 
 ## Document storage
 
-When new documents are created, they are saved in the IPEHR system as separate files.
+When you create new documents, they are saved in the IPEHR system as separate files in encrypted form.
 To store documents containing medical data, a repository with the following characteristics is required:
 
 - fault tolerance
