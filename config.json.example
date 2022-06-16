@@ -1,5 +1,6 @@
 {
     "baseUrl": "http://localhost:8080",
     "dataPath": "../data",
-    "host": "localhost:8080"
+    "host": "localhost:8080",
+    "storagePath": "./storage"
 }

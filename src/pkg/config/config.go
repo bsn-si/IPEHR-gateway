@@ -6,16 +6,18 @@ import (
 )
 
 type Config struct {
-	BaseUrl  string `json:"baseUrl"`
-	DataPath string `json:"dataPath"`
-	Host     string `json:"host"`
+	BaseUrl     string `json:"baseUrl"`
+	DataPath    string `json:"dataPath"`
+	Host        string `json:"host"`
+	StoragePath string `json:"storagePath"`
 
 	path string
 }
 
 func New(configFilePath string) *Config {
 	return &Config{
-		path: configFilePath,
+		path:        configFilePath,
+		StoragePath: "",
 	}
 }
 

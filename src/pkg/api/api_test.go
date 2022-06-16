@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -74,18 +73,12 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 		t.Fatal(err)
 	}
 
-	storageName := "test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	err = os.Setenv("STORAGE_NAME", storageName)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	testStorage := storage.Init()
+	cfg.StoragePath += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	r := New(cfg).Build()
 	ts = httptest.NewServer(r)
 
-	return ts, testStorage
+	return ts, *storage.Storage()
 }
 
 func tearDown(testWrap testWrap) {
