@@ -1094,7 +1094,18 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "scheme": {
+                            "type": "string"
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
                 },
                 "namespace": {
                     "type": "string"

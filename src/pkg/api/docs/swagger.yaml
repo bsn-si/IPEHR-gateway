@@ -340,7 +340,14 @@ definitions:
   model.ExternalRef:
     properties:
       id:
-        type: string
+        properties:
+          _type:
+            type: string
+          scheme:
+            type: string
+          value:
+            type: string
+        type: object
       namespace:
         type: string
       scheme:
