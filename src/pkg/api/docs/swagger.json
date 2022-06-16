@@ -231,7 +231,7 @@
         },
         "/ehr/{ehr_id}/composition": {
             "post": {
-                "description": "Creates the first version of a new COMPOSITION in the EHR identified by ehr_id.\n",
+                "description": "Work in progress...\nCreates the first version of a new COMPOSITION in the EHR identified by ehr_id.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -488,6 +488,56 @@
                     },
                     "404": {
                         "description": "is returned when an EHR with `ehr_id` does not exist or when an EHR_STATUS with `version_uid` does not exist."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/query/aql": {
+            "post": {
+                "description": "Work in progress...\nExecute ad-hoc query, supplied by q attribute, fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "QUERY"
+                ],
+                "summary": "Execute ad-hoc (non-stored) AQL query",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Query Request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
+                    },
+                    "408": {
+                        "description": "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -996,6 +1046,76 @@
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "model.QueryRequest": {
+            "type": "object",
+            "properties": {
+                "fetch": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "q": {
+                    "type": "string"
+                },
+                "query_parameters": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "model.QueryResponse": {
+            "type": "object",
+            "properties": {
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "path": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "_created": {
+                            "type": "string"
+                        },
+                        "_executed_aql": {
+                            "type": "string"
+                        },
+                        "_generator": {
+                            "type": "string"
+                        },
+                        "_href": {
+                            "type": "string"
+                        },
+                        "_schema_version": {
+                            "type": "string"
+                        },
+                        "_type": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "q": {
+                    "type": "string"
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {}
                 }
             }
         }

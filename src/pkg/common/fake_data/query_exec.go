@@ -1,12 +1,31 @@
 package fake_data
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
 )
+
+func QueryExecRequest(ehrId string) []byte {
+	req := `{
+	  "q": "SELECT c FROM EHR e[ehr_id/value=$ehr_id] 
+	  			CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1]
+					CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1]
+			WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp",
+	  "offset": 0,
+	  "fetch": 10,
+	  "query_parameters": {
+		"ehr_id": "` + ehrId + `",
+		"systolic_bp": 140
+	  }
+	}`
+	req = strings.ReplaceAll(req, "\n", "")
+	req = strings.ReplaceAll(req, "\t", "")
+	return []byte(req)
+}
 
 func QueryExecResponse(query string) []byte {
 	return []byte(`{
