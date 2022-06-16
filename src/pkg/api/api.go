@@ -1,6 +1,7 @@
 package api
 
 import (
+	"hms/gateway/pkg/storage"
 	"log"
 	"net/http"
 	"strings"
@@ -33,10 +34,16 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 
-	fs http.FileSystem
+	fs      http.FileSystem
+	storage *storage.Storager
 }
 
 func New(cfg *config.Config) *API {
+
+	sc := &storage.StorageConfig{}
+	sc.New(cfg.StoragePath)
+	storage.Init(sc)
+
 	docService := service.NewDefaultDocumentService()
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),

@@ -36,7 +36,7 @@ func NewDefaultDocumentService() *DefaultDocumentService {
 		DocsIndex:      docs.New(),
 		DocAccessIndex: doc_access.New(),
 		SubjectIndex:   subject.New(),
-		Storage:        storage.Init(),
+		Storage:        *storage.Storage(),
 		Keystore:       keystore.New(),
 	}
 }

@@ -28,7 +28,7 @@ func Init(name string) *Index {
 
 	id := sha3.Sum256([]byte(name))
 
-	stor := storage.Init()
+	stor := *storage.Storage()
 
 	data, err := stor.Get(&id)
 	if err != nil && !commonerr.Is(err, errors.IsNotExist) {

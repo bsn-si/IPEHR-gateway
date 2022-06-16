@@ -16,7 +16,7 @@ type KeyStore struct {
 
 func New() *KeyStore {
 	return &KeyStore{
-		storage: storage.Init(),
+		storage: *storage.Storage(),
 	}
 }
 
