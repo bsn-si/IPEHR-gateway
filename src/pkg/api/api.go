@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -85,7 +84,6 @@ func (a *API) Build() *gin.Engine {
 }
 
 func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
-	log.Println("buildEhrAPI")
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	//r.Use(Recovery, app_errors.ErrHandler)
 
@@ -104,7 +102,6 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 }
 
 func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
-	log.Println("buildGroupAccessAPI")
 	r.Use(a.Auth)
 	r.GET("/group/:group_id", a.GroupAccess.Get)
 	r.POST("/group", a.GroupAccess.Create)
@@ -113,7 +110,7 @@ func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
 
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 	r.Use(a.Auth)
-	r.POST("/", a.Query.ExecPost)
+	r.POST("/aql", a.Query.ExecPost)
 	return a
 }
 
