@@ -166,7 +166,8 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 
 	docIndex, err := h.Doc.GetDocIndexByNearestTime(ehrId, statusTime, types.EHR_STATUS)
 	if err != nil {
-		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
+		// TODO: It is necessary to write a log if document not found here?
+		//log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

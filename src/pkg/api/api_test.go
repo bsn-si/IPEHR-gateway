@@ -673,7 +673,7 @@ func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.
 			"description": "` + description + `"
 		}`)
 
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/access/group/", bytes.NewReader(req))
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/access/group", bytes.NewReader(req))
 		if err != nil {
 			t.Error(err)
 			return
@@ -681,7 +681,6 @@ func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserId)
-		request.Header.Set("Prefer", "return=representation")
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {

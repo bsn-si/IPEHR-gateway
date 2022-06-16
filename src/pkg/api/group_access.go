@@ -98,6 +98,7 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 	accessGroup, err := h.GroupAccessService.Get(userId, groupId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Group access not found"})
+		return
 	}
 
 	c.JSON(http.StatusOK, accessGroup)
