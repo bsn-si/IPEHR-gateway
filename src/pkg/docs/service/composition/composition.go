@@ -46,7 +46,7 @@ func (s CompositionService) Create(userId, ehrId string, request *model.Composit
 	composition.Name.Value = request.Name.Value
 	composition.Uid = &base.ObjectId{
 		Type:  request.Uid.Type,
-		Value: request.Uid.Type,
+		Value: request.Uid.Value,
 	}
 	composition.ArchetypeDetails = &base.Archetyped{
 		ArchetypeId: base.ObjectId{

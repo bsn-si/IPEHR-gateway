@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/api/response"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -92,7 +93,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
-	h.respondWithDocOrHeaders(doc, c)
+	response.Created(doc.EhrId.Value, doc, c)
 }
 
 // CreateWithId
@@ -179,7 +180,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 		return
 	}
 
-	h.respondWithDocOrHeaders(newDoc, c)
+	response.Created(newDoc.EhrId.Value, newDoc, c)
 }
 
 // GetById
@@ -265,16 +266,4 @@ func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/json", docDecrypted)
-}
-
-func (h *EhrHandler) respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
-	c.Header("Location", h.Cfg.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
-	c.Header("ETag", doc.EhrId.Value)
-
-	prefer := c.Request.Header.Get("Prefer")
-	if prefer == "return=representation" {
-		c.JSON(http.StatusCreated, doc)
-	} else {
-		c.AbortWithStatus(http.StatusCreated)
-	}
 }

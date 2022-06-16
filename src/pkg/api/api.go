@@ -34,6 +34,7 @@ type API struct {
 	GroupAccess *GroupAccessHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
+	Cfg         *config.Config
 
 	fs http.FileSystem
 }
@@ -46,11 +47,14 @@ func New(cfg *config.Config) *API {
 		GroupAccess: NewGroupAccessHandler(docService, cfg),
 		Composition: NewCompositionHandler(docService, cfg),
 		Query:       NewQueryHandler(docService, cfg),
+		Cfg:         cfg,
 	}
 }
 
 func (a *API) Build() *gin.Engine {
 	r := gin.New()
+
+	r.Use(a.PrepareContext)
 
 	r.NoRoute(func(c *gin.Context) {
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -121,4 +125,10 @@ func (a *API) setRedirections(r *gin.Engine) *API {
 	r.GET("/", redirect)
 	r.HEAD("/", redirect)
 	return a
+}
+
+// PrepareContext Fill context with data required for request processing
+func (a *API) PrepareContext(c *gin.Context) {
+	c.Set("cfg", a.Cfg)
+	c.Next()
 }
