@@ -224,6 +224,27 @@ definitions:
       uid:
         type: string
     type: object
+  model.EhrCreateRequest:
+    properties:
+      _type:
+        type: string
+      archetype_node_id:
+        type: string
+      isModifiable:
+        type: boolean
+      isQueryable:
+        type: boolean
+      name:
+        properties:
+          value:
+            type: string
+        type: object
+      subject:
+        properties:
+          external_ref:
+            $ref: '#/definitions/model.ExternalRef'
+        type: object
+    type: object
   model.EhrStatusUpdate:
     properties:
       _type:
@@ -449,6 +470,12 @@ paths:
         name: Prefer
         required: true
         type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.EhrCreateRequest'
       produces:
       - application/json
       responses:
@@ -531,6 +558,12 @@ paths:
         name: ehr_id
         required: true
         type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.EhrCreateRequest'
       produces:
       - application/json
       responses:

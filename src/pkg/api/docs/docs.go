@@ -101,6 +101,15 @@ const docTemplate = `{
                         "name": "Prefer",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "description": "Query Request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.EhrCreateRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -205,6 +214,15 @@ const docTemplate = `{
                         "name": "ehr_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Query Request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.EhrCreateRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -893,6 +911,39 @@ const docTemplate = `{
                 },
                 "uid": {
                     "type": "string"
+                }
+            }
+        },
+        "model.EhrCreateRequest": {
+            "type": "object",
+            "properties": {
+                "_type": {
+                    "type": "string"
+                },
+                "archetype_node_id": {
+                    "type": "string"
+                },
+                "isModifiable": {
+                    "type": "boolean"
+                },
+                "isQueryable": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "object",
+                    "properties": {
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "subject": {
+                    "type": "object",
+                    "properties": {
+                        "external_ref": {
+                            "$ref": "#/definitions/model.ExternalRef"
+                        }
+                    }
                 }
             }
         },
