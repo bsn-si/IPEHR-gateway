@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/api/response"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service/composition"
 	"hms/gateway/pkg/docs/types"
@@ -99,5 +98,18 @@ func (h CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	response.Created(doc.Uid.Value, doc, c)
+	h.respondWithDocOrHeaders(ehrId, doc, c)
+}
+
+func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
+	uid := doc.Uid.Value
+	c.Header("Location", h.service.Cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
+	c.Header("ETag", uid)
+
+	prefer := c.Request.Header.Get("Prefer")
+	if prefer == "return=representation" {
+		c.JSON(http.StatusCreated, doc)
+	} else {
+		c.AbortWithStatus(http.StatusCreated)
+	}
 }

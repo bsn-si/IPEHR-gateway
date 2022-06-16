@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"hms/gateway/pkg/api/response"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
@@ -72,7 +71,7 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 		return
 	}
 
-	response.Created(newGroupAccess.GroupId, newGroupAccess, c)
+	h.respondWithDoc(newGroupAccess, c)
 }
 
 // Get
@@ -102,4 +101,11 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, accessGroup)
+}
+
+func (h *GroupAccessHandler) respondWithDoc(doc *model.GroupAccess, c *gin.Context) {
+	c.Header("Location", h.Cfg.BaseUrl+"/v1/access/group/"+doc.GroupId)
+	c.Header("ETag", doc.GroupId)
+
+	c.JSON(http.StatusCreated, doc)
 }
