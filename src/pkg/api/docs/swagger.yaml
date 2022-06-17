@@ -630,6 +630,12 @@ paths:
         name: Prefer
         required: true
         type: string
+      - description: COMPOSITION
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Composition'
       produces:
       - application/json
       responses:

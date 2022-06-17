@@ -295,6 +295,15 @@ const docTemplate = `{
                         "name": "Prefer",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "description": "COMPOSITION",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Composition"
+                        }
                     }
                 ],
                 "responses": {
