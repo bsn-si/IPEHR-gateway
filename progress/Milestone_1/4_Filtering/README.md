@@ -1,8 +1,18 @@
+<p align="center">
+  <img width="75%" src="https://user-images.githubusercontent.com/8058268/174271312-3eec1fdb-ad70-4492-8f0e-5624d1a7c408.svg">
+</p>
+
+## DataSearch index
+
 When new EHR documents are created, the homomorphically encrypted data they contain is placed in a special DataSearch index tree structure, so that later selections can be made from this data using AQL queries.
 
-Схема
+<p align="center">
+  <img width="75%" src="https://user-images.githubusercontent.com/8058268/174270324-1218d6ba-4cf5-497d-b455-cb084b129141.svg">
+</p>
 
 The DataSearch index will be located in a blockchain. The index will be searched using a smart contract.
+
+## AQL
 
 AQL queries are used to search and filter data.
 
