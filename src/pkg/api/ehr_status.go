@@ -25,14 +25,6 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config
 	}
 }
 
-func (h EhrStatusHandler) Get(c *gin.Context) {
-	if ok := c.Query("version_at_time"); ok != "" {
-		h.GetStatusByTime(c)
-		return
-	}
-	c.AbortWithStatus(http.StatusBadRequest)
-}
-
 // Update
 // @Summary      Update EHR_STATUS
 // @Description  Updates EHR_STATUS associated with the EHR identified by `ehr_id`. The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`) must be specified in the `If-Match` header. The response will contain the updated EHR_STATUS resource when the `Prefer` header has a value of `return=representation`
@@ -145,17 +137,12 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	versionUid := c.Param("versionid")
-	if h.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
 	userId := c.GetString("userId")
 	if userId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
+
 	versionAtTime := c.Query("version_at_time")
 	statusTime, err := time.Parse(common.OPENEHR_TIME_FORMAT, versionAtTime)
 	if err != nil {
@@ -164,21 +151,17 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.Doc.GetDocIndexByNearestTime(ehrId, statusTime, types.EHR_STATUS)
-	if err != nil {
-		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
+	status, err := h.GetStatusByNearestTime(userId, ehrId, statusTime, types.EHR_STATUS)
 
-	data, err := h.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
+	marshalJson, _ := h.MarshalJson(status)
+
 	if err != nil {
 		//TODO logging
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	c.Data(http.StatusOK, "application/json", data)
+	c.Data(http.StatusOK, "application/json", marshalJson)
 }
 
 // GetById

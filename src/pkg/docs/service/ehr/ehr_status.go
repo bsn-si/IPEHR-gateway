@@ -172,6 +172,20 @@ func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace strin
 	return
 }
 
+func (s *EhrStatusService) GetStatusByNearestTime(userId, ehrId string, nearestTime time.Time, docType types.DocumentType) (status *model.EhrStatus, err error) {
+	docIndex, err := s.Doc.DocsIndex.GetDocIndexByNearestTime(ehrId, nearestTime, docType)
+	if err != nil {
+		return
+	}
+
+	status, err = s.getStatusFromStorage(userId, ehrId, docIndex)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, statusMeta *model.DocumentMeta) (status *model.EhrStatus, err error) {
 	encryptedStatus, err := s.Doc.Storage.Get(statusMeta.StorageId)
 	if err != nil {
