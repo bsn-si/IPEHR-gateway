@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -32,8 +31,6 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
-
-	fs http.FileSystem
 }
 
 func New(cfg *config.Config) *API {
@@ -50,16 +47,7 @@ func (a *API) Build() *gin.Engine {
 	r := gin.New()
 
 	r.NoRoute(func(c *gin.Context) {
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if p := strings.TrimPrefix(r.URL.Path, "/v1"); len(p) < len(r.URL.Path) {
-				if p == "/" || p == "" {
-					c.Header("Cache-Control", "no-store, max-age=0")
-				}
-				c.FileFromFS(p, a.fs)
-			} else {
-				http.NotFound(w, r)
-			}
-		}).ServeHTTP(c.Writer, c.Request)
+		c.AbortWithStatus(404)
 	})
 
 	v1 := r.Group("v1")
