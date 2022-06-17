@@ -325,7 +325,7 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *testData) func(t *
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d", http.StatusNotFound, response.StatusCode)
+			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
 			return
 		}
 	}
