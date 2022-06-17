@@ -5,12 +5,19 @@ import (
 	"hms/gateway/pkg/common/fake_data"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/storage"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 func TestStatus(t *testing.T) {
+	sc := &storage.StorageConfig{}
+	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	docService := service.NewDefaultDocumentService()
 	statusService := NewEhrStatusService(docService, nil)
 

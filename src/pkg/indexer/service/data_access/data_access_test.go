@@ -1,7 +1,10 @@
 package data_access
 
 import (
+	"hms/gateway/pkg/storage"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -9,6 +12,10 @@ import (
 )
 
 func TestDataAccessIndex(t *testing.T) {
+	sc := &storage.StorageConfig{}
+	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	dataAccessIndex := New()
 
 	userUUID := uuid.New()

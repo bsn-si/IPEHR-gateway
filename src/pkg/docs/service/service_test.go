@@ -3,11 +3,16 @@ package service
 import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/storage"
+	"strconv"
 	"testing"
 	"time"
 )
 
 func TestGetDocIndexByNearestTime(t *testing.T) {
+	sc := &storage.StorageConfig{}
+	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
 
 	docService := NewDefaultDocumentService()
 	ehrId := docService.GenerateId()

@@ -2,10 +2,17 @@ package data_search
 
 import (
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/storage"
+	"strconv"
 	"testing"
+	"time"
 )
 
 func TestDataSearchIndex(t *testing.T) {
+	sc := &storage.StorageConfig{}
+	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	dataSearchIndex := New()
 
 	pathKey := fake_data.GetRandomStringWithLength(32)

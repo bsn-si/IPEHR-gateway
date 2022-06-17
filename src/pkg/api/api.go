@@ -2,7 +2,6 @@ package api
 
 import (
 	"hms/gateway/pkg/storage"
-	"log"
 	"net/http"
 	"strings"
 
