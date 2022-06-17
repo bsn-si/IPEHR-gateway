@@ -69,8 +69,8 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 
 	// Other methods should be authorized
 	r.Use(a.Auth)
-	r.POST("/", a.Ehr.Create)
-	r.GET("/", a.Ehr.GetBySubjectIdAndNamespace)
+	r.POST("", a.Ehr.Create)
+	r.GET("", a.Ehr.GetBySubjectIdAndNamespace)
 	r.PUT("/:ehrid", a.Ehr.CreateWithId)
 	r.GET("/:ehrid", a.Ehr.GetById)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
