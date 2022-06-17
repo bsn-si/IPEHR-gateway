@@ -301,7 +301,7 @@ func (testWrap *testWrap) ehrStatusGet(testData *testData) func(t *testing.T) {
 
 func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		ehrId := uuid.New().String()
+		ehrId := testData.ehrId
 		versionAtTime := time.Now()
 
 		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+fmt.Sprintf("/v1/ehr/%s/ehr_status", ehrId), nil)
@@ -324,8 +324,8 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *testData) func(t *
 
 		defer response.Body.Close()
 
-		if response.StatusCode != http.StatusNotFound {
-			t.Errorf("Expected %d, received %d", http.StatusNotFound, response.StatusCode)
+		if response.StatusCode != http.StatusOK {
+			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
 			return
 		}
 	}

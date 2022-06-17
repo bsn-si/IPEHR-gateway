@@ -75,7 +75,7 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	r.GET("/:ehrid", a.Ehr.GetById)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
 	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
-	r.GET("/:ehrid/ehr_status", a.EhrStatus.Get)
+	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
 	r.POST("/:ehrid/composition", a.Composition.Create)
 
 	return a

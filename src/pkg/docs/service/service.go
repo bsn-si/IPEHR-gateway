@@ -3,8 +3,6 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-	"time"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
@@ -143,30 +141,6 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 	return docDecrypted, nil
-}
-
-func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.DocsIndex.Get(ehrId)
-	if err != nil {
-		return nil, err
-	}
-
-	t := uint64(nearestTime.UnixNano())
-	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docType {
-			if docIndex.Timestamp <= t {
-				doc = docIndex
-			} else {
-				break
-			}
-		}
-	}
-
-	if doc == nil {
-		err = errors.IsNotExist
-	}
-
-	return doc, err
 }
 
 func (d *DefaultDocumentService) GenerateId() string {

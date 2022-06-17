@@ -6,6 +6,7 @@ import (
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
+	"time"
 )
 
 type DocsIndex struct {
@@ -74,4 +75,28 @@ func (d *DocsIndex) GetLastByType(ehrId string, docType types.DocumentType) (doc
 		return nil, errors.IsNotExist
 	}
 	return doc, nil
+}
+
+func (d *DocsIndex) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+	docIndexes, err := d.Get(ehrId)
+	if err != nil {
+		return nil, err
+	}
+
+	t := uint64(nearestTime.UnixNano())
+	for _, docIndex := range docIndexes {
+		if docIndex.TypeCode == docType {
+			if docIndex.Timestamp <= t {
+				doc = docIndex
+			} else {
+				break
+			}
+		}
+	}
+
+	if doc == nil {
+		err = errors.IsNotExist
+	}
+
+	return doc, err
 }
