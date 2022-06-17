@@ -492,7 +492,7 @@ func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T)
 		}
 
 		// Check document by subject
-		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/?subject_id="+subjectId+"&namespace="+subjectNamespace, nil)
+		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/?subject_id="+subjectId+"&subject_namespace="+subjectNamespace, nil)
 		if err != nil {
 			t.Fatal(err)
 		}

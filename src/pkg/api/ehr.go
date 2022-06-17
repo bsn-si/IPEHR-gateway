@@ -110,6 +110,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        AuthUserId  header    string                  true  "UserId UUID"
+// @Param        Prefer      header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        ehr_id      path      string                  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        Request     body      model.EhrCreateRequest  true  "Query Request"
 // @Success      201         {object}  model.EhrSummary
@@ -246,7 +247,7 @@ func (h EhrHandler) GetById(c *gin.Context) {
 // @Router       /ehr [get]
 func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 	subjectId := c.Query("subject_id")
-	namespace := c.Query("namespace")
+	namespace := c.Query("subject_namespace")
 	if subjectId == "" || namespace == "" {
 		log.Println("Subject data is not filled correctly")
 		c.AbortWithStatus(http.StatusNotFound)
