@@ -47,5 +47,5 @@ The implementation of a full-fledged AQL query interpreter will be done in the f
 
 ## Data access
 
-Access groups are used to limit access to data that can be fetched.
+Access groups are used to limit access to data that can be fetched.  
 A detailed description of the homomorphic data encryption methodology in indexes can be found in section [2. Index design](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_1/2_Index_design)
