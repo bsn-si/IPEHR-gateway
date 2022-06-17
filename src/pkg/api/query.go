@@ -67,5 +67,5 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 	}
 
 	//TODO make real job
-	c.JSON(http.StatusOK, fake_data.QueryExecResponse(queryRequest.Query))
+	c.Data(http.StatusOK, "application/json", fake_data.QueryExecResponse(queryRequest.Query))
 }
