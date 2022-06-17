@@ -12,6 +12,8 @@ When new EHR documents are created, the homomorphically encrypted data they cont
 
 The DataSearch index will be located in a blockchain. The index will be searched using a smart contract.
 
+The index is currently located locally on the IPEHR gateway.
+
 ## AQL
 
 AQL queries are used to search and filter data.
@@ -39,4 +41,9 @@ LIMIT 5
 
 On receipt of a request, the IPEHR gateway interprets the request into a set of conditions, which is used to search the DataSearch index structure and returns the result to the requestor as specific values or as links to documents containing the requested data. 
 
+The implementation of a full-fledged AQL query interpreter will be done in the following steps.
+
+## Data access
+
 Access groups are used to limit access to data that can be fetched.
+A detailed description of the homomorphic data encryption methodology in indexes can be found in section [2. Index design](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_1/2_Index_design)
