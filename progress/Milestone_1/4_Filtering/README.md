@@ -20,6 +20,8 @@ AQL queries are used to search and filter data.
 
 Archetype Query Language (AQL) is a declarative query language developed specifically for expressing queries used for searching and retrieving the clinical data found in archetype-based EHRs.
 
+You can find a detailed description of the AQL specification on the openEHR website: <https://specifications.openehr.org/releases/QUERY/latest/AQL.html>
+
 Query example: Get the latest 5 abnormal blood pressure values that were recorded in a health encounter for a specific patient.
 
 ```
