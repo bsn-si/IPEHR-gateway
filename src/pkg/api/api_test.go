@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -24,10 +25,11 @@ import (
 )
 
 type testData struct {
-	ehrId       string
-	ehrStatusId string
-	testUserId  string
-	testUserId2 string
+	ehrId         string
+	ehrStatusId   string
+	testUserId    string
+	testUserId2   string
+	groupAccessId string
 }
 
 type testWrap struct {
@@ -48,8 +50,8 @@ func Test_API(t *testing.T) {
 	defer tearDown(*testWrap)
 
 	testData := &testData{
-		testUserId:  "11111111-1111-1111-1111-111111111111",
-		testUserId2: "22222222-2222-2222-2222-222222222222",
+		testUserId:  uuid.New().String(),
+		testUserId2: uuid.New().String(),
 	}
 
 	t.Run("EHR creating", testWrap.ehrCreate(testData))
@@ -64,6 +66,9 @@ func Test_API(t *testing.T) {
 	t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData))
 	t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData))
 	t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData))
+	t.Run("Access group create", testWrap.accessGroupCreate(testData))
+	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
+	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
 }
 
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
@@ -120,7 +125,10 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 			t.Errorf("Response body read error: %v", err)
 			return
 		}
-		response.Body.Close()
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if response.StatusCode != http.StatusCreated {
 			t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
@@ -166,7 +174,10 @@ func (testWrap *testWrap) ehrCreateWithId(testData *testData) func(t *testing.T)
 			t.Errorf("Response body read error: %v", err)
 			return
 		}
-		response.Body.Close()
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if response.StatusCode != http.StatusCreated {
 			t.Errorf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
@@ -235,7 +246,10 @@ func (testWrap *testWrap) ehrGetById(testData *testData) func(t *testing.T) {
 			t.Errorf("Response body read error: %v", err)
 			return
 		}
-		response.Body.Close()
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if response.StatusCode != http.StatusOK {
 			t.Errorf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
@@ -278,7 +292,10 @@ func (testWrap *testWrap) ehrStatusGet(testData *testData) func(t *testing.T) {
 			t.Errorf("Response body read error: %v", err)
 			return
 		}
-		response.Body.Close()
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if response.StatusCode != http.StatusOK {
 			t.Errorf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
@@ -322,7 +339,12 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *testData) func(t *
 			return
 		}
 
-		defer response.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+		}(response.Body)
 
 		if response.StatusCode != http.StatusOK {
 			t.Errorf("Expected %d, received %d", http.StatusOK, response.StatusCode)
@@ -643,7 +665,124 @@ func compositionCreateBodyRequest() *bytes.Reader {
 	return bytes.NewReader(req)
 }
 
+func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		description := fake_data.GetRandomStringWithLength(50)
+
+		req := []byte(`{
+			"description": "` + description + `"
+		}`)
+
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/access/group", bytes.NewReader(req))
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected %d, received %d body: %s", http.StatusCreated, response.StatusCode, data)
+		}
+
+		var groupAccess model.GroupAccess
+		if err = json.Unmarshal(data, &groupAccess); err != nil {
+			t.Fatal(err)
+		}
+
+		testData.groupAccessId = groupAccess.GroupId
+	}
+}
+
+func (testWrap *testWrap) wrongAccessGroupGetting(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		groupAccessIdWrong, err := uuid.NewUUID()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/access/group/"+groupAccessIdWrong.String(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusNotFound {
+			t.Fatalf("Expected %d, received %d body: %s", http.StatusNotFound, response.StatusCode, data)
+		}
+	}
+}
+
+func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/access/group/"+testData.groupAccessId, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var groupAccessGot model.GroupAccess
+		if err = json.Unmarshal(data, &groupAccessGot); err != nil {
+			t.Fatal(err)
+		}
+
+		if testData.groupAccessId != groupAccessGot.GroupId {
+			t.Fatal("Got wrong group")
+		}
+	}
+}
+
 func queryExecPostCreateBodyRequest(ehrId string) *bytes.Reader {
 	req := fake_data.QueryExecRequest(ehrId)
 	return bytes.NewReader(req)
+
 }

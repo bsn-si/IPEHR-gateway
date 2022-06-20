@@ -29,6 +29,7 @@ import (
 type API struct {
 	Ehr         *EhrHandler
 	EhrStatus   *EhrStatusHandler
+	GroupAccess *GroupAccessHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
 }
@@ -38,6 +39,7 @@ func New(cfg *config.Config) *API {
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),
+		GroupAccess: NewGroupAccessHandler(docService, cfg),
 		Composition: NewCompositionHandler(docService, cfg),
 		Query:       NewQueryHandler(docService, cfg),
 	}
@@ -52,10 +54,12 @@ func (a *API) Build() *gin.Engine {
 
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")
+	access := v1.Group("access")
 	query := v1.Group("query")
 
 	a.setRedirections(r).
 		buildEhrAPI(ehr).
+		buildGroupAccessAPI(access).
 		buildQueryAPI(query)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -81,10 +85,16 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	return a
 }
 
+func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
+	r.Use(a.Auth)
+	r.GET("/group/:group_id", a.GroupAccess.Get)
+	r.POST("/group", a.GroupAccess.Create)
+	return a
+}
+
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 	r.Use(a.Auth)
 	r.POST("/aql", a.Query.ExecPost)
-
 	return a
 }
 

@@ -153,14 +153,13 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	}
 
 	status, err := h.GetStatusByNearestTime(userId, ehrId, statusTime, types.EHR_STATUS)
-
-	marshalJson, _ := h.MarshalJson(status)
-
-	if err != nil {
-		//TODO logging
+  if err != nil {
+		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+
+	marshalJson, _ := h.MarshalJson(status)
 
 	c.Data(http.StatusOK, "application/json", marshalJson)
 }
