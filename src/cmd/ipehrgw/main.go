@@ -20,8 +20,7 @@ func main() {
 	)
 	flag.Parse()
 
-	cfg := config.New(*cfgPath)
-	err := cfg.Reload()
+	cfg, err := config.New(*cfgPath)
 	if err != nil {
 		panic(err)
 	}
