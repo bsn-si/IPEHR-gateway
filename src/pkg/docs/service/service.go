@@ -2,8 +2,7 @@ package service
 
 import (
 	"encoding/hex"
-	"fmt"	
-	"time"
+	"fmt"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
@@ -16,7 +15,7 @@ import (
 	"hms/gateway/pkg/indexer/service/doc_access"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
-  "hms/gateway/pkg/indexer/service/group_access"
+	"hms/gateway/pkg/indexer/service/group_access"
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
