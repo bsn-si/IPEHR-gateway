@@ -75,9 +75,7 @@ func Test_API(t *testing.T) {
 }
 
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
-	cfgPath := "../../../config.json.example"
-	cfg := config.New(cfgPath)
-	err := cfg.Reload()
+	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)
 	}
