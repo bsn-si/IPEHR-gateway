@@ -2,8 +2,7 @@ package service
 
 import (
 	"encoding/hex"
-	"fmt"
-	"hms/gateway/pkg/indexer/service/group_access"
+	"fmt"	
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +16,7 @@ import (
 	"hms/gateway/pkg/indexer/service/doc_access"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
+  "hms/gateway/pkg/indexer/service/group_access"
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
@@ -146,30 +146,6 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 	return docDecrypted, nil
-}
-
-func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.DocsIndex.Get(ehrId)
-	if err != nil {
-		return nil, err
-	}
-
-	t := uint64(nearestTime.UnixNano())
-	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docType {
-			if docIndex.Timestamp <= t {
-				doc = docIndex
-			} else {
-				break
-			}
-		}
-	}
-
-	if doc == nil {
-		err = errors.IsNotExist
-	}
-
-	return doc, err
 }
 
 func (d *DefaultDocumentService) GenerateId() string {

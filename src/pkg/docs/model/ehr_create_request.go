@@ -8,7 +8,7 @@ type EhrCreateRequest struct {
 	} `json:"name"`
 	Subject struct {
 		ExternalRef ExternalRef `json:"external_ref"`
-	}
+	} `json:"subject"`
 	IsModifiable bool `json:"isModifiable"`
 	IsQueryable  bool `json:"isQueryable"`
 }

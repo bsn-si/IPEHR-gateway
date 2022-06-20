@@ -210,6 +210,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "The new EHR resource is returned in the body when the request’s ` + "`" + `Prefer` + "`" + ` header value is ` + "`" + `return=representation` + "`" + `, otherwise only headers are returned.",
+                        "name": "Prefer",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "ehr_id",
                         "in": "path",
@@ -288,6 +295,15 @@ const docTemplate = `{
                         "name": "Prefer",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "description": "COMPOSITION",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Composition"
+                        }
                     }
                 ],
                 "responses": {
@@ -377,7 +393,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates EHR_STATUS associated with the EHR identified by ` + "`" + `ehr_id` + "`" + `. The existing latest ` + "`" + `version_uid` + "`" + ` of EHR_STATUS resource (i.e. the ` + "`" + `preceding_version_uid` + "`" + `) must be specified in the ` + "`" + `If-Match` + "`" + ` header. The response will contain the updated EHR_STATUS resource when the ` + "`" + `Prefer` + "`" + ` header has a value of ` + "`" + `return=representation` + "`" + `",
+                "description": "Updates EHR_STATUS associated with the EHR identified by ` + "`" + `ehr_id` + "`" + `.",
                 "consumes": [
                     "application/json"
                 ],
@@ -400,6 +416,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The existing latest ` + "`" + `version_uid` + "`" + ` of EHR_STATUS resource (i.e. the ` + "`" + `preceding_version_uid` + "`" + `) must be specified.",
+                        "name": "If-Match",
                         "in": "header",
                         "required": true
                     },
@@ -1186,7 +1209,18 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "scheme": {
+                            "type": "string"
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
                 },
                 "namespace": {
                     "type": "string"

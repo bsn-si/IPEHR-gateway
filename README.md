@@ -14,8 +14,10 @@ Today common HMS applications store patients’ data in a local or a cloud DB wh
 -	In case of a data breach full registry will be compromised.
 
 The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of storing the data registry. Patients’ data will be stored in Filecoin network and will be accessed directly by stakeholders in case they have proper rights. Access rights and documents’ indexes will be stored on a blockchain in a smart-contract. Every data subject will have full unalienable control over his data and manage access rights on a personal level.
-
-![image](https://user-images.githubusercontent.com/98888366/170699014-2ff3cec6-913b-4b4f-85f0-63899382ff24.png)
+ 
+<p align="center">
+  <img width="75%" src="https://user-images.githubusercontent.com/8058268/174096015-89aad056-d507-4ea5-8d00-bfef29c4a548.svg">
+</p>
 
 ### Key features of the IPEHR solution:
 
@@ -39,7 +41,9 @@ The solution is being developed with 7 milestones:
 
 On Milestone 1 we develop the IPEHR-gateway to provide benefits of decentralized architecture to common HMS solutions using standard APIs.
  
-![image](https://user-images.githubusercontent.com/98888366/170698968-56ee7efe-e882-4236-b170-e9680ea12135.png)
+<p align="center">
+  <img width="75%" src="https://user-images.githubusercontent.com/98888366/170698968-56ee7efe-e882-4236-b170-e9680ea12135.png">
+</p>
 
 ### IPEHR-gateway features:
 

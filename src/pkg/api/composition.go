@@ -35,9 +35,10 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *conf
 // @Tags     COMPOSITION
 // @Accept   json
 // @Produce  json
-// @Param    ehr_id      path      string  true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param    AuthUserId  header    string  true  "UserId UUID"
-// @Param    Prefer      header    string  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param    ehr_id      path      string             true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param    AuthUserId  header    string             true  "UserId UUID"
+// @Param    Prefer      header    string             true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param    Request     body      model.Composition  true  "COMPOSITION"
 // @Success  201         {object}  model.Composition
 // @Header   201         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 // @Header   201         {string}  ETag      "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"

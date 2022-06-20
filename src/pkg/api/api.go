@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -33,8 +32,6 @@ type API struct {
 	GroupAccess *GroupAccessHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
-
-	fs http.FileSystem
 }
 
 func New(cfg *config.Config) *API {
@@ -52,16 +49,7 @@ func (a *API) Build() *gin.Engine {
 	r := gin.New()
 
 	r.NoRoute(func(c *gin.Context) {
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if p := strings.TrimPrefix(r.URL.Path, "/v1"); len(p) < len(r.URL.Path) {
-				if p == "/" || p == "" {
-					c.Header("Cache-Control", "no-store, max-age=0")
-				}
-				c.FileFromFS(p, a.fs)
-			} else {
-				http.NotFound(w, r)
-			}
-		}).ServeHTTP(c.Writer, c.Request)
+		c.AbortWithStatus(404)
 	})
 
 	v1 := r.Group("v1")
@@ -85,13 +73,13 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 
 	// Other methods should be authorized
 	r.Use(a.Auth)
-	r.POST("/", a.Ehr.Create)
-	r.GET("/", a.Ehr.GetBySubjectIdAndNamespace)
+	r.POST("", a.Ehr.Create)
+	r.GET("", a.Ehr.GetBySubjectIdAndNamespace)
 	r.PUT("/:ehrid", a.Ehr.CreateWithId)
 	r.GET("/:ehrid", a.Ehr.GetById)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
 	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
-	r.GET("/:ehrid/ehr_status", a.EhrStatus.Get)
+	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
 	r.POST("/:ehrid/composition", a.Composition.Create)
 
 	return a

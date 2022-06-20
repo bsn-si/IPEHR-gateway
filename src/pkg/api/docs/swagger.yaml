@@ -340,7 +340,14 @@ definitions:
   model.ExternalRef:
     properties:
       id:
-        type: string
+        properties:
+          _type:
+            type: string
+          scheme:
+            type: string
+          value:
+            type: string
+        type: object
       namespace:
         type: string
       scheme:
@@ -565,6 +572,13 @@ paths:
         name: AuthUserId
         required: true
         type: string
+      - description: The new EHR resource is returned in the body when the request’s
+          `Prefer` header value is `return=representation`, otherwise only headers
+          are returned.
+        in: header
+        name: Prefer
+        required: true
+        type: string
       - description: 'An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
         in: path
         name: ehr_id
@@ -628,6 +642,12 @@ paths:
         name: Prefer
         required: true
         type: string
+      - description: COMPOSITION
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.Composition'
       produces:
       - application/json
       responses:
@@ -703,9 +723,6 @@ paths:
       consumes:
       - application/json
       description: Updates EHR_STATUS associated with the EHR identified by `ehr_id`.
-        The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`)
-        must be specified in the `If-Match` header. The response will contain the
-        updated EHR_STATUS resource when the `Prefer` header has a value of `return=representation`
       parameters:
       - description: 'EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
         in: path
@@ -715,6 +732,12 @@ paths:
       - description: UserId UUID
         in: header
         name: AuthUserId
+        required: true
+        type: string
+      - description: The existing latest `version_uid` of EHR_STATUS resource (i.e.
+          the `preceding_version_uid`) must be specified.
+        in: header
+        name: If-Match
         required: true
         type: string
       - description: Updated resource is returned in the body when the request’s `Prefer`
