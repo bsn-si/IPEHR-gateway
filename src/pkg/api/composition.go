@@ -18,12 +18,12 @@ import (
 )
 
 type CompositionHandler struct {
-	service *composition.CompositionService
+	*composition.CompositionService
 }
 
 func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionHandler {
 	return &CompositionHandler{
-		service: composition.NewCompositionService(docService, cfg),
+		composition.NewCompositionService(docService, cfg),
 	}
 }
 
@@ -38,8 +38,8 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *conf
 // @Param    ehr_id      path      string             true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    AuthUserId  header    string             true  "UserId UUID"
 // @Param    Prefer      header    string             true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param    Request     body      model.Composition  true  "COMPOSITION"
-// @Success  201         {object}  model.Composition
+// @Param    Request     body      model.SwagComposition  true  "COMPOSITION"
+// @Success  201         {object}  model.SwagComposition
 // @Header   201         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 // @Header   201         {string}  ETag      "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 // @Failure  400         "Is returned when the request has invalid ehr_id or invalid content (e.g. content could not be converted to a valid COMPOSITION object)"
@@ -49,7 +49,7 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *conf
 // @Router   /ehr/{ehr_id}/composition [post]
 func (h CompositionHandler) Create(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -70,6 +70,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 	var request model.Composition
 
 	if err = json.Unmarshal(data, &request); err != nil {
+		log.Println("Composition Create request unmarshal error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
 	}
@@ -86,14 +87,14 @@ func (h CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err = h.service.Doc.EhrsIndex.Get(userId)
+	_, err = h.Doc.EhrsIndex.Get(userId)
 	if errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(userId, ehrId, &request)
+	doc, err := h.CompositionCreate(userId, ehrId, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -104,7 +105,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
 	uid := doc.Uid.Value
-	c.Header("Location", h.service.Cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
+	c.Header("Location", h.Cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
 	c.Header("ETag", uid)
 
 	prefer := c.Request.Header.Get("Prefer")

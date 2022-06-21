@@ -23,7 +23,8 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      gateway.ipehr.org
+// host      gateway.ipehr.org
+// @host     localhost:8080
 // @BasePath  /v1
 
 type API struct {
