@@ -124,7 +124,7 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	versionUid := c.Param("versionid")
+	versionUid := c.Param("version_uid")
 	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
@@ -149,7 +149,12 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
-	marshalJson, _ := h.service.MarshalJson(data)
+
+	marshalJson, err := h.service.MarshalJson(data)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+	}
 
 	c.Data(http.StatusOK, "application/json", marshalJson)
 }

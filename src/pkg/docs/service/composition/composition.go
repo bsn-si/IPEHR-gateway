@@ -139,14 +139,8 @@ func (s CompositionService) GetById(userId, ehrId string, uid string) (compositi
 func (s *CompositionService) getCompositionFromStorage(userId, ehrId string, documentMeta *model.DocumentMeta) (composition *model.Composition, err error) {
 
 	encryptedData, err := s.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(ehrId))
-	if err != nil {
-		log.Println("Can't get encrypted doc", err)
-	}
-
-	composition, err = s.ParseJson(encryptedData)
-
-	if err != nil {
-		return
+	if err == nil {
+		composition, err = s.ParseJson(encryptedData)
 	}
 
 	return

@@ -613,7 +613,6 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 		if err != nil {
 			t.Fatal(err)
 		}
-		log.Println(data)
 
 		var c model.Composition
 		if err = json.Unmarshal(data, &c); err != nil {
@@ -629,22 +628,19 @@ func (testWrap *testWrap) compositionGetById(testData *testData) func(t *testing
 	return func(t *testing.T) {
 		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+testData.compositionId, nil)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserId)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			t.Errorf("Response body read error: %v", err)
-			return
+			t.Fatalf("Response body read error: %v", err)
 		}
 		err = response.Body.Close()
 		if err != nil {
@@ -652,14 +648,16 @@ func (testWrap *testWrap) compositionGetById(testData *testData) func(t *testing
 		}
 
 		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
-			return
+			t.Fatalf("Expected status: %v, received %v", http.StatusOK, response.StatusCode)
 		}
 
-		var ehr model.EHR
-		if err = json.Unmarshal(data, &ehr); err != nil {
-			t.Error(err)
-			return
+		var composition model.Composition
+		if err = json.Unmarshal(data, &composition); err != nil {
+			t.Fatal(err)
+		}
+
+		if composition.Uid.Value != testData.compositionId {
+			t.Fatalf("Expected %s, received %s", composition.Uid.Value, testData.compositionId)
 		}
 	}
 }
@@ -669,21 +667,18 @@ func (testWrap *testWrap) compositionGetByWrongId(testData *testData) func(t *te
 		wrongCompositionId := uuid.New().String() + "::openEHRSys.example.com::1"
 		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+wrongCompositionId, nil)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserId)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
 		if response.StatusCode != http.StatusNotFound {
-			t.Errorf("Expected status %d, received %d", http.StatusNotFound, response.StatusCode)
-			return
+			t.Fatalf("Expected status %d, received %d", http.StatusNotFound, response.StatusCode)
 		}
 	}
 }
