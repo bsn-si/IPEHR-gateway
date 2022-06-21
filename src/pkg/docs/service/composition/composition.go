@@ -89,7 +89,7 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 	return nil
 }
 
-func (s CompositionService) GetById(userId, ehrId string, uid string) (composition *model.Composition, err error) {
+func (s CompositionService) GetCompositionById(userId, ehrId string, uid string) (composition *model.Composition, err error) {
 
 	statuses, err := s.Doc.DocsIndex.GetByType(ehrId, types.COMPOSITION)
 	if err != nil {

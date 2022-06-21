@@ -106,13 +106,15 @@ func (h CompositionHandler) Create(c *gin.Context) {
 // GetById
 // @Summary      Get COMPOSITION by version id
 // @Description  Retrieves a particular version of the COMPOSITION identified by `version_uid` and associated with the EHR identified by `ehr_id`.
-// @Tags         EHR_STATUS
+// @Description
+// @Tags         COMPOSITION
 // @Accept       json
 // @Produce      json
 // @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid  path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 // @Param        AuthUserId   header    string  true  "UserId UUID"
-// @Success      200          {object}  model.EhrStatusUpdate
+// @Param        Request      body      model.SwagComposition  true  "COMPOSITION"
+// @Success      200          {object}  model.SwagComposition
 // @Failure      204          "Is returned when the COMPOSITION is deleted (logically)."
 // @Failure      400          "Is returned when AuthUserId is not specified"
 // @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an COMPOSITION with `version_uid` does not exist."
@@ -120,13 +122,13 @@ func (h CompositionHandler) Create(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/composition/{version_uid} [get]
 func (h CompositionHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	versionUid := c.Param("version_uid")
-	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+	if h.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -139,19 +141,19 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err := h.service.Doc.EhrsIndex.Get(userId)
+	_, err := h.Doc.EhrsIndex.Get(userId)
 	if errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	data, err := h.service.GetById(userId, ehrId, versionUid)
+	data, err := h.GetCompositionById(userId, ehrId, versionUid)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	marshalJson, err := h.service.MarshalJson(data)
+	marshalJson, err := h.MarshalJson(data)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
