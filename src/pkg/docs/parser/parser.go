@@ -2,8 +2,7 @@ package parser
 
 import (
 	"encoding/json"
-	"log"
-	"strings"
+	"fmt"
 
 	"hms/gateway/pkg/docs/model"
 )
@@ -14,40 +13,48 @@ func ParseDocument(inDocument []byte) (doc model.EHR, err error) {
 }
 
 type DataEntry struct {
-	_type  string
-	nodeId string
-	name   string
-	value  map[string]interface{}
+	Type   string
+	NodeId string
+	Name   string
+	Value  map[string]interface{}
 }
 
 type Node struct {
-	_type  string
-	nodeId string
-	next   map[string]*Node
-	items  *[]DataEntry
+	Type   string
+	NodeId string
+	Next   map[string]*Node
+	Items  *[]DataEntry
 }
 
 func NewNode(_type, nodeId string) *Node {
 	return &Node{
-		_type:  _type,
-		nodeId: nodeId,
-		next:   make(map[string]*Node),
+		Type:   _type,
+		NodeId: nodeId,
+		Next:   make(map[string]*Node),
 	}
 }
 
 func (x *Node) Dump(level int) {
-	log.Println(strings.Repeat("\t", level), x._type, x.nodeId)
-	if x.items != nil {
-		for _, item := range *x.items {
-			log.Println(strings.Repeat("\t", level), item)
+	/*
+		log.Println(strings.Repeat("\t", level), x._type, x.nodeId)
+		if x.items != nil {
+			for _, item := range *x.items {
+				log.Println(strings.Repeat("\t", level), item)
+			}
 		}
+		for k, v := range x.next {
+			//if level == 0 {
+			log.Println(strings.Repeat("\t", level), k, ":")
+			//}
+			v.Dump(level + 1)
+		}
+	*/
+	data, err := json.MarshalIndent(x, "", "    ")
+	if err != nil {
+		fmt.Println(err)
 	}
-	for k, v := range x.next {
-		//if level == 0 {
-		log.Println(strings.Repeat("\t", level), k, ":")
-		//}
-		v.Dump(level + 1)
-	}
+	fmt.Println(string(data))
+
 }
 
 func ParseComposition(inComposition []byte) (composition model.Composition, err error) {
@@ -61,7 +68,7 @@ func ParseComposition(inComposition []byte) (composition model.Composition, err 
 	content := composition.Content
 
 	x := &Node{
-		next: make(map[string]*Node),
+		Next: make(map[string]*Node),
 	}
 	iterate(content, x)
 
@@ -81,10 +88,10 @@ func iterate(items interface{}, node *Node) {
 		case "SECTION":
 			iterate(item["items"].([]interface{}), node)
 		case "EVALUATION", "OBSERVATION", "INSTRUCTION":
-			if node.next[_type] == nil {
-				node.next[_type] = NewNode(_type, nodeId)
+			if node.Next[_type] == nil {
+				node.Next[_type] = NewNode(_type, nodeId)
 			}
-			nodeType := node.next[_type]
+			nodeType := node.Next[_type]
 			for _, key := range []string{"data", "protocol"} {
 				if item[key] == nil {
 					continue
@@ -94,48 +101,48 @@ func iterate(items interface{}, node *Node) {
 				itemsKeyType := itemsKey["_type"].(string)
 				itemsKeyNodeId := itemsKey["archetype_node_id"].(string)
 
-				if nodeType.next[key] == nil {
-					nodeType.next[key] = NewNode(itemsKeyType, itemsKeyNodeId)
+				if nodeType.Next[key] == nil {
+					nodeType.Next[key] = NewNode(itemsKeyType, itemsKeyNodeId)
 				}
-				nodeCurrent := nodeType.next[key]
+				nodeCurrent := nodeType.Next[key]
 
-				if nodeCurrent.next[itemsKeyNodeId] == nil {
-					nodeCurrent.next[itemsKeyNodeId] = NewNode(itemsKeyType, itemsKeyNodeId)
+				if nodeCurrent.Next[itemsKeyNodeId] == nil {
+					nodeCurrent.Next[itemsKeyNodeId] = NewNode(itemsKeyType, itemsKeyNodeId)
 				}
-				nodeCurrent = nodeCurrent.next[itemsKeyNodeId]
+				nodeCurrent = nodeCurrent.Next[itemsKeyNodeId]
 
 				if itemsKey["items"] != nil {
-					if nodeCurrent.next["items"] == nil {
-						nodeCurrent.next["items"] = NewNode("items", "")
+					if nodeCurrent.Next["items"] == nil {
+						nodeCurrent.Next["items"] = NewNode("items", "")
 					}
-					nodeCurrent = nodeCurrent.next["items"]
+					nodeCurrent = nodeCurrent.Next["items"]
 					iterate(itemsKey["items"].([]interface{}), nodeCurrent)
 				}
 
 				if itemsKey["events"] != nil {
-					if nodeCurrent.next["events"] == nil {
-						nodeCurrent.next["events"] = NewNode("events", "")
+					if nodeCurrent.Next["events"] == nil {
+						nodeCurrent.Next["events"] = NewNode("events", "")
 					}
-					nodeCurrent = nodeCurrent.next["events"]
+					nodeCurrent = nodeCurrent.Next["events"]
 					iterate(itemsKey["events"].([]interface{}), nodeCurrent)
 				}
 			}
 
 			if item["activities"] != nil {
-				if nodeType.next["activities"] == nil {
-					nodeType.next["activities"] = NewNode("activities", "")
+				if nodeType.Next["activities"] == nil {
+					nodeType.Next["activities"] = NewNode("activities", "")
 				}
-				nodeCurrent := nodeType.next["activities"]
+				nodeCurrent := nodeType.Next["activities"]
 				iterate(item["activities"].([]interface{}), nodeCurrent)
 			}
 		case "ACTION":
-			if node.next["ACTION"] == nil {
-				node.next["ACTION"] = NewNode("ACTION", nodeId)
+			if node.Next["ACTION"] == nil {
+				node.Next["ACTION"] = NewNode("ACTION", nodeId)
 			}
-			nodeCurrent := node.next["ACTION"]
+			nodeCurrent := node.Next["ACTION"]
 
-			if nodeCurrent.next[nodeId] == nil {
-				nodeCurrent.next[nodeId] = NewNode(_type, nodeId)
+			if nodeCurrent.Next[nodeId] == nil {
+				nodeCurrent.Next[nodeId] = NewNode(_type, nodeId)
 			}
 
 			for _, key := range []string{"protocol", "description"} {
@@ -145,62 +152,62 @@ func iterate(items interface{}, node *Node) {
 				itemsKey := item[key].(map[string]interface{})
 				itemsKeyType := itemsKey["_type"].(string)
 				itemsKeyNodeId := itemsKey["archetype_node_id"].(string)
-				if nodeCurrent.next[key] == nil {
-					nodeCurrent.next[key] = NewNode(itemsKeyType, itemsKeyNodeId)
+				if nodeCurrent.Next[key] == nil {
+					nodeCurrent.Next[key] = NewNode(itemsKeyType, itemsKeyNodeId)
 				}
-				nodeCurrent = nodeCurrent.next[key]
+				nodeCurrent = nodeCurrent.Next[key]
 
-				if nodeCurrent.next[itemsKeyNodeId] == nil {
-					nodeCurrent.next[itemsKeyNodeId] = NewNode(itemsKeyType, itemsKeyNodeId)
+				if nodeCurrent.Next[itemsKeyNodeId] == nil {
+					nodeCurrent.Next[itemsKeyNodeId] = NewNode(itemsKeyType, itemsKeyNodeId)
 				}
-				nodeCurrent = nodeCurrent.next[itemsKeyNodeId]
+				nodeCurrent = nodeCurrent.Next[itemsKeyNodeId]
 
 				iterate(itemsKey["items"].([]interface{}), nodeCurrent)
 			}
 		case "CLUSTER":
-			if node.next["CLUSTER"] == nil {
-				node.next["CLUSTER"] = NewNode("CLUSTER", nodeId)
+			if node.Next["CLUSTER"] == nil {
+				node.Next["CLUSTER"] = NewNode("CLUSTER", nodeId)
 			}
-			nodeCluster := node.next["CLUSTER"]
+			nodeCluster := node.Next["CLUSTER"]
 
-			if nodeCluster.next[nodeId] == nil {
-				nodeCluster.next[nodeId] = NewNode(_type, nodeId)
+			if nodeCluster.Next[nodeId] == nil {
+				nodeCluster.Next[nodeId] = NewNode(_type, nodeId)
 			}
-			iterate(item["items"].([]interface{}), nodeCluster.next[nodeId])
+			iterate(item["items"].([]interface{}), nodeCluster.Next[nodeId])
 		case "ACTIVITY":
 			itemsDescription := item["description"].(map[string]interface{})
 			itemsDescriptionType := itemsDescription["_type"].(string)
 			itemsDescriptionNodeId := itemsDescription["archetype_node_id"].(string)
-			if node.next["description"] == nil {
-				node.next["description"] = NewNode("description", itemsDescriptionNodeId)
+			if node.Next["description"] == nil {
+				node.Next["description"] = NewNode("description", itemsDescriptionNodeId)
 			}
-			nodeCurrent := node.next["description"]
+			nodeCurrent := node.Next["description"]
 
-			if nodeCurrent.next[itemsDescriptionNodeId] == nil {
-				nodeCurrent.next[itemsDescriptionNodeId] = NewNode(itemsDescriptionType, itemsDescriptionNodeId)
+			if nodeCurrent.Next[itemsDescriptionNodeId] == nil {
+				nodeCurrent.Next[itemsDescriptionNodeId] = NewNode(itemsDescriptionType, itemsDescriptionNodeId)
 			}
-			nodeCurrent = nodeCurrent.next[itemsDescriptionNodeId]
+			nodeCurrent = nodeCurrent.Next[itemsDescriptionNodeId]
 			iterate(itemsDescription["items"].([]interface{}), nodeCurrent)
 		case "POINT_EVENT":
 			itemsData := item["data"].(map[string]interface{})
 			itemsDataType := itemsData["_type"].(string)
 			itemsDataNodeId := itemsData["archetype_node_id"].(string)
-			if node.next["data"] == nil {
-				node.next["data"] = NewNode("data", itemsDataNodeId)
+			if node.Next["data"] == nil {
+				node.Next["data"] = NewNode("data", itemsDataNodeId)
 			}
-			nodeData := node.next["data"]
+			nodeData := node.Next["data"]
 
-			if nodeData.next[itemsDataNodeId] == nil {
-				nodeData.next[itemsDataNodeId] = NewNode(itemsDataType, itemsDataNodeId)
+			if nodeData.Next[itemsDataNodeId] == nil {
+				nodeData.Next[itemsDataNodeId] = NewNode(itemsDataType, itemsDataNodeId)
 			}
-			iterate(itemsData["items"].([]interface{}), nodeData.next[itemsDataNodeId])
+			iterate(itemsData["items"].([]interface{}), nodeData.Next[itemsDataNodeId])
 		case "ITEM_TREE":
 			iterate(item["items"].([]interface{}), node)
 		case "HISTORY":
 			iterate(item["events"].([]interface{}), node)
 		case "ELEMENT":
-			if node.items == nil {
-				node.items = &[]DataEntry{}
+			if node.Items == nil {
+				node.Items = &[]DataEntry{}
 			}
 			itemValue := item["value"].(map[string]interface{})
 			itemName := item["name"].(map[string]interface{})
@@ -260,11 +267,11 @@ func iterate(items interface{}, node *Node) {
 			}
 			//log.Println(valueType)
 			value["_type"] = valueType
-			*node.items = append(*node.items, DataEntry{
-				_type:  _type,
-				nodeId: nodeId,
-				name:   itemName["value"].(string),
-				value:  value,
+			*node.Items = append(*node.Items, DataEntry{
+				Type:   _type,
+				NodeId: nodeId,
+				Name:   itemName["value"].(string),
+				Value:  value,
 			})
 		}
 	}
