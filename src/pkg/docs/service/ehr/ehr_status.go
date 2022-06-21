@@ -97,7 +97,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 		TypeCode:       types.EHR_STATUS,
 		StorageId:      statusStorageId,
 		DocIdEncrypted: statusIdEncrypted,
-		Timestamp:      uint64(time.Now().UnixNano()),
+		Timestamp:      uint64(time.Now().Unix()),
 	}
 	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
 		return err
