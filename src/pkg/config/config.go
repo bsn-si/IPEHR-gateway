@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"hms/gateway/pkg/common/utils"
@@ -9,11 +8,10 @@ import (
 )
 
 type Config struct {
-	BaseUrl        string `json:"baseUrl"`
-	DataPath       string `json:"dataPath"`
-	Host           string `json:"host"`
-	KeystoreKeyStr string `json:"keystoreKey"`
-	KeystoreKey    []byte
+	BaseUrl     string `json:"baseUrl"`
+	DataPath    string `json:"dataPath"`
+	Host        string `json:"host"`
+	KeystoreKey string `json:"keystoreKey"`
 
 	path string
 }
@@ -75,20 +73,6 @@ func (c *Config) load() (err error) {
 	if err != nil {
 		return
 	}
-
-	err = c.prepareKeystoreKey()
-
-	return
-}
-
-// Make []byte key in KeystoreKey field from string in source configuration file
-func (c *Config) prepareKeystoreKey() (err error) {
-	keyByte, err := hex.DecodeString(c.KeystoreKeyStr)
-	if err != nil {
-		return
-	}
-
-	c.KeystoreKey = keyByte
 
 	return
 }

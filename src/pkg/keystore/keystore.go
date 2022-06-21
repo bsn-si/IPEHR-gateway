@@ -3,6 +3,7 @@ package keystore
 
 import (
 	cryptoRand "crypto/rand"
+	"encoding/hex"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/errors"
@@ -13,8 +14,8 @@ import (
 )
 
 type KeyStore struct {
-	storage storage.Storager
-	cfg     *config.Config
+	storage     storage.Storager
+	keystoreKey []byte
 }
 
 func New() *KeyStore {
@@ -23,9 +24,14 @@ func New() *KeyStore {
 		return nil
 	}
 
+	keyByte, err := hex.DecodeString(cfg.KeystoreKey)
+	if err != nil {
+		return nil
+	}
+
 	return &KeyStore{
-		storage: storage.Init(),
-		cfg:     cfg,
+		storage:     storage.Init(),
+		keystoreKey: keyByte,
 	}
 }
 
@@ -91,7 +97,7 @@ func (k *KeyStore) storeId(userId string) *[32]byte {
 }
 
 func (k *KeyStore) encryptUserKeys(keysDecrypted *[]byte) (keysEncrypted []byte, err error) {
-	key, err := chacha_poly.NewKeyFromBytes(k.cfg.KeystoreKey)
+	key, err := chacha_poly.NewKeyFromBytes(k.keystoreKey)
 	if err != nil {
 		return
 	}
@@ -102,7 +108,7 @@ func (k *KeyStore) encryptUserKeys(keysDecrypted *[]byte) (keysEncrypted []byte,
 }
 
 func (k *KeyStore) decryptUserKeys(keysEncrypted *[]byte) (keysDecrypted []byte, err error) {
-	key, err := chacha_poly.NewKeyFromBytes(k.cfg.KeystoreKey)
+	key, err := chacha_poly.NewKeyFromBytes(k.keystoreKey)
 	if err != nil {
 		return
 	}
