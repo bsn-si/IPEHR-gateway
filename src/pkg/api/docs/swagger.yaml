@@ -1,0 +1,820 @@
+basePath: /v1
+definitions:
+  Composition:
+    properties:
+      _type:
+        type: string
+      archetype_details:
+        properties:
+          _type:
+            type: string
+          archetype_id:
+            properties:
+              value:
+                type: string
+            type: object
+          rm_version:
+            type: string
+          template_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      archetype_node_id:
+        type: string
+      category:
+        properties:
+          defining_code:
+            properties:
+              code_string:
+                type: string
+              preferred_term:
+                type: string
+              terminology_id:
+                properties:
+                  value:
+                    type: string
+                type: object
+            type: object
+          value:
+            type: string
+        type: object
+      composer:
+        properties:
+          _type:
+            type: string
+          external_ref:
+            properties:
+              id:
+                properties:
+                  _type:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              namespace:
+                type: string
+              type:
+                type: string
+            type: object
+          name:
+            type: string
+        type: object
+      content:
+        items: {}
+        type: array
+      context:
+        properties:
+          setting:
+            properties:
+              defining_code:
+                properties:
+                  code_string:
+                    type: string
+                  preferred_term:
+                    type: string
+                  terminology_id:
+                    properties:
+                      value:
+                        type: string
+                    type: object
+                type: object
+              value:
+                type: string
+            type: object
+          start_time:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      language:
+        properties:
+          code_string:
+            type: string
+          preferred_term:
+            type: string
+          terminology_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      name:
+        properties:
+          value:
+            type: string
+        type: object
+      territory:
+        properties:
+          code_string:
+            type: string
+          preferred_term:
+            type: string
+          terminology_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      uid:
+        properties:
+          _type:
+            type: string
+          value:
+            type: string
+        type: object
+    type: object
+  model.EhrCreateRequest:
+    properties:
+      _type:
+        type: string
+      archetype_node_id:
+        type: string
+      isModifiable:
+        type: boolean
+      isQueryable:
+        type: boolean
+      name:
+        properties:
+          value:
+            type: string
+        type: object
+      subject:
+        properties:
+          external_ref:
+            $ref: '#/definitions/model.ExternalRef'
+        type: object
+    type: object
+  model.EhrStatusUpdate:
+    properties:
+      _type:
+        type: string
+      archetype_node_id:
+        type: string
+      is_modifiable:
+        type: boolean
+      is_queryable:
+        type: boolean
+      name:
+        properties:
+          value:
+            type: string
+        type: object
+      other_details:
+        properties:
+          _type:
+            type: string
+          archetype_node_id:
+            type: string
+          items:
+            items: {}
+            type: array
+          name:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      subject:
+        properties:
+          external_ref:
+            $ref: '#/definitions/model.ExternalRef'
+        type: object
+      uid:
+        properties:
+          _type:
+            type: string
+          value:
+            type: string
+        type: object
+    type: object
+  model.EhrSummary:
+    properties:
+      ehr_access:
+        properties:
+          id:
+            type: string
+          namespace:
+            type: string
+          type:
+            type: string
+        type: object
+      ehr_id:
+        type: string
+      ehr_status:
+        properties:
+          id:
+            type: string
+          namespace:
+            type: string
+          type:
+            type: string
+        type: object
+      system_id:
+        type: string
+      time_created:
+        properties:
+          value:
+            type: string
+        type: object
+    type: object
+  model.ExternalRef:
+    properties:
+      id:
+        properties:
+          _type:
+            type: string
+          scheme:
+            type: string
+          value:
+            type: string
+        type: object
+      namespace:
+        type: string
+      scheme:
+        type: string
+      type:
+        type: string
+    type: object
+  model.GroupAccess:
+    properties:
+      description:
+        type: string
+      group_id:
+        type: string
+    type: object
+  model.GroupAccessCreateRequest:
+    properties:
+      description:
+        type: string
+    type: object
+  model.QueryRequest:
+    properties:
+      fetch:
+        type: integer
+      offset:
+        type: integer
+      q:
+        type: string
+      query_parameters:
+        additionalProperties: true
+        type: object
+    type: object
+  model.QueryResponse:
+    properties:
+      columns:
+        items:
+          properties:
+            name:
+              type: string
+            path:
+              type: string
+          type: object
+        type: array
+      meta:
+        properties:
+          _created:
+            type: string
+          _executed_aql:
+            type: string
+          _generator:
+            type: string
+          _href:
+            type: string
+          _schema_version:
+            type: string
+          _type:
+            type: string
+        type: object
+      name:
+        type: string
+      q:
+        type: string
+      rows:
+        items: {}
+        type: array
+    type: object
+host: gateway.ipehr.org
+info:
+  contact:
+    email: support@bsn.si
+    name: API Support
+    url: https://bsn.si/blockchain
+  description: The IPEHR Gateway is an openEHR compliant EHR server implementation
+    that stores encrypted medical data in a Filecoin distributed file storage.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: IPEHR Gateway API
+  version: "0.1"
+paths:
+  /ehr:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Retrieve the EHR with the specified subject_id and subject_namespace.
+        These subject parameters will be matched against EHR’s
+        EHR_STATUS.subject.external_ref.id.value and EHR_STATUS.subject.external_ref.namespace values.
+      parameters:
+      - description: 'subject id. Example: ins01'
+        in: query
+        name: subject_id
+        required: true
+        type: string
+      - description: 'id namespace. Example: examples'
+        in: query
+        name: subject_namespace
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.EhrSummary'
+        "400":
+          description: Is returned when userId is empty
+        "404":
+          description: Is returned when an EHR with ehr_id does not exist.
+      summary: Get EHR summary by subject id
+      tags:
+      - EHR
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Create a new EHR with an auto-generated identifier.
+        An EHR_STATUS resource needs to be always created and committed in the new EHR. This resource MAY be also supplied by the client as the request body. If not supplied, a default EHR_STATUS will be used by the service with following attributes:
+        - `is_queryable`: true
+        - `is_modifiable`: true
+        - `subject`: a PARTY_SELF object
+
+        All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The new EHR resource is returned in the body when the request’s
+          `Prefer` header value is `return=representation`, otherwise only headers
+          are returned.
+        in: header
+        name: Prefer
+        required: true
+        type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.EhrCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          headers:
+            ETag:
+              description: 'ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+              type: string
+            Location:
+              description: '{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398'
+              type: string
+          schema:
+            $ref: '#/definitions/model.EhrSummary'
+        "400":
+          description: Is returned when the request body (if provided) could not be
+            parsed.
+        "409":
+          description: Unable to create a new EHR due to a conflict with an already
+            existing EHR with the same subject id, namespace pair.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Create EHR
+      tags:
+      - EHR
+  /ehr/{ehr_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the EHR with the specified ehr_id
+      parameters:
+      - description: 'EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: ehr_id
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.EhrSummary'
+        "400":
+          description: Is returned when userId is empty
+        "404":
+          description: Is returned when an EHR with ehr_id does not exist.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get EHR summary by id
+      tags:
+      - EHR
+    put:
+      consumes:
+      - application/json
+      description: |-
+        Create a new EHR with the specified ehr_id identifier.
+        The value of the ehr_id unique identifier MUST be valid HIER_OBJECT_ID value. It is strongly RECOMMENDED that an UUID always be used for this.
+        An EHR_STATUS resource needs to be always created and committed in the new EHR. This resource MAY be also supplied by the client as the request body. If not supplied, a default EHR_STATUS will be used by the service with following attributes:
+        - `is_queryable`: true
+        - `is_modifiable`: true
+        - `subject`: a PARTY_SELF object
+
+        All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The new EHR resource is returned in the body when the request’s
+          `Prefer` header value is `return=representation`, otherwise only headers
+          are returned.
+        in: header
+        name: Prefer
+        required: true
+        type: string
+      - description: 'An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: ehr_id
+        required: true
+        type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.EhrCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          headers:
+            ETag:
+              description: 'ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+              type: string
+            Location:
+              description: '{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398'
+              type: string
+          schema:
+            $ref: '#/definitions/model.EhrSummary'
+        "400":
+          description: Is returned when the request body (if provided) could not be
+            parsed.
+        "409":
+          description: Unable to create a new EHR due to a conflict with an already
+            existing EHR. Can happen when the supplied ehr_id is already used by an
+            existing EHR.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Create EHR with id
+      tags:
+      - EHR
+  /ehr/{ehr_id}/composition:
+    post:
+      consumes:
+      - application/json
+      description: |
+        Work in progress...
+        Creates the first version of a new COMPOSITION in the EHR identified by ehr_id.
+      parameters:
+      - description: 'EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: ehr_id
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The new EHR resource is returned in the body when the request’s
+          `Prefer` header value is `return=representation`, otherwise only headers
+          are returned.
+        in: header
+        name: Prefer
+        required: true
+        type: string
+      - description: COMPOSITION
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/Composition'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          headers:
+            ETag:
+              description: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1
+              type: string
+            Location:
+              description: '{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1'
+              type: string
+          schema:
+            $ref: '#/definitions/Composition'
+        "400":
+          description: Is returned when the request has invalid ehr_id or invalid
+            content (e.g. content could not be converted to a valid COMPOSITION object)
+        "404":
+          description: Is returned when an EHR with ehr_id does not exist.
+        "422":
+          description: Is returned when the content could be converted to a COMPOSITION,
+            but there are semantic validation errors, such as the underlying template
+            is not known or is not validating the supplied COMPOSITION).
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Create COMPOSITION
+      tags:
+      - COMPOSITION
+  /ehr/{ehr_id}/ehr_status:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a version of the EHR_STATUS associated with the EHR identified
+        by `ehr_id`. If `version_at_time` is supplied, retrieves the version extant
+        at specified time, otherwise retrieves the latest EHR_STATUS version.
+      parameters:
+      - description: 'EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: ehr_id
+        required: true
+        type: string
+      - description: 'A given time in the extended ISO 8601 format. Example: 2015-01-20T19:30:22.765+01:00'
+        in: query
+        name: version_at_time
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.EhrStatusUpdate'
+        "400":
+          description: Is returned when the request has invalid content such as an
+            invalid `version_at_time` format.
+        "404":
+          description: Is returned when EHR with `ehr_id` does not exist or a version
+            of an EHR_STATUS resource does not exist at the specified `version_at_time`
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get EHR_STATUS version by time
+      tags:
+      - EHR_STATUS
+    put:
+      consumes:
+      - application/json
+      description: Updates EHR_STATUS associated with the EHR identified by `ehr_id`.
+      parameters:
+      - description: 'EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: ehr_id
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The existing latest `version_uid` of EHR_STATUS resource (i.e.
+          the `preceding_version_uid`) must be specified.
+        in: header
+        name: If-Match
+        required: true
+        type: string
+      - description: Updated resource is returned in the body when the request’s `Prefer`
+          header value is `return=representation`, otherwise only headers are returned.
+        in: header
+        name: Prefer
+        required: true
+        type: string
+      - description: EHR_STATUS
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.EhrStatusUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            ETag:
+              description: 'uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2'
+              type: string
+            Location:
+              description: '{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2'
+              type: string
+          schema:
+            $ref: '#/definitions/model.EhrStatusUpdate'
+        "204":
+          description: Is returned when `Prefer` header is missing or is set to `return=minimal`
+          headers:
+            ETag:
+              description: 'uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2'
+              type: string
+            Location:
+              description: '{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2'
+              type: string
+        "400":
+          description: Is returned when the request has invalid content.
+        "404":
+          description: Is returned when an EHR with ehr_id does not exist.
+        "412":
+          description: Is returned when `If-Match` request header doesn’t match the
+            latest version on the service side. Returns also latest `version_uid`
+            in the `Location` and `ETag` headers.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Update EHR_STATUS
+      tags:
+      - EHR_STATUS
+  /ehr/{ehr_id}/ehr_status/{version_uid}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a particular version of the EHR_STATUS identified by
+        `version_uid` and associated with the EHR identified by `ehr_id`.
+      parameters:
+      - description: 'EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: ehr_id
+        required: true
+        type: string
+      - description: 'VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2'
+        in: path
+        name: version_uid
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.EhrStatusUpdate'
+        "400":
+          description: Is returned when AuthUserId is not specified
+        "404":
+          description: is returned when an EHR with `ehr_id` does not exist or when
+            an EHR_STATUS with `version_uid` does not exist.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get EHR_STATUS by version id
+      tags:
+      - EHR_STATUS
+  /query/aql:
+    post:
+      consumes:
+      - application/json
+      description: |
+        Work in progress...
+        Execute ad-hoc query, supplied by q attribute, fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.
+        See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.QueryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.QueryResponse'
+        "400":
+          description: Is returned when the server was unable to execute the query
+            due to invalid input, e.g. a request with missing `q` parameter or an
+            invalid query syntax.
+        "408":
+          description: Is returned when there is a query execution timeout (i.e. maximum
+            query execution time reached, therefore the server aborted the execution
+            of the query).
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Execute ad-hoc (non-stored) AQL query
+      tags:
+      - QUERY
+  /v1/access/group:
+    post:
+      consumes:
+      - application/json
+      description: Creates new access group for use with part of users data and return
+        this group
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: DTO with data to create group access
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.GroupAccessCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GroupAccess'
+        "400":
+          description: Is returned when the request has invalid content.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Create new access group
+      tags:
+      - GROUP_ACCESS
+  /v1/access/group/{group_id}:
+    get:
+      consumes:
+      - application/json
+      description: Return access group object
+      parameters:
+      - description: 'access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: group_id
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GroupAccess'
+        "400":
+          description: Is returned when the request has invalid content.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get access group
+      tags:
+      - GROUP_ACCESS
+swagger: "2.0"
