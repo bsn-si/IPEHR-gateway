@@ -49,7 +49,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	if statusGet.Uid.Value != statusNew.Uid.Value {
-		t.Error("Got wrong status")
+		t.Fatalf("Expected %s, received %s", statusGet.Uid.Value, statusNew.Uid.Value)
 	}
 
 	// get status by subject

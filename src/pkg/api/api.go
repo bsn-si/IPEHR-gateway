@@ -29,9 +29,9 @@ import (
 type API struct {
 	Ehr         *EhrHandler
 	EhrStatus   *EhrStatusHandler
-	GroupAccess *GroupAccessHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
+	GroupAccess *GroupAccessHandler
 }
 
 func New(cfg *config.Config) *API {
@@ -39,9 +39,9 @@ func New(cfg *config.Config) *API {
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),
-		GroupAccess: NewGroupAccessHandler(docService, cfg),
 		Composition: NewCompositionHandler(docService, cfg),
 		Query:       NewQueryHandler(docService, cfg),
+		GroupAccess: NewGroupAccessHandler(docService, cfg),
 	}
 }
 
