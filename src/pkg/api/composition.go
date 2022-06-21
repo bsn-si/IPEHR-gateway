@@ -113,7 +113,6 @@ func (h CompositionHandler) Create(c *gin.Context) {
 // @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid  path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 // @Param        AuthUserId   header    string  true  "UserId UUID"
-// @Param        Request      body      model.SwagComposition  true  "COMPOSITION"
 // @Success      200          {object}  model.SwagComposition
 // @Failure      204          "Is returned when the COMPOSITION is deleted (logically)."
 // @Failure      400          "Is returned when AuthUserId is not specified"
