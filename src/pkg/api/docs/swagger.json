@@ -14,7 +14,7 @@
         },
         "version": "0.1"
     },
-    "host": "gateway.ipehr.org",
+    "host": "localhost:8080",
     "basePath": "/v1",
     "paths": {
         "/ehr": {

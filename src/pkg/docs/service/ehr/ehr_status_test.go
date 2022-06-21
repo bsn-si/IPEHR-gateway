@@ -2,19 +2,25 @@ package ehr
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/common/fake_data"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/types"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+
+	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/types"
 )
 
 func TestStatus(t *testing.T) {
-	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService, nil)
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
+	statusService := NewEhrStatusService(docService)
 
 	userId := uuid.New().String()
 	subjectId1 := uuid.New().String()
@@ -58,8 +64,12 @@ func TestStatus(t *testing.T) {
 }
 
 func TestStatusUpdate(t *testing.T) {
-	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService, nil)
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
+	statusService := NewEhrStatusService(docService)
 
 	userId := uuid.New().String()
 	subjectNamespace := "test_status"
@@ -95,7 +105,7 @@ func TestStatusUpdate(t *testing.T) {
 }
 
 func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, subjectNamespace string) (newEhr *model.EHR, err error) {
-	ehrDocService := NewEhrService(docService, nil)
+	ehrDocService := NewEhrService(docService)
 
 	createRequestByte := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
 	var createRequest model.EhrCreateRequest
@@ -109,9 +119,12 @@ func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, su
 }
 
 func TestGetStatusByNearestTime(t *testing.T) {
-
-	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService, nil)
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
+	statusService := NewEhrStatusService(docService)
 
 	userId := uuid.New().String()
 	subjectId1 := uuid.New().String()

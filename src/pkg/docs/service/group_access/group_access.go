@@ -1,22 +1,20 @@
 package group_access
 
 import (
-	"github.com/google/uuid"
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
+
+	"github.com/google/uuid"
 )
 
 type GroupAccessService struct {
 	Doc *service.DefaultDocumentService
-	Cfg *config.Config
 }
 
-func NewGroupAccessService(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessService {
+func NewGroupAccessService(docService *service.DefaultDocumentService) *GroupAccessService {
 	return &GroupAccessService{
 		Doc: docService,
-		Cfg: cfg,
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -31,15 +32,16 @@ type DefaultDocumentService struct {
 	Keystore         *keystore.KeyStore
 }
 
-func NewDefaultDocumentService() *DefaultDocumentService {
+func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
+	ks := keystore.New(cfg.KeystoreKey)
 	return &DefaultDocumentService{
 		EhrsIndex:        ehrs.New(),
 		DocsIndex:        docs.New(),
-		DocAccessIndex:   doc_access.New(),
+		DocAccessIndex:   doc_access.New(ks),
 		SubjectIndex:     subject.New(),
-		GroupAccessIndex: group_access.New(),
+		GroupAccessIndex: group_access.New(ks),
 		Storage:          storage.Init(),
-		Keystore:         keystore.New(),
+		Keystore:         ks,
 	}
 }
 

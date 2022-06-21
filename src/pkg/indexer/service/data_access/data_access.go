@@ -17,10 +17,10 @@ type DataAccessIndex struct {
 	keystore *keystore.KeyStore
 }
 
-func New() *DataAccessIndex {
+func New(ks *keystore.KeyStore) *DataAccessIndex {
 	return &DataAccessIndex{
 		index:    indexer.Init("data_access"),
-		keystore: keystore.New(),
+		keystore: ks,
 	}
 }
 

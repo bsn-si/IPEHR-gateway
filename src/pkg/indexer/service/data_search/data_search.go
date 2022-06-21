@@ -21,10 +21,10 @@ type DataSearchIndex struct {
 	keystore *keystore.KeyStore
 }
 
-func New() *DataSearchIndex {
+func New(ks *keystore.KeyStore) *DataSearchIndex {
 	return &DataSearchIndex{
 		index:    indexer.Init("data_search"),
-		keystore: keystore.New(),
+		keystore: ks,
 	}
 }
 

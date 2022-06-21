@@ -4,9 +4,11 @@ package group_access
 
 import (
 	"encoding/hex"
+
 	"github.com/google/uuid"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
+
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/indexer"
@@ -18,10 +20,10 @@ type GroupAccessIndex struct {
 	keystore *keystore.KeyStore
 }
 
-func New() *GroupAccessIndex {
+func New(ks *keystore.KeyStore) *GroupAccessIndex {
 	return &GroupAccessIndex{
 		index:    indexer.Init("group_access"),
-		keystore: keystore.New(),
+		keystore: ks,
 	}
 }
 

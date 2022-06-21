@@ -2,11 +2,18 @@ package data_search
 
 import (
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/keystore"
 	"testing"
 )
 
 func TestDataSearchIndex(t *testing.T) {
-	dataSearchIndex := New()
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ks := keystore.New(cfg.KeystoreKey)
+	dataSearchIndex := New(ks)
 
 	pathKey := fake_data.GetRandomStringWithLength(32)
 

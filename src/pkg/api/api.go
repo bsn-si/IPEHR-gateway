@@ -23,7 +23,8 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      gateway.ipehr.org
+// host      gateway.ipehr.org
+// @host     localhost:8080
 // @BasePath  /v1
 
 type API struct {
@@ -35,7 +36,7 @@ type API struct {
 }
 
 func New(cfg *config.Config) *API {
-	docService := service.NewDefaultDocumentService()
+	docService := service.NewDefaultDocumentService(cfg)
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),

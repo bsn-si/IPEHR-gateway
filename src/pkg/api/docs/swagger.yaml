@@ -296,7 +296,7 @@ definitions:
         items: {}
         type: array
     type: object
-host: gateway.ipehr.org
+host: localhost:8080
 info:
   contact:
     email: support@bsn.si

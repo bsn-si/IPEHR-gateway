@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
@@ -17,13 +16,11 @@ import (
 
 type EhrService struct {
 	Doc *service.DefaultDocumentService
-	Cfg *config.Config
 }
 
-func NewEhrService(docService *service.DefaultDocumentService, cfg *config.Config) *EhrService {
+func NewEhrService(docService *service.DefaultDocumentService) *EhrService {
 	return &EhrService{
 		Doc: docService,
-		Cfg: cfg,
 	}
 }
 
@@ -69,7 +66,7 @@ func (s EhrService) EhrCreateWithId(userId, ehrId string, request *model.EhrCrea
 	}
 
 	// Creating EHR_STATUS
-	ehrStatusService := NewEhrStatusService(s.Doc, s.Cfg)
+	ehrStatusService := NewEhrStatusService(s.Doc)
 
 	ehrStatusId := ehr.EhrStatus.Id.Value
 	subjectId := request.Subject.ExternalRef.Id.Value

@@ -3,11 +3,11 @@ package doc_access
 
 import (
 	"encoding/hex"
-	"hms/gateway/pkg/crypto/chacha_poly"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
@@ -18,10 +18,10 @@ type DocAccessIndex struct {
 	keystore *keystore.KeyStore
 }
 
-func New() *DocAccessIndex {
+func New(ks *keystore.KeyStore) *DocAccessIndex {
 	return &DocAccessIndex{
 		index:    indexer.Init("doc_access"),
-		keystore: keystore.New(),
+		keystore: ks,
 	}
 }
 

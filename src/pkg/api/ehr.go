@@ -17,12 +17,14 @@ import (
 )
 
 type EhrHandler struct {
-	*ehr.EhrService
+	cfg     *config.Config
+	service *ehr.EhrService
 }
 
 func NewEhrHandler(docService *service.DefaultDocumentService, cfg *config.Config) *EhrHandler {
 	return &EhrHandler{
-		ehr.NewEhrService(docService, cfg),
+		cfg:     cfg,
+		service: ehr.NewEhrService(docService),
 	}
 
 }
@@ -76,14 +78,14 @@ func (h EhrHandler) Create(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err = h.Doc.EhrsIndex.Get(userId)
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if !errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return
 	}
 
 	// EHR document creating
-	doc, err := h.EhrCreate(userId, &request)
+	doc, err := h.service.EhrCreate(userId, &request)
 	if err != nil {
 		if errors.Is(err, errors.AlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -124,7 +126,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 	ehrId := c.Param("ehrid")
 
 	// Checking EHR does not exist
-	doc, err := h.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
+	doc, err := h.service.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
 	if err != nil && !errors.Is(err, errors.IsNotExist) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "EHR retrieve error"})
 		return
@@ -134,7 +136,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 		return
 	}
 
-	if h.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
@@ -165,14 +167,14 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err = h.Doc.EhrsIndex.Get(userId)
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if !errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return
 	}
 
 	// EHR document creating
-	newDoc, err := h.EhrCreateWithId(userId, ehrId, &request)
+	newDoc, err := h.service.EhrCreateWithId(userId, ehrId, &request)
 	if err != nil {
 		if errors.Is(err, errors.AlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -200,7 +202,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 // @Router       /ehr/{ehr_id} [get]
 func (h EhrHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -212,7 +214,7 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	}
 
 	// Getting docStorageId
-	doc, err := h.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
+	doc, err := h.service.Doc.DocsIndex.GetLastByType(ehrId, types.EHR)
 	if err != nil {
 		log.Println("GetLastDocIndexByType", "ehrId", ehrId, err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -220,7 +222,7 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	}
 
 	// Getting doc from storage
-	docDecrypted, err := h.Doc.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
+	docDecrypted, err := h.service.Doc.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
 	if err != nil {
 		//TODO some logging
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
@@ -260,7 +262,7 @@ func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 		return
 	}
 
-	docDecrypted, err := h.GetDocBySubject(userId, subjectId, namespace)
+	docDecrypted, err := h.service.GetDocBySubject(userId, subjectId, namespace)
 	if err != nil {
 		log.Println("Can't get document by subject", err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -271,7 +273,7 @@ func (h EhrHandler) GetBySubjectIdAndNamespace(c *gin.Context) {
 }
 
 func (h *EhrHandler) respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
-	c.Header("Location", h.Cfg.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
+	c.Header("Location", h.cfg.BaseUrl+"/v1/ehr/"+doc.EhrId.Value)
 	c.Header("ETag", doc.EhrId.Value)
 
 	prefer := c.Request.Header.Get("Prefer")

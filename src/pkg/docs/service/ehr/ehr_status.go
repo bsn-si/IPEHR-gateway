@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
@@ -16,13 +15,11 @@ import (
 
 type EhrStatusService struct {
 	Doc *service.DefaultDocumentService
-	Cfg *config.Config
 }
 
-func NewEhrStatusService(docService *service.DefaultDocumentService, cfg *config.Config) *EhrStatusService {
+func NewEhrStatusService(docService *service.DefaultDocumentService) *EhrStatusService {
 	return &EhrStatusService{
 		Doc: docService,
-		Cfg: cfg,
 	}
 }
 
@@ -111,7 +108,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 		return err
 	}
 
-	ehrService := NewEhrService(s.Doc, s.Cfg)
+	ehrService := NewEhrService(s.Doc)
 	err = ehrService.UpdateDocumentStatus(userId, ehrId, status)
 	if err != nil {
 		return err
