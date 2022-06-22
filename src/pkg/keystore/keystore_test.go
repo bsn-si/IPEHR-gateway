@@ -1,11 +1,13 @@
 package keystore
 
 import (
-	"hms/gateway/pkg/storage"
 	"os"
 	"strconv"
 	"testing"
 	"time"
+
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/storage"
 )
 
 const testStorePath string = "/tmp/localfiletest"
@@ -18,11 +20,14 @@ func TestKeystore(t *testing.T) {
 		}
 	}()
 
-	sc := &storage.StorageConfig{}
-	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
 	storage.Init(sc)
 
-	ks := New()
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ks := New(cfg.KeystoreKey)
 
 	userIdOne := "111-222-333"
 	userIdTwo := "111-222-333-444"

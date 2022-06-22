@@ -4,16 +4,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"hms/gateway/pkg/common"
 )
 
 func QueryExecRequest(ehrId string) []byte {
 	req := `{
-	  "q": "SELECT c FROM EHR e[ehr_id/value=$ehr_id] 
-	  			CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1]
-					CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1]
+	  "q": "SELECT e/ehr_id/value, 
+	  			   c/context/start_time/value as startTime, 
+				   c/uid/value as cid, 
+				   c/name 
+	  		FROM EHR e 
+			CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] 
+				CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] 
 			WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp",
 	  "offset": 0,
 	  "fetch": 10,
@@ -29,41 +31,26 @@ func QueryExecRequest(ehrId string) []byte {
 
 func QueryExecResponse(query string) []byte {
 	return []byte(`{
-	  "meta": {
+		"meta": {
 		"_href": "",
 		"_type": "RESULTSET",
 		"_schema_version": "1.0.0",
 		"_created": "` + time.Now().Format(common.OPENEHR_TIME_FORMAT) + `"
-	  },
-	  "q": "` + query + `",
-	  "columns": [
+		},
+		"q": "` + query + `",
+		"columns": [
 		{
 		  "name": "#0",
 		  "path": "/ehr_id/value"
 		},
 		{
-		  "name": "startTime",
-		  "path": "/context/start_time/value"
-		},
-		{
-		  "name": "cid",
-		  "path": "/uid/value"
-		},
-		{
-		  "name": "#3",
-		  "path": "/name"
+		  "name": "systolic",
+		  "path": "/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude"
 		}
-	  ],
-	  "rows": [
-		[
-		  "` + uuid.New().String() + `",
-		  "2017-02-16T13:50:11.308+01:00",
-		  "90910cf0-66a0-4382-b1f8-c0f27e81b42d::openEHRSys.example.com::1",
-		  {
-			"_type": "DV_TEXT",
-			"value": "Labs"
-		  }
+		],
+		"rows": [
+		  "41f6fdb5-9ea5-4bb8-b2fa-21131543f82e::piri.ehrscape.com::1",
+		  266.0
 		]
-	  ]
-	}`)
+	  }`)
 }

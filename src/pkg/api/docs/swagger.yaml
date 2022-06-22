@@ -1,228 +1,130 @@
 basePath: /v1
 definitions:
-  base.Archetyped:
+  Composition:
     properties:
       _type:
         type: string
-      archetype_id:
-        type: string
-      rm_version:
-        type: string
-      template_id:
-        type: string
-    type: object
-  base.CodePhrase:
-    properties:
-      code_string:
-        type: string
-      preferred_term:
-        type: string
-      terminology_id:
-        type: string
-    type: object
-  base.DvCodedText:
-    properties:
-      _type:
-        type: string
-      defining_code:
-        $ref: '#/definitions/base.CodePhrase'
-      encoding:
-        $ref: '#/definitions/base.CodePhrase'
-      formatting:
-        type: string
-      hyperlink:
-        $ref: '#/definitions/base.DvUri'
-      language:
-        $ref: '#/definitions/base.CodePhrase'
-      mappings:
-        items:
-          $ref: '#/definitions/base.TermMapping'
-        type: array
-      value:
-        type: string
-    type: object
-  base.DvDateTime:
-    properties:
-      accuracy:
-        $ref: '#/definitions/base.DvDuration'
-      value:
-        type: string
-    type: object
-  base.DvDuration:
-    properties:
-      accuracy: {}
-      accuracy_is_percent:
-        type: boolean
-      magnitude_status:
-        type: boolean
-      normal_range:
-        $ref: '#/definitions/base.Interval'
-      normal_status:
-        $ref: '#/definitions/base.CodePhrase'
-      other_reference_ranges:
-        items:
-          $ref: '#/definitions/base.ReferenceRange'
-        type: array
-      value:
-        type: string
-    type: object
-  base.DvIdentifier:
-    properties:
-      assigner:
-        type: string
-      id:
-        type: string
-      issuer:
-        type: string
-      type:
-        type: string
-    type: object
-  base.DvText:
-    properties:
-      _type:
-        type: string
-      encoding:
-        $ref: '#/definitions/base.CodePhrase'
-      formatting:
-        type: string
-      hyperlink:
-        $ref: '#/definitions/base.DvUri'
-      language:
-        $ref: '#/definitions/base.CodePhrase'
-      mappings:
-        items:
-          $ref: '#/definitions/base.TermMapping'
-        type: array
-      value:
-        type: string
-    type: object
-  base.DvUri:
-    properties:
-      value:
-        type: string
-    type: object
-  base.Interval:
-    properties:
-      lower: {}
-      lower_included:
-        type: boolean
-      lower_unbounded:
-        type: boolean
-      upper: {}
-      upper_included:
-        type: boolean
-      upper_unbounded:
-        type: boolean
-    type: object
-  base.Link:
-    properties:
-      meaning:
-        $ref: '#/definitions/base.DvText'
-      target:
-        $ref: '#/definitions/base.DvUri'
-      type:
-        $ref: '#/definitions/base.DvText'
-    type: object
-  base.Locatable:
-    properties:
-      _type:
-        type: string
-      Pathable: {}
       archetype_details:
-        $ref: '#/definitions/base.Archetyped'
-      archetype_node_id:
-        type: string
-      links:
-        items:
-          $ref: '#/definitions/base.Link'
-        type: array
-      name:
-        $ref: '#/definitions/base.DvText'
-      uid:
-        type: string
-    type: object
-  base.ObjectRef:
-    properties:
-      id:
-        type: string
-      namespace:
-        type: string
-      type:
-        type: string
-    type: object
-  base.Participation:
-    properties:
-      function:
-        $ref: '#/definitions/base.DvText'
-      mode:
-        $ref: '#/definitions/base.DvCodedText'
-      performer:
-        $ref: '#/definitions/base.PartyProxy'
-      time:
-        $ref: '#/definitions/base.Interval'
-    type: object
-  base.PartyIdentified:
-    properties:
-      external_ref:
-        $ref: '#/definitions/base.ObjectRef'
-      identifiers:
-        items:
-          $ref: '#/definitions/base.DvIdentifier'
-        type: array
-      name:
-        type: string
-    type: object
-  base.PartyProxy:
-    properties:
-      external_ref:
-        $ref: '#/definitions/base.ObjectRef'
-    type: object
-  base.ReferenceRange:
-    properties:
-      meaning:
-        type: string
-      range:
-        $ref: '#/definitions/base.Interval'
-    type: object
-  base.TermMapping:
-    properties:
-      match:
-        type: integer
-      purpose:
-        $ref: '#/definitions/base.DvCodedText'
-      target:
-        $ref: '#/definitions/base.CodePhrase'
-    type: object
-  model.Composition:
-    properties:
-      _type:
-        type: string
-      Pathable: {}
-      archetype_details:
-        $ref: '#/definitions/base.Archetyped'
+        properties:
+          _type:
+            type: string
+          archetype_id:
+            properties:
+              value:
+                type: string
+            type: object
+          rm_version:
+            type: string
+          template_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
       archetype_node_id:
         type: string
       category:
-        $ref: '#/definitions/base.DvCodedText'
+        properties:
+          defining_code:
+            properties:
+              code_string:
+                type: string
+              preferred_term:
+                type: string
+              terminology_id:
+                properties:
+                  value:
+                    type: string
+                type: object
+            type: object
+          value:
+            type: string
+        type: object
       composer:
-        $ref: '#/definitions/base.PartyProxy'
+        properties:
+          _type:
+            type: string
+          external_ref:
+            properties:
+              id:
+                properties:
+                  _type:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              namespace:
+                type: string
+              type:
+                type: string
+            type: object
+          name:
+            type: string
+        type: object
       content:
         items: {}
         type: array
       context:
-        $ref: '#/definitions/model.EventContext'
+        properties:
+          setting:
+            properties:
+              defining_code:
+                properties:
+                  code_string:
+                    type: string
+                  preferred_term:
+                    type: string
+                  terminology_id:
+                    properties:
+                      value:
+                        type: string
+                    type: object
+                type: object
+              value:
+                type: string
+            type: object
+          start_time:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
       language:
-        $ref: '#/definitions/base.CodePhrase'
-      links:
-        items:
-          $ref: '#/definitions/base.Link'
-        type: array
+        properties:
+          code_string:
+            type: string
+          preferred_term:
+            type: string
+          terminology_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
       name:
-        $ref: '#/definitions/base.DvText'
+        properties:
+          value:
+            type: string
+        type: object
       territory:
-        $ref: '#/definitions/base.CodePhrase'
+        properties:
+          code_string:
+            type: string
+          preferred_term:
+            type: string
+          terminology_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
       uid:
-        type: string
+        properties:
+          _type:
+            type: string
+          value:
+            type: string
+        type: object
     type: object
   model.EhrCreateRequest:
     properties:
@@ -318,25 +220,6 @@ definitions:
             type: string
         type: object
     type: object
-  model.EventContext:
-    properties:
-      end_time:
-        $ref: '#/definitions/base.DvDateTime'
-      health_care_facility:
-        $ref: '#/definitions/base.PartyIdentified'
-      location:
-        type: string
-      other_context:
-        $ref: '#/definitions/base.Locatable'
-      participations:
-        items:
-          $ref: '#/definitions/base.Participation'
-        type: array
-      setting:
-        $ref: '#/definitions/base.DvCodedText'
-      start_time:
-        $ref: '#/definitions/base.DvDateTime'
-    type: object
   model.ExternalRef:
     properties:
       id:
@@ -353,6 +236,18 @@ definitions:
       scheme:
         type: string
       type:
+        type: string
+    type: object
+  model.GroupAccess:
+    properties:
+      description:
+        type: string
+      group_id:
+        type: string
+    type: object
+  model.GroupAccessCreateRequest:
+    properties:
+      description:
         type: string
     type: object
   model.QueryRequest:
@@ -560,6 +455,13 @@ paths:
         name: AuthUserId
         required: true
         type: string
+      - description: The new EHR resource is returned in the body when the request’s
+          `Prefer` header value is `return=representation`, otherwise only headers
+          are returned.
+        in: header
+        name: Prefer
+        required: true
+        type: string
       - description: 'An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
         in: path
         name: ehr_id
@@ -623,6 +525,12 @@ paths:
         name: Prefer
         required: true
         type: string
+      - description: COMPOSITION
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/Composition'
       produces:
       - application/json
       responses:
@@ -636,7 +544,7 @@ paths:
               description: '{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1'
               type: string
           schema:
-            $ref: '#/definitions/model.Composition'
+            $ref: '#/definitions/Composition'
         "400":
           description: Is returned when the request has invalid ehr_id or invalid
             content (e.g. content could not be converted to a valid COMPOSITION object)
@@ -698,9 +606,6 @@ paths:
       consumes:
       - application/json
       description: Updates EHR_STATUS associated with the EHR identified by `ehr_id`.
-        The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`)
-        must be specified in the `If-Match` header. The response will contain the
-        updated EHR_STATUS resource when the `Prefer` header has a value of `return=representation`
       parameters:
       - description: 'EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
         in: path
@@ -710,6 +615,12 @@ paths:
       - description: UserId UUID
         in: header
         name: AuthUserId
+        required: true
+        type: string
+      - description: The existing latest `version_uid` of EHR_STATUS resource (i.e.
+          the `preceding_version_uid`) must be specified.
+        in: header
+        name: If-Match
         required: true
         type: string
       - description: Updated resource is returned in the body when the request’s `Prefer`
@@ -842,4 +753,68 @@ paths:
       summary: Execute ad-hoc (non-stored) AQL query
       tags:
       - QUERY
+  /v1/access/group:
+    post:
+      consumes:
+      - application/json
+      description: Creates new access group for use with part of users data and return
+        this group
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: DTO with data to create group access
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.GroupAccessCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GroupAccess'
+        "400":
+          description: Is returned when the request has invalid content.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Create new access group
+      tags:
+      - GROUP_ACCESS
+  /v1/access/group/{group_id}:
+    get:
+      consumes:
+      - application/json
+      description: Return access group object
+      parameters:
+      - description: 'access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: group_id
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GroupAccess'
+        "400":
+          description: Is returned when the request has invalid content.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get access group
+      tags:
+      - GROUP_ACCESS
 swagger: "2.0"

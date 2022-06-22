@@ -13,14 +13,15 @@ type StorageConfig struct {
 	path        string
 }
 
-func (c *StorageConfig) New(path string) (config *StorageConfig) {
-	path = c.prepare(path)
-	err := c.valid(path)
+func NewConfig(path string) (config *StorageConfig) {
+	config = &StorageConfig{}
+	path = config.prepare(path)
+	err := config.valid(path)
 	if err != nil {
 		log.Panicln(err, path)
 	}
 
-	c.setPath(path)
+	config.setPath(path)
 	return config
 }
 
@@ -43,7 +44,6 @@ func (c *StorageConfig) setProcessPath(path string) {
 }
 
 func (c *StorageConfig) prepare(path string) string {
-
 	processPath, err := os.Executable()
 	if err != nil {
 		log.Panicln(err)

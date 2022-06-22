@@ -1,7 +1,6 @@
 package data_access
 
 import (
-	"hms/gateway/pkg/storage"
 	"strconv"
 	"testing"
 	"time"
@@ -9,14 +8,21 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/keystore"
+	"hms/gateway/pkg/storage"
 )
 
 func TestDataAccessIndex(t *testing.T) {
-	sc := &storage.StorageConfig{}
-	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
 	storage.Init(sc)
 
-	dataAccessIndex := New()
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ks := keystore.New(cfg.KeystoreKey)
+	dataAccessIndex := New(ks)
 
 	userUUID := uuid.New()
 	userId := userUUID.String()

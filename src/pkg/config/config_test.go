@@ -1,13 +1,13 @@
 package config
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_Config(t *testing.T) {
 
 	t.Run("GetConfig fallback to example config file", func(t *testing.T) {
-		configPath := "../../../config.json.example"
-		cfg := New(configPath)
-		err := cfg.Reload()
+		cfg, err := New()
 		if err != nil {
 			t.Fatal(err)
 		}

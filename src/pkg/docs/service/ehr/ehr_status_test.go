@@ -2,24 +2,30 @@ package ehr
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/common/fake_data"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/storage"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+
+	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/storage"
 )
 
 func TestStatus(t *testing.T) {
-	sc := &storage.StorageConfig{}
-	sc.New("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
 	storage.Init(sc)
 
-	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService, nil)
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
+	statusService := NewEhrStatusService(docService)
 
 	userId := uuid.New().String()
 	subjectId1 := uuid.New().String()
@@ -48,7 +54,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	if statusGet.Uid.Value != statusNew.Uid.Value {
-		t.Error("Got wrong status")
+		t.Fatalf("Expected %s, received %s", statusGet.Uid.Value, statusNew.Uid.Value)
 	}
 
 	// get status by subject
@@ -63,8 +69,12 @@ func TestStatus(t *testing.T) {
 }
 
 func TestStatusUpdate(t *testing.T) {
-	docService := service.NewDefaultDocumentService()
-	statusService := NewEhrStatusService(docService, nil)
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
+	statusService := NewEhrStatusService(docService)
 
 	userId := uuid.New().String()
 	subjectNamespace := "test_status"
@@ -100,7 +110,7 @@ func TestStatusUpdate(t *testing.T) {
 }
 
 func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, subjectNamespace string) (newEhr *model.EHR, err error) {
-	ehrDocService := NewEhrService(docService, nil)
+	ehrDocService := NewEhrService(docService)
 
 	createRequestByte := fake_data.EhrCreateCustomRequest(subjectId, subjectNamespace)
 	var createRequest model.EhrCreateRequest
@@ -111,4 +121,38 @@ func getNewEhr(docService *service.DefaultDocumentService, userId, subjectId, su
 
 	newEhr, err = ehrDocService.EhrCreate(userId, &createRequest)
 	return
+}
+
+func TestGetStatusByNearestTime(t *testing.T) {
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
+	statusService := NewEhrStatusService(docService)
+
+	userId := uuid.New().String()
+	subjectId1 := uuid.New().String()
+	subjectNamespace := "test_status"
+	subjectId2 := uuid.New().String()
+
+	newEhr, err := getNewEhr(docService, userId, subjectId1, subjectNamespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ehrId := newEhr.EhrId.Value
+
+	statusIdNew := uuid.New().String()
+
+	_, err = statusService.Create(userId, ehrId, statusIdNew, subjectId2, subjectNamespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Test: docIndex is not exist yet
+	if _, err := statusService.GetStatusByNearestTime(userId, ehrId, time.Now(), types.EHR_STATUS); err != nil {
+		t.Fatal("Should return status", err)
+	}
+
 }

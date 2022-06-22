@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
@@ -16,13 +15,11 @@ import (
 
 type EhrStatusService struct {
 	Doc *service.DefaultDocumentService
-	Cfg *config.Config
 }
 
-func NewEhrStatusService(docService *service.DefaultDocumentService, cfg *config.Config) *EhrStatusService {
+func NewEhrStatusService(docService *service.DefaultDocumentService) *EhrStatusService {
 	return &EhrStatusService{
 		Doc: docService,
-		Cfg: cfg,
 	}
 }
 
@@ -100,7 +97,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 		TypeCode:       types.EHR_STATUS,
 		StorageId:      statusStorageId,
 		DocIdEncrypted: statusIdEncrypted,
-		Timestamp:      uint64(time.Now().UnixNano()),
+		Timestamp:      uint64(time.Now().Unix()),
 	}
 	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
 		return err
@@ -111,7 +108,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 		return err
 	}
 
-	ehrService := NewEhrService(s.Doc, s.Cfg)
+	ehrService := NewEhrService(s.Doc)
 	err = ehrService.UpdateDocumentStatus(userId, ehrId, status)
 	if err != nil {
 		return err
@@ -169,6 +166,20 @@ func (s *EhrStatusService) GetStatusBySubject(userId, subjectId, namespace strin
 			return
 		}
 	}
+	return
+}
+
+func (s *EhrStatusService) GetStatusByNearestTime(userId, ehrId string, nearestTime time.Time, docType types.DocumentType) (status *model.EhrStatus, err error) {
+	docIndex, err := s.Doc.DocsIndex.GetDocIndexByNearestTime(ehrId, nearestTime, docType)
+	if err != nil {
+		return
+	}
+
+	status, err = s.getStatusFromStorage(userId, ehrId, docIndex)
+	if err != nil {
+		return
+	}
+
 	return
 }
 

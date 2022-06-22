@@ -22,9 +22,9 @@ func Init(sc *StorageConfig) {
 	}
 }
 
-func Storage() *Storager {
+func Storage() Storager {
 	if storage == nil {
 		log.Fatal("Storage is not initialized")
 	}
-	return &storage
+	return storage
 }
