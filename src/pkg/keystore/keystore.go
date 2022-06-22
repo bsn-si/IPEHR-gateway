@@ -4,13 +4,13 @@ package keystore
 import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/crypto/chacha_poly"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage"
 
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
+
+	"hms/gateway/pkg/crypto/chacha_poly"
+	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/storage"
 )
 
 type KeyStore struct {
@@ -18,13 +18,12 @@ type KeyStore struct {
 	keystoreKey []byte
 }
 
-func New() *KeyStore {
-	cfg, err := config.New()
-	if err != nil {
-		return nil
-	}
+func New(key string) *KeyStore {
+	if key == "" {
+		panic("Keystore key is empty. Check the config.")
 
-	keyByte, err := hex.DecodeString(cfg.KeystoreKey)
+	}
+	keyByte, err := hex.DecodeString(key)
 	if err != nil {
 		return nil
 	}

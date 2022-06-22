@@ -2,23 +2,27 @@ package api
 
 import (
 	"encoding/json"
+	"io"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/group_access"
-	"io"
-	"io/ioutil"
-	"net/http"
 )
 
 type GroupAccessHandler struct {
-	*group_access.GroupAccessService
+	cfg     *config.Config
+	service *group_access.GroupAccessService
 }
 
 func NewGroupAccessHandler(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessHandler {
 	return &GroupAccessHandler{
-		group_access.NewGroupAccessService(docService, cfg),
+		cfg:     cfg,
+		service: group_access.NewGroupAccessService(docService),
 	}
 }
 
@@ -65,7 +69,7 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 		return
 	}
 
-	newGroupAccess, err := h.GroupAccessService.Create(userId, &request)
+	newGroupAccess, err := h.service.Create(userId, &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Group Access creating error"})
 		return
@@ -95,7 +99,7 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 		return
 	}
 
-	accessGroup, err := h.GroupAccessService.Get(userId, groupId)
+	accessGroup, err := h.service.Get(userId, groupId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Group access not found"})
 		return
@@ -105,7 +109,7 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 }
 
 func (h *GroupAccessHandler) respondWithDoc(doc *model.GroupAccess, c *gin.Context) {
-	c.Header("Location", h.Cfg.BaseUrl+"/v1/access/group/"+doc.GroupId)
+	c.Header("Location", h.cfg.BaseUrl+"/v1/access/group/"+doc.GroupId)
 	c.Header("ETag", doc.GroupId)
 
 	c.JSON(http.StatusCreated, doc)

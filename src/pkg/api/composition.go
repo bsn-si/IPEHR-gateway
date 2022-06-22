@@ -2,9 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/docs/service/composition"
-	"hms/gateway/pkg/docs/types"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,18 +9,23 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/composition"
+	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
 type CompositionHandler struct {
-	*composition.CompositionService
+	cfg     *config.Config
+	service *composition.CompositionService
 }
 
 func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionHandler {
 	return &CompositionHandler{
-		composition.NewCompositionService(docService, cfg),
+		cfg:     cfg,
+		service: composition.NewCompositionService(docService),
 	}
 }
 
@@ -49,7 +51,7 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *conf
 // @Router   /ehr/{ehr_id}/composition [post]
 func (h CompositionHandler) Create(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -87,14 +89,14 @@ func (h CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err = h.Doc.EhrsIndex.Get(userId)
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	// Composition document creating
-	doc, err := h.CompositionCreate(userId, ehrId, &request)
+	doc, err := h.service.CompositionCreate(userId, ehrId, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -121,13 +123,13 @@ func (h CompositionHandler) Create(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/composition/{version_uid} [get]
 func (h CompositionHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	versionUid := c.Param("version_uid")
-	if h.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -140,19 +142,19 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err := h.Doc.EhrsIndex.Get(userId)
+	_, err := h.service.Doc.EhrsIndex.Get(userId)
 	if errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	data, err := h.GetCompositionById(userId, ehrId, versionUid)
+	data, err := h.service.GetCompositionById(userId, ehrId, versionUid)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	marshalJson, err := h.MarshalJson(data)
+	marshalJson, err := h.service.MarshalJson(data)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -163,7 +165,7 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
 	uid := doc.Uid.Value
-	c.Header("Location", h.Cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
+	c.Header("Location", h.cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
 	c.Header("ETag", uid)
 
 	prefer := c.Request.Header.Get("Prefer")

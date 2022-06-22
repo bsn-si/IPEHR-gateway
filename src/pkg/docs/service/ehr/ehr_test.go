@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 )
@@ -14,13 +15,17 @@ import (
 func TestSave(t *testing.T) {
 	jsonDoc := fake_data.EhrCreateRequest()
 
-	docService := service.NewDefaultDocumentService()
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	docService := service.NewDefaultDocumentService(cfg)
 
-	ehrService := NewEhrService(docService, nil)
+	ehrService := NewEhrService(docService)
 
 	var ehrReq model.EhrCreateRequest
 
-	err := json.Unmarshal(jsonDoc, &ehrReq)
+	err = json.Unmarshal(jsonDoc, &ehrReq)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -66,7 +66,7 @@ func (d *DocsIndex) GetLastByType(ehrId string, docType types.DocumentType) (doc
 
 	for _, docIndex := range docIndexes {
 		if docIndex.TypeCode == docType {
-			if doc == nil || docIndex.Timestamp > doc.Timestamp {
+			if doc == nil || docIndex.Timestamp >= doc.Timestamp {
 				doc = docIndex
 			}
 		}
@@ -83,7 +83,7 @@ func (d *DocsIndex) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time
 		return nil, err
 	}
 
-	t := uint64(nearestTime.UnixNano())
+	t := uint64(nearestTime.Unix())
 	for _, docIndex := range docIndexes {
 		if docIndex.TypeCode == docType {
 			if docIndex.Timestamp <= t {

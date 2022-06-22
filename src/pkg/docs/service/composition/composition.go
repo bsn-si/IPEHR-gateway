@@ -2,25 +2,23 @@ package composition
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/config"
+	"log"
+	"time"
+
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"log"
-	"time"
 )
 
 type CompositionService struct {
 	Doc *service.DefaultDocumentService
-	Cfg *config.Config
 }
 
-func NewCompositionService(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionService {
+func NewCompositionService(docService *service.DefaultDocumentService) *CompositionService {
 	return &CompositionService{
 		Doc: docService,
-		Cfg: cfg,
 	}
 }
 

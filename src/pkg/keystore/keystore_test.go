@@ -1,6 +1,7 @@
 package keystore
 
 import (
+	"hms/gateway/pkg/config"
 	"os"
 	"testing"
 )
@@ -15,7 +16,11 @@ func TestKeystore(t *testing.T) {
 		}
 	}()
 
-	ks := New()
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ks := New(cfg.KeystoreKey)
 
 	userIdOne := "111-222-333"
 	userIdTwo := "111-222-333-444"

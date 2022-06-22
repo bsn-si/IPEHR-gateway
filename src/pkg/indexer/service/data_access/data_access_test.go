@@ -6,10 +6,17 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/keystore"
 )
 
 func TestDataAccessIndex(t *testing.T) {
-	dataAccessIndex := New()
+	cfg, err := config.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ks := keystore.New(cfg.KeystoreKey)
+	dataAccessIndex := New(ks)
 
 	userUUID := uuid.New()
 	userId := userUUID.String()
