@@ -1,13 +1,20 @@
 package data_search
 
 import (
+	"strconv"
+	"testing"
+	"time"
+
 	"hms/gateway/pkg/common/fake_data"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/keystore"
-	"testing"
+	"hms/gateway/pkg/storage"
 )
 
 func TestDataSearchIndex(t *testing.T) {
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)

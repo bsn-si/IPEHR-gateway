@@ -1,10 +1,17 @@
 package subject
 
 import (
+	"strconv"
 	"testing"
+	"time"
+
+	"hms/gateway/pkg/storage"
 )
 
 func TestSubjectIndex(t *testing.T) {
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	subjectIndex := New()
 
 	testEhrId := "This is the best of test EHR document ID"

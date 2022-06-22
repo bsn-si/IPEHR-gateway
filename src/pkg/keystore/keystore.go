@@ -29,7 +29,7 @@ func New(key string) *KeyStore {
 	}
 
 	return &KeyStore{
-		storage:     storage.Init(),
+		storage:     storage.Storage(),
 		keystoreKey: keyByte,
 	}
 }

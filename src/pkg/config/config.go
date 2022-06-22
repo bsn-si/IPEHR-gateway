@@ -11,6 +11,7 @@ type Config struct {
 	BaseUrl     string `json:"baseUrl"`
 	DataPath    string `json:"dataPath"`
 	Host        string `json:"host"`
+	StoragePath string `json:"storagePath"`
 	KeystoreKey string `json:"keystoreKey"`
 
 	path string
