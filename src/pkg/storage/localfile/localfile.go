@@ -25,7 +25,7 @@ type LocalFileStorage struct {
 	compressionLevel   int
 }
 
-func Init(config *Config) (*LocalFileStorage, error) {
+func Init(config *Config, globalConfig *config2.Config) (*LocalFileStorage, error) {
 	if len(config.BasePath) == 0 {
 		return nil, fmt.Errorf("BasePath is empty")
 	}
@@ -43,11 +43,6 @@ func Init(config *Config) (*LocalFileStorage, error) {
 		if err = os.MkdirAll(config.BasePath, os.ModePerm); err != nil {
 			return nil, err
 		}
-	}
-
-	globalConfig, err := config2.New()
-	if err != nil {
-		return nil, err
 	}
 
 	return &LocalFileStorage{
@@ -130,6 +125,10 @@ func (s *LocalFileStorage) compress(data *[]byte) (compressedData *[]byte, err e
 	if err != nil {
 		return
 	}
+
+	defer func(zw *gzip.Writer) {
+		_ = zw.Close()
+	}(zw)
 
 	_, err = zw.Write(*data)
 	if err != nil {
