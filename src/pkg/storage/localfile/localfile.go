@@ -1,17 +1,16 @@
 package localfile
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/hex"
 	"fmt"
 	"golang.org/x/crypto/sha3"
+	config2 "hms/gateway/pkg/config"
+	"hms/gateway/pkg/errors"
+	"io/ioutil"
 	"log"
 	"os"
-
-	"hms/gateway/pkg/errors"
-)
-
-var (
-	ErrIdIsTooShort = fmt.Errorf("id is too short")
 )
 
 type Config struct {
@@ -20,8 +19,10 @@ type Config struct {
 }
 
 type LocalFileStorage struct {
-	basePath string
-	depth    uint8
+	basePath           string
+	depth              uint8
+	compressionEnabled bool
+	compressionLevel   int
 }
 
 func Init(config *Config) (*LocalFileStorage, error) {
@@ -43,93 +44,128 @@ func Init(config *Config) (*LocalFileStorage, error) {
 			return nil, err
 		}
 	}
+
+	globalConfig, err := config2.New()
+	if err != nil {
+		return nil, err
+	}
+
 	return &LocalFileStorage{
-		basePath: config.BasePath,
-		depth:    config.Depth,
+		basePath:           config.BasePath,
+		depth:              config.Depth,
+		compressionEnabled: globalConfig.CompressionEnabled,
+		compressionLevel:   globalConfig.CompressionLevel,
 	}, nil
 }
 
 func (s *LocalFileStorage) Add(data []byte) (id *[32]byte, err error) {
 	h := sha3.Sum256(data)
-	idStr := hex.EncodeToString(h[:])
 
-	path := s.dirpath(idStr)
+	id = &h
 
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			return nil, err
-		}
-	}
-
-	filepath := s.filepath(idStr)
-
-	err = os.WriteFile(filepath, data, 0644)
-	if err != nil {
-		return nil, err
-	}
-	return &h, nil
-}
-
-func (s *LocalFileStorage) AddWithId(id *[32]byte, data []byte) (err error) {
-	if len(*id) < int(s.depth*2) {
-		return ErrIdIsTooShort
-	}
-
-	idStr := hex.EncodeToString(id[:])
-
-	path := s.dirpath(idStr)
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	filepath := s.filepath(idStr)
-	if _, err = os.Stat(filepath); err == nil {
-		return errors.AlreadyExist
-	}
-
-	err = os.WriteFile(filepath, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+	err = s.writeFile(id, &data)
+	return
 }
 
 func (s *LocalFileStorage) ReplaceWithId(id *[32]byte, data []byte) (err error) {
-	if len(*id) < int(s.depth*2) {
-		return ErrIdIsTooShort
-	}
+	return s.AddWithId(id, data)
+}
 
-	idStr := hex.EncodeToString(id[:])
-
-	path := s.dirpath(idStr)
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	filepath := s.filepath(idStr)
-	err = os.WriteFile(filepath, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *LocalFileStorage) AddWithId(id *[32]byte, data []byte) (err error) {
+	err = s.writeFile(id, &data)
+	return
 }
 
 func (s *LocalFileStorage) Get(id *[32]byte) (data []byte, err error) {
-	if len(*id) < int(s.depth*2) {
-		return nil, ErrIdIsTooShort
-	}
-
 	idStr := hex.EncodeToString(id[:])
 
 	path := s.filepath(idStr)
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		return nil, errors.IsNotExist
 	}
-	return os.ReadFile(path)
+	data, err = os.ReadFile(path)
+	if err != nil {
+		return
+	}
+
+	if s.compressionEnabled {
+		dataDecompressed, err := s.decompress(&data)
+		if err != nil {
+			return nil, err
+		}
+		data = *dataDecompressed
+	}
+
+	return
+}
+
+func (s *LocalFileStorage) writeFile(id *[32]byte, data *[]byte) (err error) {
+	idStr := hex.EncodeToString(id[:])
+
+	path := s.dirpath(idStr)
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		if err = os.MkdirAll(path, os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	if s.compressionEnabled {
+		data, err = s.compress(data)
+		if err != nil {
+			return
+		}
+	}
+
+	filepath := s.filepath(idStr)
+	err = os.WriteFile(filepath, *data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *LocalFileStorage) compress(data *[]byte) (compressedData *[]byte, err error) {
+	var buf bytes.Buffer
+	zw, err := gzip.NewWriterLevel(&buf, s.compressionLevel)
+	if err != nil {
+		return
+	}
+
+	_, err = zw.Write(*data)
+	if err != nil {
+		return
+	}
+
+	err = zw.Close()
+	if err != nil {
+		return
+	}
+
+	bufBytes := buf.Bytes()
+	compressedData = &bufBytes
+
+	return
+}
+
+func (s *LocalFileStorage) decompress(data *[]byte) (decompressedData *[]byte, err error) {
+	buf := bytes.NewReader(*data)
+	zr, err := gzip.NewReader(buf)
+	if err != nil {
+		return
+	}
+
+	defer func(zr *gzip.Reader) {
+		_ = zr.Close()
+	}(zr)
+
+	decompressed, err := ioutil.ReadAll(zr)
+	if err != nil {
+		return
+	}
+
+	decompressedData = &decompressed
+
+	return
 }
 
 func (s *LocalFileStorage) dirpath(id string) (path string) {

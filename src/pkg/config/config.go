@@ -8,10 +8,12 @@ import (
 )
 
 type Config struct {
-	BaseUrl     string `json:"baseUrl"`
-	DataPath    string `json:"dataPath"`
-	Host        string `json:"host"`
-	KeystoreKey string `json:"keystoreKey"`
+	BaseUrl            string `json:"baseUrl"`
+	DataPath           string `json:"dataPath"`
+	Host               string `json:"host"`
+	KeystoreKey        string `json:"keystoreKey"`
+	CompressionEnabled bool   `json:"compressionEnabled"`
+	CompressionLevel   int    `json:"compressionLevel"`
 
 	path string
 }
