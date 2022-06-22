@@ -1,14 +1,12 @@
 package localfile
 
 import (
-	"bytes"
-	"compress/gzip"
 	"encoding/hex"
 	"fmt"
 	"golang.org/x/crypto/sha3"
 	config2 "hms/gateway/pkg/config"
 	"hms/gateway/pkg/errors"
-	"io/ioutil"
+	"hms/gateway/pkg/storage/compressor"
 	"log"
 	"os"
 )
@@ -21,8 +19,8 @@ type Config struct {
 type LocalFileStorage struct {
 	basePath           string
 	depth              uint8
+	compressor         compressor.Interface
 	compressionEnabled bool
-	compressionLevel   int
 }
 
 func Init(config *Config, globalConfig *config2.Config) (*LocalFileStorage, error) {
@@ -48,18 +46,22 @@ func Init(config *Config, globalConfig *config2.Config) (*LocalFileStorage, erro
 	return &LocalFileStorage{
 		basePath:           config.BasePath,
 		depth:              config.Depth,
+		compressor:         compressor.New(globalConfig.CompressionLevel),
 		compressionEnabled: globalConfig.CompressionEnabled,
-		compressionLevel:   globalConfig.CompressionLevel,
 	}, nil
 }
 
 func (s *LocalFileStorage) Add(data []byte) (id *[32]byte, err error) {
-	h := sha3.Sum256(data)
-
-	id = &h
+	id = s.idByContent(&data)
 
 	err = s.writeFile(id, &data)
+
 	return
+}
+
+func (s *LocalFileStorage) idByContent(data *[]byte) *[32]byte {
+	h := sha3.Sum256(*data)
+	return &h
 }
 
 func (s *LocalFileStorage) ReplaceWithId(id *[32]byte, data []byte) (err error) {
@@ -84,7 +86,7 @@ func (s *LocalFileStorage) Get(id *[32]byte) (data []byte, err error) {
 	}
 
 	if s.compressionEnabled {
-		dataDecompressed, err := s.decompress(&data)
+		dataDecompressed, err := s.compressor.Decompress(&data)
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +107,7 @@ func (s *LocalFileStorage) writeFile(id *[32]byte, data *[]byte) (err error) {
 	}
 
 	if s.compressionEnabled {
-		data, err = s.compress(data)
+		data, err = s.compressor.Compress(data)
 		if err != nil {
 			return
 		}
@@ -117,54 +119,6 @@ func (s *LocalFileStorage) writeFile(id *[32]byte, data *[]byte) (err error) {
 		return err
 	}
 	return nil
-}
-
-func (s *LocalFileStorage) compress(data *[]byte) (compressedData *[]byte, err error) {
-	var buf bytes.Buffer
-	zw, err := gzip.NewWriterLevel(&buf, s.compressionLevel)
-	if err != nil {
-		return
-	}
-
-	defer func(zw *gzip.Writer) {
-		_ = zw.Close()
-	}(zw)
-
-	_, err = zw.Write(*data)
-	if err != nil {
-		return
-	}
-
-	err = zw.Close()
-	if err != nil {
-		return
-	}
-
-	bufBytes := buf.Bytes()
-	compressedData = &bufBytes
-
-	return
-}
-
-func (s *LocalFileStorage) decompress(data *[]byte) (decompressedData *[]byte, err error) {
-	buf := bytes.NewReader(*data)
-	zr, err := gzip.NewReader(buf)
-	if err != nil {
-		return
-	}
-
-	defer func(zr *gzip.Reader) {
-		_ = zr.Close()
-	}(zr)
-
-	decompressed, err := ioutil.ReadAll(zr)
-	if err != nil {
-		return
-	}
-
-	decompressedData = &decompressed
-
-	return
 }
 
 func (s *LocalFileStorage) dirpath(id string) (path string) {

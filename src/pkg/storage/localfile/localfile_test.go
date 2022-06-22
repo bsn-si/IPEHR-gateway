@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestAdd(t *testing.T) {
+func TestWithCompression(t *testing.T) {
 	cfg := config()
 
 	globalConfig, err := config2.New()
