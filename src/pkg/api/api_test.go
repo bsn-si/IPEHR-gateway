@@ -662,7 +662,7 @@ func (testWrap *testWrap) compositionGetById(testData *testData) func(t *testing
 
 func (testWrap *testWrap) compositionGetByWrongId(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		wrongCompositionId := uuid.New().String() + "::openEHRSys.example.com::1"
+		wrongCompositionId := uuid.NewString() + "::openEHRSys.example.com::1"
 		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+wrongCompositionId, nil)
 		if err != nil {
 			t.Fatal(err)

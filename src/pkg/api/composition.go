@@ -97,6 +97,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 
 	// Composition document creating
 	doc, err := h.service.CompositionCreate(userId, ehrId, &request)
+
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -148,19 +149,27 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.GetCompositionById(userId, ehrId, versionUid)
+	documentMeta, err := h.service.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, types.COMPOSITION)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	marshalJson, err := h.service.MarshalJson(data)
+	encryptedData, err := h.service.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 
-	c.Data(http.StatusOK, "application/json", marshalJson)
+	_, err = h.service.ParseJson(encryptedData)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", encryptedData)
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
