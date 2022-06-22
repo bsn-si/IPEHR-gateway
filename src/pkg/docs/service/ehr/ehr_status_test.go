@@ -2,6 +2,7 @@ package ehr
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 
@@ -12,9 +13,13 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/storage"
 )
 
 func TestStatus(t *testing.T) {
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)

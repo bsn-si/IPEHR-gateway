@@ -1,10 +1,17 @@
 package indexer
 
 import (
+	"strconv"
 	"testing"
+	"time"
+
+	"hms/gateway/pkg/storage"
 )
 
 func TestIndex(t *testing.T) {
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
+
 	name := "TestIndex"
 	index := Init(name)
 

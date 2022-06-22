@@ -1,6 +1,7 @@
 package api
 
 import (
+	"hms/gateway/pkg/storage"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -35,6 +36,9 @@ type API struct {
 }
 
 func New(cfg *config.Config) *API {
+	sc := storage.NewConfig(cfg.StoragePath)
+	storage.Init(sc)
+
 	docService := service.NewDefaultDocumentService(cfg)
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),

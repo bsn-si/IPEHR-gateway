@@ -4,45 +4,34 @@ import (
 	config2 "hms/gateway/pkg/config"
 	"hms/gateway/pkg/storage/localfile"
 	"log"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
-var Storage Storager
+var storage Storager
 
-func getStorageName() string {
-	name := os.Getenv("STORAGE_NAME") // TODO put in documentation
-	name = strings.ReplaceAll(name, ".", "_")
-	return "storage/" + name
-}
+func Init(sc *StorageConfig) {
 
-func Init() Storager {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-
-	path := filepath.Dir(ex) + "/" + getStorageName()
-	//TODO getting basepath from general config
-
-	if Storage == nil {
+	if storage == nil {
 		cfg := localfile.Config{
-			BasePath: path,
+			BasePath: sc.Path(),
 			Depth:    3,
 		}
 		var err error
 
 		globalConfig, err := config2.New()
 		if err != nil {
-			return nil
+			log.Fatal(err)
 		}
 
-		Storage, err = localfile.Init(&cfg, globalConfig)
+		storage, err = localfile.Init(&cfg, globalConfig)
 		if err != nil {
 			log.Fatal(err)
-			return nil
 		}
 	}
-	return Storage
+}
+
+func Storage() Storager {
+	if storage == nil {
+		log.Fatal("Storage is not initialized")
+	}
+	return storage
 }

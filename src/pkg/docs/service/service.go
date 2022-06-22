@@ -40,7 +40,7 @@ func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 		DocAccessIndex:   doc_access.New(ks),
 		SubjectIndex:     subject.New(),
 		GroupAccessIndex: group_access.New(ks),
-		Storage:          storage.Init(),
+		Storage:          storage.Storage(),
 		Keystore:         ks,
 	}
 }
