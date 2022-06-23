@@ -13,17 +13,17 @@ func ParseDocument(inDocument []byte) (doc model.EHR, err error) {
 }
 
 type DataEntry struct {
-	Type   string
-	NodeId string
-	Name   string
-	Value  map[string]interface{}
+	Type     string
+	NodeId   string
+	Name     string
+	ValueSet []map[string]interface{}
 }
 
 type Node struct {
 	Type   string
 	NodeId string
 	Next   map[string]*Node
-	Items  *[]DataEntry
+	Items  map[string]*DataEntry // nodeId -> DataEntry
 }
 
 func NewNode(_type, nodeId string) *Node {
@@ -82,14 +82,14 @@ func iterate(items interface{}, node *Node) {
 		item := item.(map[string]interface{})
 
 		_type := item["_type"].(string)
-		nodeId := item["archetype_node_id"].(string)
+		itemNodeId := item["archetype_node_id"].(string)
 
 		switch _type {
 		case "SECTION":
 			iterate(item["items"].([]interface{}), node)
 		case "EVALUATION", "OBSERVATION", "INSTRUCTION":
 			if node.Next[_type] == nil {
-				node.Next[_type] = NewNode(_type, nodeId)
+				node.Next[_type] = NewNode(_type, itemNodeId)
 			}
 			nodeType := node.Next[_type]
 			for _, key := range []string{"data", "protocol"} {
@@ -137,12 +137,12 @@ func iterate(items interface{}, node *Node) {
 			}
 		case "ACTION":
 			if node.Next["ACTION"] == nil {
-				node.Next["ACTION"] = NewNode("ACTION", nodeId)
+				node.Next["ACTION"] = NewNode("ACTION", itemNodeId)
 			}
 			nodeCurrent := node.Next["ACTION"]
 
-			if nodeCurrent.Next[nodeId] == nil {
-				nodeCurrent.Next[nodeId] = NewNode(_type, nodeId)
+			if nodeCurrent.Next[itemNodeId] == nil {
+				nodeCurrent.Next[itemNodeId] = NewNode(_type, itemNodeId)
 			}
 
 			for _, key := range []string{"protocol", "description"} {
@@ -166,14 +166,14 @@ func iterate(items interface{}, node *Node) {
 			}
 		case "CLUSTER":
 			if node.Next["CLUSTER"] == nil {
-				node.Next["CLUSTER"] = NewNode("CLUSTER", nodeId)
+				node.Next["CLUSTER"] = NewNode("CLUSTER", itemNodeId)
 			}
 			nodeCluster := node.Next["CLUSTER"]
 
-			if nodeCluster.Next[nodeId] == nil {
-				nodeCluster.Next[nodeId] = NewNode(_type, nodeId)
+			if nodeCluster.Next[itemNodeId] == nil {
+				nodeCluster.Next[itemNodeId] = NewNode(_type, itemNodeId)
 			}
-			iterate(item["items"].([]interface{}), nodeCluster.Next[nodeId])
+			iterate(item["items"].([]interface{}), nodeCluster.Next[itemNodeId])
 		case "ACTIVITY":
 			itemsDescription := item["description"].(map[string]interface{})
 			itemsDescriptionType := itemsDescription["_type"].(string)
@@ -206,73 +206,80 @@ func iterate(items interface{}, node *Node) {
 		case "HISTORY":
 			iterate(item["events"].([]interface{}), node)
 		case "ELEMENT":
-			if node.Items == nil {
-				node.Items = &[]DataEntry{}
-			}
 			itemValue := item["value"].(map[string]interface{})
 			itemName := item["name"].(map[string]interface{})
 			valueType := itemValue["_type"].(string)
-			var value map[string]interface{}
+			var valueSet map[string]interface{}
 			switch valueType {
 			case "DV_TEXT":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"value": itemValue["value"],
 				}
 			case "DV_CODED_TEXT":
 				defCode := itemValue["defining_code"].(map[string]interface{})
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"value":       itemValue["value"],
 					"code_string": defCode["code_string"],
 				}
 			case "DV_IDENTIFIER":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"id": itemValue["id"],
 				}
 			case "DV_MULTIMEDIA":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"uri": itemValue["uri"],
 				}
 			case "DV_DATE_TIME", "DV_DATE", "DV_TIME":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"value": itemValue["value"],
 				}
 			case "DV_QUANTITY":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"magnitude": itemValue["magnitude"],
 					"units":     itemValue["units"],
 					"precision": itemValue["precision"],
 				}
 			case "DV_COUNT":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"magnitude": itemValue["magnitude"],
 				}
 			case "DV_PROPORTION":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"numerator":   itemValue["numerator"],
 					"denominator": itemValue["denominator"],
 					"type":        itemValue["type"],
 				}
 			case "DV_URI":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"uri": itemValue["uri"],
 				}
 			case "DV_BOOLEAN":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"value": itemValue["value"],
 				}
 			case "DV_DURATION":
-				value = map[string]interface{}{
+				valueSet = map[string]interface{}{
 					"value": itemValue["value"],
 				}
 			}
 			//log.Println(valueType)
-			value["_type"] = valueType
-			*node.Items = append(*node.Items, DataEntry{
-				Type:   _type,
-				NodeId: nodeId,
-				Name:   itemName["value"].(string),
-				Value:  value,
-			})
+			valueSet["_type"] = valueType
+
+			if node.Items == nil {
+				node.Items = make(map[string]*DataEntry)
+			}
+
+			nodeItem, ok := node.Items[itemNodeId]
+			if !ok {
+				nodeItem = &DataEntry{
+					Type:     _type,
+					NodeId:   itemNodeId,
+					Name:     itemName["value"].(string),
+					ValueSet: []map[string]interface{}{},
+				}
+				node.Items[itemNodeId] = nodeItem
+			}
+			nodeItem.ValueSet = append(nodeItem.ValueSet, valueSet)
 		}
 	}
 }
