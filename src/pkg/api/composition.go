@@ -97,12 +97,71 @@ func (h CompositionHandler) Create(c *gin.Context) {
 
 	// Composition document creating
 	doc, err := h.service.CompositionCreate(userId, ehrId, &request)
+
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
 	}
 
 	h.respondWithDocOrHeaders(ehrId, doc, c)
+}
+
+// GetById
+// @Summary      Get COMPOSITION by version id
+// @Description  Retrieves a particular version of the COMPOSITION identified by `version_uid` and associated with the EHR identified by `ehr_id`.
+// @Description
+// @Tags         COMPOSITION
+// @Accept       json
+// @Produce      json
+// @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        version_uid  path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+// @Param        AuthUserId   header    string  true  "UserId UUID"
+// @Success      200          {object}  model.SwagComposition
+// @Failure      204          "Is returned when the COMPOSITION is deleted (logically)."
+// @Failure      400          "Is returned when AuthUserId is not specified"
+// @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an COMPOSITION with `version_uid` does not exist."
+// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr/{ehr_id}/composition/{version_uid} [get]
+func (h CompositionHandler) GetById(c *gin.Context) {
+	ehrId := c.Param("ehrid")
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	versionUid := c.Param("version_uid")
+	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+
+	}
+
+	// Checking EHR does not exist
+	_, err := h.service.Doc.EhrsIndex.Get(userId)
+	if errors.Is(err, errors.IsNotExist) {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	data, err := h.service.GetCompositionById(userId, ehrId, versionUid, types.COMPOSITION)
+	if err != nil {
+		if errors.Is(err, errors.IsNotExist) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else {
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, data)
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
