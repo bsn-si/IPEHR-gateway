@@ -1,5 +1,7 @@
 {
     "baseUrl": "http://localhost:8080",
     "dataPath": "../data",
-    "host": "localhost:8080"
+    "host": "localhost:8080",
+    "storagePath": "../data/storage",
+    "keystoreKey": "fb5b72b901e8419969057bc7f73f8731bf3e3599ee3d8fac26b2c4bc6c7b6627"
 }

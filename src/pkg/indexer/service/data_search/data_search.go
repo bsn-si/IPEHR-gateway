@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/indexer"
+	"hms/gateway/pkg/keystore"
 )
 
 type DataSearchIndex struct {
@@ -15,7 +16,7 @@ type DataSearchIndex struct {
 	node  *Node
 }
 
-func New() *DataSearchIndex {
+func New(ks *keystore.KeyStore) *DataSearchIndex {
 	return &DataSearchIndex{
 		index: indexer.Init("data_search"),
 		node:  newNode("INDEX", ""),

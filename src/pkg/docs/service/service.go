@@ -3,11 +3,11 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -17,30 +17,34 @@ import (
 	"hms/gateway/pkg/indexer/service/doc_access"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
+	"hms/gateway/pkg/indexer/service/group_access"
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
 )
 
 type DefaultDocumentService struct {
-	Storage         storage.Storager
-	Keystore        *keystore.KeyStore
-	EhrsIndex       *ehrs.EhrsIndex
-	DocsIndex       *docs.DocsIndex
-	DocAccessIndex  *doc_access.DocAccessIndex
-	SubjectIndex    *subject.SubjectIndex
-	DataSearchIndex *data_search.DataSearchIndex
+	Storage          storage.Storager
+	Keystore         *keystore.KeyStore
+	EhrsIndex        *ehrs.EhrsIndex
+	DocsIndex        *docs.DocsIndex
+	DocAccessIndex   *doc_access.DocAccessIndex
+	SubjectIndex     *subject.SubjectIndex
+	GroupAccessIndex *group_access.GroupAccessIndex
+	DataSearchIndex  *data_search.DataSearchIndex
 }
 
-func NewDefaultDocumentService() *DefaultDocumentService {
+func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
+	ks := keystore.New(cfg.KeystoreKey)
 	return &DefaultDocumentService{
-		Storage:         storage.Init(),
-		Keystore:        keystore.New(),
-		EhrsIndex:       ehrs.New(),
-		DocsIndex:       docs.New(),
-		DocAccessIndex:  doc_access.New(),
-		SubjectIndex:    subject.New(),
-		DataSearchIndex: data_search.New(),
+		Storage:          storage.Storage(),
+		Keystore:         ks,
+		EhrsIndex:        ehrs.New(),
+		DocsIndex:        docs.New(),
+		DocAccessIndex:   doc_access.New(ks),
+		SubjectIndex:     subject.New(),
+		GroupAccessIndex: group_access.New(ks),
+		DataSearchIndex:  data_search.New(ks),
 	}
 }
 
@@ -146,30 +150,6 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, err
 	}
 	return docDecrypted, nil
-}
-
-func (d *DefaultDocumentService) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.DocsIndex.Get(ehrId)
-	if err != nil {
-		return nil, err
-	}
-
-	t := uint64(nearestTime.UnixNano())
-	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docType {
-			if docIndex.Timestamp <= t {
-				doc = docIndex
-			} else {
-				break
-			}
-		}
-	}
-
-	if doc == nil {
-		err = errors.IsNotExist
-	}
-
-	return doc, err
 }
 
 func (d *DefaultDocumentService) GenerateId() string {

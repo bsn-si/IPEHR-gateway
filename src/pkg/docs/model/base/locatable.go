@@ -12,5 +12,5 @@ type Locatable struct {
 	Uid              *ObjectId   `json:"uid,omitempty"`
 	Links            *[]Link     `json:"links,omitempty"`
 	ArchetypeDetails *Archetyped `json:"archetype_details,omitempty"`
-	Pathable
+	Pathable         `json:"-"`
 }

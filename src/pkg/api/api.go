@@ -1,8 +1,8 @@
 package api
 
 import (
+	"hms/gateway/pkg/storage"
 	"net/http"
-	"strings"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -32,17 +32,20 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
-
-	fs http.FileSystem
+	GroupAccess *GroupAccessHandler
 }
 
 func New(cfg *config.Config) *API {
-	docService := service.NewDefaultDocumentService()
+	sc := storage.NewConfig(cfg.StoragePath)
+	storage.Init(sc)
+
+	docService := service.NewDefaultDocumentService(cfg)
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),
 		Composition: NewCompositionHandler(docService, cfg),
 		Query:       NewQueryHandler(docService, cfg),
+		GroupAccess: NewGroupAccessHandler(docService, cfg),
 	}
 }
 
@@ -50,24 +53,17 @@ func (a *API) Build() *gin.Engine {
 	r := gin.New()
 
 	r.NoRoute(func(c *gin.Context) {
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if p := strings.TrimPrefix(r.URL.Path, "/v1"); len(p) < len(r.URL.Path) {
-				if p == "/" || p == "" {
-					c.Header("Cache-Control", "no-store, max-age=0")
-				}
-				c.FileFromFS(p, a.fs)
-			} else {
-				http.NotFound(w, r)
-			}
-		}).ServeHTTP(c.Writer, c.Request)
+		c.AbortWithStatus(404)
 	})
 
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")
+	access := v1.Group("access")
 	query := v1.Group("query")
 
 	a.setRedirections(r).
 		buildEhrAPI(ehr).
+		buildGroupAccessAPI(access).
 		buildQueryAPI(query)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -81,22 +77,29 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 
 	// Other methods should be authorized
 	r.Use(a.Auth)
-	r.POST("/", a.Ehr.Create)
-	r.GET("/", a.Ehr.GetBySubjectIdAndNamespace)
+	r.POST("", a.Ehr.Create)
+	r.GET("", a.Ehr.GetBySubjectIdAndNamespace)
 	r.PUT("/:ehrid", a.Ehr.CreateWithId)
 	r.GET("/:ehrid", a.Ehr.GetById)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
 	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
-	r.GET("/:ehrid/ehr_status", a.EhrStatus.Get)
+	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
 	r.POST("/:ehrid/composition", a.Composition.Create)
+	r.GET("/:ehrid/composition/:version_uid", a.Composition.GetById)
 
+	return a
+}
+
+func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
+	r.Use(a.Auth)
+	r.GET("/group/:group_id", a.GroupAccess.Get)
+	r.POST("/group", a.GroupAccess.Create)
 	return a
 }
 
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 	r.Use(a.Auth)
 	r.POST("/aql", a.Query.ExecPost)
-
 	return a
 }
 

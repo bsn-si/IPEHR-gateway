@@ -5,22 +5,24 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+
 	"hms/gateway/pkg/common/fake_data"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/query"
-
-	"github.com/gin-gonic/gin"
 )
 
 type QueryHandler struct {
-	*query.QueryService
+	cfg     *config.Config
+	service *query.QueryService
 }
 
 func NewQueryHandler(docService *service.DefaultDocumentService, cfg *config.Config) *QueryHandler {
 	return &QueryHandler{
-		query.NewQueryService(docService, cfg),
+		cfg:     cfg,
+		service: query.NewQueryService(docService),
 	}
 }
 
@@ -67,5 +69,5 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 	}
 
 	//TODO make real job
-	c.JSON(http.StatusOK, fake_data.QueryExecResponse(queryRequest.Query))
+	c.Data(http.StatusOK, "application/json", fake_data.QueryExecResponse(queryRequest.Query))
 }

@@ -2,115 +2,114 @@ package composition
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/crypto/chacha_poly"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/types"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
+
+	"hms/gateway/pkg/crypto/chacha_poly"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 )
 
 type CompositionService struct {
 	Doc *service.DefaultDocumentService
-	Cfg *config.Config
 }
 
-func NewCompositionService(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionService {
+func NewCompositionService(docService *service.DefaultDocumentService) *CompositionService {
 	return &CompositionService{
 		Doc: docService,
-		Cfg: cfg,
 	}
 }
 
-func (s CompositionService) ParseJson(data []byte) (*model.Composition, error) {
-	var doc model.Composition
-	err := json.Unmarshal(data, &doc)
-	if err != nil {
-		return nil, err
-	}
-	return &doc, nil
+func (s CompositionService) ParseJson(data []byte) (composition *model.Composition, err error) {
+	composition = &model.Composition{}
+	err = json.Unmarshal(data, composition)
+	return
 }
 
 func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) {
 	return json.Marshal(doc)
 }
 
-func (s CompositionService) Create(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
-	composition = &model.Composition{}
+func (s CompositionService) CompositionCreate(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
+	composition = request
 
-	composition.Type = types.COMPOSITION.String()
-	// TODO cant comprehend should we use data from request (because validation) or create new one?
-	composition.ArchetypeNodeId = request.ArchetypeNodeId
-	composition.Name.Value = request.Name.Value
-	composition.Uid = &base.ObjectId{
-		Type:  request.Uid.Type,
-		Value: request.Uid.Type,
-	}
-	composition.ArchetypeDetails = &base.Archetyped{
-		ArchetypeId: base.ObjectId{
-			Value: request.ArchetypeDetails.ArchetypeId.Type,
-		},
-		TemplateId: &base.ObjectId{Value: request.ArchetypeDetails.TemplateId.Value},
-		RmVersion:  request.ArchetypeDetails.RmVersion,
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return
 	}
 
-	// TODO fill others
-	//composition.Language
-	//composition.Territory
-	//composition.Category
-	//composition.Composer
-	//composition.Context
-	//composition.Content
-
-	err = s.save(userId, ehrId, composition)
-
-	return composition, err
+	err = s.save(userId, ehrUUID, composition)
+	return
 }
 
-func (s CompositionService) save(userId string, ehrId string, doc *model.Composition) error {
+func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Composition) (err error) {
 	docBytes, err := s.MarshalJson(doc)
 	if err != nil {
 		log.Println(err)
-		return err
+		return
 	}
+
+	documentUid := doc.Uid.Value
 
 	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
 	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(ehrId))
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(documentUid))
 	if err != nil {
 		log.Println(err)
-		return err
+		return
 	}
 
 	// Storage saving
 	docStorageId, err := s.Doc.Storage.Add(docEncrypted)
 	if err != nil {
 		log.Println(err)
+		return
+	}
+
+	docIdEncrypted, err := key.EncryptWithAuthData([]byte(documentUid), ehrUUID[:])
+	if err != nil {
 		return err
 	}
 
 	// Index Docs ehr_id -> doc_meta
 	docIndex := &model.DocumentMeta{
-		TypeCode:  types.COMPOSITION,
-		StorageId: docStorageId,
-		Timestamp: uint64(time.Now().UnixNano()),
+		TypeCode:       types.COMPOSITION,
+		DocIdEncrypted: docIdEncrypted,
+		StorageId:      docStorageId,
+		Timestamp:      uint64(time.Now().UnixNano()),
 	}
 
 	// First record in doc index
-	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
+	if err = s.Doc.DocsIndex.Add(ehrUUID.String(), docIndex); err != nil {
 		log.Println(err)
-		return err
+		return
 	}
 
 	// Index Access
 	if err = s.Doc.DocAccessIndex.Add(userId, docStorageId, key.Bytes()); err != nil {
 		log.Println(err)
-		return err
+		return
 	}
 
 	return nil
+}
+
+func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
+	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
+	if err != nil {
+		return nil, errors.IsNotExist
+	}
+
+	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
+	if err != nil {
+		return nil, err
+	}
+
+	return c.ParseJson(decryptedData)
 }
