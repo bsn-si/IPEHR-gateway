@@ -102,6 +102,8 @@ Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPE
 
 Result: in the response, you see the EHR status version by time
 
+[Watch video instruction](https://media.bsn.si/ipehr/get_version_by_time.mp4) 📹 
+
 ### Getting info on EHR_STATUS by version id
 
 Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project/_edit#create-an-ehr-1) and ehr_id, AuthUserId, version_id (look at "ehr_status" -> "value") are copied to a buffer
@@ -112,6 +114,7 @@ Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPE
 
 Result: in the response, you see the EHR status EHR_STATUS by version id (at the example it is ::1 at the end which means requested the first version)
 
+[Watch video instruction](https://media.bsn.si/ipehr/get_by_summary_id.mp4) 📹 
 
 ## Update EHR
 
@@ -122,8 +125,8 @@ Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPE
 1. Click `Try it out`
 1. Fill in `AuthUserId` with copied information 
 1. Fill in a new ehr_id according to the UUID format
-1. Fill in If-Match with version_id to +1 (e.g the current version is 8cf1779d-f050-4be3-a671-579bf277f294::openEHRSys.example.com::1 and the user update EHR with a new version 8cf1779d-f050-4be3-a671-579bf277f294::openEHRSys.example.com::2)
-1. Fill in Request with a body template:
+1. Fill in If-Match with version_id (e.g the current version is 8cf1779d-f050-4be3-a671-579bf277f294::openEHRSys.example.com::1)
+1. Fill in Request with a body template (also can find it [here](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/ehr.html#ehr_status-ehr_status-put)):
     > {
   "_type": "EHR_STATUS",
   "archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
@@ -160,6 +163,8 @@ Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPE
 1. Click `Execute`
 
 Result: in the response, you see an updated EHR. Now you can find EHR with a new version and in new version, you will see that the changed param has a new value
+
+[Watch video instruction](https://media.bsn.si/ipehr/update_ehr.mp4) 📹 
 
 ## Create a composition
 
