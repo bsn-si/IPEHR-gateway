@@ -12,15 +12,18 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer/service/data_search"
 )
 
 type CompositionService struct {
-	Doc *service.DefaultDocumentService
+	Doc             *service.DefaultDocumentService
+	DataSearchIndex *data_search.DataSearchIndex
 }
 
 func NewCompositionService(docService *service.DefaultDocumentService) *CompositionService {
 	return &CompositionService{
-		Doc: docService,
+		Doc:             docService,
+		DataSearchIndex: data_search.New(),
 	}
 }
 
@@ -87,6 +90,14 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 
 	// First record in doc index
 	if err = s.Doc.DocsIndex.Add(ehrUUID.String(), docIndex); err != nil {
+		log.Println(err)
+		return
+	}
+
+	// Index DataSearch
+	groupId := uuid.New()
+	docStorId := []byte{1, 2, 3}
+	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, &groupId, docStorId); err != nil {
 		log.Println(err)
 		return
 	}

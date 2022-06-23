@@ -7,25 +7,9 @@ import (
 
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
-	"hms/gateway/pkg/keystore"
 )
-
-type DataSearchIndex struct {
-	index indexer.Indexer
-	node  *Node
-}
-
-func New(ks *keystore.KeyStore) *DataSearchIndex {
-	return &DataSearchIndex{
-		index: indexer.Init("data_search"),
-		node:  newNode("INDEX", ""),
-	}
-}
-
-func (d *DataSearchIndex) Add(key string, value interface{}) error {
-	return nil
-}
 
 type DataEntry struct {
 	GroupId       *uuid.UUID
@@ -56,7 +40,21 @@ func newNode(_type, nodeId string) *Node {
 	}
 }
 
-func (n *Node) Dump() {
+type DataSearchIndex struct {
+	index indexer.Indexer
+}
+
+func New() *DataSearchIndex {
+	return &DataSearchIndex{
+		index: indexer.Init("data_search"),
+	}
+}
+
+func (d *DataSearchIndex) Add(key string, value interface{}) error {
+	return nil
+}
+
+func (n *Node) dump() {
 	data, err := json.MarshalIndent(n, "", "    ")
 	if err != nil {
 		fmt.Println(err)
@@ -64,9 +62,15 @@ func (n *Node) Dump() {
 	fmt.Println(string(data))
 }
 
-func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId *uuid.UUID, docStorId []byte) {
-	if i.node == nil {
-		i.node = newNode("INDEX", "")
+func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId *uuid.UUID, docStorId []byte) error {
+	node := &Node{}
+	err := i.index.GetById("INDEX", node)
+	if err != nil {
+		if errors.Is(err, errors.IsNotExist) {
+			node = newNode("INDEX", "")
+		} else {
+			return err
+		}
 	}
 
 	var iterate func(items interface{}, node *Node)
@@ -282,7 +286,9 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId
 		}
 	}
 
-	iterate(content, i.node)
+	iterate(content, node)
 
-	i.index.Replace("INDEX", i.node)
+	node.dump()
+
+	return i.index.Replace("INDEX", node)
 }

@@ -97,7 +97,6 @@ func (h CompositionHandler) Create(c *gin.Context) {
 
 	// Composition document creating
 	doc, err := h.service.CompositionCreate(userId, ehrId, &request)
-
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return

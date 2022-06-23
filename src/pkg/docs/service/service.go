@@ -13,7 +13,6 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/service/data_search"
 	"hms/gateway/pkg/indexer/service/doc_access"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
@@ -31,7 +30,6 @@ type DefaultDocumentService struct {
 	DocAccessIndex   *doc_access.DocAccessIndex
 	SubjectIndex     *subject.SubjectIndex
 	GroupAccessIndex *group_access.GroupAccessIndex
-	DataSearchIndex  *data_search.DataSearchIndex
 }
 
 func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
@@ -44,7 +42,6 @@ func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 		DocAccessIndex:   doc_access.New(ks),
 		SubjectIndex:     subject.New(),
 		GroupAccessIndex: group_access.New(ks),
-		DataSearchIndex:  data_search.New(ks),
 	}
 }
 
