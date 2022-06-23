@@ -3,6 +3,7 @@ package compressor
 import (
 	"fmt"
 	"hms/gateway/pkg/common/utils"
+	"hms/gateway/pkg/crypto/chacha_poly"
 	"os"
 	"testing"
 )
@@ -34,13 +35,29 @@ func TestCompressionRatio(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dataSize := float32(len(data))
+	key := chacha_poly.GenerateKey()
+	encryptedData, err := key.Encrypt(data)
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	dataSize := float32(len(data))
+	dataSizeEncrypted := float32(len(encryptedData))
+
+	// raw data
 	for l := 0; l <= 9; l++ {
 		compressor := New(l)
 		compressed, _ := compressor.Compress(&data)
 		ratio := dataSize / float32(len(*compressed))
-		t.Logf("Level: %d Ratio: %.1f times", l, ratio)
+		t.Logf("Raw data. Level: %d Ratio: %.1f times", l, ratio)
+	}
+
+	// encrypted
+	for l := 0; l <= 9; l++ {
+		compressor := New(l)
+		compressed, _ := compressor.Compress(&encryptedData)
+		ratio := dataSizeEncrypted / float32(len(*compressed))
+		t.Logf("Encrypted. Level: %d Ratio: %.1f times", l, ratio)
 	}
 }
 
