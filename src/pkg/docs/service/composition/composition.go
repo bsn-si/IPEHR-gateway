@@ -2,15 +2,16 @@ package composition
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
-	"hms/gateway/pkg/errors"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 )
 
 type CompositionService struct {
@@ -23,13 +24,10 @@ func NewCompositionService(docService *service.DefaultDocumentService) *Composit
 	}
 }
 
-func (s CompositionService) ParseJson(data []byte) (*model.Composition, error) {
-	var doc model.Composition
-	err := json.Unmarshal(data, &doc)
-	if err != nil {
-		return nil, err
-	}
-	return &doc, nil
+func (s CompositionService) ParseJson(data []byte) (composition *model.Composition, err error) {
+	composition = &model.Composition{}
+	err = json.Unmarshal(data, composition)
+	return
 }
 
 func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) {
@@ -102,18 +100,16 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 	return nil
 }
 
-func (c CompositionService) GetCompositionById(userId string, ehrId string, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
+func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
 	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
 	if err != nil {
 		return nil, errors.IsNotExist
 	}
 
-	encryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
+	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
 	if err != nil {
 		return nil, err
 	}
 
-	composition, err = c.ParseJson(encryptedData)
-
-	return
+	return c.ParseJson(decryptedData)
 }

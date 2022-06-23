@@ -150,22 +150,18 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	}
 
 	data, err := h.service.GetCompositionById(userId, ehrId, versionUid, types.COMPOSITION)
-
-	switch err {
-	case nil:
-		break
-	case errors.IsNotExist:
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	default:
-		log.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
+	if err != nil {
+		if errors.Is(err, errors.IsNotExist) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else {
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
 	}
 
-	dataJson, _ := h.service.MarshalJson(data)
-
-	c.Data(http.StatusOK, "application/json", dataJson)
+	c.JSON(http.StatusOK, data)
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
