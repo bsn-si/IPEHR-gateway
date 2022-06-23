@@ -125,13 +125,13 @@ func (h CompositionHandler) Create(c *gin.Context) {
 func (h CompositionHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
 	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
-		c.AbortWithStatus(http.StatusNotFound)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
 	versionUid := c.Param("version_uid")
 	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
-		c.AbortWithStatus(http.StatusNotFound)
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -149,27 +149,23 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	documentMeta, err := h.service.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, types.COMPOSITION)
-	if err != nil {
+	data, err := h.service.GetCompositionById(userId, ehrId, versionUid, types.COMPOSITION)
+
+	switch err {
+	case nil:
+		break
+	case errors.IsNotExist:
 		c.AbortWithStatus(http.StatusNotFound)
 		return
-	}
-
-	encryptedData, err := h.service.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
-	if err != nil {
+	default:
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	_, err = h.service.ParseJson(encryptedData)
+	dataJson, _ := h.service.MarshalJson(data)
 
-	if err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	c.Data(http.StatusOK, "application/json", encryptedData)
+	c.Data(http.StatusOK, "application/json", dataJson)
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
