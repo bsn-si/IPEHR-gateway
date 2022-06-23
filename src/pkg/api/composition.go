@@ -130,7 +130,7 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	}
 
 	versionUid := c.Param("version_uid")
-	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+	if h.service.Doc.ValidateId(versionUid, types.COMPOSITION) == false {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
