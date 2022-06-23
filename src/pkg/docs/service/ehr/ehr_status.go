@@ -2,11 +2,12 @@ package ehr
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/crypto"
+	"hms/gateway/pkg/crypto/common"
 	"time"
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
@@ -68,7 +69,7 @@ func (s *EhrStatusService) Validate(doc *model.EhrStatus) bool {
 
 func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrStatus) error {
 	// Document encryption key generation
-	key := chacha_poly.GenerateKey()
+	key := crypto.GenerateKey()
 
 	statusStorageId, err := s.saveStatusToStorage(status, key)
 	if err != nil {
@@ -117,7 +118,7 @@ func (s *EhrStatusService) SaveStatus(ehrId, userId string, status *model.EhrSta
 	return nil
 }
 
-func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *chacha_poly.Key) (storageId *[32]byte, err error) {
+func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key common.KeyInterface) (storageId *[32]byte, err error) {
 	statusBytes, err := s.MarshalJson(status)
 	if err != nil {
 		return

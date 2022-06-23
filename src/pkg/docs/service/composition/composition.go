@@ -2,10 +2,10 @@ package composition
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/crypto"
 	"log"
 	"time"
 
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
@@ -48,7 +48,7 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 	}
 
 	// Document encryption key generation
-	key := chacha_poly.GenerateKey()
+	key := crypto.GenerateKey()
 
 	// Document encryption
 	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(ehrId))

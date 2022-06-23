@@ -3,11 +3,12 @@ package doc_access
 
 import (
 	"encoding/hex"
+	"hms/gateway/pkg/crypto"
+	"hms/gateway/pkg/crypto/common"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
@@ -62,7 +63,7 @@ func (u *DocAccessIndex) Get(userId string) ([]byte, error) {
 	return keyEncrypted, err
 }
 
-func (u *DocAccessIndex) GetDocumentKey(userId string, docStorageId *[32]byte) (docKey *chacha_poly.Key, err error) {
+func (u *DocAccessIndex) GetDocumentKey(userId string, docStorageId *[32]byte) (docKey common.KeyInterface, err error) {
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		return
@@ -87,7 +88,7 @@ func (u *DocAccessIndex) GetDocumentKey(userId string, docStorageId *[32]byte) (
 		return
 	}
 
-	docKey, err = chacha_poly.NewKeyFromBytes(docKeyBytes)
+	docKey, err = crypto.NewKeyFromBytes(docKeyBytes)
 	if err != nil {
 		return
 	}

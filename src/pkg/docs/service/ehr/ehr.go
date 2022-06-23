@@ -2,13 +2,13 @@ package ehr
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/crypto"
 	"log"
 	"time"
 
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
@@ -88,7 +88,7 @@ func (s EhrService) SaveDoc(userId string, doc *model.EHR) error {
 	}
 
 	// Document encryption key generation
-	key := chacha_poly.GenerateKey()
+	key := crypto.GenerateKey()
 
 	// Document encryption
 	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(doc.EhrId.Value))

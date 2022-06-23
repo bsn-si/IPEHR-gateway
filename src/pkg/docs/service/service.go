@@ -3,12 +3,11 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
+	"hms/gateway/pkg/crypto"
 
 	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
@@ -88,7 +87,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 			return nil, fmt.Errorf("document key length mismatch")
 		}
 
-		key, err := chacha_poly.NewKeyFromBytes(keyDecrypted)
+		key, err := crypto.NewKeyFromBytes(keyDecrypted)
 		if err != nil {
 			return nil, err
 		}
@@ -133,8 +132,10 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 		return nil, fmt.Errorf("document key length mismatch")
 	}
 
-	var docKey chacha_poly.Key
-	copy(docKey[:], keyDecrypted)
+	docKey, err := crypto.NewKeyFromBytes(keyDecrypted)
+	if err != nil {
+		return nil, err
+	}
 
 	docEncrypted, err := d.Storage.Get(storageId)
 	if err != nil {
