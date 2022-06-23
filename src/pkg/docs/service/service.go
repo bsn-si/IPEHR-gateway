@@ -13,6 +13,7 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer/service/data_search"
 	"hms/gateway/pkg/indexer/service/doc_access"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
@@ -22,22 +23,24 @@ import (
 )
 
 type DefaultDocumentService struct {
-	Storage        storage.Storager
-	EhrsIndex      *ehrs.EhrsIndex
-	DocsIndex      *docs.DocsIndex
-	DocAccessIndex *doc_access.DocAccessIndex
-	SubjectIndex   *subject.SubjectIndex
-	Keystore       *keystore.KeyStore
+	Storage         storage.Storager
+	Keystore        *keystore.KeyStore
+	EhrsIndex       *ehrs.EhrsIndex
+	DocsIndex       *docs.DocsIndex
+	DocAccessIndex  *doc_access.DocAccessIndex
+	SubjectIndex    *subject.SubjectIndex
+	DataSearchIndex *data_search.DataSearchIndex
 }
 
 func NewDefaultDocumentService() *DefaultDocumentService {
 	return &DefaultDocumentService{
-		EhrsIndex:      ehrs.New(),
-		DocsIndex:      docs.New(),
-		DocAccessIndex: doc_access.New(),
-		SubjectIndex:   subject.New(),
-		Storage:        storage.Init(),
-		Keystore:       keystore.New(),
+		Storage:         storage.Init(),
+		Keystore:        keystore.New(),
+		EhrsIndex:       ehrs.New(),
+		DocsIndex:       docs.New(),
+		DocAccessIndex:  doc_access.New(),
+		SubjectIndex:    subject.New(),
+		DataSearchIndex: data_search.New(),
 	}
 }
 
