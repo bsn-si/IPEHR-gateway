@@ -26,6 +26,24 @@ func BenchmarkCompression(b *testing.B) {
 	}
 }
 
+// If someone wants to check compression ratio
+func TestCompressionRatio(t *testing.T) {
+	t.Skip()
+	data, err := testData()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dataSize := float32(len(data))
+
+	for l := 0; l <= 9; l++ {
+		compressor := New(l)
+		compressed, _ := compressor.Compress(&data)
+		ratio := dataSize / float32(len(*compressed))
+		t.Logf("Level: %d Ratio: %.1f times", l, ratio)
+	}
+}
+
 func testData() (data []byte, err error) {
 	rootDir, err := utils.ProjectRootDir()
 	if err != nil {
