@@ -288,7 +288,5 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId
 
 	iterate(content, node)
 
-	node.dump()
-
 	return i.index.Replace("INDEX", node)
 }

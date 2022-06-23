@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestParseDocument(t *testing.T) {
+func TestParseEhr(t *testing.T) {
 	wd, _ := os.Getwd()
 	filePath := wd + "/../../../../data/mock/ehr/ehr.json"
 
@@ -16,7 +16,7 @@ func TestParseDocument(t *testing.T) {
 		t.Fatal("Can't open composition.json file", filePath)
 	}
 
-	res, err := ParseDocument(inJson)
+	res, err := ParseEhr(inJson)
 	if err != nil {
 		t.Fatal(err)
 	}

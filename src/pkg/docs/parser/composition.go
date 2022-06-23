@@ -8,5 +8,6 @@ import (
 
 func ParseComposition(inComposition []byte) (composition *model.Composition, err error) {
 	composition = &model.Composition{}
-	return json.Unmarshal(inComposition, composition)
+	err = json.Unmarshal(inComposition, composition)
+	return
 }
