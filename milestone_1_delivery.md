@@ -23,7 +23,7 @@ In this milestone we've designed and developed an MH-ORM and medical data storag
 
 ### Project introduction:
 
-[![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://media.bsn.si/ipehr/introduction.mov)
+[![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://www.youtube.com/watch?v=nJFA5W4qoEw)
 
 
 # Workflow example
