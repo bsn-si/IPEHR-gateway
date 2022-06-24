@@ -21,7 +21,7 @@ The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of 
 
 ### Whatch video introduction:
 
-[![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://media.bsn.si/ipehr/introduction.mov)
+[![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://www.youtube.com/watch?v=nJFA5W4qoEw)
 
 ### Key features of the IPEHR solution:
 
