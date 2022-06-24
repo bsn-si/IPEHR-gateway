@@ -6,7 +6,6 @@ import (
 	"golang.org/x/crypto/sha3"
 	config2 "hms/gateway/pkg/config"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage/compressor"
 	"log"
 	"os"
 )
@@ -17,10 +16,8 @@ type Config struct {
 }
 
 type LocalFileStorage struct {
-	basePath           string
-	depth              uint8
-	compressor         compressor.Interface
-	compressionEnabled bool
+	basePath string
+	depth    uint8
 }
 
 func Init(config *Config, globalConfig *config2.Config) (*LocalFileStorage, error) {
@@ -44,10 +41,8 @@ func Init(config *Config, globalConfig *config2.Config) (*LocalFileStorage, erro
 	}
 
 	return &LocalFileStorage{
-		basePath:           config.BasePath,
-		depth:              config.Depth,
-		compressor:         compressor.New(globalConfig.CompressionLevel),
-		compressionEnabled: globalConfig.CompressionEnabled,
+		basePath: config.BasePath,
+		depth:    config.Depth,
 	}, nil
 }
 
@@ -85,14 +80,6 @@ func (s *LocalFileStorage) Get(id *[32]byte) (data []byte, err error) {
 		return
 	}
 
-	if s.compressionEnabled {
-		dataDecompressed, err := s.compressor.Decompress(&data)
-		if err != nil {
-			return nil, err
-		}
-		data = *dataDecompressed
-	}
-
 	return
 }
 
@@ -103,13 +90,6 @@ func (s *LocalFileStorage) writeFile(id *[32]byte, data *[]byte) (err error) {
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		if err = os.MkdirAll(path, os.ModePerm); err != nil {
 			return err
-		}
-	}
-
-	if s.compressionEnabled {
-		data, err = s.compressor.Compress(data)
-		if err != nil {
-			return
 		}
 	}
 

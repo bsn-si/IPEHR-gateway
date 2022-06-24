@@ -123,6 +123,14 @@ func (s *EhrStatusService) saveStatusToStorage(status *model.EhrStatus, key *cha
 		return
 	}
 
+	if s.Doc.CompressionEnabled {
+		statusBytesPointer, err := s.Doc.Compressor.Compress(&statusBytes)
+		if err != nil {
+			return nil, err
+		}
+		statusBytes = *statusBytesPointer
+	}
+
 	// Document encryption
 	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(status.Uid.Value))
 	if err != nil {
@@ -203,6 +211,14 @@ func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, statusMeta
 	statusBytes, err := statusKey.DecryptWithAuthData(encryptedStatus, statusId)
 	if err != nil {
 		return
+	}
+
+	if s.Doc.CompressionEnabled {
+		statusBytesPointer, err := s.Doc.Compressor.Decompress(&statusBytes)
+		if err != nil {
+			return nil, err
+		}
+		statusBytes = *statusBytesPointer
 	}
 
 	status, err = s.ParseJson(statusBytes)
