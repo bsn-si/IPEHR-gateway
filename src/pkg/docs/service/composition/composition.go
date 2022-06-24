@@ -165,26 +165,16 @@ func (c CompositionService) parseUid(uid string) (base []string, last string) {
 	return parts[:length], parts[length]
 }
 
-func (c CompositionService) DeleteCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (newUid string, err error) {
-	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
+func (c CompositionService) DeleteCompositionById(userId, ehrId, versionUid string) (newUid string, err error) {
+	err = c.Doc.UpdateDocStatus(userId, ehrId, versionUid, types.COMPOSITION, status.ACTIVE, status.DELETED)
 	if err != nil {
-		return newUid, errors.IsNotExist
-	}
+		if errors.Is(err, errors.AlreadyUpdated) {
+			return "", errors.AlreadyDeleted
+		} else {
+			return "", err
+		}
 
-	if documentMeta.Status == status.DELETED {
-		return newUid, errors.AlreadyDeleted
 	}
-
-	ehrUUID, err := uuid.Parse(ehrId)
-	if err != nil {
-		return
-	}
-
-	err = c.delete(userId, ehrUUID, documentMeta)
-	if err != nil {
-		return
-	}
-
 	newUid = c.increaseUidVersion(versionUid)
 
 	return

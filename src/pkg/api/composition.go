@@ -209,8 +209,7 @@ func (h CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	uuid, err := h.service.DeleteCompositionById(userId, ehrId, versionUid, types.COMPOSITION)
-
+	uuid, err := h.service.DeleteCompositionById(userId, ehrId, versionUid)
 	switch err {
 	case nil:
 		h.addResponseHeaders(ehrId, uuid, c)

@@ -2,11 +2,12 @@
 package docs
 
 import (
+	"time"
+
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
-	"time"
 )
 
 type DocsIndex struct {
