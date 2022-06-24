@@ -5,10 +5,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
+
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 )
 
 type CompositionService struct {
@@ -21,13 +24,10 @@ func NewCompositionService(docService *service.DefaultDocumentService) *Composit
 	}
 }
 
-func (s CompositionService) ParseJson(data []byte) (*model.Composition, error) {
-	var doc model.Composition
-	err := json.Unmarshal(data, &doc)
-	if err != nil {
-		return nil, err
-	}
-	return &doc, nil
+func (s CompositionService) ParseJson(data []byte) (composition *model.Composition, err error) {
+	composition = &model.Composition{}
+	err = json.Unmarshal(data, composition)
+	return
 }
 
 func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) {
@@ -36,22 +36,30 @@ func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) 
 
 func (s CompositionService) CompositionCreate(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
 	composition = request
-	err = s.save(userId, ehrId, composition)
+
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return
+	}
+
+	err = s.save(userId, ehrUUID, composition)
 	return
 }
 
-func (s CompositionService) save(userId string, ehrId string, doc *model.Composition) (err error) {
+func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Composition) (err error) {
 	docBytes, err := s.MarshalJson(doc)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
+	documentUid := doc.Uid.Value
+
 	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
 	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(ehrId))
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(documentUid))
 	if err != nil {
 		log.Println(err)
 		return
@@ -64,15 +72,21 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 		return
 	}
 
+	docIdEncrypted, err := key.EncryptWithAuthData([]byte(documentUid), ehrUUID[:])
+	if err != nil {
+		return err
+	}
+
 	// Index Docs ehr_id -> doc_meta
 	docIndex := &model.DocumentMeta{
-		TypeCode:  types.COMPOSITION,
-		StorageId: docStorageId,
-		Timestamp: uint64(time.Now().UnixNano()),
+		TypeCode:       types.COMPOSITION,
+		DocIdEncrypted: docIdEncrypted,
+		StorageId:      docStorageId,
+		Timestamp:      uint64(time.Now().UnixNano()),
 	}
 
 	// First record in doc index
-	if err = s.Doc.DocsIndex.Add(ehrId, docIndex); err != nil {
+	if err = s.Doc.DocsIndex.Add(ehrUUID.String(), docIndex); err != nil {
 		log.Println(err)
 		return
 	}
@@ -84,4 +98,18 @@ func (s CompositionService) save(userId string, ehrId string, doc *model.Composi
 	}
 
 	return nil
+}
+
+func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
+	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
+	if err != nil {
+		return nil, errors.IsNotExist
+	}
+
+	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
+	if err != nil {
+		return nil, err
+	}
+
+	return c.ParseJson(decryptedData)
 }
