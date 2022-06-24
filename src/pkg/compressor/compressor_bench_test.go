@@ -20,7 +20,7 @@ func BenchmarkCompression(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				compressed, _ := compressor.Compress(&data)
+				compressed, _ := compressor.Compress(data)
 				_, _ = compressor.Decompress(compressed)
 			}
 		})
@@ -47,16 +47,16 @@ func TestCompressionRatio(t *testing.T) {
 	// raw data
 	for l := 0; l <= 9; l++ {
 		compressor := New(l)
-		compressed, _ := compressor.Compress(&data)
-		ratio := dataSize / float32(len(*compressed))
+		compressed, _ := compressor.Compress(data)
+		ratio := dataSize / float32(len(compressed))
 		t.Logf("Raw data. Level: %d Ratio: %.1f times", l, ratio)
 	}
 
 	// encrypted
 	for l := 0; l <= 9; l++ {
 		compressor := New(l)
-		compressed, _ := compressor.Compress(&encryptedData)
-		ratio := dataSizeEncrypted / float32(len(*compressed))
+		compressed, _ := compressor.Compress(encryptedData)
+		ratio := dataSizeEncrypted / float32(len(compressed))
 		t.Logf("Encrypted. Level: %d Ratio: %.1f times", l, ratio)
 	}
 }

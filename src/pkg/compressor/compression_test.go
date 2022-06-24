@@ -2,8 +2,9 @@ package compressor
 
 import (
 	"bytes"
-	"hms/gateway/pkg/common/fake_data"
 	"testing"
+
+	"hms/gateway/pkg/common/fake_data"
 )
 
 func TestCompression(t *testing.T) {
@@ -14,7 +15,7 @@ func TestCompression(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	compressedData, err := compressor.Compress(&testData)
+	compressedData, err := compressor.Compress(testData)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -24,7 +25,7 @@ func TestCompression(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(*decompressedData, testData) {
+	if !bytes.Equal(decompressedData, testData) {
 		t.Fatal("Source and decompressed data is not equal")
 	}
 }

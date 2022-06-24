@@ -88,11 +88,10 @@ func (s EhrService) SaveDoc(userId string, doc *model.EHR) error {
 	}
 
 	if s.Doc.CompressionEnabled {
-		docBytesPointer, err := s.Doc.Compressor.Compress(&docBytes)
+		docBytes, err = s.Doc.Compressor.Compress(docBytes)
 		if err != nil {
 			return err
 		}
-		docBytes = *docBytesPointer
 	}
 
 	// Document encryption key generation

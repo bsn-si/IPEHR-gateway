@@ -56,11 +56,10 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 	documentUid := doc.Uid.Value
 
 	if s.Doc.CompressionEnabled {
-		docBytesPointer, err := s.Doc.Compressor.Compress(&docBytes)
+		docBytes, err = s.Doc.Compressor.Compress(docBytes)
 		if err != nil {
 			return err
 		}
-		docBytes = *docBytesPointer
 	}
 
 	// Document encryption key generation

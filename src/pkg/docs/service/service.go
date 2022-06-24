@@ -3,9 +3,10 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"hms/gateway/pkg/compressor"
+
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
-	"hms/gateway/pkg/compressor"
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chacha_poly"
@@ -160,11 +161,10 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	}
 
 	if d.CompressionEnabled {
-		docDecryptedPointer, err := d.Compressor.Decompress(&docDecrypted)
+		docDecrypted, err = d.Compressor.Decompress(docDecrypted)
 		if err != nil {
 			return nil, err
 		}
-		docDecrypted = *docDecryptedPointer
 	}
 
 	return docDecrypted, nil

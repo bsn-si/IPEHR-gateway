@@ -16,50 +16,37 @@ func New(compressionLevel int) *Compressor {
 	}
 }
 
-func (c *Compressor) Compress(data *[]byte) (compressedData *[]byte, err error) {
+func (c *Compressor) Compress(data []byte) (compressedData []byte, err error) {
 	var buf bytes.Buffer
 	zw, err := gzip.NewWriterLevel(&buf, c.compressionLevel)
 	if err != nil {
 		return
 	}
+	defer zw.Close()
 
-	defer func(zw *gzip.Writer) {
-		_ = zw.Close()
-	}(zw)
-
-	_, err = zw.Write(*data)
-	if err != nil {
+	if _, err = zw.Write(data); err != nil {
 		return
 	}
 
-	err = zw.Close()
-	if err != nil {
+	if err = zw.Close(); err != nil {
 		return
 	}
 
-	bufBytes := buf.Bytes()
-	compressedData = &bufBytes
-
-	return
+	return buf.Bytes(), nil
 }
 
-func (c *Compressor) Decompress(data *[]byte) (decompressedData *[]byte, err error) {
-	buf := bytes.NewReader(*data)
+func (c *Compressor) Decompress(data []byte) (decompressedData []byte, err error) {
+	buf := bytes.NewReader(data)
 	zr, err := gzip.NewReader(buf)
 	if err != nil {
 		return
 	}
-
-	defer func(zr *gzip.Reader) {
-		_ = zr.Close()
-	}(zr)
+	defer zr.Close()
 
 	decompressed, err := ioutil.ReadAll(zr)
 	if err != nil {
 		return
 	}
 
-	decompressedData = &decompressed
-
-	return
+	return decompressed, nil
 }
