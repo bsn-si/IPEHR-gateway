@@ -174,10 +174,12 @@ Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPE
 1. Click `/POST /ehr/{ehr_id}/composition` [Create COMPOSITION](https://gateway.ipehr.org/swagger/index.html#/COMPOSITION/post_ehr__ehr_id__composition)
 1. Click `Try it out`
 1. Fill in `ehr_id, `AuthUserId`, and `Prefer` with copied information 
-1. In the `Request` put information (body of JSON) from [this](http://jsonblob.com/989175154986991616) file 
+1. In the `Request` put information (body of JSON) from [this](https://media.bsn.si/ipehr/composition.json) file 
 1. Click `Execute`
 
 Result: in the response, you see a created composition with a lot of information inside (e.g archetype_node_id, composer, health_care_facility etc)
+
+[Watch video instruction](https://media.bsn.si/ipehr/create_composition.mp4) 📹 
 
 ## Execute ad-hoc (non-stored) AQL query
 
@@ -197,3 +199,5 @@ Result: in the response, you see a created composition with a lot of information
 }
 1. Click `Execute`
 Result: In the response, you see a requested information
+
+[Watch video instruction](https://media.bsn.si/ipehr/ad-hoc.mp4) 📹 
