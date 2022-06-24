@@ -1,6 +1,7 @@
 package storage
 
 import (
+	config2 "hms/gateway/pkg/config"
 	"hms/gateway/pkg/storage/localfile"
 	"log"
 )
@@ -15,7 +16,13 @@ func Init(sc *StorageConfig) {
 			Depth:    3,
 		}
 		var err error
-		storage, err = localfile.Init(&cfg)
+
+		globalConfig, err := config2.New()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		storage, err = localfile.Init(&cfg, globalConfig)
 		if err != nil {
 			log.Fatal(err)
 		}

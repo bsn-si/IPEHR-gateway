@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"hms/gateway/pkg/compressor"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
@@ -23,26 +24,38 @@ import (
 )
 
 type DefaultDocumentService struct {
-	Storage          storage.Storager
-	EhrsIndex        *ehrs.EhrsIndex
-	DocsIndex        *docs.DocsIndex
-	DocAccessIndex   *doc_access.DocAccessIndex
-	SubjectIndex     *subject.SubjectIndex
-	GroupAccessIndex *group_access.GroupAccessIndex
-	Keystore         *keystore.KeyStore
+	Storage            storage.Storager
+	EhrsIndex          *ehrs.EhrsIndex
+	DocsIndex          *docs.DocsIndex
+	DocAccessIndex     *doc_access.DocAccessIndex
+	SubjectIndex       *subject.SubjectIndex
+	GroupAccessIndex   *group_access.GroupAccessIndex
+	Keystore           *keystore.KeyStore
+	Compressor         compressor.Interface
+	CompressionEnabled bool
 }
 
 func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 	ks := keystore.New(cfg.KeystoreKey)
-	return &DefaultDocumentService{
-		EhrsIndex:        ehrs.New(),
-		DocsIndex:        docs.New(),
-		DocAccessIndex:   doc_access.New(ks),
-		SubjectIndex:     subject.New(),
-		GroupAccessIndex: group_access.New(ks),
-		Storage:          storage.Storage(),
-		Keystore:         ks,
+
+	globalConfig, err := config.New()
+	if err != nil {
+		return nil
 	}
+
+	service := &DefaultDocumentService{
+		EhrsIndex:          ehrs.New(),
+		DocsIndex:          docs.New(),
+		DocAccessIndex:     doc_access.New(ks),
+		SubjectIndex:       subject.New(),
+		GroupAccessIndex:   group_access.New(ks),
+		Storage:            storage.Storage(),
+		Keystore:           ks,
+		Compressor:         compressor.New(globalConfig.CompressionLevel),
+		CompressionEnabled: globalConfig.CompressionEnabled,
+	}
+
+	return service
 }
 
 func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
@@ -146,6 +159,14 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	if err != nil {
 		return nil, err
 	}
+
+	if d.CompressionEnabled {
+		docDecrypted, err = d.Compressor.Decompress(docDecrypted)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return docDecrypted, nil
 }
 

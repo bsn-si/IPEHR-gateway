@@ -55,6 +55,13 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 
 	documentUid := doc.Uid.Value
 
+	if s.Doc.CompressionEnabled {
+		docBytes, err = s.Doc.Compressor.Compress(docBytes)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Document encryption key generation
 	key := chacha_poly.GenerateKey()
 
