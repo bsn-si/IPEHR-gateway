@@ -3,7 +3,7 @@ package data_search
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 
@@ -19,24 +19,24 @@ type DataEntry struct {
 
 type Element struct {
 	ItemType    string
-	Type        string
+	ElementType string
 	NodeId      string
 	Name        string
 	DataEntries []*DataEntry
 }
 
 type Node struct {
-	Type   string
-	NodeId string
-	Next   map[string]*Node
-	Items  map[string]*Element // nodeId -> Element
+	NodeType string
+	NodeId   string
+	Next     map[string]*Node
+	Items    map[string]*Element // nodeId -> Element
 }
 
 func newNode(_type, nodeId string) *Node {
 	return &Node{
-		Type:   _type,
-		NodeId: nodeId,
-		Next:   make(map[string]*Node),
+		NodeType: _type,
+		NodeId:   nodeId,
+		Next:     make(map[string]*Node),
 	}
 }
 
@@ -57,9 +57,10 @@ func (d *DataSearchIndex) Add(key string, value interface{}) error {
 func (n *Node) dump() {
 	data, err := json.MarshalIndent(n, "", "    ")
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
+		return
 	}
-	fmt.Println(string(data))
+	log.Println(string(data))
 }
 
 func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId *uuid.UUID, docStorId []byte) error {
@@ -76,6 +77,14 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId
 	var iterate func(items interface{}, node *Node)
 
 	iterate = func(items interface{}, node *Node) {
+		switch items.(type) {
+		case []interface{}:
+			// ok
+		default:
+			log.Println("Unexpected type of content item:", items)
+			return
+		}
+
 		for _, item := range items.([]interface{}) {
 			item := item.(map[string]interface{})
 
@@ -269,7 +278,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId
 				if !ok {
 					element = &Element{
 						ItemType:    _type,
-						Type:        valueType,
+						ElementType: valueType,
 						NodeId:      itemNodeId,
 						Name:        itemName["value"].(string),
 						DataEntries: []*DataEntry{},

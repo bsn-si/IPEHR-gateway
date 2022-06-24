@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
@@ -56,6 +57,12 @@ func (h CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	data, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
@@ -96,7 +103,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.CompositionCreate(userId, ehrId, &request)
+	doc, err := h.service.CompositionCreate(userId, &ehrUUID, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -124,7 +131,13 @@ func (h CompositionHandler) Create(c *gin.Context) {
 func (h CompositionHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
 	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
@@ -142,13 +155,13 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err := h.service.Doc.EhrsIndex.Get(userId)
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
 	if errors.Is(err, errors.IsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	data, err := h.service.GetCompositionById(userId, ehrId, versionUid, types.COMPOSITION)
+	data, err := h.service.GetCompositionById(userId, versionUid, &ehrUUID, types.COMPOSITION)
 	if err != nil {
 		if errors.Is(err, errors.IsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)

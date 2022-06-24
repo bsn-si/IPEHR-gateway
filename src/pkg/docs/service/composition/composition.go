@@ -37,29 +37,31 @@ func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) 
 	return json.Marshal(doc)
 }
 
-func (s CompositionService) CompositionCreate(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
+func (s CompositionService) CompositionCreate(userId string, ehrUUID *uuid.UUID, request *model.Composition) (composition *model.Composition, err error) {
 	composition = request
-
-	ehrUUID, err := uuid.Parse(ehrId)
-	if err != nil {
-		return
-	}
 
 	err = s.save(userId, ehrUUID, composition)
 	return
 }
 
-func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Composition) (err error) {
+func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, doc *model.Composition) (err error) {
+	documentUid := doc.Uid.Value
+
+	// Checking the existence of the Composition
+	if docMeta, err := s.Doc.GetDocIndexByDocId(userId, documentUid, ehrUUID, types.COMPOSITION); err == nil {
+		if docMeta != nil {
+			return errors.AlreadyExist
+		}
+	}
+
+	// Document encryption key generation
+	key := chacha_poly.GenerateKey()
+
 	docBytes, err := s.MarshalJson(doc)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	documentUid := doc.Uid.Value
-
-	// Document encryption key generation
-	key := chacha_poly.GenerateKey()
 
 	// Document encryption
 	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(documentUid))
@@ -111,8 +113,8 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 	return nil
 }
 
-func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
-	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
+func (c CompositionService) GetCompositionById(userId, versionUid string, ehrUUID *uuid.UUID, documentType types.DocumentType) (composition *model.Composition, err error) {
+	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, versionUid, ehrUUID, documentType)
 	if err != nil {
 		return nil, errors.IsNotExist
 	}

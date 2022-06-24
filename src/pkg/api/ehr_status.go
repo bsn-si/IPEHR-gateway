@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
@@ -55,6 +56,14 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+
+	/*
+		ehrUUID, err := uuid.Parse(ehrId)
+		if err != nil {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+	*/
 
 	userId := c.GetString("userId")
 	if userId == "" {
@@ -187,6 +196,12 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 		return
 	}
 
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	versionUid := c.Param("versionid")
 	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
 		c.AbortWithStatus(http.StatusNotFound)
@@ -199,7 +214,7 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.service.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, types.EHR_STATUS)
+	docIndex, err := h.service.Doc.GetDocIndexByDocId(userId, versionUid, &ehrUUID, types.EHR_STATUS)
 	if err != nil {
 		log.Printf("GetDocIndexByDocId userId: %s ehrId: %s versionId: %s error: %v", userId, ehrId, versionUid, err)
 		c.AbortWithStatus(http.StatusNotFound)

@@ -45,13 +45,8 @@ func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 	}
 }
 
-func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+func (d *DefaultDocumentService) GetDocIndexByDocId(userId, docId string, ehrUUID *uuid.UUID, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
 	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	ehrUUID, err := uuid.Parse(ehrId)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +57,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		return nil, err
 	}
 
-	docIndexes, err := d.DocsIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrUUID.String())
 	if err != nil {
 		return nil, err
 	}
