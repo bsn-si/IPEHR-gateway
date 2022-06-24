@@ -6,6 +6,7 @@ var (
 	AuthorizationError = errors.New("Authorization error")
 	IsNotExist         = errors.New("Object is not exist")
 	AlreadyExist       = errors.New("Object already exist")
+	AlreadyDeleted     = errors.New("Object already deleted")
 	IncorrectRequest   = errors.New("Request is incorrect")
 	EncryptionError    = errors.New("Encryption error")
 )

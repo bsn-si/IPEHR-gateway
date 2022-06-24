@@ -66,6 +66,8 @@ func Test_API(t *testing.T) {
 	t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData))
 	t.Run("COMPOSITION getting with correct EhrId", testWrap.compositionGetById(testData))
 	t.Run("COMPOSITION getting with wrong EhrId", testWrap.compositionGetByWrongId(testData))
+	t.Run("COMPOSITION delete by wrong UID", testWrap.compositionDeleteByWrongId(testData))
+	t.Run("COMPOSITION delete", testWrap.compositionDeleteById(testData))
 	t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData))
 	t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData))
 	t.Run("Access group create", testWrap.accessGroupCreate(testData))
@@ -671,6 +673,57 @@ func (testWrap *testWrap) compositionGetByWrongId(testData *testData) func(t *te
 		if response.StatusCode != http.StatusNotFound {
 			t.Fatalf("Expected status %d, received %d", http.StatusNotFound, response.StatusCode)
 		}
+	}
+}
+
+func (testWrap *testWrap) compositionDeleteByWrongId(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		request, err := http.NewRequest(http.MethodDelete, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+uuid.New().String(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		if response.StatusCode != http.StatusNotFound {
+			t.Fatalf("Expected status: %v, received %v", http.StatusNotFound, response.StatusCode)
+		}
+	}
+}
+
+func (testWrap *testWrap) compositionDeleteById(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		request, err := http.NewRequest(http.MethodDelete, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+testData.compositionId, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		if response.StatusCode != http.StatusNoContent {
+			t.Fatalf("Expected status: %v, received %v", http.StatusNoContent, response.StatusCode)
+		}
+
+		// Check answer for repeated query
+		response, err = testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		if response.StatusCode != http.StatusBadRequest {
+			t.Fatalf("Expected status: %v, received %v", http.StatusBadRequest, response.StatusCode)
+		}
+
 	}
 }
 
