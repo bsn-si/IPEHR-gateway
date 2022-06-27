@@ -21,6 +21,11 @@ In this milestone we've designed and developed an MH-ORM and medical data storag
 | 6. :heavy_check_mark: | API | [See IPEHR-gateway/API](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_1/6_API) | The minimum basic version of the REST API has been implemented to support document handling according to the latest stable version of the openEHR specification. In the next milestones the API will be supplemented with other methods to fully comply with the openEHR specifications. | 
 | 7. :heavy_check_mark: | Extensive testing | [ipEHR wiki](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project#workflow-example) | Milestone deliverables testing examples with video guides |
 
+### Project introduction:
+
+[![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://www.youtube.com/watch?v=nJFA5W4qoEw)
+
+
 # Workflow example
 
 The following methods are based on the [standard specification of OpenEHR](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/ehr.html)
