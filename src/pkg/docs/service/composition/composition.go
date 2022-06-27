@@ -2,7 +2,12 @@ package composition
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/docs/status"
+	"hms/gateway/pkg/errors"
 	"log"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,7 +16,6 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
-	"hms/gateway/pkg/errors"
 )
 
 type CompositionService struct {
@@ -90,6 +94,7 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 		DocIdEncrypted: docIdEncrypted,
 		StorageId:      docStorageId,
 		Timestamp:      uint64(time.Now().UnixNano()),
+		Status:         status.ACTIVE,
 	}
 
 	// First record in doc index
@@ -107,10 +112,28 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 	return nil
 }
 
+func (s CompositionService) delete(userId string, ehrUUID uuid.UUID, docIndex *model.DocumentMeta) (err error) {
+	docIndex.Status = status.DELETED
+
+	var docIndexes []*model.DocumentMeta
+	docIndexes = append(docIndexes, docIndex)
+
+	if err = s.Doc.DocsIndex.Replace(ehrUUID.String(), docIndexes); err != nil {
+		log.Println(err)
+	}
+
+	return
+}
+
 func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
 	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
 	if err != nil {
 		return nil, errors.IsNotExist
+	}
+
+	if documentMeta.Status == status.DELETED {
+		err = errors.AlreadyDeleted
+		return
 	}
 
 	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(versionUid))
@@ -119,4 +142,47 @@ func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string,
 	}
 
 	return c.ParseJson(decryptedData)
+}
+
+func (c CompositionService) increaseUidVersion(uid string) string {
+	base, ver := c.parseUidByVersion(uid)
+	ver++
+
+	return strings.Join(base, "::") + "::" + strconv.Itoa(ver)
+}
+
+func (c CompositionService) parseUidByVersion(uid string) (base []string, ver int) {
+	base, verPart := c.parseUid(uid)
+
+	ver = 0
+	if verInt, err := strconv.Atoi(verPart); err == nil {
+		ver = verInt
+	}
+	return
+}
+
+func (c CompositionService) parseUid(uid string) (base []string, last string) {
+	re := regexp.MustCompile(`::`)
+	parts := re.Split(uid, -1)
+	length := len(parts) - 1
+	if length == 0 {
+		return parts, ""
+	}
+
+	return parts[:length], parts[length]
+}
+
+func (c CompositionService) DeleteCompositionById(userId, ehrId, versionUid string) (newUid string, err error) {
+	err = c.Doc.UpdateDocStatus(userId, ehrId, versionUid, types.COMPOSITION, status.ACTIVE, status.DELETED)
+	if err != nil {
+		if errors.Is(err, errors.AlreadyUpdated) {
+			return "", errors.AlreadyDeleted
+		} else {
+			return "", err
+		}
+
+	}
+	newUid = c.increaseUidVersion(versionUid)
+
+	return
 }
