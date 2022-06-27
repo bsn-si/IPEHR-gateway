@@ -222,8 +222,6 @@ func (h CompositionHandler) Delete(c *gin.Context) {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
-
-	return
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
