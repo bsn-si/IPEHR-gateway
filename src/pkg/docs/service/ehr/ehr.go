@@ -98,7 +98,11 @@ func (s EhrService) SaveDoc(userId string, doc *model.EHR) error {
 	key := chacha_poly.GenerateKey()
 
 	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(doc.EhrId.Value))
+	ehrUUID, err := uuid.Parse(doc.EhrId.Value)
+	if err != nil {
+		return err
+	}
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, ehrUUID[:])
 	if err != nil {
 		log.Println(err)
 		return err
@@ -154,7 +158,11 @@ func (s EhrService) GetDocBySubject(userId, subjectId, namespace string) (docDec
 	}
 
 	// Getting doc from storage
-	docDecrypted, err = s.Doc.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return
+	}
+	docDecrypted, err = s.Doc.GetDocFromStorageById(userId, doc.StorageId, ehrUUID[:])
 	if err != nil {
 		log.Println("Can't get encrypted doc", err)
 	}
@@ -167,7 +175,11 @@ func (s *EhrService) UpdateDocumentStatus(userId, ehrId string, status *model.Eh
 		return
 	}
 
-	docDecrypted, err := s.Doc.GetDocFromStorageById(userId, docMeta.StorageId, []byte(ehrId))
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return
+	}
+	docDecrypted, err := s.Doc.GetDocFromStorageById(userId, docMeta.StorageId, ehrUUID[:])
 	if err != nil {
 		return
 	}

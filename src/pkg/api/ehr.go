@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -222,7 +223,11 @@ func (h EhrHandler) GetById(c *gin.Context) {
 	}
 
 	// Getting doc from storage
-	docDecrypted, err := h.service.Doc.GetDocFromStorageById(userId, doc.StorageId, []byte(ehrId))
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return
+	}
+	docDecrypted, err := h.service.Doc.GetDocFromStorageById(userId, doc.StorageId, ehrUUID[:])
 	if err != nil {
 		//TODO some logging
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
