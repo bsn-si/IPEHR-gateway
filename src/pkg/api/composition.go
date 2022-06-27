@@ -270,15 +270,61 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Success      200         {object}  model.SwagComposition  true  "Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is `return=representation.`"
 // @Header       200         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 // @Header       200         {string}  ETag      "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Failure      204          "`No Content` is returned when COMPOSITION was deleted."
-// @Failure      204          "`Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
+// @Failure      422          "`Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
 // @Failure      400          "`Bad Request` is returned when the request has invalid `ehr_id` or invalid content (e.g. either the body of the request could not be read, or converted to a valid COMPOSITION object)"
 // @Failure      404          "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist."
 // @Failure      412          "`Version conflict` is returned when `If-Match` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers."
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
+	ehrId := c.Param("ehrid")
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 
+	versionUid := c.Param("versioned_object_uid")
+	if h.service.Doc.ValidateId(versionUid, types.COMPOSITION) == false {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	prevVersion := c.GetHeader("If-Match")
+	if prevVersion == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "If-Match is empty"})
+		return
+	}
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	// Checking EHR does not exist
+	_, err := h.service.Doc.EhrsIndex.Get(userId)
+	if errors.Is(err, errors.IsNotExist) {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	// TODO 422 invalid body `Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
+	// TODO 404 `Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist.
+	// TODO 412 `Version conflict` is returned when `If-Match` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers.
+
+	//uuid, err := h.service.DeleteCompositionById(userId, ehrId, versionUid)
+	//switch err {
+	//case nil:
+	//	h.addResponseHeaders(ehrId, uuid, c)
+	//	c.AbortWithStatus(http.StatusNoContent)
+	//case errors.AlreadyDeleted:
+	//	c.AbortWithStatus(http.StatusBadRequest)
+	//case errors.IsNotExist:
+	//	c.AbortWithStatus(http.StatusNotFound)
+	//default:
+	//	log.Println(err)
+	//	c.AbortWithStatus(http.StatusInternalServerError)
+	//}
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Composition, c *gin.Context) {
