@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
 )
@@ -63,7 +64,7 @@ func (n *Node) dump() {
 	log.Println(string(data))
 }
 
-func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId *uuid.UUID, docStorageIdEncrypted []byte) error {
+func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAccess *model.GroupAccess, docStorageIdEncrypted []byte) error {
 	node := &Node{}
 	err := i.index.GetById("INDEX", node)
 	if err != nil {
@@ -286,7 +287,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId
 					node.Items[itemNodeId] = element
 				}
 				dataEntry := &DataEntry{
-					GroupId:       groupId,
+					GroupId:       groupAccess.GroupUUID,
 					ValueSet:      valueSet,
 					DocStorIdEncr: docStorageIdEncrypted,
 				}
