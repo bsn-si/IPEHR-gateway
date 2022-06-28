@@ -26,46 +26,33 @@ import (
 
 type DefaultDocumentService struct {
 	Storage            storage.Storager
+	Keystore           *keystore.KeyStore
 	EhrsIndex          *ehrs.EhrsIndex
 	DocsIndex          *docs.DocsIndex
 	DocAccessIndex     *doc_access.DocAccessIndex
 	SubjectIndex       *subject.SubjectIndex
 	GroupAccessIndex   *group_access.GroupAccessIndex
-	Keystore           *keystore.KeyStore
 	Compressor         compressor.Interface
 	CompressionEnabled bool
 }
 
 func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 	ks := keystore.New(cfg.KeystoreKey)
-
-	globalConfig, err := config.New()
-	if err != nil {
-		return nil
-	}
-
-	service := &DefaultDocumentService{
+	return &DefaultDocumentService{
+		Storage:            storage.Storage(),
+		Keystore:           ks,
 		EhrsIndex:          ehrs.New(),
 		DocsIndex:          docs.New(),
 		DocAccessIndex:     doc_access.New(ks),
 		SubjectIndex:       subject.New(),
 		GroupAccessIndex:   group_access.New(ks),
-		Storage:            storage.Storage(),
-		Keystore:           ks,
-		Compressor:         compressor.New(globalConfig.CompressionLevel),
-		CompressionEnabled: globalConfig.CompressionEnabled,
+		Compressor:         compressor.New(cfg.CompressionLevel),
+		CompressionEnabled: cfg.CompressionEnabled,
 	}
-
-	return service
 }
 
-func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+func (d *DefaultDocumentService) GetDocIndexByDocId(userId, docId string, ehrUUID *uuid.UUID, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
 	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	ehrUUID, err := uuid.Parse(ehrId)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +63,7 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string,
 		return nil, err
 	}
 
-	docIndexes, err := d.DocsIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrUUID.String())
 	if err != nil {
 		return nil, err
 	}

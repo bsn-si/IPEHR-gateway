@@ -2,8 +2,6 @@ package composition
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/status"
-	"hms/gateway/pkg/errors"
 	"log"
 	"regexp"
 	"strconv"
@@ -15,16 +13,21 @@ import (
 	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer/service/data_search"
 )
 
 type CompositionService struct {
-	Doc *service.DefaultDocumentService
+	Doc             *service.DefaultDocumentService
+	DataSearchIndex *data_search.DataSearchIndex
 }
 
 func NewCompositionService(docService *service.DefaultDocumentService) *CompositionService {
 	return &CompositionService{
-		Doc: docService,
+		Doc:             docService,
+		DataSearchIndex: data_search.New(),
 	}
 }
 
@@ -38,26 +41,34 @@ func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) 
 	return json.Marshal(doc)
 }
 
-func (s CompositionService) CompositionCreate(userId, ehrId string, request *model.Composition) (composition *model.Composition, err error) {
+func (s CompositionService) CompositionCreate(userId string, ehrUUID, groupAccessUUID *uuid.UUID, request *model.Composition) (composition *model.Composition, err error) {
 	composition = request
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	groupAccess, err := s.Doc.GroupAccessIndex.Get(userId, groupAccessUUID)
 	if err != nil {
+		log.Println("GroupAccessIndex.Get error:", err)
 		return
 	}
 
-	err = s.save(userId, ehrUUID, composition)
+	err = s.save(userId, ehrUUID, groupAccess, composition)
 	return
 }
 
-func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Composition) (err error) {
+func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, doc *model.Composition) (err error) {
+	documentUid := doc.Uid.Value
+
+	// Checking the existence of the Composition
+	if docMeta, err := s.Doc.GetDocIndexByDocId(userId, documentUid, ehrUUID, types.COMPOSITION); err == nil {
+		if docMeta != nil {
+			return errors.AlreadyExist
+		}
+	}
+
 	docBytes, err := s.MarshalJson(doc)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	documentUid := doc.Uid.Value
 
 	if s.Doc.CompressionEnabled {
 		docBytes, err = s.Doc.Compressor.Compress(docBytes)
@@ -97,8 +108,19 @@ func (s CompositionService) save(userId string, ehrUUID uuid.UUID, doc *model.Co
 		Status:         status.ACTIVE,
 	}
 
-	// First record in doc index
 	if err = s.Doc.DocsIndex.Add(ehrUUID.String(), docIndex); err != nil {
+		log.Println(err)
+		return
+	}
+
+	docStorageIdEncrypted, err := groupAccess.Key.EncryptWithAuthData(docStorageId[:], groupAccess.GroupUUID[:])
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// Index DataSearch
+	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, groupAccess, docStorageIdEncrypted); err != nil {
 		log.Println(err)
 		return
 	}
@@ -125,8 +147,8 @@ func (s CompositionService) delete(userId string, ehrUUID uuid.UUID, docIndex *m
 	return
 }
 
-func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string, documentType types.DocumentType) (composition *model.Composition, err error) {
-	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, ehrId, versionUid, documentType)
+func (c CompositionService) GetCompositionById(userId, versionUid string, ehrUUID *uuid.UUID, documentType types.DocumentType) (composition *model.Composition, err error) {
+	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, versionUid, ehrUUID, documentType)
 	if err != nil {
 		return nil, errors.IsNotExist
 	}

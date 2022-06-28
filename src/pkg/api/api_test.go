@@ -62,6 +62,9 @@ func Test_API(t *testing.T) {
 	t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData))
 	t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData))
 	t.Run("EHR get by subject", testWrap.ehrGetBySubject(testData))
+	t.Run("Access group create", testWrap.accessGroupCreate(testData))
+	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
+	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
 	t.Run("COMPOSITION create Expected fail with wrong EhrId", testWrap.compositionCreateFail(testData))
 	t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData))
 	t.Run("COMPOSITION getting with correct EhrId", testWrap.compositionGetById(testData))
@@ -70,9 +73,6 @@ func Test_API(t *testing.T) {
 	t.Run("COMPOSITION delete", testWrap.compositionDeleteById(testData))
 	t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData))
 	t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData))
-	t.Run("Access group create", testWrap.accessGroupCreate(testData))
-	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
-	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
 }
 
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
@@ -587,6 +587,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserId)
+		request.Header.Set("GroupAccessId", testData.groupAccessId)
 		request.Header.Set("Prefer", "return=representation")
 
 		response, err := testWrap.httpClient.Do(request)
@@ -825,7 +826,7 @@ func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.
 			t.Fatal(err)
 		}
 
-		testData.groupAccessId = groupAccess.GroupId
+		testData.groupAccessId = groupAccess.GroupUUID.String()
 	}
 }
 
@@ -895,7 +896,7 @@ func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing
 			t.Fatal(err)
 		}
 
-		if testData.groupAccessId != groupAccessGot.GroupId {
+		if testData.groupAccessId != groupAccessGot.GroupUUID.String() {
 			t.Fatal("Got wrong group")
 		}
 	}

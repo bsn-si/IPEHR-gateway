@@ -43,26 +43,22 @@ func (g *GroupAccessIndex) Add(userId string, groupAccess *model.GroupAccess) (e
 		return
 	}
 
-	indexKey, err := g.makeKey(userId, groupAccess.GroupId)
-	if err != nil {
-		return
-	}
+	h := sha3.Sum256(append([]byte(userId), groupAccess.GroupUUID[:]...))
+	indexKey := hex.EncodeToString(h[:])
 
 	err = g.index.Add(indexKey, groupAccessEncrypted)
 
 	return
 }
 
-func (g *GroupAccessIndex) Get(userId, groupAccessId string) (groupAccess *model.GroupAccess, err error) {
+func (g *GroupAccessIndex) Get(userId string, groupAccessUUID *uuid.UUID) (groupAccess *model.GroupAccess, err error) {
 	userPubKey, userPrivateKey, err := g.keystore.Get(userId)
 	if err != nil {
 		return
 	}
 
-	indexKey, err := g.makeKey(userId, groupAccessId)
-	if err != nil {
-		return
-	}
+	h := sha3.Sum256(append([]byte(userId), groupAccessUUID[:]...))
+	indexKey := hex.EncodeToString(h[:])
 
 	var groupAccessEncrypted []byte
 	err = g.index.GetById(indexKey, &groupAccessEncrypted)
@@ -76,23 +72,6 @@ func (g *GroupAccessIndex) Get(userId, groupAccessId string) (groupAccess *model
 	}
 
 	err = msgpack.Unmarshal(groupAccessByte, &groupAccess)
-
-	return
-}
-
-func (g *GroupAccessIndex) makeKey(userId, groupAccessId string) (indexKeyStr string, err error) {
-	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return
-	}
-
-	groupUUID, err := uuid.Parse(groupAccessId)
-	if err != nil {
-		return
-	}
-
-	indexKey := sha3.Sum256(append(userUUID[:], groupUUID[:]...))
-	indexKeyStr = hex.EncodeToString(indexKey[:])
 
 	return
 }
