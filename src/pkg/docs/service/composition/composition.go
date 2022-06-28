@@ -120,7 +120,7 @@ func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, groupAccess 
 	}
 
 	// Index DataSearch
-	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, groupAccess.GroupUUID, docStorageIdEncrypted); err != nil {
+	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, groupAccess, docStorageIdEncrypted); err != nil {
 		log.Println(err)
 		return
 	}
