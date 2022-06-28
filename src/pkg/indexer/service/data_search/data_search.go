@@ -63,7 +63,7 @@ func (n *Node) dump() {
 	log.Println(string(data))
 }
 
-func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId *uuid.UUID, docStorId []byte) error {
+func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId *uuid.UUID, docStorageIdEncrypted []byte) error {
 	node := &Node{}
 	err := i.index.GetById("INDEX", node)
 	if err != nil {
@@ -288,7 +288,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupId
 				dataEntry := &DataEntry{
 					GroupId:       groupId,
 					ValueSet:      valueSet,
-					DocStorIdEncr: docStorId,
+					DocStorIdEncr: docStorageIdEncrypted,
 				}
 				element.DataEntries = append(element.DataEntries, dataEntry)
 			}

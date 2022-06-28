@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
@@ -22,7 +23,7 @@ type GroupAccessHandler struct {
 func NewGroupAccessHandler(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessHandler {
 	return &GroupAccessHandler{
 		cfg:     cfg,
-		service: group_access.NewGroupAccessService(docService),
+		service: group_access.NewGroupAccessService(docService, cfg),
 	}
 }
 
@@ -93,13 +94,19 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 func (h *GroupAccessHandler) Get(c *gin.Context) {
 	groupId := c.Param("group_id")
 
+	groupUUID, err := uuid.Parse(groupId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "groupId is incorrect"})
+		return
+	}
+
 	userId := c.GetString("userId")
 	if userId == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
-	accessGroup, err := h.service.Get(userId, groupId)
+	accessGroup, err := h.service.Get(userId, &groupUUID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Group access not found"})
 		return
@@ -109,8 +116,8 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 }
 
 func (h *GroupAccessHandler) respondWithDoc(doc *model.GroupAccess, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseUrl+"/v1/access/group/"+doc.GroupId)
-	c.Header("ETag", doc.GroupId)
+	c.Header("Location", h.cfg.BaseUrl+"/v1/access/group/"+doc.GroupUUID.String())
+	c.Header("ETag", doc.GroupUUID.String())
 
 	c.JSON(http.StatusCreated, doc)
 }

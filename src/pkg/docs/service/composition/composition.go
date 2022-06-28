@@ -37,14 +37,20 @@ func (s CompositionService) MarshalJson(doc *model.Composition) ([]byte, error) 
 	return json.Marshal(doc)
 }
 
-func (s CompositionService) CompositionCreate(userId string, ehrUUID *uuid.UUID, request *model.Composition) (composition *model.Composition, err error) {
+func (s CompositionService) CompositionCreate(userId string, ehrUUID, groupAccessUUID *uuid.UUID, request *model.Composition) (composition *model.Composition, err error) {
 	composition = request
 
-	err = s.save(userId, ehrUUID, composition)
+	groupAccess, err := s.Doc.GroupAccessIndex.Get(userId, groupAccessUUID)
+	if err != nil {
+		log.Println("GroupAccessIndex.Get error:", err)
+		return
+	}
+
+	err = s.save(userId, ehrUUID, groupAccess, composition)
 	return
 }
 
-func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, doc *model.Composition) (err error) {
+func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, doc *model.Composition) (err error) {
 	documentUid := doc.Uid.Value
 
 	// Checking the existence of the Composition
@@ -90,16 +96,19 @@ func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, doc *model.C
 		Timestamp:      uint64(time.Now().UnixNano()),
 	}
 
-	// First record in doc index
 	if err = s.Doc.DocsIndex.Add(ehrUUID.String(), docIndex); err != nil {
 		log.Println(err)
 		return
 	}
 
+	docStorageIdEncrypted, err := groupAccess.Key.EncryptWithAuthData(docStorageId[:], groupAccess.GroupUUID[:])
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	// Index DataSearch
-	groupId := uuid.New()
-	docStorId := []byte{1, 2, 3}
-	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, &groupId, docStorId); err != nil {
+	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, groupAccess.GroupUUID, docStorageIdEncrypted); err != nil {
 		log.Println(err)
 		return
 	}

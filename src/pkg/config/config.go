@@ -8,11 +8,13 @@ import (
 )
 
 type Config struct {
-	BaseUrl     string `json:"baseUrl"`
-	DataPath    string `json:"dataPath"`
-	Host        string `json:"host"`
-	StoragePath string `json:"storagePath"`
-	KeystoreKey string `json:"keystoreKey"`
+	BaseUrl              string `json:"baseUrl"`
+	DataPath             string `json:"dataPath"`
+	Host                 string `json:"host"`
+	StoragePath          string `json:"storagePath"`
+	KeystoreKey          string `json:"keystoreKey"`
+	DefaultUserId        string `json:"defaultUserId"`
+	DefaultGroupAccessId string `json:"defaultGroupAccessId"`
 
 	path string
 }
