@@ -179,6 +179,9 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 		if errors.Is(err, errors.IsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
+		} else if errors.Is(err, errors.AlreadyDeleted) {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
 		} else {
 			log.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -189,10 +192,66 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	c.JSON(http.StatusOK, data)
 }
 
+// Delete
+// @Summary      Deletes the COMPOSITION by version id
+// @Description  Deletes the COMPOSITION identified by `preceding_version_uid` and associated with the EHR identified by `ehr_id`.
+// @Description
+// @Tags         COMPOSITION
+// @Accept       json
+// @Produce      json
+// @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        preceding_version_uid  path      string  true  "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent) version. Example: `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
+// @Param        AuthUserId   header    string  true  "UserId UUID"
+// @Failure      204          "`No Content` is returned when COMPOSITION was deleted."
+// @Failure      400          "`Bad Request` is returned when the composition with `preceding_version_uid` is already deleted."
+// @Failure      404          "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with preceding_version_uid does not exist."
+// @Failure      409          "`Conflict` is returned when supplied `preceding_version_uid` doesn’t match the latest version. Returns latest version in the Location and ETag headers."
+// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
+func (h CompositionHandler) Delete(c *gin.Context) {
+	ehrId := c.Param("ehrid")
+	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	versionUid := c.Param("preceding_version_uid")
+	if h.service.Doc.ValidateId(versionUid, types.COMPOSITION) == false {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	// Checking EHR does not exist
+	_, err := h.service.Doc.EhrsIndex.Get(userId)
+	if errors.Is(err, errors.IsNotExist) {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	uuid, err := h.service.DeleteCompositionById(userId, ehrId, versionUid)
+	switch err {
+	case nil:
+		h.addResponseHeaders(ehrId, uuid, c)
+		c.AbortWithStatus(http.StatusNoContent)
+	case errors.AlreadyDeleted:
+		c.AbortWithStatus(http.StatusBadRequest)
+	case errors.IsNotExist:
+		c.AbortWithStatus(http.StatusNotFound)
+	default:
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+	}
+}
+
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
 	uid := doc.Uid.Value
-	c.Header("Location", h.cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
-	c.Header("ETag", uid)
+	h.addResponseHeaders(ehrId, uid, c)
 
 	prefer := c.Request.Header.Get("Prefer")
 	if prefer == "return=representation" {
@@ -200,4 +259,9 @@ func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Co
 	} else {
 		c.AbortWithStatus(http.StatusCreated)
 	}
+}
+
+func (h *CompositionHandler) addResponseHeaders(ehrId string, uid string, c *gin.Context) {
+	c.Header("Location", h.cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
+	c.Header("ETag", uid)
 }

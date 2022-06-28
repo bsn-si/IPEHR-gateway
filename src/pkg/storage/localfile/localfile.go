@@ -4,14 +4,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"golang.org/x/crypto/sha3"
+	config2 "hms/gateway/pkg/config"
+	"hms/gateway/pkg/errors"
 	"log"
 	"os"
-
-	"hms/gateway/pkg/errors"
-)
-
-var (
-	ErrIdIsTooShort = fmt.Errorf("id is too short")
 )
 
 type Config struct {
@@ -24,7 +20,7 @@ type LocalFileStorage struct {
 	depth    uint8
 }
 
-func Init(config *Config) (*LocalFileStorage, error) {
+func Init(config *Config, globalConfig *config2.Config) (*LocalFileStorage, error) {
 	if len(config.BasePath) == 0 {
 		return nil, fmt.Errorf("BasePath is empty")
 	}
@@ -43,6 +39,7 @@ func Init(config *Config) (*LocalFileStorage, error) {
 			return nil, err
 		}
 	}
+
 	return &LocalFileStorage{
 		basePath: config.BasePath,
 		depth:    config.Depth,
@@ -50,86 +47,58 @@ func Init(config *Config) (*LocalFileStorage, error) {
 }
 
 func (s *LocalFileStorage) Add(data []byte) (id *[32]byte, err error) {
-	h := sha3.Sum256(data)
-	idStr := hex.EncodeToString(h[:])
+	id = s.idByContent(&data)
 
-	path := s.dirpath(idStr)
+	err = s.writeFile(id, &data)
 
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			return nil, err
-		}
-	}
-
-	filepath := s.filepath(idStr)
-
-	err = os.WriteFile(filepath, data, 0644)
-	if err != nil {
-		return nil, err
-	}
-	return &h, nil
+	return
 }
 
-func (s *LocalFileStorage) AddWithId(id *[32]byte, data []byte) (err error) {
-	if len(*id) < int(s.depth*2) {
-		return ErrIdIsTooShort
-	}
-
-	idStr := hex.EncodeToString(id[:])
-
-	path := s.dirpath(idStr)
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	filepath := s.filepath(idStr)
-	if _, err = os.Stat(filepath); err == nil {
-		return errors.AlreadyExist
-	}
-
-	err = os.WriteFile(filepath, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *LocalFileStorage) idByContent(data *[]byte) *[32]byte {
+	h := sha3.Sum256(*data)
+	return &h
 }
 
 func (s *LocalFileStorage) ReplaceWithId(id *[32]byte, data []byte) (err error) {
-	if len(*id) < int(s.depth*2) {
-		return ErrIdIsTooShort
-	}
+	return s.AddWithId(id, data)
+}
 
-	idStr := hex.EncodeToString(id[:])
-
-	path := s.dirpath(idStr)
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	filepath := s.filepath(idStr)
-	err = os.WriteFile(filepath, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *LocalFileStorage) AddWithId(id *[32]byte, data []byte) (err error) {
+	err = s.writeFile(id, &data)
+	return
 }
 
 func (s *LocalFileStorage) Get(id *[32]byte) (data []byte, err error) {
-	if len(*id) < int(s.depth*2) {
-		return nil, ErrIdIsTooShort
-	}
-
 	idStr := hex.EncodeToString(id[:])
 
 	path := s.filepath(idStr)
 	if _, err = os.Stat(path); os.IsNotExist(err) {
 		return nil, errors.IsNotExist
 	}
-	return os.ReadFile(path)
+	data, err = os.ReadFile(path)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (s *LocalFileStorage) writeFile(id *[32]byte, data *[]byte) (err error) {
+	idStr := hex.EncodeToString(id[:])
+
+	path := s.dirpath(idStr)
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		if err = os.MkdirAll(path, os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	filepath := s.filepath(idStr)
+	err = os.WriteFile(filepath, *data, 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *LocalFileStorage) dirpath(id string) (path string) {
