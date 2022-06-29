@@ -2,11 +2,16 @@
 package data_search
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/crypto/hm"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
@@ -65,6 +70,10 @@ func (n *Node) dump() {
 }
 
 func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAccess *model.GroupAccess, docStorageIdEncrypted []byte) error {
+	var (
+		key   = (*[32]byte)(groupAccess.Key)
+		nonce = groupAccess.Nonce
+	)
 	node := &Node{}
 	err := i.index.GetById("INDEX", node)
 	if err != nil {
@@ -214,61 +223,120 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 			case "HISTORY":
 				iterate(item["events"].([]interface{}), node)
 			case "ELEMENT":
-				itemValue := item["value"].(map[string]interface{})
-				itemName := item["name"].(map[string]interface{})
-				valueType := itemValue["_type"].(string)
-				var valueSet map[string]interface{}
+				var (
+					valueSet  map[string]interface{}
+					itemValue = item["value"].(map[string]interface{})
+					itemName  = item["name"].(map[string]interface{})
+					valueType = itemValue["_type"].(string)
+					errors    []error
+				)
 				switch valueType {
 				case "DV_TEXT":
 					valueSet = map[string]interface{}{
-						"value": itemValue["value"],
+						"value": hm.EncryptString(itemValue["value"].(string), key, nonce, errors),
 					}
 				case "DV_CODED_TEXT":
 					defCode := itemValue["defining_code"].(map[string]interface{})
+					codeString := defCode["code_string"].(string)
+					codeString = codeString[2:] // format at0000
 					valueSet = map[string]interface{}{
-						"value":       itemValue["value"],
-						"code_string": defCode["code_string"],
+						"value":       hm.EncryptString(itemValue["value"].(string), key, nonce, errors),
+						"code_string": hm.EncryptInt(codeString, key, errors),
 					}
 				case "DV_IDENTIFIER":
 					valueSet = map[string]interface{}{
-						"id": itemValue["id"],
+						"id": hm.EncryptString(itemValue["id"].(string), key, nonce, errors),
 					}
 				case "DV_MULTIMEDIA":
+					uri := itemValue["uri"].(map[string]interface{})
 					valueSet = map[string]interface{}{
-						"uri": itemValue["uri"],
+						"uri": hm.EncryptString(uri["value"].(string), key, nonce, errors),
 					}
-				case "DV_DATE_TIME", "DV_DATE", "DV_TIME":
+				case "DV_DATE_TIME":
+					dateTime, err := time.Parse(common.OPENEHR_TIME_FORMAT, itemValue["value"].(string))
+					if err != nil {
+						errors = append(errors, err)
+						break
+					}
 					valueSet = map[string]interface{}{
-						"value": itemValue["value"],
+						"value": hm.EncryptInt(dateTime.Unix(), key, errors),
+					}
+				case "DV_DATE":
+					dateTime, err := time.Parse("2006-01-02", itemValue["value"].(string))
+					if err != nil {
+						errors = append(errors, err)
+						break
+					}
+					valueSet = map[string]interface{}{
+						"value": hm.EncryptInt(dateTime.Unix(), key, errors),
+					}
+				case "DV_TIME":
+					dateTime, err := time.Parse("15:04:05.999", itemValue["value"].(string))
+					if err != nil {
+						errors = append(errors, err)
+						break
+					}
+					valueSet = map[string]interface{}{
+						"value": hm.EncryptInt(dateTime.Unix(), key, errors),
 					}
 				case "DV_QUANTITY":
 					valueSet = map[string]interface{}{
-						"magnitude": itemValue["magnitude"],
-						"units":     itemValue["units"],
-						"precision": itemValue["precision"],
+						"units": hm.EncryptString(itemValue["units"].(string), key, nonce, errors),
+					}
+
+					log.Printf("magnitude type: %T", itemValue["magnitude"])
+
+					switch itemValue["magnitude"].(type) {
+					case float64:
+						valueSet["magnitude"] = hm.EncryptFloat(itemValue["magnitude"], key, errors)
+					default:
+						valueSet["magnitude"] = hm.EncryptInt(itemValue["magnitude"], key, errors)
+					}
+					if fmt.Sprintf("%T", itemValue["precision"]) != "<nil>" {
+						valueSet["precision"] = hm.EncryptInt(itemValue["precision"], key, errors)
 					}
 				case "DV_COUNT":
 					valueSet = map[string]interface{}{
-						"magnitude": itemValue["magnitude"],
+						"magnitude": hm.EncryptInt(itemValue["magnitude"], key, errors),
 					}
 				case "DV_PROPORTION":
 					valueSet = map[string]interface{}{
-						"numerator":   itemValue["numerator"],
-						"denominator": itemValue["denominator"],
-						"type":        itemValue["type"],
+						"numerator":   hm.EncryptFloat(itemValue["numerator"], key, errors),
+						"denominator": hm.EncryptFloat(itemValue["denominator"], key, errors),
+						"type":        hm.EncryptInt(itemValue["type"], key, errors),
 					}
 				case "DV_URI":
-					valueSet = map[string]interface{}{
-						"uri": itemValue["uri"],
+					switch itemValue["uri"].(type) {
+					case string:
+						valueSet = map[string]interface{}{
+							"uri": hm.EncryptString(itemValue["uri"].(string), key, nonce, errors),
+						}
 					}
 				case "DV_BOOLEAN":
+					if fmt.Sprintf("%T", itemValue["value"]) != "bool" {
+						errors = append(errors, fmt.Errorf("Incorrect DV_BOOLEAN element %v", itemValue["value"]))
+						break
+					}
+					var value string
+					if itemValue["value"].(bool) == true {
+						value = "true"
+					} else {
+						value = "false"
+					}
+
 					valueSet = map[string]interface{}{
-						"value": itemValue["value"],
+						"value": hm.EncryptString(value, key, nonce, errors),
 					}
 				case "DV_DURATION":
+					// TODO make comparable duration
 					valueSet = map[string]interface{}{
-						"value": itemValue["value"],
+						"value": hm.EncryptString(itemValue["value"].(string), key, nonce, errors),
 					}
+				}
+
+				if len(errors) > 0 {
+					log.Printf("Errors in item %v processing. Errors: %v", item, errors)
+					continue
 				}
 
 				if node.Items == nil {
@@ -279,9 +347,9 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 				if !ok {
 					element = &Element{
 						ItemType:    _type,
-						ElementType: valueType,
+						ElementType: hex.EncodeToString(hm.EncryptString(valueType, key, nonce, errors)), // TODO make ElementType - []byte
 						NodeId:      itemNodeId,
-						Name:        itemName["value"].(string),
+						Name:        hex.EncodeToString(hm.EncryptString(itemName["value"].(string), key, nonce, errors)), // TODO make Name - []byte
 						DataEntries: []*DataEntry{},
 					}
 					node.Items[itemNodeId] = element
@@ -297,6 +365,8 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 	}
 
 	iterate(content, node)
+
+	node.dump()
 
 	return i.index.Replace("INDEX", node)
 }
