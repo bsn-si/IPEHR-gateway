@@ -128,4 +128,3 @@ After building the image, start the container
 docker run -d --restart always -p 8080:8080 --name ipehr-gateway ipehr:gtw
 ```
 
-
