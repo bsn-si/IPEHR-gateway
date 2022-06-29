@@ -1,6 +1,7 @@
 package group_access
 
 import (
+	"crypto/rand"
 	"log"
 
 	"github.com/google/uuid"
@@ -66,6 +67,10 @@ func (g *GroupAccessService) Create(userId string, c *model.GroupAccessCreateReq
 		GroupUUID:   &groupUUID,
 		Description: c.Description,
 		Key:         chacha_poly.GenerateKey(),
+		Nonce:       &[12]byte{},
+	}
+	if _, err := rand.Read(groupAccess.Nonce[:]); err != nil {
+		return nil, err
 	}
 
 	err = g.Doc.GroupAccessIndex.Add(userId, groupAccess)

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"hms/gateway/pkg/storage"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -11,6 +10,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/storage"
 )
 
 // @title        IPEHR Gateway API

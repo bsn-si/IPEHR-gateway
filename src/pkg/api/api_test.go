@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -18,6 +19,7 @@ import (
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/storage"
@@ -554,7 +556,11 @@ func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *test
 		userId := uuid.New().String()
 		ehrId := uuid.New().String()
 
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+ehrId+"/composition", compositionCreateBodyRequest())
+		body, err := compositionCreateBodyRequest()
+		if err != nil {
+			t.Fatal(err)
+		}
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+ehrId+"/composition", body)
 		if err != nil {
 			t.Error(err)
 			return
@@ -579,10 +585,13 @@ func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *test
 
 func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition", compositionCreateBodyRequest())
+		body, err := compositionCreateBodyRequest()
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
+		}
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition", body)
+		if err != nil {
+			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
@@ -781,9 +790,18 @@ func ehrCreateBodyRequest() *bytes.Reader {
 	return bytes.NewReader(req)
 }
 
-func compositionCreateBodyRequest() *bytes.Reader {
-	req := fake_data.CompositionCreateRequest()
-	return bytes.NewReader(req)
+func compositionCreateBodyRequest() (*bytes.Reader, error) {
+	rootDir, err := utils.ProjectRootDir()
+	if err != nil {
+		return nil, err
+	}
+	filePath := rootDir + "/data/mock/ehr/composition.json"
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(data), nil
 }
 
 func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.T) {
