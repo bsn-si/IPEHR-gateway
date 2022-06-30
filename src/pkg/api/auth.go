@@ -11,7 +11,7 @@ import (
 func (a *API) Auth(c *gin.Context) {
 	userId := c.Request.Header.Get("AuthUserId")
 	if userId == "" {
-		c.AbortWithError(http.StatusForbidden, errors.AuthorizationError)
+		_ = c.AbortWithError(http.StatusForbidden, errors.AuthorizationError)
 		return
 	}
 	c.Set("userId", userId)
@@ -32,8 +32,10 @@ func (a *API) Auth(c *gin.Context) {
 	c.Next()
 }
 
+/*
 func checkSignature(pubKey, signature string) bool {
 	//TODO with NaCl sign
 
 	return true
 }
+*/

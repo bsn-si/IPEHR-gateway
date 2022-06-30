@@ -52,7 +52,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -144,7 +144,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status [get]
 func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -191,7 +191,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h EhrStatusHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -203,7 +203,7 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 	}
 
 	versionUid := c.Param("versionid")
-	if h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) == false {
+	if !h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

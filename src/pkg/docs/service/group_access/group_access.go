@@ -29,10 +29,9 @@ func NewGroupAccessService(docService *service.DefaultDocumentService, cfg *conf
 		log.Fatal(err)
 	}
 
-	groupAccess, err := docService.GroupAccessIndex.Get(cfg.DefaultUserId, &groupUUID)
-	if err != nil {
+	if _, err = docService.GroupAccessIndex.Get(cfg.DefaultUserId, &groupUUID); err != nil {
 		if errors.Is(err, errors.IsNotExist) {
-			groupAccess = &model.GroupAccess{
+			groupAccess := &model.GroupAccess{
 				GroupUUID:   &groupUUID,
 				Description: "Default access group",
 				Key:         chacha_poly.GenerateKey(),

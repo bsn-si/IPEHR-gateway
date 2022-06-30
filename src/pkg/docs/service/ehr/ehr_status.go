@@ -202,6 +202,10 @@ func (s *EhrStatusService) getStatusFromStorage(userId, ehrId string, statusMeta
 	}
 
 	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return
+	}
+
 	statusId, err := statusKey.DecryptWithAuthData(statusMeta.DocIdEncrypted, ehrUUID[:])
 	if err != nil {
 		return

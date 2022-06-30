@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -228,114 +229,228 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 					itemValue = item["value"].(map[string]interface{})
 					itemName  = item["name"].(map[string]interface{})
 					valueType = itemValue["_type"].(string)
-					errors    []error
+					err       error
 				)
 				switch valueType {
 				case "DV_TEXT":
-					valueSet = map[string]interface{}{
-						"value": hm.EncryptString(itemValue["value"].(string), key, nonce, errors),
-					}
-				case "DV_CODED_TEXT":
-					defCode := itemValue["defining_code"].(map[string]interface{})
-					codeString := defCode["code_string"].(string)
-					codeString = codeString[2:] // format at0000
-					valueSet = map[string]interface{}{
-						"value":       hm.EncryptString(itemValue["value"].(string), key, nonce, errors),
-						"code_string": hm.EncryptInt(codeString, key, errors),
-					}
-				case "DV_IDENTIFIER":
-					valueSet = map[string]interface{}{
-						"id": hm.EncryptString(itemValue["id"].(string), key, nonce, errors),
-					}
-				case "DV_MULTIMEDIA":
-					uri := itemValue["uri"].(map[string]interface{})
-					valueSet = map[string]interface{}{
-						"uri": hm.EncryptString(uri["value"].(string), key, nonce, errors),
-					}
-				case "DV_DATE_TIME":
-					dateTime, err := time.Parse(common.OPENEHR_TIME_FORMAT, itemValue["value"].(string))
-					if err != nil {
-						errors = append(errors, err)
-						break
-					}
-					valueSet = map[string]interface{}{
-						"value": hm.EncryptInt(dateTime.Unix(), key, errors),
-					}
-				case "DV_DATE":
-					dateTime, err := time.Parse("2006-01-02", itemValue["value"].(string))
-					if err != nil {
-						errors = append(errors, err)
-						break
-					}
-					valueSet = map[string]interface{}{
-						"value": hm.EncryptInt(dateTime.Unix(), key, errors),
-					}
-				case "DV_TIME":
-					dateTime, err := time.Parse("15:04:05.999", itemValue["value"].(string))
-					if err != nil {
-						errors = append(errors, err)
-						break
-					}
-					valueSet = map[string]interface{}{
-						"value": hm.EncryptInt(dateTime.Unix(), key, errors),
-					}
-				case "DV_QUANTITY":
-					valueSet = map[string]interface{}{
-						"units": hm.EncryptString(itemValue["units"].(string), key, nonce, errors),
-					}
-
-					log.Printf("magnitude type: %T", itemValue["magnitude"])
-
-					switch itemValue["magnitude"].(type) {
-					case float64:
-						valueSet["magnitude"] = hm.EncryptFloat(itemValue["magnitude"], key, errors)
-					default:
-						valueSet["magnitude"] = hm.EncryptInt(itemValue["magnitude"], key, errors)
-					}
-					if fmt.Sprintf("%T", itemValue["precision"]) != "<nil>" {
-						valueSet["precision"] = hm.EncryptInt(itemValue["precision"], key, errors)
-					}
-				case "DV_COUNT":
-					valueSet = map[string]interface{}{
-						"magnitude": hm.EncryptInt(itemValue["magnitude"], key, errors),
-					}
-				case "DV_PROPORTION":
-					valueSet = map[string]interface{}{
-						"numerator":   hm.EncryptFloat(itemValue["numerator"], key, errors),
-						"denominator": hm.EncryptFloat(itemValue["denominator"], key, errors),
-						"type":        hm.EncryptInt(itemValue["type"], key, errors),
-					}
-				case "DV_URI":
-					switch itemValue["uri"].(type) {
+					switch value := itemValue["value"].(type) {
 					case string:
 						valueSet = map[string]interface{}{
-							"uri": hm.EncryptString(itemValue["uri"].(string), key, nonce, errors),
+							"value": hm.EncryptString(value, key, nonce),
 						}
+					default:
+						err = fmt.Errorf("Incorrect DV_TEXT value element %v", value)
 					}
-				case "DV_BOOLEAN":
-					if fmt.Sprintf("%T", itemValue["value"]) != "bool" {
-						errors = append(errors, fmt.Errorf("Incorrect DV_BOOLEAN element %v", itemValue["value"]))
-						break
+				case "DV_CODED_TEXT":
+					switch defCode := itemValue["defining_code"].(type) {
+					case map[string]interface{}:
+						switch codeString := defCode["code_string"].(type) {
+						case string:
+							codeString = codeString[2:] // format at0000
+							var codeStringInt int64
+							codeStringInt, err = strconv.ParseInt(codeString, 10, 64)
+							if err != nil {
+								err = fmt.Errorf("Incorrect DV_CODED_TEXT defining_code.code_string element %v", codeString)
+								break
+							}
+							valueSet = map[string]interface{}{
+								"code_string": hm.EncryptInt(codeStringInt, key),
+							}
+
+							switch value := itemValue["value"].(type) {
+							case string:
+								valueSet["value"] = hm.EncryptString(value, key, nonce)
+							default:
+								err = fmt.Errorf("Incorrect DV_CODED_TEXT value element %v", value)
+							}
+						default:
+							err = fmt.Errorf("Incorrect DV_CODED_TEXT code_string element %v", codeString)
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_CODED_TEXT defining_code element %v", defCode)
 					}
-					var value string
-					if itemValue["value"].(bool) == true {
-						value = "true"
-					} else {
-						value = "false"
+				case "DV_IDENTIFIER":
+					switch id := itemValue["id"].(type) {
+					case string:
+						valueSet = map[string]interface{}{
+							"id": hm.EncryptString(id, key, nonce),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_IDENTIFIER id element %v", id)
+					}
+				case "DV_MULTIMEDIA":
+					switch uri := itemValue["uri"].(type) {
+					case map[string]interface{}:
+						switch value := uri["value"].(type) {
+						case string:
+							valueSet = map[string]interface{}{
+								"uri": hm.EncryptString(value, key, nonce),
+							}
+						default:
+							err = fmt.Errorf("Incorrect DV_MULTIMEDIA uri.value element %v", value)
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_MULTIMEDIA uri element %v", uri)
+					}
+				case "DV_DATE_TIME":
+					switch value := itemValue["value"].(type) {
+					case string:
+						var dateTime time.Time
+						if dateTime, err = time.Parse(common.OPENEHR_TIME_FORMAT, value); err != nil {
+							err = fmt.Errorf("Incorrect DV_DATE_TIME.value element %v", value)
+							break
+						}
+						valueSet = map[string]interface{}{
+							"value": hm.EncryptInt(dateTime.Unix(), key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_DATE_TIME.value element %v", value)
+					}
+				case "DV_DATE":
+					switch value := itemValue["value"].(type) {
+					case string:
+						var dateTime time.Time
+						if dateTime, err = time.Parse("2006-01-02", value); err != nil {
+							err = fmt.Errorf("Incorrect DV_DATE.value element %v", value)
+							break
+						}
+						valueSet = map[string]interface{}{
+							"value": hm.EncryptInt(dateTime.Unix(), key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_DATE.value element %v", value)
+					}
+				case "DV_TIME":
+					switch value := itemValue["value"].(type) {
+					case string:
+						var dateTime time.Time
+						if dateTime, err = time.Parse("15:04:05.999", value); err != nil {
+							err = fmt.Errorf("Incorrect DV_TIME.value element %v", value)
+							break
+						}
+						valueSet = map[string]interface{}{
+							"value": hm.EncryptInt(dateTime.Unix(), key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_TIME.value element %v", value)
+					}
+				case "DV_QUANTITY":
+					switch units := itemValue["units"].(type) {
+					case string:
+						valueSet = map[string]interface{}{
+							"units": hm.EncryptString(itemValue["units"].(string), key, nonce),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_QUANTITY.units element %v", units)
 					}
 
-					valueSet = map[string]interface{}{
-						"value": hm.EncryptString(value, key, nonce, errors),
+					if err != nil {
+						break
+					}
+
+					switch magnitude := itemValue["magnitude"].(type) {
+					case float64:
+						valueSet["magnitude"] = hm.EncryptFloat(magnitude, key)
+					case int64:
+						valueSet["magnitude"] = hm.EncryptInt(magnitude, key)
+					default:
+						err = fmt.Errorf("Incorrect DV_QUANTITY.magnitude element %v", magnitude)
+					}
+
+					if err != nil {
+						break
+					}
+
+					switch precision := itemValue["precision"].(type) {
+					case float64:
+						valueSet["precision"] = hm.EncryptFloat(precision, key)
+					case int64:
+						valueSet["precision"] = hm.EncryptInt(precision, key)
+					}
+				case "DV_COUNT":
+					switch magnitude := itemValue["magnitude"].(type) {
+					case float64:
+						valueSet = map[string]interface{}{
+							"magnitude": hm.EncryptFloat(magnitude, key),
+						}
+					case int64:
+						valueSet = map[string]interface{}{
+							"magnitude": hm.EncryptInt(magnitude, key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_COUNT.magnitude element %v", magnitude)
+					}
+				case "DV_PROPORTION":
+					switch numerator := itemValue["numerator"].(type) {
+					case float64:
+						valueSet = map[string]interface{}{
+							"numerator": hm.EncryptFloat(numerator, key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_PROPORTION.numerator element %v", numerator)
+					}
+
+					if err != nil {
+						break
+					}
+
+					switch denominator := itemValue["denominator"].(type) {
+					case float64:
+						valueSet = map[string]interface{}{
+							"denominator": hm.EncryptFloat(denominator, key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_PROPORTION.denominator element %v", denominator)
+					}
+
+					if err != nil {
+						break
+					}
+
+					switch _type := itemValue["type"].(type) {
+					case float64:
+						valueSet = map[string]interface{}{
+							"type": hm.EncryptFloat(_type, key),
+						}
+					case int64:
+						valueSet = map[string]interface{}{
+							"type": hm.EncryptInt(_type, key),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_PROPORTION.type element %v", _type)
+					}
+				case "DV_URI":
+					switch value := itemValue["value"].(type) {
+					case string:
+						valueSet = map[string]interface{}{
+							"value": hm.EncryptString(value, key, nonce),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_URI.value element %v", value)
+					}
+				case "DV_BOOLEAN":
+					switch value := itemValue["value"].(type) {
+					case bool:
+						valueSet = map[string]interface{}{
+							"value": hm.EncryptString(strconv.FormatBool(value), key, nonce),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_BOOLEAN.value element %v", value)
 					}
 				case "DV_DURATION":
 					// TODO make comparable duration
-					valueSet = map[string]interface{}{
-						"value": hm.EncryptString(itemValue["value"].(string), key, nonce, errors),
+					switch value := itemValue["value"].(type) {
+					case string:
+						valueSet = map[string]interface{}{
+							"value": hm.EncryptString(value, key, nonce),
+						}
+					default:
+						err = fmt.Errorf("Incorrect DV_DURATION.value element %v", value)
 					}
 				}
 
-				if len(errors) > 0 {
-					log.Printf("Errors in item %v processing. Errors: %v", item, errors)
+				if err != nil {
+					log.Printf("Errors in item %v processing. Error: %v", item, err)
 					continue
 				}
 
@@ -347,9 +462,9 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 				if !ok {
 					element = &Element{
 						ItemType:    _type,
-						ElementType: hex.EncodeToString(hm.EncryptString(valueType, key, nonce, errors)), // TODO make ElementType - []byte
+						ElementType: hex.EncodeToString(hm.EncryptString(valueType, key, nonce)), // TODO make ElementType - []byte
 						NodeId:      itemNodeId,
-						Name:        hex.EncodeToString(hm.EncryptString(itemName["value"].(string), key, nonce, errors)), // TODO make Name - []byte
+						Name:        hex.EncodeToString(hm.EncryptString(itemName["value"].(string), key, nonce)), // TODO make Name - []byte
 						DataEntries: []*DataEntry{},
 					}
 					node.Items[itemNodeId] = element
@@ -366,7 +481,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 
 	iterate(content, node)
 
-	node.dump()
+	//node.dump()
 
 	return i.index.Replace("INDEX", node)
 }
