@@ -1,5 +1,7 @@
 # IPEHR
 
+[![golangci-lint](https://github.com/bsn-si/IPEHR-gateway/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/bsn-si/IPEHR-gateway/actions/workflows/golangci-lint.yml)
+
 ## Disclamer
 
 The project is under active development and will gradually be supplemented.
