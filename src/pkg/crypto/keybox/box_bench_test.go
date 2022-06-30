@@ -31,7 +31,10 @@ func BenchmarkCrypt(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		encrypted, _ := Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
-		Open(encrypted, senderPublicKey, recipientPrivateKey)
+		_, err = Open(encrypted, senderPublicKey, recipientPrivateKey)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -48,7 +51,6 @@ func BenchmarkCryptSealOnly(b *testing.B) {
 	}
 
 	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
-
 	if err != nil {
 		b.Fatalf("%s", err)
 	}
@@ -56,7 +58,10 @@ func BenchmarkCryptSealOnly(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
+		_, err = Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -85,7 +90,10 @@ func BenchmarkPrecomputedCrypt(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		encrypted, _ := SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
-		OpenAfterPrecomputation(encrypted, &sharedDecryptKey)
+		_, err = OpenAfterPrecomputation(encrypted, &sharedDecryptKey)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -113,7 +121,10 @@ func BenchmarkPrecomputedCryptSealOnly(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
+		_, err = SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -133,7 +144,10 @@ func BenchmarkAnonymousCrypt(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		encrypted, _ := SealAnonymous(testStrings[i], publicKey)
-		OpenAnonymous(encrypted, publicKey, privateKey)
+		_, err = OpenAnonymous(encrypted, publicKey, privateKey)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -153,7 +167,10 @@ func BenchmarkAnonymousCryptSealOnly(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		SealAnonymous(testStrings[i], publicKey)
+		_, err = SealAnonymous(testStrings[i], publicKey)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 

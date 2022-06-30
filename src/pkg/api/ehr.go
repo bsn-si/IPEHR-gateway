@@ -136,7 +136,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 		return
 	}
 
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
@@ -202,7 +202,7 @@ func (h EhrHandler) CreateWithId(c *gin.Context) {
 // @Router       /ehr/{ehr_id} [get]
 func (h EhrHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

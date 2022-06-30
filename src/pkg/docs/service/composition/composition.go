@@ -134,19 +134,6 @@ func (s CompositionService) save(userId string, ehrUUID *uuid.UUID, groupAccess 
 	return nil
 }
 
-func (s CompositionService) delete(userId string, ehrUUID uuid.UUID, docIndex *model.DocumentMeta) (err error) {
-	docIndex.Status = status.DELETED
-
-	var docIndexes []*model.DocumentMeta
-	docIndexes = append(docIndexes, docIndex)
-
-	if err = s.Doc.DocsIndex.Replace(ehrUUID.String(), docIndexes); err != nil {
-		log.Println(err)
-	}
-
-	return
-}
-
 func (c CompositionService) GetCompositionById(userId, versionUid string, ehrUUID *uuid.UUID, documentType types.DocumentType) (composition *model.Composition, err error) {
 	documentMeta, err := c.Doc.GetDocIndexByDocId(userId, versionUid, ehrUUID, documentType)
 	if err != nil {

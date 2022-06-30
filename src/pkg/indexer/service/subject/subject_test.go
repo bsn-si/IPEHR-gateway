@@ -33,7 +33,7 @@ func TestSubjectIndex(t *testing.T) {
 		t.Errorf("Saved %s and recived %s EHR ids not match", testEhrId, receivedEhrId)
 	}
 
-	receivedEhrId, err = subjectIndex.GetEhrBySubject(testSubject, testBadNamespace)
+	_, err = subjectIndex.GetEhrBySubject(testSubject, testBadNamespace)
 	if err == nil {
 		t.Error("Not got error for wrong subject namespace")
 	}

@@ -28,7 +28,7 @@ jobs:
           version: v1.29
 
           # Optional: working directory, useful for monorepos
-          # working-directory: somedir
+          working-directory: src
 
           # Optional: golangci-lint command line arguments.
           # args: --issues-exit-code=0
@@ -44,4 +44,4 @@ jobs:
           # skip-pkg-cache: true
 
           # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
-          # skip-build-cache: true
+          #

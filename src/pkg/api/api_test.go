@@ -202,18 +202,17 @@ func (testWrap *testWrap) ehrCreateWithIdForSameUser(testData *testData) func(t 
 
 		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+ehrId3, ehrCreateBodyRequest())
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserId2)
 
 		response, err := testWrap.httpClient.Do(request)
-		err = response.Body.Close()
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
+		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusConflict {
 			t.Errorf("Expected %d, received %d", http.StatusConflict, response.StatusCode)
@@ -498,14 +497,11 @@ func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T)
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		_, err = ioutil.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
-		err = response.Body.Close()
-		if err != nil {
-			t.Fatalf("Response body read error: %v", err)
-		}
+		response.Body.Close()
 
 		if response.StatusCode != http.StatusCreated {
 			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
@@ -526,14 +522,11 @@ func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T)
 			t.Fatal(err)
 		}
 
-		data, err = ioutil.ReadAll(response.Body)
+		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
-		err = response.Body.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
 			t.Fatal(err)

@@ -8,7 +8,7 @@ import (
 
 func TestEncryptWith(t *testing.T) {
 	key := GenerateKey()
-	msg, err := fake_data.GetByteArray(20)
+	msg, _ := fake_data.GetByteArray(20)
 
 	t.Logf("Test message: %x", msg)
 
@@ -33,7 +33,7 @@ func TestEncryptWith(t *testing.T) {
 
 func TestEncryptWithAuthData(t *testing.T) {
 	key := GenerateKey()
-	msg, err := fake_data.GetByteArray(20)
+	msg, _ := fake_data.GetByteArray(20)
 
 	t.Logf("Test message: %x", msg)
 

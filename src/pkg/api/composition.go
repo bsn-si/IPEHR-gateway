@@ -53,7 +53,7 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *conf
 // @Router   /ehr/{ehr_id}/composition [post]
 func (h CompositionHandler) Create(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -143,7 +143,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{version_uid} [get]
 func (h CompositionHandler) GetById(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -155,7 +155,7 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 	}
 
 	versionUid := c.Param("version_uid")
-	if h.service.Doc.ValidateId(versionUid, types.COMPOSITION) == false {
+	if !h.service.Doc.ValidateId(versionUid, types.COMPOSITION) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -210,13 +210,13 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
 func (h CompositionHandler) Delete(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
 	versionUid := c.Param("preceding_version_uid")
-	if h.service.Doc.ValidateId(versionUid, types.COMPOSITION) == false {
+	if !h.service.Doc.ValidateId(versionUid, types.COMPOSITION) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
