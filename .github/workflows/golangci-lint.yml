@@ -45,6 +45,3 @@ jobs:
 
           # Optional: if set to true then the action don't cache or restore ~/.cache/go-build.
           #
- issues:
-  exclude:
-    - "Error: func `(*Node).dump` is .*"

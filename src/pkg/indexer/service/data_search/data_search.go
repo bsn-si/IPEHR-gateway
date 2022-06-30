@@ -61,6 +61,7 @@ func (d *DataSearchIndex) Add(key string, value interface{}) error {
 	return nil
 }
 
+//nolint
 func (n *Node) dump() {
 	data, err := json.MarshalIndent(n, "", "    ")
 	if err != nil {
