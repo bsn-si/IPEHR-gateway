@@ -1,14 +1,16 @@
-package chacha_poly
+package chachaPoly_test
 
 import (
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/common/fake_data"
+	"bytes"
 	"testing"
+
+	"hms/gateway/pkg/common/fakeData"
+	"hms/gateway/pkg/crypto/chachaPoly"
 )
 
 func TestEncryptWith(t *testing.T) {
-	key := GenerateKey()
-	msg, _ := fake_data.GetByteArray(20)
+	key := chachaPoly.GenerateKey()
+	msg, _ := fakeData.GetByteArray(20)
 
 	t.Logf("Test message: %x", msg)
 
@@ -26,18 +28,19 @@ func TestEncryptWith(t *testing.T) {
 
 	t.Logf("Decrypted message: %x", decrypted)
 
-	if !common.SliceEqualBytes(msg, decrypted) {
+	if !bytes.Equal(msg, decrypted) {
 		panic("Decryped message mismatch!")
 	}
 }
 
 func TestEncryptWithAuthData(t *testing.T) {
-	key := GenerateKey()
-	msg, _ := fake_data.GetByteArray(20)
+	key := chachaPoly.GenerateKey()
+	msg, _ := fakeData.GetByteArray(20)
 
 	t.Logf("Test message: %x", msg)
 
 	authData := []byte("This is a additional data")
+
 	encrypted, err := key.EncryptWithAuthData(msg, authData)
 	if err != nil {
 		panic(err)
@@ -52,7 +55,7 @@ func TestEncryptWithAuthData(t *testing.T) {
 
 	t.Logf("Decrypted message: %x", decrypted)
 
-	if !common.SliceEqualBytes(msg, decrypted) {
+	if !bytes.Equal(msg, decrypted) {
 		panic("Decryped message mismatch!")
 	}
 }

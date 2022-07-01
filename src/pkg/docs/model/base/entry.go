@@ -15,7 +15,7 @@ type Entry struct {
 	Language            CodePhrase       `json:"language"`
 	Encoding            CodePhrase       `json:"encoding"`
 	OtherParticipations *[]Participation `json:"other_participations,omitempty"`
-	WorkflowId          *ObjectRef       `json:"workflow_id,omitempty"`
+	WorkflowID          *ObjectRef       `json:"workflow_id,omitempty"`
 	Subject             PartyProxy       `json:"subject"`
 	Provider            *PartyProxy      `json:"provider,omitempty"`
 	ContentItem

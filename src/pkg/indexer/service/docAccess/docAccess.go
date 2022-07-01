@@ -1,5 +1,5 @@
 // Package doc_access User document keys index
-package doc_access
+package docAccess
 
 import (
 	"encoding/hex"
@@ -7,33 +7,33 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/crypto/chacha_poly"
+	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
 )
 
-type DocAccessIndex struct {
+type Index struct {
 	index    indexer.Indexer
 	keystore *keystore.KeyStore
 }
 
-func New(ks *keystore.KeyStore) *DocAccessIndex {
-	return &DocAccessIndex{
+func New(ks *keystore.KeyStore) *Index {
+	return &Index{
 		index:    indexer.Init("doc_access"),
 		keystore: ks,
 	}
 }
 
 // Add user's document key
-func (u *DocAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byte) error {
-	userUUID, err := uuid.Parse(userId)
+func (u *Index) Add(userID string, docStorageID *[32]byte, docKey []byte) error {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return err
 	}
 
 	// Getting user publicKey
-	userPubKey, _, err := u.keystore.Get(userId)
+	userPubKey, _, err := u.keystore.Get(userID)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (u *DocAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byt
 	}
 
 	// Index doc_id -> encrypted_doc_key
-	indexKey := sha3.Sum256(append(docStorageId[:], userUUID[:]...))
+	indexKey := sha3.Sum256(append(docStorageID[:], userUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
 
 	if err = u.index.Add(indexKeyStr, keyEncrypted); err != nil {
@@ -56,28 +56,31 @@ func (u *DocAccessIndex) Add(userId string, docStorageId *[32]byte, docKey []byt
 }
 
 // Get user key
-func (u *DocAccessIndex) Get(userId string) ([]byte, error) {
+func (u *Index) Get(userID string) ([]byte, error) {
 	var keyEncrypted []byte
-	err := u.index.GetById(userId, &keyEncrypted)
+
+	err := u.index.GetByID(userID, &keyEncrypted)
+
 	return keyEncrypted, err
 }
 
-func (u *DocAccessIndex) GetDocumentKey(userId string, docStorageId *[32]byte) (docKey *chacha_poly.Key, err error) {
-	userUUID, err := uuid.Parse(userId)
+func (u *Index) GetDocumentKey(userID string, docStorageID *[32]byte) (docKey *chachaPoly.Key, err error) {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return
 	}
 
-	userPubKey, userPrivateKey, err := u.keystore.Get(userId)
+	userPubKey, userPrivateKey, err := u.keystore.Get(userID)
 	if err != nil {
 		return
 	}
 
-	indexKey := sha3.Sum256(append(docStorageId[:], userUUID[:]...))
+	indexKey := sha3.Sum256(append(docStorageID[:], userUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
 
 	var keyEncrypted []byte
-	err = u.index.GetById(indexKeyStr, &keyEncrypted)
+
+	err = u.index.GetByID(indexKeyStr, &keyEncrypted)
 	if err != nil {
 		return
 	}
@@ -87,10 +90,10 @@ func (u *DocAccessIndex) GetDocumentKey(userId string, docStorageId *[32]byte) (
 		return
 	}
 
-	docKey, err = chacha_poly.NewKeyFromBytes(docKeyBytes)
+	docKey, err = chachaPoly.NewKeyFromBytes(docKeyBytes)
 	if err != nil {
 		return
 	}
 
-	return
+	return docKey, nil
 }

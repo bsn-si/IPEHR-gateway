@@ -1,4 +1,4 @@
-package fake_data
+package fakeData
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"hms/gateway/pkg/common"
 )
 
-func QueryExecRequest(ehrId string) []byte {
+func QueryExecRequest(ehrID string) []byte {
 	req := `{
 	  "q": "SELECT e/ehr_id/value, 
 	  			   c/context/start_time/value as startTime, 
@@ -20,12 +20,13 @@ func QueryExecRequest(ehrId string) []byte {
 	  "offset": 0,
 	  "fetch": 10,
 	  "query_parameters": {
-		"ehr_id": "` + ehrId + `",
+		"ehr_id": "` + ehrID + `",
 		"systolic_bp": 140
 	  }
 	}`
 	req = strings.ReplaceAll(req, "\n", "")
 	req = strings.ReplaceAll(req, "\t", "")
+
 	return []byte(req)
 }
 
@@ -35,7 +36,7 @@ func QueryExecResponse(query string) []byte {
 		"_href": "",
 		"_type": "RESULTSET",
 		"_schema_version": "1.0.0",
-		"_created": "` + time.Now().Format(common.OPENEHR_TIME_FORMAT) + `"
+		"_created": "` + time.Now().Format(common.OpenEhrTimeFormat) + `"
 		},
 		"q": "` + query + `",
 		"columns": [

@@ -1,4 +1,4 @@
-package fake_data
+package fakeData
 
 func CompositionCreateRequest() []byte {
 	return CompositionCreateCustomRequest()

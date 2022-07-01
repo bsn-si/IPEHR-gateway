@@ -1,4 +1,4 @@
-package fake_data
+package fakeData
 
 import (
 	"fmt"
@@ -13,10 +13,13 @@ func GetRandomStringWithLength(lengthOfString int) string {
 	for i := 0; i < lengthOfString; i++ {
 		r = append(r, GetRandomLetter())
 	}
+
 	return strings.Join(r, "")
 }
 
+//nolint
 func GetRandomLetter() string {
 	cNum := 97 + rand.Intn(25)
+
 	return fmt.Sprintf("%c", cNum)
 }

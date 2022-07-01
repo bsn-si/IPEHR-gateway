@@ -1,5 +1,5 @@
-// Package data_search keys index
-package data_search
+// Package dataSearch keys index
+package dataSearch
 
 import (
 	"encoding/hex"
@@ -19,45 +19,45 @@ import (
 )
 
 type DataEntry struct {
-	GroupId       *uuid.UUID
+	GroupID       *uuid.UUID
 	ValueSet      map[string]interface{}
-	DocStorIdEncr []byte
+	DocStorIDEncr []byte
 }
 
 type Element struct {
 	ItemType    string
 	ElementType string
-	NodeId      string
+	NodeID      string
 	Name        string
 	DataEntries []*DataEntry
 }
 
 type Node struct {
 	NodeType string
-	NodeId   string
+	NodeID   string
 	Next     map[string]*Node
-	Items    map[string]*Element // nodeId -> Element
+	Items    map[string]*Element // nodeID -> Element
 }
 
-func newNode(_type, nodeId string) *Node {
+func newNode(_type, nodeID string) *Node {
 	return &Node{
 		NodeType: _type,
-		NodeId:   nodeId,
+		NodeID:   nodeID,
 		Next:     make(map[string]*Node),
 	}
 }
 
-type DataSearchIndex struct {
+type Index struct {
 	index indexer.Indexer
 }
 
-func New() *DataSearchIndex {
-	return &DataSearchIndex{
+func New() *Index {
+	return &Index{
 		index: indexer.Init("data_search"),
 	}
 }
 
-func (d *DataSearchIndex) Add(key string, value interface{}) error {
+func (i *Index) Add(key string, value interface{}) error {
 	return nil
 }
 
@@ -71,15 +71,15 @@ func (n *Node) dump() {
 	log.Println(string(data))
 }
 
-func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAccess *model.GroupAccess, docStorageIdEncrypted []byte) error {
+func (i *Index) UpdateIndexWithNewContent(content interface{}, groupAccess *model.GroupAccess, docStorageIDEncrypted []byte) error {
 	var (
 		key   = (*[32]byte)(groupAccess.Key)
 		nonce = groupAccess.Nonce
+		node  = &Node{}
 	)
-	node := &Node{}
-	err := i.index.GetById("INDEX", node)
-	if err != nil {
-		if errors.Is(err, errors.IsNotExist) {
+
+	if err := i.index.GetByID("INDEX", node); err != nil {
+		if errors.Is(err, errors.ErrIsNotExist) {
 			node = newNode("INDEX", "")
 		} else {
 			return err
@@ -101,16 +101,18 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 			item := item.(map[string]interface{})
 
 			_type := item["_type"].(string)
-			itemNodeId := item["archetype_node_id"].(string)
+			itemNodeID := item["archetype_node_id"].(string)
 
 			switch _type {
 			case "SECTION":
 				iterate(item["items"].([]interface{}), node)
 			case "EVALUATION", "OBSERVATION", "INSTRUCTION":
 				if node.Next[_type] == nil {
-					node.Next[_type] = newNode(_type, itemNodeId)
+					node.Next[_type] = newNode(_type, itemNodeID)
 				}
+
 				nodeType := node.Next[_type]
+
 				for _, key := range []string{"data", "protocol"} {
 					if item[key] == nil {
 						continue
@@ -118,22 +120,24 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 
 					itemsKey := item[key].(map[string]interface{})
 					itemsKeyType := itemsKey["_type"].(string)
-					itemsKeyNodeId := itemsKey["archetype_node_id"].(string)
+					itemsKeyNodeID := itemsKey["archetype_node_id"].(string)
 
 					if nodeType.Next[key] == nil {
-						nodeType.Next[key] = newNode(itemsKeyType, itemsKeyNodeId)
+						nodeType.Next[key] = newNode(itemsKeyType, itemsKeyNodeID)
 					}
-					nodeCurrent := nodeType.Next[key]
 
-					if nodeCurrent.Next[itemsKeyNodeId] == nil {
-						nodeCurrent.Next[itemsKeyNodeId] = newNode(itemsKeyType, itemsKeyNodeId)
+					nodeCurrent := nodeType.Next[key]
+					if nodeCurrent.Next[itemsKeyNodeID] == nil {
+						nodeCurrent.Next[itemsKeyNodeID] = newNode(itemsKeyType, itemsKeyNodeID)
 					}
-					nodeCurrent = nodeCurrent.Next[itemsKeyNodeId]
+
+					nodeCurrent = nodeCurrent.Next[itemsKeyNodeID]
 
 					if itemsKey["items"] != nil {
 						if nodeCurrent.Next["items"] == nil {
 							nodeCurrent.Next["items"] = newNode("items", "")
 						}
+
 						nodeCurrent = nodeCurrent.Next["items"]
 						iterate(itemsKey["items"].([]interface{}), nodeCurrent)
 					}
@@ -142,6 +146,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 						if nodeCurrent.Next["events"] == nil {
 							nodeCurrent.Next["events"] = newNode("events", "")
 						}
+
 						nodeCurrent = nodeCurrent.Next["events"]
 						iterate(itemsKey["events"].([]interface{}), nodeCurrent)
 					}
@@ -151,75 +156,92 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 					if nodeType.Next["activities"] == nil {
 						nodeType.Next["activities"] = newNode("activities", "")
 					}
+
 					nodeCurrent := nodeType.Next["activities"]
 					iterate(item["activities"].([]interface{}), nodeCurrent)
 				}
 			case "ACTION":
 				if node.Next["ACTION"] == nil {
-					node.Next["ACTION"] = newNode("ACTION", itemNodeId)
+					node.Next["ACTION"] = newNode("ACTION", itemNodeID)
 				}
+
 				nodeCurrent := node.Next["ACTION"]
 
-				if nodeCurrent.Next[itemNodeId] == nil {
-					nodeCurrent.Next[itemNodeId] = newNode(_type, itemNodeId)
+				if nodeCurrent.Next[itemNodeID] == nil {
+					nodeCurrent.Next[itemNodeID] = newNode(_type, itemNodeID)
 				}
 
 				for _, key := range []string{"protocol", "description"} {
 					if item[key] == nil {
 						continue
 					}
-					itemsKey := item[key].(map[string]interface{})
-					itemsKeyType := itemsKey["_type"].(string)
-					itemsKeyNodeId := itemsKey["archetype_node_id"].(string)
-					if nodeCurrent.Next[key] == nil {
-						nodeCurrent.Next[key] = newNode(itemsKeyType, itemsKeyNodeId)
-					}
-					nodeCurrent = nodeCurrent.Next[key]
 
-					if nodeCurrent.Next[itemsKeyNodeId] == nil {
-						nodeCurrent.Next[itemsKeyNodeId] = newNode(itemsKeyType, itemsKeyNodeId)
+					itemsKey := item[key].(map[string]interface{})
+
+					itemsKeyType := itemsKey["_type"].(string)
+
+					itemsKeyNodeID := itemsKey["archetype_node_id"].(string)
+
+					if nodeCurrent.Next[key] == nil {
+						nodeCurrent.Next[key] = newNode(itemsKeyType, itemsKeyNodeID)
 					}
-					nodeCurrent = nodeCurrent.Next[itemsKeyNodeId]
+
+					nodeCurrent = nodeCurrent.Next[key]
+					if nodeCurrent.Next[itemsKeyNodeID] == nil {
+						nodeCurrent.Next[itemsKeyNodeID] = newNode(itemsKeyType, itemsKeyNodeID)
+					}
+
+					nodeCurrent = nodeCurrent.Next[itemsKeyNodeID]
 
 					iterate(itemsKey["items"].([]interface{}), nodeCurrent)
 				}
 			case "CLUSTER":
 				if node.Next["CLUSTER"] == nil {
-					node.Next["CLUSTER"] = newNode("CLUSTER", itemNodeId)
+					node.Next["CLUSTER"] = newNode("CLUSTER", itemNodeID)
 				}
-				nodeCluster := node.Next["CLUSTER"]
 
-				if nodeCluster.Next[itemNodeId] == nil {
-					nodeCluster.Next[itemNodeId] = newNode(_type, itemNodeId)
+				nodeCluster := node.Next["CLUSTER"]
+				if nodeCluster.Next[itemNodeID] == nil {
+					nodeCluster.Next[itemNodeID] = newNode(_type, itemNodeID)
 				}
-				iterate(item["items"].([]interface{}), nodeCluster.Next[itemNodeId])
+
+				iterate(item["items"].([]interface{}), nodeCluster.Next[itemNodeID])
 			case "ACTIVITY":
 				itemsDescription := item["description"].(map[string]interface{})
-				itemsDescriptionType := itemsDescription["_type"].(string)
-				itemsDescriptionNodeId := itemsDescription["archetype_node_id"].(string)
-				if node.Next["description"] == nil {
-					node.Next["description"] = newNode("description", itemsDescriptionNodeId)
-				}
-				nodeCurrent := node.Next["description"]
 
-				if nodeCurrent.Next[itemsDescriptionNodeId] == nil {
-					nodeCurrent.Next[itemsDescriptionNodeId] = newNode(itemsDescriptionType, itemsDescriptionNodeId)
+				itemsDescriptionType := itemsDescription["_type"].(string)
+
+				itemsDescriptionNodeID := itemsDescription["archetype_node_id"].(string)
+
+				if node.Next["description"] == nil {
+					node.Next["description"] = newNode("description", itemsDescriptionNodeID)
 				}
-				nodeCurrent = nodeCurrent.Next[itemsDescriptionNodeId]
+
+				nodeCurrent := node.Next["description"]
+				if nodeCurrent.Next[itemsDescriptionNodeID] == nil {
+					nodeCurrent.Next[itemsDescriptionNodeID] = newNode(itemsDescriptionType, itemsDescriptionNodeID)
+				}
+
+				nodeCurrent = nodeCurrent.Next[itemsDescriptionNodeID]
+
 				iterate(itemsDescription["items"].([]interface{}), nodeCurrent)
 			case "POINT_EVENT":
 				itemsData := item["data"].(map[string]interface{})
-				itemsDataType := itemsData["_type"].(string)
-				itemsDataNodeId := itemsData["archetype_node_id"].(string)
-				if node.Next["data"] == nil {
-					node.Next["data"] = newNode("data", itemsDataNodeId)
-				}
-				nodeData := node.Next["data"]
 
-				if nodeData.Next[itemsDataNodeId] == nil {
-					nodeData.Next[itemsDataNodeId] = newNode(itemsDataType, itemsDataNodeId)
+				itemsDataType := itemsData["_type"].(string)
+
+				itemsDataNodeID := itemsData["archetype_node_id"].(string)
+
+				if node.Next["data"] == nil {
+					node.Next["data"] = newNode("data", itemsDataNodeID)
 				}
-				iterate(itemsData["items"].([]interface{}), nodeData.Next[itemsDataNodeId])
+
+				nodeData := node.Next["data"]
+				if nodeData.Next[itemsDataNodeID] == nil {
+					nodeData.Next[itemsDataNodeID] = newNode(itemsDataType, itemsDataNodeID)
+				}
+
+				iterate(itemsData["items"].([]interface{}), nodeData.Next[itemsDataNodeID])
 			case "ITEM_TREE":
 				iterate(item["items"].([]interface{}), node)
 			case "HISTORY":
@@ -232,6 +254,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 					valueType = itemValue["_type"].(string)
 					err       error
 				)
+
 				switch valueType {
 				case "DV_TEXT":
 					switch value := itemValue["value"].(type) {
@@ -240,7 +263,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"value": hm.EncryptString(value, key, nonce),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_TEXT value element %v", value)
+						err = fmt.Errorf("%w: DV_TEXT value element %v", errors.ErrIncorrectFormat, value)
 					}
 				case "DV_CODED_TEXT":
 					switch defCode := itemValue["defining_code"].(type) {
@@ -248,12 +271,15 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 						switch codeString := defCode["code_string"].(type) {
 						case string:
 							codeString = codeString[2:] // format at0000
+
 							var codeStringInt int64
+
 							codeStringInt, err = strconv.ParseInt(codeString, 10, 64)
 							if err != nil {
-								err = fmt.Errorf("Incorrect DV_CODED_TEXT defining_code.code_string element %v", codeString)
+								err = fmt.Errorf("%w: DV_CODED_TEXT defining_code.code_string element %v", errors.ErrIncorrectFormat, codeString)
 								break
 							}
+
 							valueSet = map[string]interface{}{
 								"code_string": hm.EncryptInt(codeStringInt, key),
 							}
@@ -262,13 +288,13 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							case string:
 								valueSet["value"] = hm.EncryptString(value, key, nonce)
 							default:
-								err = fmt.Errorf("Incorrect DV_CODED_TEXT value element %v", value)
+								err = fmt.Errorf("%w: DV_CODED_TEXT value element %v", errors.ErrIncorrectFormat, value)
 							}
 						default:
-							err = fmt.Errorf("Incorrect DV_CODED_TEXT code_string element %v", codeString)
+							err = fmt.Errorf("%w: DV_CODED_TEXT code_string element %v", errors.ErrIncorrectFormat, codeString)
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_CODED_TEXT defining_code element %v", defCode)
+						err = fmt.Errorf("%w: DV_CODED_TEXT defining_code element %v", errors.ErrIncorrectFormat, defCode)
 					}
 				case "DV_IDENTIFIER":
 					switch id := itemValue["id"].(type) {
@@ -277,7 +303,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"id": hm.EncryptString(id, key, nonce),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_IDENTIFIER id element %v", id)
+						err = fmt.Errorf("%w: DV_IDENTIFIER id element %v", errors.ErrIncorrectFormat, id)
 					}
 				case "DV_MULTIMEDIA":
 					switch uri := itemValue["uri"].(type) {
@@ -288,52 +314,58 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 								"uri": hm.EncryptString(value, key, nonce),
 							}
 						default:
-							err = fmt.Errorf("Incorrect DV_MULTIMEDIA uri.value element %v", value)
+							err = fmt.Errorf("%w: DV_MULTIMEDIA uri.value element %v", errors.ErrIncorrectFormat, value)
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_MULTIMEDIA uri element %v", uri)
+						err = fmt.Errorf("%w: DV_MULTIMEDIA uri element %v", errors.ErrIncorrectFormat, uri)
 					}
 				case "DV_DATE_TIME":
 					switch value := itemValue["value"].(type) {
 					case string:
 						var dateTime time.Time
-						if dateTime, err = time.Parse(common.OPENEHR_TIME_FORMAT, value); err != nil {
-							err = fmt.Errorf("Incorrect DV_DATE_TIME.value element %v", value)
+
+						if dateTime, err = time.Parse(common.OpenEhrTimeFormat, value); err != nil {
+							err = fmt.Errorf("%w: DV_DATE_TIME.value element %v", errors.ErrIncorrectFormat, value)
 							break
 						}
+
 						valueSet = map[string]interface{}{
 							"value": hm.EncryptInt(dateTime.Unix(), key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_DATE_TIME.value element %v", value)
+						err = fmt.Errorf("%w: DV_DATE_TIME.value element %v", errors.ErrIncorrectFormat, value)
 					}
 				case "DV_DATE":
 					switch value := itemValue["value"].(type) {
 					case string:
 						var dateTime time.Time
+
 						if dateTime, err = time.Parse("2006-01-02", value); err != nil {
-							err = fmt.Errorf("Incorrect DV_DATE.value element %v", value)
+							err = fmt.Errorf("%w: DV_DATE.value element %v", errors.ErrIncorrectFormat, value)
 							break
 						}
+
 						valueSet = map[string]interface{}{
 							"value": hm.EncryptInt(dateTime.Unix(), key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_DATE.value element %v", value)
+						err = fmt.Errorf("%w: DV_DATE.value element %v", errors.ErrIncorrectFormat, value)
 					}
 				case "DV_TIME":
 					switch value := itemValue["value"].(type) {
 					case string:
 						var dateTime time.Time
+
 						if dateTime, err = time.Parse("15:04:05.999", value); err != nil {
-							err = fmt.Errorf("Incorrect DV_TIME.value element %v", value)
+							err = fmt.Errorf("%w: DV_TIME.value element %v", errors.ErrIncorrectFormat, value)
 							break
 						}
+
 						valueSet = map[string]interface{}{
 							"value": hm.EncryptInt(dateTime.Unix(), key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_TIME.value element %v", value)
+						err = fmt.Errorf("%w: DV_TIME.value element %v", errors.ErrIncorrectFormat, value)
 					}
 				case "DV_QUANTITY":
 					switch units := itemValue["units"].(type) {
@@ -342,7 +374,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"units": hm.EncryptString(itemValue["units"].(string), key, nonce),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_QUANTITY.units element %v", units)
+						err = fmt.Errorf("%w: DV_QUANTITY.units element %v", errors.ErrIncorrectFormat, units)
 					}
 
 					if err != nil {
@@ -355,7 +387,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 					case int64:
 						valueSet["magnitude"] = hm.EncryptInt(magnitude, key)
 					default:
-						err = fmt.Errorf("Incorrect DV_QUANTITY.magnitude element %v", magnitude)
+						err = fmt.Errorf("%w: DV_QUANTITY.magnitude element %v", errors.ErrIncorrectFormat, magnitude)
 					}
 
 					if err != nil {
@@ -379,7 +411,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"magnitude": hm.EncryptInt(magnitude, key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_COUNT.magnitude element %v", magnitude)
+						err = fmt.Errorf("%w: DV_COUNT.magnitude element %v", errors.ErrIncorrectFormat, magnitude)
 					}
 				case "DV_PROPORTION":
 					switch numerator := itemValue["numerator"].(type) {
@@ -388,7 +420,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"numerator": hm.EncryptFloat(numerator, key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_PROPORTION.numerator element %v", numerator)
+						err = fmt.Errorf("%w: DV_PROPORTION.numerator element %v", errors.ErrIncorrectFormat, numerator)
 					}
 
 					if err != nil {
@@ -401,7 +433,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"denominator": hm.EncryptFloat(denominator, key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_PROPORTION.denominator element %v", denominator)
+						err = fmt.Errorf("%w: DV_PROPORTION.denominator element %v", errors.ErrIncorrectFormat, denominator)
 					}
 
 					if err != nil {
@@ -418,7 +450,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"type": hm.EncryptInt(_type, key),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_PROPORTION.type element %v", _type)
+						err = fmt.Errorf("%w: DV_PROPORTION.type element %v", errors.ErrIncorrectFormat, _type)
 					}
 				case "DV_URI":
 					switch value := itemValue["value"].(type) {
@@ -427,7 +459,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"value": hm.EncryptString(value, key, nonce),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_URI.value element %v", value)
+						err = fmt.Errorf("%w: DV_URI.value element %v", errors.ErrIncorrectFormat, value)
 					}
 				case "DV_BOOLEAN":
 					switch value := itemValue["value"].(type) {
@@ -436,7 +468,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"value": hm.EncryptString(strconv.FormatBool(value), key, nonce),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_BOOLEAN.value element %v", value)
+						err = fmt.Errorf("%w: DV_BOOLEAN.value element %v", errors.ErrIncorrectFormat, value)
 					}
 				case "DV_DURATION":
 					// TODO make comparable duration
@@ -446,7 +478,7 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 							"value": hm.EncryptString(value, key, nonce),
 						}
 					default:
-						err = fmt.Errorf("Incorrect DV_DURATION.value element %v", value)
+						err = fmt.Errorf("%w: DV_DURATION.value element %v", errors.ErrIncorrectFormat, value)
 					}
 				}
 
@@ -459,22 +491,24 @@ func (i *DataSearchIndex) UpdateIndexWithNewContent(content interface{}, groupAc
 					node.Items = make(map[string]*Element)
 				}
 
-				element, ok := node.Items[itemNodeId]
+				element, ok := node.Items[itemNodeID]
 				if !ok {
 					element = &Element{
 						ItemType:    _type,
 						ElementType: hex.EncodeToString(hm.EncryptString(valueType, key, nonce)), // TODO make ElementType - []byte
-						NodeId:      itemNodeId,
+						NodeID:      itemNodeID,
 						Name:        hex.EncodeToString(hm.EncryptString(itemName["value"].(string), key, nonce)), // TODO make Name - []byte
 						DataEntries: []*DataEntry{},
 					}
-					node.Items[itemNodeId] = element
+					node.Items[itemNodeID] = element
 				}
+
 				dataEntry := &DataEntry{
-					GroupId:       groupAccess.GroupUUID,
+					GroupID:       groupAccess.GroupUUID,
 					ValueSet:      valueSet,
-					DocStorIdEncr: docStorageIdEncrypted,
+					DocStorIDEncr: docStorageIDEncrypted,
 				}
+
 				element.DataEntries = append(element.DataEntries, dataEntry)
 			}
 		}

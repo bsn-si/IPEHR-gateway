@@ -2,11 +2,11 @@ package model
 
 type EhrStatusUpdate struct {
 	Type            string `json:"_type"`
-	ArchetypeNodeId string `json:"archetype_node_id"`
+	ArchetypeNodeID string `json:"archetype_node_id"`
 	Name            struct {
 		Value string `json:"value"`
 	} `json:"name"`
-	Uid struct {
+	UID struct {
 		Type  string `json:"_type"`
 		Value string `json:"value"`
 	} `json:"uid"`
@@ -15,7 +15,7 @@ type EhrStatusUpdate struct {
 	} `json:"subject"`
 	OtherDetails struct {
 		Type            string `json:"_type"`
-		ArchetypeNodeId string `json:"archetype_node_id"`
+		ArchetypeNodeID string `json:"archetype_node_id"`
 		Name            struct {
 			Value string `json:"value"`
 		} `json:"name"`

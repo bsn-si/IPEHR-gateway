@@ -1,4 +1,4 @@
-package data_access
+package dataAccess_test
 
 import (
 	"strconv"
@@ -7,8 +7,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/indexer/service/dataAccess"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
 )
@@ -21,26 +22,27 @@ func TestDataAccessIndex(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	ks := keystore.New(cfg.KeystoreKey)
-	dataAccessIndex := New(ks)
+	dataAccessIndex := dataAccess.New(ks)
 
 	userUUID := uuid.New()
-	userId := userUUID.String()
+	userID := userUUID.String()
 
 	accessGroupUUID := uuid.New()
-	accessGroupId := accessGroupUUID.String()
+	accessGroupID := accessGroupUUID.String()
 
-	accessGroupKey, err := fake_data.GetByteArray(32)
+	accessGroupKey, err := fakeData.GetByteArray(32)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = dataAccessIndex.Add(userId, accessGroupId, accessGroupKey)
+	err = dataAccessIndex.Add(userID, accessGroupID, accessGroupKey)
 	if err != nil {
 		t.Fatal("dataAccessIndex add error:", err)
 	}
 
-	groupAccessKey, err := dataAccessIndex.Get(userId, accessGroupId)
+	groupAccessKey, err := dataAccessIndex.Get(userID, accessGroupID)
 	if err != nil {
 		t.Fatal("dataAccessIndex get error:", err)
 	}
@@ -48,5 +50,4 @@ func TestDataAccessIndex(t *testing.T) {
 	if len(groupAccessKey) < 32 {
 		t.Fatal("groupAccessKey incorrect")
 	}
-
 }

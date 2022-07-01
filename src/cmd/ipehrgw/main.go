@@ -14,10 +14,10 @@ import (
 )
 
 func main() {
-
 	var (
 		cfgPath = flag.String("config", "./config.json", "config file path")
 	)
+
 	flag.Parse()
 
 	cfg, err := config.New(*cfgPath)

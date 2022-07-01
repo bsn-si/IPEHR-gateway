@@ -1,16 +1,17 @@
-package compressor
+package compressor_test
 
 import (
 	"bytes"
 	"testing"
 
-	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/common/fakeData"
+	"hms/gateway/pkg/compressor"
 )
 
 func TestCompression(t *testing.T) {
-	compressor := New(5)
+	compressor := compressor.New(5)
 
-	testData, err := fake_data.GetByteArray(1000)
+	testData, err := fakeData.GetByteArray(1000)
 	if err != nil {
 		t.Fatal(err)
 	}

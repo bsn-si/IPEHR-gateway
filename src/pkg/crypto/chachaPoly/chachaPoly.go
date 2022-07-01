@@ -1,4 +1,4 @@
-package chacha_poly
+package chachaPoly
 
 import (
 	crypto_rand "crypto/rand"
@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"golang.org/x/crypto/chacha20poly1305"
+
+	"hms/gateway/pkg/errors"
 )
 
 const (
@@ -31,29 +33,35 @@ func GenerateKey() *Key {
 	if _, err := crypto_rand.Read(key[:]); err != nil {
 		panic(err)
 	}
+
 	return key
 }
 
 func NewKeyFromBytes(keyBytes []byte) (*Key, error) {
 	if len(keyBytes) != KeyLength {
-		return nil, fmt.Errorf("Key length is incorrect")
+		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
 	}
+
 	key := new(Key)
+
 	copy(key[:], keyBytes)
+
 	return key, nil
 }
 
 func (k Key) Encrypt(msg []byte) ([]byte, error) {
 	if len(k) != KeyLength {
-		return nil, fmt.Errorf("Key length is incorrect")
+		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
 	}
+
 	aead, err := chacha20poly1305.New(k[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("key init error: %w", err)
 	}
+
 	nonce := make([]byte, NonceLength, NonceLength+len(msg)+Overhead)
 	if _, err := crypto_rand.Read(nonce); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("nonce creating error: %w", err)
 	}
 
 	encrypted := aead.Seal(nonce, nonce, msg, nil)
@@ -63,15 +71,17 @@ func (k Key) Encrypt(msg []byte) ([]byte, error) {
 
 func (k Key) EncryptWithAuthData(msg, authData []byte) ([]byte, error) {
 	if len(k) != KeyLength {
-		return nil, fmt.Errorf("Key length is incorrect")
+		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
 	}
+
 	aead, err := chacha20poly1305.New(k[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("key init error: %w", err)
 	}
+
 	nonce := make([]byte, NonceLength, NonceLength+len(msg)+Overhead)
 	if _, err := crypto_rand.Read(nonce); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("nonce creating error: %w", err)
 	}
 
 	encrypted := aead.Seal(nonce, nonce, msg, authData)
@@ -81,15 +91,16 @@ func (k Key) EncryptWithAuthData(msg, authData []byte) ([]byte, error) {
 
 func (k Key) Decrypt(encrypted []byte) ([]byte, error) {
 	if len(k) != KeyLength {
-		return nil, fmt.Errorf("Key length is incorrect")
+		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
 	}
+
 	aead, err := chacha20poly1305.New(k[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("key init error: %w", err)
 	}
 
 	if len(encrypted) < NonceLength {
-		return nil, fmt.Errorf("ciphertext too short")
+		return nil, fmt.Errorf("%w: Ciphertext too short", errors.ErrEncryption)
 	}
 
 	// Split nonce and ciphertext.
@@ -98,7 +109,7 @@ func (k Key) Decrypt(encrypted []byte) ([]byte, error) {
 	// Decrypt the message and check it wasn't tampered with.
 	msg, err := aead.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ciphertext open error: %w", err)
 	}
 
 	return msg, nil
@@ -106,15 +117,16 @@ func (k Key) Decrypt(encrypted []byte) ([]byte, error) {
 
 func (k Key) DecryptWithAuthData(encrypted, authData []byte) ([]byte, error) {
 	if len(k) != KeyLength {
-		return nil, fmt.Errorf("Key length is incorrect")
+		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
 	}
+
 	aead, err := chacha20poly1305.New(k[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("key init error: %w", err)
 	}
 
 	if len(encrypted) < NonceLength {
-		return nil, fmt.Errorf("ciphertext too short")
+		return nil, fmt.Errorf("%w: Ciphertext too short", errors.ErrEncryption)
 	}
 
 	// Split nonce and ciphertext.
@@ -123,7 +135,7 @@ func (k Key) DecryptWithAuthData(encrypted, authData []byte) ([]byte, error) {
 	// Decrypt the message and check it wasn't tampered with.
 	msg, err := aead.Open(nil, nonce, ciphertext, authData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ciphertext open error: %w", err)
 	}
 
 	return msg, nil

@@ -1,16 +1,16 @@
-package fake_data
+package fakeData
 
 import (
 	"github.com/google/uuid"
 )
 
 func EhrCreateRequest() []byte {
-	subjectId := uuid.New().String()
+	subjectID := uuid.New().String()
 
-	return EhrCreateCustomRequest(subjectId, "test")
+	return EhrCreateCustomRequest(subjectID, "test")
 }
 
-func EhrCreateCustomRequest(subjectId, subjectNamespace string) []byte {
+func EhrCreateCustomRequest(subjectID, subjectNamespace string) []byte {
 	return []byte(`{
 	  "_type": "EHR_STATUS",
 	  "archetype_node_id": "openEHR-EHR-EHR_STATUS.generic.v1",
@@ -21,7 +21,7 @@ func EhrCreateCustomRequest(subjectId, subjectNamespace string) []byte {
 		"external_ref": {
 		  "id": {
 			"_type": "GENERIC_ID",
-			"value": "` + subjectId + `",
+			"value": "` + subjectID + `",
 			"scheme": "id_scheme"
 		  },
 		  "namespace": "` + subjectNamespace + `",

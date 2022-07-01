@@ -1,4 +1,4 @@
-package data_search
+package dataSearch_test
 
 import (
 	"testing"

@@ -1,7 +1,10 @@
 // Generators of fake byte arrays for test purpose
-package fake_data
+package fakeData
 
-import cryptoRand "crypto/rand"
+import (
+	cryptoRand "crypto/rand"
+	"fmt"
+)
 
 // Generate array of random byte arrays for testing
 func GetByteArrays(numOfData int, dataLength int) ([][]byte, error) {
@@ -12,17 +15,20 @@ func GetByteArrays(numOfData int, dataLength int) ([][]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		testStrings = append(testStrings, testString)
 	}
+
 	return testStrings, nil
 }
 
 // Generate random data array for testing
 func GetByteArray(lengthOfData int) ([]byte, error) {
 	message := make([]byte, lengthOfData)
-	_, err := cryptoRand.Read(message)
-	if err != nil {
-		return nil, err
+
+	if _, err := cryptoRand.Read(message); err != nil {
+		return nil, fmt.Errorf("GetByteArray error: %w", err)
 	}
+
 	return message, nil
 }

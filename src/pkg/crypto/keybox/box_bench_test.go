@@ -1,4 +1,4 @@
-package keybox
+package keybox_test
 
 import (
 	cryptoRand "crypto/rand"
@@ -7,7 +7,8 @@ import (
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/common/fake_data"
+	"hms/gateway/pkg/common/fakeData"
+	"hms/gateway/pkg/crypto/keybox"
 )
 
 func BenchmarkCrypt(b *testing.B) {
@@ -21,7 +22,7 @@ func BenchmarkCrypt(b *testing.B) {
 		panic(err)
 	}
 
-	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
+	testStrings, err := fakeData.GetByteArrays(b.N, keybox.KeyLength)
 
 	if err != nil {
 		b.Fatalf("%s", err)
@@ -30,9 +31,9 @@ func BenchmarkCrypt(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		encrypted, _ := Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
-		_, err = Open(encrypted, senderPublicKey, recipientPrivateKey)
-		if err != nil {
+		encrypted, _ := keybox.Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
+
+		if _, err = keybox.Open(encrypted, senderPublicKey, recipientPrivateKey); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -50,7 +51,7 @@ func BenchmarkCryptSealOnly(b *testing.B) {
 		panic(err)
 	}
 
-	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
+	testStrings, err := fakeData.GetByteArrays(b.N, keybox.KeyLength)
 	if err != nil {
 		b.Fatalf("%s", err)
 	}
@@ -58,7 +59,7 @@ func BenchmarkCryptSealOnly(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err = Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
+		_, err = keybox.Seal(testStrings[i], recipientPublicKey, senderPrivateKey)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -76,12 +77,12 @@ func BenchmarkPrecomputedCrypt(b *testing.B) {
 		panic(err)
 	}
 
-	var sharedEncryptKey, sharedDecryptKey [KeyLength]byte
-	Precompute(&sharedEncryptKey, recipientPublicKey, senderPrivateKey)
-	Precompute(&sharedDecryptKey, senderPublicKey, recipientPrivateKey)
+	var sharedEncryptKey, sharedDecryptKey [keybox.KeyLength]byte
 
-	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
+	keybox.Precompute(&sharedEncryptKey, recipientPublicKey, senderPrivateKey)
+	keybox.Precompute(&sharedDecryptKey, senderPublicKey, recipientPrivateKey)
 
+	testStrings, err := fakeData.GetByteArrays(b.N, keybox.KeyLength)
 	if err != nil {
 		b.Fatalf("%s", err)
 	}
@@ -89,8 +90,9 @@ func BenchmarkPrecomputedCrypt(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		encrypted, _ := SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
-		_, err = OpenAfterPrecomputation(encrypted, &sharedDecryptKey)
+		encrypted, _ := keybox.SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
+
+		_, err = keybox.OpenAfterPrecomputation(encrypted, &sharedDecryptKey)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -109,11 +111,11 @@ func BenchmarkPrecomputedCryptSealOnly(b *testing.B) {
 		panic(err)
 	}
 
-	var sharedEncryptKey [KeyLength]byte
-	Precompute(&sharedEncryptKey, recipientPublicKey, senderPrivateKey)
+	var sharedEncryptKey [keybox.KeyLength]byte
 
-	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
+	keybox.Precompute(&sharedEncryptKey, recipientPublicKey, senderPrivateKey)
 
+	testStrings, err := fakeData.GetByteArrays(b.N, keybox.KeyLength)
 	if err != nil {
 		b.Fatalf("%s", err)
 	}
@@ -121,7 +123,7 @@ func BenchmarkPrecomputedCryptSealOnly(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err = SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
+		_, err = keybox.SealAfterPrecomputation(testStrings[i], &sharedEncryptKey)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -134,7 +136,7 @@ func BenchmarkAnonymousCrypt(b *testing.B) {
 		panic(err)
 	}
 
-	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
+	testStrings, err := fakeData.GetByteArrays(b.N, keybox.KeyLength)
 
 	if err != nil {
 		b.Fatalf("%s", err)
@@ -143,9 +145,9 @@ func BenchmarkAnonymousCrypt(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		encrypted, _ := SealAnonymous(testStrings[i], publicKey)
-		_, err = OpenAnonymous(encrypted, publicKey, privateKey)
-		if err != nil {
+		encrypted, _ := keybox.SealAnonymous(testStrings[i], publicKey)
+
+		if _, err = keybox.OpenAnonymous(encrypted, publicKey, privateKey); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -158,7 +160,7 @@ func BenchmarkAnonymousCryptSealOnly(b *testing.B) {
 		panic(err)
 	}
 
-	testStrings, err := fake_data.GetByteArrays(b.N, KeyLength)
+	testStrings, err := fakeData.GetByteArrays(b.N, keybox.KeyLength)
 
 	if err != nil {
 		b.Fatalf("%s", err)
@@ -167,15 +169,14 @@ func BenchmarkAnonymousCryptSealOnly(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err = SealAnonymous(testStrings[i], publicKey)
-		if err != nil {
+		if _, err = keybox.SealAnonymous(testStrings[i], publicKey); err != nil {
 			b.Fatal(err)
 		}
 	}
 }
 
 func BenchmarkSha3_256(b *testing.B) {
-	testStrings, err := fake_data.GetByteArrays(b.N, 64)
+	testStrings, err := fakeData.GetByteArrays(b.N, 64)
 
 	if err != nil {
 		b.Fatalf("%s", err)

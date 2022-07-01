@@ -1,5 +1,5 @@
-// Package data_access keys index
-package data_access
+// Package dataAccess keys index
+package dataAccess
 
 import (
 	"encoding/hex"
@@ -12,32 +12,32 @@ import (
 	"hms/gateway/pkg/keystore"
 )
 
-type DataAccessIndex struct {
+type Index struct {
 	index    indexer.Indexer
 	keystore *keystore.KeyStore
 }
 
-func New(ks *keystore.KeyStore) *DataAccessIndex {
-	return &DataAccessIndex{
+func New(ks *keystore.KeyStore) *Index {
+	return &Index{
 		index:    indexer.Init("data_access"),
 		keystore: ks,
 	}
 }
 
-// Add DataAccessIndex key
-func (d *DataAccessIndex) Add(userId, accessGroupId string, accessGroupKey []byte) error {
-	userUUID, err := uuid.Parse(userId)
+// Add Index key
+func (d *Index) Add(userID, accessGroupID string, accessGroupKey []byte) error {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return err
 	}
 
-	accessGroupUUID, err := uuid.Parse(accessGroupId)
+	accessGroupUUID, err := uuid.Parse(accessGroupID)
 	if err != nil {
 		return err
 	}
 
 	// Getting user publicKey
-	userPubKey, _, err := d.keystore.Get(userId)
+	userPubKey, _, err := d.keystore.Get(userID)
 	if err != nil {
 		return err
 	}
@@ -50,6 +50,7 @@ func (d *DataAccessIndex) Add(userId, accessGroupId string, accessGroupKey []byt
 
 	// Index doc_id -> encrypted_doc_key
 	indexKey := sha3.Sum256(append(userUUID[:], accessGroupUUID[:]...))
+
 	indexKeyStr := hex.EncodeToString(indexKey[:])
 	if err = d.index.Add(indexKeyStr, keyEncrypted); err != nil {
 		return err
@@ -58,21 +59,21 @@ func (d *DataAccessIndex) Add(userId, accessGroupId string, accessGroupKey []byt
 	return nil
 }
 
-// Get DataAccessIndex key
-func (d *DataAccessIndex) Get(userId, accessGroupId string) (groupAccessKeyEncrypted []byte, err error) {
-	userUUID, err := uuid.Parse(userId)
+// Get Index key
+func (d *Index) Get(userID, accessGroupID string) (groupAccessKeyEncrypted []byte, err error) {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return
 	}
 
-	accessGroupUUID, err := uuid.Parse(accessGroupId)
+	accessGroupUUID, err := uuid.Parse(accessGroupID)
 	if err != nil {
 		return
 	}
 
 	indexKey := sha3.Sum256(append(userUUID[:], accessGroupUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
-	err = d.index.GetById(indexKeyStr, &groupAccessKeyEncrypted)
+	err = d.index.GetByID(indexKeyStr, &groupAccessKeyEncrypted)
 
 	return groupAccessKeyEncrypted, err
 }

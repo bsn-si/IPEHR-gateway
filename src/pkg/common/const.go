@@ -1,3 +1,3 @@
 package common
 
-const OPENEHR_TIME_FORMAT = "2006-01-02T15:04:05.999-07:00"
+const OpenEhrTimeFormat = "2006-01-02T15:04:05.999-07:00"

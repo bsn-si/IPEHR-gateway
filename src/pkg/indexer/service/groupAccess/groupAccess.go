@@ -1,6 +1,6 @@
 // Package group_access Stores access group data
-// userId + GroupId -> model.GroupAccess
-package group_access
+// userID + GroupID -> model.GroupAccess
+package groupAccess
 
 import (
 	"encoding/hex"
@@ -15,20 +15,20 @@ import (
 	"hms/gateway/pkg/keystore"
 )
 
-type GroupAccessIndex struct {
+type Index struct {
 	index    indexer.Indexer
 	keystore *keystore.KeyStore
 }
 
-func New(ks *keystore.KeyStore) *GroupAccessIndex {
-	return &GroupAccessIndex{
+func New(ks *keystore.KeyStore) *Index {
+	return &Index{
 		index:    indexer.Init("group_access"),
 		keystore: ks,
 	}
 }
 
-func (g *GroupAccessIndex) Add(userId string, groupAccess *model.GroupAccess) (err error) {
-	userPubKey, _, err := g.keystore.Get(userId)
+func (i *Index) Add(userID string, groupAccess *model.GroupAccess) (err error) {
+	userPubKey, _, err := i.keystore.Get(userID)
 	if err != nil {
 		return
 	}
@@ -43,25 +43,26 @@ func (g *GroupAccessIndex) Add(userId string, groupAccess *model.GroupAccess) (e
 		return
 	}
 
-	h := sha3.Sum256(append([]byte(userId), groupAccess.GroupUUID[:]...))
+	h := sha3.Sum256(append([]byte(userID), groupAccess.GroupUUID[:]...))
 	indexKey := hex.EncodeToString(h[:])
 
-	err = g.index.Add(indexKey, groupAccessEncrypted)
+	err = i.index.Add(indexKey, groupAccessEncrypted)
 
 	return
 }
 
-func (g *GroupAccessIndex) Get(userId string, groupAccessUUID *uuid.UUID) (groupAccess *model.GroupAccess, err error) {
-	userPubKey, userPrivateKey, err := g.keystore.Get(userId)
+func (i *Index) Get(userID string, groupAccessUUID *uuid.UUID) (groupAccess *model.GroupAccess, err error) {
+	userPubKey, userPrivateKey, err := i.keystore.Get(userID)
 	if err != nil {
 		return
 	}
 
-	h := sha3.Sum256(append([]byte(userId), groupAccessUUID[:]...))
+	h := sha3.Sum256(append([]byte(userID), groupAccessUUID[:]...))
 	indexKey := hex.EncodeToString(h[:])
 
 	var groupAccessEncrypted []byte
-	err = g.index.GetById(indexKey, &groupAccessEncrypted)
+
+	err = i.index.GetByID(indexKey, &groupAccessEncrypted)
 	if err != nil {
 		return
 	}

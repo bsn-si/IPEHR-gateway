@@ -1,12 +1,13 @@
-package keybox
+package keybox_test
 
 import (
 	cryptoRand "crypto/rand"
 	"testing"
 
-	"golang.org/x/crypto/nacl/box"
+	"hms/gateway/pkg/common/fakeData"
+	"hms/gateway/pkg/crypto/keybox"
 
-	"hms/gateway/pkg/common/fake_data"
+	"golang.org/x/crypto/nacl/box"
 )
 
 func TestCrypt(t *testing.T) {
@@ -20,18 +21,18 @@ func TestCrypt(t *testing.T) {
 		panic(err)
 	}
 
-	msg, err := fake_data.GetByteArray(20)
+	msg, err := fakeData.GetByteArray(20)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
 
 	t.Logf("Test message: %x", msg)
 
-	encrypted, _ := Seal(msg, recipientPublicKey, senderPrivateKey)
+	encrypted, _ := keybox.Seal(msg, recipientPublicKey, senderPrivateKey)
 
 	t.Logf("Encrypted message: %x", encrypted)
 
-	decrypted, _ := Open(encrypted, senderPublicKey, recipientPrivateKey)
+	decrypted, _ := keybox.Open(encrypted, senderPublicKey, recipientPrivateKey)
 
 	t.Logf("Decrypted message: %x", decrypted)
 
@@ -51,13 +52,14 @@ func TestPrecomputedCrypt(t *testing.T) {
 		panic(err)
 	}
 
-	var sharedEncryptKey, sharedDecryptKey [KeyLength]byte
-	Precompute(&sharedEncryptKey, recipientPublicKey, senderPrivateKey)
-	Precompute(&sharedDecryptKey, senderPublicKey, recipientPrivateKey)
+	var sharedEncryptKey, sharedDecryptKey [keybox.KeyLength]byte
+
+	keybox.Precompute(&sharedEncryptKey, recipientPublicKey, senderPrivateKey)
+	keybox.Precompute(&sharedDecryptKey, senderPublicKey, recipientPrivateKey)
 
 	t.Logf("Precomputed shared key: %x", sharedDecryptKey)
 
-	msg, err := fake_data.GetByteArray(20)
+	msg, err := fakeData.GetByteArray(20)
 
 	t.Logf("Test message: %x", msg)
 
@@ -65,11 +67,11 @@ func TestPrecomputedCrypt(t *testing.T) {
 		t.Fatalf("%s", err)
 	}
 
-	encrypted, _ := Seal(msg, recipientPublicKey, senderPrivateKey)
+	encrypted, _ := keybox.Seal(msg, recipientPublicKey, senderPrivateKey)
 
 	t.Logf("Encrypted message: %x", encrypted)
 
-	decrypted, _ := OpenAfterPrecomputation(encrypted, &sharedDecryptKey)
+	decrypted, _ := keybox.OpenAfterPrecomputation(encrypted, &sharedDecryptKey)
 
 	t.Logf("Decrypted message: %x", decrypted)
 
@@ -84,7 +86,7 @@ func TestAnonymousCrypt(t *testing.T) {
 		panic(err)
 	}
 
-	msg, err := fake_data.GetByteArray(20)
+	msg, err := fakeData.GetByteArray(20)
 
 	t.Logf("Test message: %x", msg)
 
@@ -92,11 +94,11 @@ func TestAnonymousCrypt(t *testing.T) {
 		t.Fatalf("%s", err)
 	}
 
-	encrypted, _ := SealAnonymous(msg, publicKey)
+	encrypted, _ := keybox.SealAnonymous(msg, publicKey)
 
 	t.Logf("Encrypted message: %x", encrypted)
 
-	decrypted, _ := OpenAnonymous(encrypted, publicKey, privateKey)
+	decrypted, _ := keybox.OpenAnonymous(encrypted, publicKey, privateKey)
 
 	t.Logf("Decrypted message: %x", decrypted)
 

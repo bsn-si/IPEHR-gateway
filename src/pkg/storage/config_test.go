@@ -1,8 +1,10 @@
-package storage
+package storage_test
 
 import (
 	"fmt"
 	"testing"
+
+	"hms/gateway/pkg/storage"
 )
 
 type pathTest struct {
@@ -19,7 +21,8 @@ var storagePathTests = []pathTest{
 
 func TestStorageConfig(t *testing.T) {
 	for _, test := range storagePathTests {
-		testStorageConfig := NewConfig(test.path)
+		testStorageConfig := storage.NewConfig(test.path)
+
 		test.expected = fmt.Sprintf(test.expected, testStorageConfig.ProcessPath())
 		if testStorageConfig.Path() != test.expected {
 			t.Errorf("Output %q not equal to expected %q", testStorageConfig.Path(), test.expected)
@@ -30,7 +33,7 @@ func TestStorageConfig(t *testing.T) {
 func TestStorageConfigWithRoot(t *testing.T) {
 	defer func() { _ = recover() }()
 
-	NewConfig("/")
+	storage.NewConfig("/")
 
 	t.Errorf("Root folder is free for use as a storage")
 }
@@ -38,14 +41,15 @@ func TestStorageConfigWithRoot(t *testing.T) {
 func TestStorageConfigWithRelativeRoot(t *testing.T) {
 	defer func() { _ = recover() }()
 
-	NewConfig("../../../../../../../../../../../../../../")
+	storage.NewConfig("../../../../../../../../../../../../../../")
 
 	t.Errorf("Root folder is free for use as a storage if path is relative")
 }
 
 func TestStorageConfigWhichNotInExecutedFolder(t *testing.T) {
 	var path = "/test/1/2/3"
-	testStorageConfig := NewConfig(path)
+
+	testStorageConfig := storage.NewConfig(path)
 	if testStorageConfig.Path() != path {
 		t.Errorf("Out of executed folder test failed")
 	}

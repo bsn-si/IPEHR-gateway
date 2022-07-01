@@ -10,5 +10,5 @@ package base
 type Link struct {
 	Meaning DvText `json:"meaning"`
 	Type    DvText `json:"type"`
-	Target  DvUri  `json:"target"`
+	Target  DvURI  `json:"target"`
 }

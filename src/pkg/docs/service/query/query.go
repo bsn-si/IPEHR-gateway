@@ -4,12 +4,12 @@ import (
 	"hms/gateway/pkg/docs/service"
 )
 
-type QueryService struct {
+type Service struct {
 	Doc *service.DefaultDocumentService
 }
 
-func NewQueryService(docService *service.DefaultDocumentService) *QueryService {
-	return &QueryService{
+func NewQueryService(docService *service.DefaultDocumentService) *Service {
+	return &Service{
 		Doc: docService,
 	}
 }
