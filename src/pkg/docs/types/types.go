@@ -3,17 +3,17 @@ package types
 type DocumentType uint8
 
 const (
-	EHR         DocumentType = 1
-	EHR_ACCESS  DocumentType = 2
-	EHR_STATUS  DocumentType = 3
-	COMPOSITION DocumentType = 4
+	Ehr         DocumentType = 1
+	EhrAccess   DocumentType = 2
+	EhrStatus   DocumentType = 3
+	Composition DocumentType = 4
 )
 
-var typeNames map[DocumentType]string = map[DocumentType]string{
-	EHR:         "EHR",
-	EHR_ACCESS:  "EHR_ACCESS",
-	EHR_STATUS:  "EHR_STATUS",
-	COMPOSITION: "COMPOSITION",
+var typeNames = map[DocumentType]string{
+	Ehr:         "EHR",
+	EhrAccess:   "EHR_ACCESS",
+	EhrStatus:   "EHR_STATUS",
+	Composition: "COMPOSITION",
 }
 
 func (t DocumentType) String() string {

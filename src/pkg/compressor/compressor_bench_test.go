@@ -1,11 +1,13 @@
-package compressor
+package compressor_test
 
 import (
 	"fmt"
-	"hms/gateway/pkg/common/utils"
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"os"
 	"testing"
+
+	"hms/gateway/pkg/common/utils"
+	"hms/gateway/pkg/compressor"
+	"hms/gateway/pkg/crypto/chachaPoly"
 )
 
 func BenchmarkCompression(b *testing.B) {
@@ -16,7 +18,7 @@ func BenchmarkCompression(b *testing.B) {
 
 	for l := 0; l <= 9; l++ {
 		b.Run("Compression "+fmt.Sprintf("%d", l), func(b *testing.B) {
-			compressor := New(l)
+			compressor := compressor.New(l)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -30,12 +32,14 @@ func BenchmarkCompression(b *testing.B) {
 // If someone wants to check compression ratio
 func TestCompressionRatio(t *testing.T) {
 	t.Skip()
+
 	data, err := testData()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	key := chacha_poly.GenerateKey()
+	key := chachaPoly.GenerateKey()
+
 	encryptedData, err := key.Encrypt(data)
 	if err != nil {
 		t.Fatal(err)
@@ -46,7 +50,7 @@ func TestCompressionRatio(t *testing.T) {
 
 	// raw data
 	for l := 0; l <= 9; l++ {
-		compressor := New(l)
+		compressor := compressor.New(l)
 		compressed, _ := compressor.Compress(data)
 		ratio := dataSize / float32(len(compressed))
 		t.Logf("Raw data. Level: %d Ratio: %.1f times", l, ratio)
@@ -54,7 +58,7 @@ func TestCompressionRatio(t *testing.T) {
 
 	// encrypted
 	for l := 0; l <= 9; l++ {
-		compressor := New(l)
+		compressor := compressor.New(l)
 		compressed, _ := compressor.Compress(encryptedData)
 		ratio := dataSizeEncrypted / float32(len(compressed))
 		t.Logf("Encrypted. Level: %d Ratio: %.1f times", l, ratio)
@@ -66,6 +70,7 @@ func testData() (data []byte, err error) {
 	if err != nil {
 		return
 	}
+
 	filePath := rootDir + "/data/mock/ehr/composition.json"
 
 	data, err = os.ReadFile(filePath)

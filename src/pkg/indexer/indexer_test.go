@@ -1,10 +1,11 @@
-package indexer
+package indexer_test
 
 import (
 	"strconv"
 	"testing"
 	"time"
 
+	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/storage"
 )
 
@@ -13,7 +14,7 @@ func TestIndex(t *testing.T) {
 	storage.Init(sc)
 
 	name := "TestIndex"
-	index := Init(name)
+	index := indexer.Init(name)
 
 	type Person struct {
 		Name    string
@@ -30,6 +31,7 @@ func TestIndex(t *testing.T) {
 	}
 
 	id := "123"
+
 	err := index.Add(id, item)
 	if err != nil {
 		t.Error(err)
@@ -37,7 +39,7 @@ func TestIndex(t *testing.T) {
 	}
 
 	var item2 Person
-	if err = index.GetById(id, &item2); err != nil {
+	if err = index.GetByID(id, &item2); err != nil {
 		t.Error(err)
 		return
 	}

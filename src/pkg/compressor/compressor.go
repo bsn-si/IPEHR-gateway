@@ -18,6 +18,7 @@ func New(compressionLevel int) *Compressor {
 
 func (c *Compressor) Compress(data []byte) (compressedData []byte, err error) {
 	var buf bytes.Buffer
+
 	zw, err := gzip.NewWriterLevel(&buf, c.compressionLevel)
 	if err != nil {
 		return
@@ -37,6 +38,7 @@ func (c *Compressor) Compress(data []byte) (compressedData []byte, err error) {
 
 func (c *Compressor) Decompress(data []byte) (decompressedData []byte, err error) {
 	buf := bytes.NewReader(data)
+
 	zr, err := gzip.NewReader(buf)
 	if err != nil {
 		return

@@ -6,6 +6,6 @@ package base
 // https://specifications.openehr.org/releases/RM/latest/ehr.html#_care_entry_class
 type CareEntry struct {
 	Protocol    ItemStructure `json:"protocol,omitempty"`
-	GuidelineId ObjectRef     `json:"guideline_id"`
+	GuidelineID ObjectRef     `json:"guideline_id"`
 	Entry
 }

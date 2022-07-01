@@ -41,6 +41,7 @@ func New(cfg *config.Config) *API {
 	storage.Init(sc)
 
 	docService := service.NewDefaultDocumentService(cfg)
+
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg),
@@ -79,14 +80,14 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	// Other methods should be authorized
 	r.Use(a.Auth)
 	r.POST("", a.Ehr.Create)
-	r.GET("", a.Ehr.GetBySubjectIdAndNamespace)
-	r.PUT("/:ehrid", a.Ehr.CreateWithId)
-	r.GET("/:ehrid", a.Ehr.GetById)
+	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
+	r.PUT("/:ehrid", a.Ehr.CreateWithID)
+	r.GET("/:ehrid", a.Ehr.GetByID)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
-	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
+	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
 	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
 	r.POST("/:ehrid/composition", a.Composition.Create)
-	r.GET("/:ehrid/composition/:version_uid", a.Composition.GetById)
+	r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
 	r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
 
 	return a
@@ -96,12 +97,14 @@ func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
 	r.Use(a.Auth)
 	r.GET("/group/:group_id", a.GroupAccess.Get)
 	r.POST("/group", a.GroupAccess.Create)
+
 	return a
 }
 
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 	r.Use(a.Auth)
 	r.POST("/aql", a.Query.ExecPost)
+
 	return a
 }
 
@@ -112,5 +115,6 @@ func (a *API) setRedirections(r *gin.Engine) *API {
 
 	r.GET("/", redirect)
 	r.HEAD("/", redirect)
+
 	return a
 }

@@ -3,15 +3,15 @@ package model
 import "hms/gateway/pkg/docs/model/base"
 
 type EhrSummary struct {
-	SystemId  base.ObjectId `json:"system_id"`
-	EhrId     base.ObjectId `json:"ehr_id"`
+	SystemID  base.ObjectID `json:"system_id"`
+	EhrID     base.ObjectID `json:"ehr_id"`
 	EhrStatus struct {
-		Id        base.ObjectId `json:"id"`
+		ID        base.ObjectID `json:"id"`
 		Namespace string        `json:"namespace"`
 		Type      string        `json:"type"`
 	} `json:"ehr_status"`
 	EhrAccess struct {
-		Id        base.ObjectId `json:"id"`
+		ID        base.ObjectID `json:"id"`
 		Namespace string        `json:"namespace"`
 		Type      string        `json:"type"`
 	} `json:"ehr_access"`

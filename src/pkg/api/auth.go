@@ -9,12 +9,13 @@ import (
 )
 
 func (a *API) Auth(c *gin.Context) {
-	userId := c.Request.Header.Get("AuthUserId")
-	if userId == "" {
-		_ = c.AbortWithError(http.StatusForbidden, errors.AuthorizationError)
+	userID := c.Request.Header.Get("AuthUserId")
+	if userID == "" {
+		_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
 		return
 	}
-	c.Set("userId", userId)
+
+	c.Set("userId", userID)
 
 	/* TODO
 	signature := c.Request.Header.Get("AuthSign")

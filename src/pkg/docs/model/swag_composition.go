@@ -2,33 +2,33 @@ package model
 
 type SwagComposition struct {
 	Type            string `json:"_type"`
-	ArchetypeNodeId string `json:"archetype_node_id"`
+	ArchetypeNodeID string `json:"archetype_node_id"`
 	Name            struct {
 		Value string `json:"value"`
 	} `json:"name"`
-	Uid struct {
+	UID struct {
 		Type  string `json:"_type"`
 		Value string `json:"value"`
 	} `json:"uid,omitempty"`
 	ArchetypeDetails struct {
 		Type        string `json:"_type"`
-		ArchetypeId struct {
+		ArchetypeID struct {
 			Value string `json:"value"`
 		} `json:"archetype_id"`
-		TemplateId struct {
+		TemplateID struct {
 			Value string `json:"value"`
 		} `json:"template_id,omitempty"`
 		RmVersion string `json:"rm_version"`
 	} `json:"archetype_details,omitempty"`
 	Language struct {
-		TerminologyId struct {
+		TerminologyID struct {
 			Value string `json:"value"`
 		} `json:"terminology_id"`
 		CodeString    string `json:"code_string,omitempty"`
 		PreferredTerm string `json:"preferred_term,omitempty"`
 	} `json:"language"`
 	Territory struct {
-		TerminologyId struct {
+		TerminologyID struct {
 			Value string `json:"value"`
 		} `json:"terminology_id"`
 		CodeString    string `json:"code_string,omitempty"`
@@ -37,7 +37,7 @@ type SwagComposition struct {
 	Category struct {
 		Value        string `json:"value"`
 		DefiningCode struct {
-			TerminologyId struct {
+			TerminologyID struct {
 				Value string `json:"value"`
 			} `json:"terminology_id"`
 			CodeString    string `json:"code_string,omitempty"`
@@ -48,7 +48,7 @@ type SwagComposition struct {
 		Type        string `json:"_type"`
 		Name        string `json:"name"`
 		ExternalRef struct {
-			Id struct {
+			ID struct {
 				Type  string `json:"_type"`
 				Value string `json:"value"`
 			} `json:"id"`
@@ -63,7 +63,7 @@ type SwagComposition struct {
 		Setting struct {
 			Value        string `json:"value"`
 			DefiningCode struct {
-				TerminologyId struct {
+				TerminologyID struct {
 					Value string `json:"value"`
 				} `json:"terminology_id"`
 				CodeString    string `json:"code_string,omitempty"`

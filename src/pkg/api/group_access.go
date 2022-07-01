@@ -11,18 +11,18 @@ import (
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/group_access"
+	"hms/gateway/pkg/docs/service/groupAccess"
 )
 
 type GroupAccessHandler struct {
 	cfg     *config.Config
-	service *group_access.GroupAccessService
+	service *groupAccess.Service
 }
 
 func NewGroupAccessHandler(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessHandler {
 	return &GroupAccessHandler{
 		cfg:     cfg,
-		service: group_access.NewGroupAccessService(docService, cfg),
+		service: groupAccess.NewGroupAccessService(docService, cfg),
 	}
 }
 
@@ -58,13 +58,13 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
-	newGroupAccess, err := h.service.Create(userId, &request)
+	newGroupAccess, err := h.service.Create(userID, &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Group Access creating error"})
 		return
@@ -86,21 +86,21 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 // @Failure      500         "Is returned when an unexpected error occurs while processing a request"
 // @Router       /v1/access/group/{group_id} [get]
 func (h *GroupAccessHandler) Get(c *gin.Context) {
-	groupId := c.Param("group_id")
+	groupID := c.Param("group_id")
 
-	groupUUID, err := uuid.Parse(groupId)
+	groupUUID, err := uuid.Parse(groupID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "groupId is incorrect"})
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
-	accessGroup, err := h.service.Get(userId, &groupUUID)
+	accessGroup, err := h.service.Get(userID, &groupUUID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Group access not found"})
 		return
@@ -110,7 +110,7 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 }
 
 func (h *GroupAccessHandler) respondWithDoc(doc *model.GroupAccess, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseUrl+"/v1/access/group/"+doc.GroupUUID.String())
+	c.Header("Location", h.cfg.BaseURL+"/v1/access/group/"+doc.GroupUUID.String())
 	c.Header("ETag", doc.GroupUUID.String())
 
 	c.JSON(http.StatusCreated, doc)

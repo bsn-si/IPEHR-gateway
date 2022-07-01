@@ -8,13 +8,13 @@ import (
 
 var storage Storager
 
-func Init(sc *StorageConfig) {
-
+func Init(sc *Config) {
 	if storage == nil {
 		cfg := localfile.Config{
 			BasePath: sc.Path(),
 			Depth:    3,
 		}
+
 		var err error
 
 		globalConfig, err := config2.New()
@@ -33,5 +33,6 @@ func Storage() Storager {
 	if storage == nil {
 		log.Fatal("Storage is not initialized")
 	}
+
 	return storage
 }

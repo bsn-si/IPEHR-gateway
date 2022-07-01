@@ -9,16 +9,16 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/crypto/chacha_poly"
+	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/service/doc_access"
+	"hms/gateway/pkg/indexer/service/docAccess"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/ehrs"
-	"hms/gateway/pkg/indexer/service/group_access"
+	"hms/gateway/pkg/indexer/service/groupAccess"
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/storage"
@@ -27,38 +27,39 @@ import (
 type DefaultDocumentService struct {
 	Storage            storage.Storager
 	Keystore           *keystore.KeyStore
-	EhrsIndex          *ehrs.EhrsIndex
-	DocsIndex          *docs.DocsIndex
-	DocAccessIndex     *doc_access.DocAccessIndex
-	SubjectIndex       *subject.SubjectIndex
-	GroupAccessIndex   *group_access.GroupAccessIndex
+	EhrsIndex          *ehrs.Index
+	DocsIndex          *docs.Index
+	DocAccessIndex     *docAccess.Index
+	SubjectIndex       *subject.Index
+	GroupAccessIndex   *groupAccess.Index
 	Compressor         compressor.Interface
 	CompressionEnabled bool
 }
 
 func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 	ks := keystore.New(cfg.KeystoreKey)
+
 	return &DefaultDocumentService{
 		Storage:            storage.Storage(),
 		Keystore:           ks,
 		EhrsIndex:          ehrs.New(),
 		DocsIndex:          docs.New(),
-		DocAccessIndex:     doc_access.New(ks),
+		DocAccessIndex:     docAccess.New(ks),
 		SubjectIndex:       subject.New(),
-		GroupAccessIndex:   group_access.New(ks),
+		GroupAccessIndex:   groupAccess.New(ks),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,
 	}
 }
 
-func (d *DefaultDocumentService) GetDocIndexByDocId(userId, docId string, ehrUUID *uuid.UUID, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	userUUID, err := uuid.Parse(userId)
+func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUID *uuid.UUID, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
+	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +75,9 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, docId string, ehrUUI
 		}
 
 		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
+		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
+
 		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
 		if err != nil {
 			return nil, err
@@ -85,43 +87,46 @@ func (d *DefaultDocumentService) GetDocIndexByDocId(userId, docId string, ehrUUI
 		if err != nil {
 			return nil, err
 		}
+
 		if len(keyDecrypted) != 32 {
-			return nil, fmt.Errorf("document key length mismatch")
+			return nil, fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
 		}
 
-		key, err := chacha_poly.NewKeyFromBytes(keyDecrypted)
+		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
 		if err != nil {
 			return nil, err
 		}
 
-		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIdEncrypted, ehrUUID[:])
+		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
 		if err != nil {
 			continue
 		}
 
-		if docId == string(docIdDecrypted) {
+		if docID == string(docIDDecrypted) {
 			return docIndex, nil
 		}
 	}
-	return nil, errors.IsNotExist
+
+	return nil, errors.ErrIsNotExist
 }
 
-func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId *[32]byte, authData []byte) (docBytes []byte, err error) {
-	userUUID, err := uuid.Parse(userId)
+func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID *[32]byte, authData []byte) (docBytes []byte, err error) {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Getting access key
-	indexKey := sha3.Sum256(append(storageId[:], userUUID[:]...))
+	indexKey := sha3.Sum256(append(storageID[:], userUUID[:]...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
+
 	keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
 	if err != nil {
 		return nil, err
 	}
 
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
+	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -130,14 +135,16 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	if err != nil {
 		return nil, err
 	}
+
 	if len(keyDecrypted) != 32 {
-		return nil, fmt.Errorf("document key length mismatch")
+		return nil, fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
 	}
 
-	var docKey chacha_poly.Key
+	var docKey chachaPoly.Key
+
 	copy(docKey[:], keyDecrypted)
 
-	docEncrypted, err := d.Storage.Get(storageId)
+	docEncrypted, err := d.Storage.Get(storageID)
 	if err != nil {
 		return nil, err
 	}
@@ -158,24 +165,24 @@ func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId 
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) UpdateDocStatus(userId, ehrId, docId string, docType types.DocumentType, old, new status.DocumentStatus) (err error) {
-	userUUID, err := uuid.Parse(userId)
+func (d *DefaultDocumentService) UpdateDocStatus(userID, ehrID, docID string, docType types.DocumentType, old, new status.DocumentStatus) (err error) {
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return err
 	}
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		return err
 	}
 
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
+	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
 	if err != nil {
 		return err
 	}
 
-	docIndexes, err := d.DocsIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrID)
 	if err != nil {
 		return err
 	}
@@ -186,8 +193,9 @@ func (d *DefaultDocumentService) UpdateDocStatus(userId, ehrId, docId string, do
 		}
 
 		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
+		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
+
 		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
 		if err != nil {
 			return err
@@ -197,44 +205,48 @@ func (d *DefaultDocumentService) UpdateDocStatus(userId, ehrId, docId string, do
 		if err != nil {
 			return err
 		}
+
 		if len(keyDecrypted) != 32 {
-			return fmt.Errorf("document key length mismatch")
+			return fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
 		}
 
-		key, err := chacha_poly.NewKeyFromBytes(keyDecrypted)
+		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
 		if err != nil {
 			return err
 		}
 
-		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIdEncrypted, ehrUUID[:])
+		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
 		if err != nil {
 			continue
 		}
 
-		if docId == string(docIdDecrypted) {
+		if docID == string(docIDDecrypted) {
 			if docIndex.Status == new {
-				return errors.AlreadyUpdated
+				return errors.ErrAlreadyUpdated
 			}
+
 			docIndex.Status = new
-			if err = d.DocsIndex.Replace(ehrId, docIndexes); err != nil {
+
+			if err = d.DocsIndex.Replace(ehrID, docIndexes); err != nil {
 				return err
 			}
+
 			return nil
 		}
 	}
-	return errors.IsNotExist
+
+	return errors.ErrIsNotExist
 }
 
-func (d *DefaultDocumentService) GenerateId() string {
+func (d *DefaultDocumentService) GenerateID() string {
 	return uuid.New().String()
 }
 
-func (d *DefaultDocumentService) GetSystemId() string {
+func (d *DefaultDocumentService) GetSystemID() string {
 	return ""
 }
 
-func (d *DefaultDocumentService) ValidateId(id string, docType types.DocumentType) bool {
+func (d *DefaultDocumentService) ValidateID(id string, docType types.DocumentType) bool {
 	//TODO
-
 	return true
 }

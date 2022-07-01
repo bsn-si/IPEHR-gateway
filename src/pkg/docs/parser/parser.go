@@ -9,5 +9,6 @@ import (
 func ParseEhr(inDocument []byte) (doc *model.EHR, err error) {
 	doc = &model.EHR{}
 	err = json.Unmarshal(inDocument, doc)
+
 	return
 }

@@ -20,7 +20,7 @@ import (
 
 type CompositionHandler struct {
 	cfg     *config.Config
-	service *composition.CompositionService
+	service *composition.Service
 }
 
 func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionHandler {
@@ -51,14 +51,14 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *conf
 // @Failure  422            "Is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /ehr/{ehr_id}/composition [post]
-func (h CompositionHandler) Create(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
+func (h *CompositionHandler) Create(c *gin.Context) {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
@@ -82,6 +82,7 @@ func (h CompositionHandler) Create(c *gin.Context) {
 	if err = json.Unmarshal(data, &request); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+
 		return
 	}
 
@@ -90,42 +91,43 @@ func (h CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
 	// Checking EHR does not exist
-	_, err = h.service.Doc.EhrsIndex.Get(userId)
-	if errors.Is(err, errors.IsNotExist) {
+	_, err = h.service.Doc.EhrsIndex.Get(userID)
+	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	groupIdStr := c.GetHeader("GroupAccessId")
-	if groupIdStr == "" {
-		groupIdStr = h.cfg.DefaultGroupAccessId
+	groupIDStr := c.GetHeader("GroupAccessId")
+	if groupIDStr == "" {
+		groupIDStr = h.cfg.DefaultGroupAccessID
 	}
 
-	groupAccessUUID, err := uuid.Parse(groupIdStr)
+	groupAccessUUID, err := uuid.Parse(groupIDStr)
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
 	// Composition document creating
-	doc, err := h.service.CompositionCreate(userId, &ehrUUID, &groupAccessUUID, &request)
+	doc, err := h.service.CompositionCreate(userID, &ehrUUID, &groupAccessUUID, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
 	}
 
-	h.respondWithDocOrHeaders(ehrId, doc, c)
+	h.respondWithDocOrHeaders(ehrID, doc, c)
 }
 
-// GetById
+// GetByID
 // @Summary      Get COMPOSITION by version id
 // @Description  Retrieves a particular version of the COMPOSITION identified by `version_uid` and associated with the EHR identified by `ehr_id`.
 // @Description
@@ -141,45 +143,44 @@ func (h CompositionHandler) Create(c *gin.Context) {
 // @Failure  404          "is returned when an EHR with `ehr_id` does not exist or when an COMPOSITION with `version_uid` does not exist."
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /ehr/{ehr_id}/composition/{version_uid} [get]
-func (h CompositionHandler) GetById(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
+func (h *CompositionHandler) GetByID(c *gin.Context) {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	versionUid := c.Param("version_uid")
-	if !h.service.Doc.ValidateId(versionUid, types.COMPOSITION) {
+	versionUID := c.Param("version_uid")
+	if !h.service.Doc.ValidateID(versionUID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
-
 	}
 
 	// Checking EHR does not exist
-	_, err = h.service.Doc.EhrsIndex.Get(userId)
-	if errors.Is(err, errors.IsNotExist) {
+	_, err = h.service.Doc.EhrsIndex.Get(userID)
+	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	data, err := h.service.GetCompositionById(userId, versionUid, &ehrUUID, types.COMPOSITION)
+	data, err := h.service.GetCompositionByID(userID, versionUID, &ehrUUID, types.Composition)
 	if err != nil {
-		if errors.Is(err, errors.IsNotExist) {
+		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
-		} else if errors.Is(err, errors.AlreadyDeleted) {
+		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		} else {
@@ -208,40 +209,41 @@ func (h CompositionHandler) GetById(c *gin.Context) {
 // @Failure      409          "`Conflict` is returned when supplied `preceding_version_uid` doesn’t match the latest version. Returns latest version in the Location and ETag headers."
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
-func (h CompositionHandler) Delete(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
+func (h *CompositionHandler) Delete(c *gin.Context) {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	versionUid := c.Param("preceding_version_uid")
-	if !h.service.Doc.ValidateId(versionUid, types.COMPOSITION) {
+	versionUID := c.Param("preceding_version_uid")
+	if !h.service.Doc.ValidateID(versionUID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
 	// Checking EHR does not exist
-	_, err := h.service.Doc.EhrsIndex.Get(userId)
-	if errors.Is(err, errors.IsNotExist) {
+	_, err := h.service.Doc.EhrsIndex.Get(userID)
+	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	uuid, err := h.service.DeleteCompositionById(userId, ehrId, versionUid)
+	uuid, err := h.service.DeleteCompositionByID(userID, ehrID, versionUID)
+	//nolint:errorlint
 	switch err {
 	case nil:
-		h.addResponseHeaders(ehrId, uuid, c)
+		h.addResponseHeaders(ehrID, uuid, c)
 		c.AbortWithStatus(http.StatusNoContent)
-	case errors.AlreadyDeleted:
+	case errors.ErrAlreadyDeleted:
 		c.AbortWithStatus(http.StatusBadRequest)
-	case errors.IsNotExist:
+	case errors.ErrIsNotExist:
 		c.AbortWithStatus(http.StatusNotFound)
 	default:
 		log.Println(err)
@@ -249,9 +251,9 @@ func (h CompositionHandler) Delete(c *gin.Context) {
 	}
 }
 
-func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Composition, c *gin.Context) {
-	uid := doc.Uid.Value
-	h.addResponseHeaders(ehrId, uid, c)
+func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Composition, c *gin.Context) {
+	uid := doc.UID.Value
+	h.addResponseHeaders(ehrID, uid, c)
 
 	prefer := c.Request.Header.Get("Prefer")
 	if prefer == "return=representation" {
@@ -261,7 +263,7 @@ func (h *CompositionHandler) respondWithDocOrHeaders(ehrId string, doc *model.Co
 	}
 }
 
-func (h *CompositionHandler) addResponseHeaders(ehrId string, uid string, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseUrl+"/v1/ehr/"+ehrId+"/composition/"+uid)
+func (h *CompositionHandler) addResponseHeaders(ehrID string, uid string, c *gin.Context) {
+	c.Header("Location", h.cfg.BaseURL+"/v1/ehr/"+ehrID+"/composition/"+uid)
 	c.Header("ETag", uid)
 }

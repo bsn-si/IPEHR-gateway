@@ -1,53 +1,57 @@
 package storage
 
 import (
-	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"hms/gateway/pkg/errors"
 )
 
-type StorageConfig struct {
+type Config struct {
 	processPath string
 	path        string
 }
 
-func NewConfig(path string) (config *StorageConfig) {
-	config = &StorageConfig{}
+func NewConfig(path string) (config *Config) {
+	config = &Config{}
 	path = config.prepare(path)
-	err := config.valid(path)
-	if err != nil {
+
+	if err := config.valid(path); err != nil {
 		log.Panicln(err, path)
 	}
 
 	config.setPath(path)
+
 	return config
 }
 
 // Absolute path
-func (c *StorageConfig) Path() string {
+func (c *Config) Path() string {
 	return c.path
 }
 
 // Absolute path of current executable process file
-func (c *StorageConfig) ProcessPath() string {
+func (c *Config) ProcessPath() string {
 	return c.processPath
 }
 
-func (c *StorageConfig) setPath(path string) {
+func (c *Config) setPath(path string) {
 	c.path = path
 }
 
-func (c *StorageConfig) setProcessPath(path string) {
+func (c *Config) setProcessPath(path string) {
 	c.processPath = path
 }
 
-func (c *StorageConfig) prepare(path string) string {
+func (c *Config) prepare(path string) string {
 	processPath, err := os.Executable()
 	if err != nil {
 		log.Panicln(err)
 	}
+
 	c.setProcessPath(filepath.Dir(processPath))
 
 	path = strings.TrimSpace(path)
@@ -65,13 +69,13 @@ func (c *StorageConfig) prepare(path string) string {
 	return path
 }
 
-func (c *StorageConfig) valid(path string) (err error) {
+func (c *Config) valid(path string) (err error) {
 	if len(path) == 0 {
-		return errors.New("Storage path is empty")
+		return fmt.Errorf("Storage path is empty: %w", errors.ErrIsEmpty)
 	}
 
 	if path == "/" {
-		return errors.New("Can not use root folder as a storage")
+		return fmt.Errorf("%w: Can not use root folder as a storage", errors.ErrCustom)
 	}
 
 	if !strings.HasPrefix(path, c.ProcessPath()) {

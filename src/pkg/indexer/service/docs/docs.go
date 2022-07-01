@@ -10,40 +10,43 @@ import (
 	"hms/gateway/pkg/indexer"
 )
 
-type DocsIndex struct {
+type Index struct {
 	index indexer.Indexer
 }
 
-func New() *DocsIndex {
-	return &DocsIndex{
+func New() *Index {
+	return &Index{
 		index: indexer.Init("docs"),
 	}
 }
 
 // Add doc index
-func (d *DocsIndex) Add(ehrId string, docIndex *model.DocumentMeta) error {
+func (i *Index) Add(ehrID string, docIndex *model.DocumentMeta) error {
 	var docIndexes []*model.DocumentMeta
-	err := d.index.GetById(ehrId, &docIndexes)
-	if err != nil && !errors.Is(err, errors.IsNotExist) {
+
+	err := i.index.GetByID(ehrID, &docIndexes)
+	if err != nil && !errors.Is(err, errors.ErrIsNotExist) {
 		return err
 	}
+
 	docIndexes = append(docIndexes, docIndex)
-	return d.index.Replace(ehrId, docIndexes)
+
+	return i.index.Replace(ehrID, docIndexes)
 }
 
 // Replace EHR documents
-func (d *DocsIndex) Replace(ehrId string, docIndexes []*model.DocumentMeta) error {
-	return d.index.Replace(ehrId, docIndexes)
+func (i *Index) Replace(ehrID string, docIndexes []*model.DocumentMeta) error {
+	return i.index.Replace(ehrID, docIndexes)
 }
 
 // Get EHR documents metadata
-func (d *DocsIndex) Get(ehrId string) (docIndexes []*model.DocumentMeta, err error) {
-	err = d.index.GetById(ehrId, &docIndexes)
+func (i *Index) Get(ehrID string) (docIndexes []*model.DocumentMeta, err error) {
+	err = i.index.GetByID(ehrID, &docIndexes)
 	return
 }
 
-func (d *DocsIndex) GetByType(ehrId string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
-	docIndexes, err := d.Get(ehrId)
+func (i *Index) GetByType(ehrID string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
+	docIndexes, err := i.Get(ehrID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,14 +56,16 @@ func (d *DocsIndex) GetByType(ehrId string, docType types.DocumentType) (docs []
 			docs = append(docs, docIndex)
 		}
 	}
+
 	if 0 == len(docs) {
-		return nil, errors.IsNotExist
+		return nil, errors.ErrIsNotExist
 	}
+
 	return docs, nil
 }
 
-func (d *DocsIndex) GetLastByType(ehrId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.Get(ehrId)
+func (i *Index) GetLastByType(ehrID string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+	docIndexes, err := i.Get(ehrID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,19 +77,22 @@ func (d *DocsIndex) GetLastByType(ehrId string, docType types.DocumentType) (doc
 			}
 		}
 	}
+
 	if doc == nil {
-		return nil, errors.IsNotExist
+		return nil, errors.ErrIsNotExist
 	}
+
 	return doc, nil
 }
 
-func (d *DocsIndex) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	docIndexes, err := d.Get(ehrId)
+func (i *Index) GetDocIndexByNearestTime(ehrID string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+	docIndexes, err := i.Get(ehrID)
 	if err != nil {
 		return nil, err
 	}
 
 	t := uint64(nearestTime.Unix())
+
 	for _, docIndex := range docIndexes {
 		if docIndex.TypeCode == docType {
 			if docIndex.Timestamp <= t {
@@ -96,7 +104,7 @@ func (d *DocsIndex) GetDocIndexByNearestTime(ehrId string, nearestTime time.Time
 	}
 
 	if doc == nil {
-		err = errors.IsNotExist
+		err = errors.ErrIsNotExist
 	}
 
 	return doc, err

@@ -1,11 +1,13 @@
-package localfile
+package localfile_test
 
 import (
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/common/utils"
-	config2 "hms/gateway/pkg/config"
+	"bytes"
 	"os"
 	"testing"
+
+	"hms/gateway/pkg/common/utils"
+	config2 "hms/gateway/pkg/config"
+	"hms/gateway/pkg/storage/localfile"
 )
 
 func TestWithCompression(t *testing.T) {
@@ -18,7 +20,7 @@ func TestWithCompression(t *testing.T) {
 
 	globalConfig.CompressionEnabled = true
 
-	fs, err := Init(cfg, globalConfig)
+	fs, err := localfile.Init(cfg, globalConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +40,7 @@ func TestWithCompression(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !common.SliceEqualBytes(data, data2) {
+	if !bytes.Equal(data, data2) {
 		t.Fatal("Data mismatch")
 	}
 
@@ -57,7 +59,7 @@ func TestWithoutCompression(t *testing.T) {
 
 	globalConfig.CompressionEnabled = false
 
-	fs, err := Init(cfg, globalConfig)
+	fs, err := localfile.Init(cfg, globalConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +79,7 @@ func TestWithoutCompression(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !common.SliceEqualBytes(data, data2) {
+	if !bytes.Equal(data, data2) {
 		t.Fatal("Data mismatch")
 	}
 
@@ -86,8 +88,8 @@ func TestWithoutCompression(t *testing.T) {
 	}
 }
 
-func config() *Config {
-	return &Config{
+func config() *localfile.Config {
+	return &localfile.Config{
 		BasePath: "/tmp/localfiletest",
 		Depth:    3,
 	}
@@ -98,9 +100,8 @@ func testData() (data []byte, err error) {
 	if err != nil {
 		return
 	}
+
 	filePath := rootDir + "/data/mock/ehr/composition.json"
 
-	data, err = os.ReadFile(filePath)
-
-	return
+	return os.ReadFile(filePath)
 }

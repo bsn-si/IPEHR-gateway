@@ -1,7 +1,7 @@
 package indexer
 
 import (
-	commonerr "errors"
+	"fmt"
 	"log"
 	"sync"
 
@@ -23,7 +23,6 @@ type Index struct {
 func Init(name string) *Index {
 	if name == "" {
 		log.Fatal("name is empty")
-		return nil
 	}
 
 	id := sha3.Sum256([]byte(name))
@@ -31,19 +30,17 @@ func Init(name string) *Index {
 	stor := storage.Storage()
 
 	data, err := stor.Get(&id)
-	if err != nil && !commonerr.Is(err, errors.IsNotExist) {
+	if err != nil && !errors.Is(err, errors.ErrIsNotExist) {
 		log.Fatal(err)
-		return nil
 	}
 
 	var cache map[string][]byte
-	if commonerr.Is(err, errors.IsNotExist) {
+	if errors.Is(err, errors.ErrIsNotExist) {
 		cache = make(map[string][]byte)
 	} else {
 		err = msgpack.Unmarshal(data, &cache)
 		if err != nil {
 			log.Fatal(err)
-			return nil
 		}
 	}
 
@@ -55,100 +52,103 @@ func Init(name string) *Index {
 	}
 }
 
-func (i *Index) Add(itemId string, item interface{}) (err error) {
+func (i *Index) Add(itemID string, item interface{}) (err error) {
 	i.Lock()
 	defer func() {
 		if err != nil {
-			delete(i.cache, itemId)
+			delete(i.cache, itemID)
 		}
 		i.Unlock()
 	}()
 
-	_, ok := i.cache[itemId]
-	if ok {
-		return errors.AlreadyExist
+	if _, ok := i.cache[itemID]; ok {
+		return errors.ErrAlreadyExist
 	}
 
 	data, err := msgpack.Marshal(item)
 	if err != nil {
-		return err
+		return fmt.Errorf("item marshal error: %w", err)
 	}
 
-	i.cache[itemId] = data
+	i.cache[itemID] = data
+
+	data, err = msgpack.Marshal(i.cache)
+	if err != nil {
+		return fmt.Errorf("cache marshal error: %w", err)
+	}
+
+	if err = i.storage.ReplaceWithID(i.id, data); err != nil {
+		return fmt.Errorf("storage.ReplaceWithID error: %w", err)
+	}
+
+	return nil
+}
+
+func (i *Index) Replace(itemID string, item interface{}) (err error) {
+	i.Lock()
+	defer func() {
+		if err != nil {
+			delete(i.cache, itemID)
+		}
+		i.Unlock()
+	}()
+
+	data, err := msgpack.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("item marshal error: %w", err)
+	}
+
+	i.cache[itemID] = data
 
 	data, err = msgpack.Marshal(i.cache)
 	if err != nil {
 		return err
 	}
 
-	err = i.storage.ReplaceWithId(i.id, data)
+	err = i.storage.ReplaceWithID(i.id, data)
 	if err != nil {
-		return err
+		return fmt.Errorf("storage.ReplaceWithID error: %w", err)
 	}
 
 	return nil
 }
 
-func (i *Index) Replace(itemId string, item interface{}) (err error) {
-	i.Lock()
-	defer func() {
-		if err != nil {
-			delete(i.cache, itemId)
-		}
-		i.Unlock()
-	}()
-
-	data, err := msgpack.Marshal(item)
-	if err != nil {
-		return err
-	}
-
-	i.cache[itemId] = data
-
-	data, err = msgpack.Marshal(i.cache)
-	if err != nil {
-		return err
-	}
-
-	err = i.storage.ReplaceWithId(i.id, data)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (i *Index) GetById(itemId string, dst interface{}) error {
+func (i *Index) GetByID(itemID string, dst interface{}) error {
 	i.RLock()
-	item, ok := i.cache[itemId]
+	item, ok := i.cache[itemID]
 	i.RUnlock()
 
 	if !ok {
-		return errors.IsNotExist
+		return errors.ErrIsNotExist
 	}
 
-	return msgpack.Unmarshal(item, dst)
+	if err := msgpack.Unmarshal(item, dst); err != nil {
+		return fmt.Errorf("item unmarshal error: %w", err)
+	}
+
+	return nil
 }
 
-func (i *Index) Delete(itemId string) error {
+func (i *Index) Delete(itemID string) error {
 	i.Lock()
 	defer i.Unlock()
 
-	item, ok := i.cache[itemId]
+	item, ok := i.cache[itemID]
 	if !ok {
-		return errors.IsNotExist
+		return errors.ErrIsNotExist
 	}
 
-	delete(i.cache, itemId)
+	delete(i.cache, itemID)
+
 	data, err := msgpack.Marshal(i.cache)
 	if err != nil {
-		i.cache[itemId] = item
+		i.cache[itemID] = item
 		return err
 	}
 
-	err = i.storage.ReplaceWithId(i.id, data)
+	err = i.storage.ReplaceWithID(i.id, data)
 	if err != nil {
-		i.cache[itemId] = item
+		i.cache[itemID] = item
 		return err
 	}
 

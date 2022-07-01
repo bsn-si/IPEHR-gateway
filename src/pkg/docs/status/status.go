@@ -7,7 +7,7 @@ const (
 	DELETED DocumentStatus = 2
 )
 
-var statusNames map[DocumentStatus]string = map[DocumentStatus]string{
+var statusNames = map[DocumentStatus]string{
 	ACTIVE:  "ACTIVE",
 	DELETED: "DELETED",
 }

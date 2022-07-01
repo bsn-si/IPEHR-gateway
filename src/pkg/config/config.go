@@ -2,21 +2,23 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
-	"hms/gateway/pkg/common/utils"
+	"fmt"
 	"os"
+
+	"hms/gateway/pkg/common/utils"
+	"hms/gateway/pkg/errors"
 )
 
 type Config struct {
-	BaseUrl              string `json:"baseUrl"`
+	BaseURL              string `json:"baseUrl"`
 	DataPath             string `json:"dataPath"`
 	Host                 string `json:"host"`
 	StoragePath          string `json:"storagePath"`
 	KeystoreKey          string `json:"keystoreKey"`
 	CompressionEnabled   bool   `json:"compressionEnabled"`
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
-	DefaultUserId        string `json:"defaultUserId"`
-	DefaultGroupAccessId string `json:"defaultGroupAccessId"`
+	DefaultUserID        string `json:"defaultUserId"`
+	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
 
 	path string
 }
@@ -29,6 +31,7 @@ func New(params ...string) (cfg *Config, err error) {
 	if len(params) == 1 {
 		configFilePath = params[0]
 	}
+
 	path, err := resolveConfigFile(configFilePath)
 	if err != nil {
 		return
@@ -56,15 +59,12 @@ func resolveConfigFile(userConfigFile string) (configFile string, err error) {
 	}
 
 	for _, configFile = range possibleConfigFiles {
-		_, err = os.Stat(configFile)
-		if err == nil {
-			return
+		if _, err = os.Stat(configFile); err == nil {
+			return configFile, nil
 		}
 	}
 
-	err = errors.New("not found any configuration file")
-
-	return
+	return "", fmt.Errorf("Not found any configuration file: %w", errors.ErrIsNotExist)
 }
 
 // Loads content of source configuration file into configuration structure

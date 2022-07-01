@@ -1,7 +1,7 @@
 package model
 
 type ExternalRef struct {
-	Id struct {
+	ID struct {
 		Value  string `json:"value"`
 		Type   string `json:"_type,omitempty"`
 		Scheme string `json:"scheme,omitempty"`

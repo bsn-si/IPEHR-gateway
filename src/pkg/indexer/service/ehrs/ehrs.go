@@ -5,29 +5,30 @@ import (
 	"hms/gateway/pkg/indexer"
 )
 
-type EhrsIndex struct {
+type Index struct {
 	index indexer.Indexer
 }
 
-func New() *EhrsIndex {
-	return &EhrsIndex{
+func New() *Index {
+	return &Index{
 		index: indexer.Init("ehrs"),
 	}
 }
 
 // Add document storage Id for user
-func (u *EhrsIndex) Add(userId string, docStorageId *[32]byte) error {
-	return u.index.Add(userId, docStorageId)
+func (u *Index) Add(userID string, docStorageID *[32]byte) error {
+	return u.index.Add(userID, docStorageID)
 }
 
 // Get document storage Id for user
-func (u *EhrsIndex) Get(userId string) (docStorageId *[32]byte, err error) {
-	docStorageId = &[32]byte{}
-	err = u.index.GetById(userId, docStorageId)
+func (u *Index) Get(userID string) (docStorageID *[32]byte, err error) {
+	docStorageID = &[32]byte{}
+	err = u.index.GetByID(userID, docStorageID)
+
 	return
 }
 
 // Replace document storage Id for user
-func (u *EhrsIndex) Replace(userId string, docStorageId *[32]byte) error {
-	return u.index.Replace(userId, docStorageId)
+func (u *Index) Replace(userID string, docStorageID *[32]byte) error {
+	return u.index.Replace(userID, docStorageID)
 }

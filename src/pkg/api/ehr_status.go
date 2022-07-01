@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
@@ -18,13 +20,13 @@ import (
 
 type EhrStatusHandler struct {
 	cfg     *config.Config
-	service *ehr.EhrStatusService
+	service *ehr.Service
 }
 
 func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config.Config) *EhrStatusHandler {
 	return &EhrStatusHandler{
 		cfg:     cfg,
-		service: ehr.NewEhrStatusService(docService),
+		service: ehr.NewService(docService),
 	}
 }
 
@@ -51,42 +53,46 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h EhrStatusHandler) Update(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
 	/*
-		ehrUUID, err := uuid.Parse(ehrId)
+		ehrUUID, err := uuid.Parse(ehrID)
 		if err != nil {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
 	*/
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
 	IfMatch := c.Request.Header.Get("If-Match")
-	docLast, err := h.service.GetStatus(userId, ehrId)
+
+	docLast, err := h.service.GetStatus(userID, ehrID)
 	if err != nil {
 		log.Println("ehrStatusService.Get error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting last EHR document status"})
+
+		return
 	}
 
-	if docLast.Uid == nil || docLast.Uid.Value == "" {
+	if docLast.UID == nil || docLast.UID.Value == "" {
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
 	}
 
 	// Checking If-Match header
-	if IfMatch != docLast.Uid.Value {
-		h.setLocationAndETagHeaders(ehrId, docLast.Uid.Value, c)
+	if IfMatch != docLast.UID.Value {
+		h.setLocationAndETagHeaders(ehrID, docLast.UID.Value, c)
 		c.AbortWithStatus(http.StatusPreconditionFailed)
+
 		return
 	}
 
@@ -95,28 +101,28 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
-	err = c.Request.Body.Close()
-	if err != nil {
+
+	if err = c.Request.Body.Close(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request content is invalid"})
 		return
 	}
 
-	update, err := h.service.ParseJson(data)
-	if err != nil {
+	var status model.EhrStatus
+	if err = json.Unmarshal(data, &status); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request content is invalid"})
 		return
 	}
 
-	if !h.service.Validate(update) {
+	if !h.service.ValidateStatus(&status) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err = h.service.SaveStatus(ehrId, userId, update); err != nil {
+	if err = h.service.SaveStatus(ehrID, userID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR_STATUS saving error"})
 		return
 	}
 
-	h.setLocationAndETagHeaders(ehrId, update.Uid.Value, c)
+	h.setLocationAndETagHeaders(ehrID, status.UID.Value, c)
 
 	switch c.Request.Header.Get("Prefer") {
 	case "return=representation":
@@ -143,39 +149,40 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Failure      500              "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status [get]
 func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
 	versionAtTime := c.Query("version_at_time")
-	statusTime, err := time.Parse(common.OPENEHR_TIME_FORMAT, versionAtTime)
+
+	statusTime, err := time.Parse(common.OpenEhrTimeFormat, versionAtTime)
 	if err != nil {
-		log.Printf("Incorrect format of time option, use %s", common.OPENEHR_TIME_FORMAT)
+		log.Printf("Incorrect format of time option, use %s", common.OpenEhrTimeFormat)
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 
-	status, err := h.service.GetStatusByNearestTime(userId, ehrId, statusTime, types.EHR_STATUS)
+	status, err := h.service.GetStatusByNearestTime(userID, ehrID, statusTime, types.EhrStatus)
 	if err != nil {
-		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrId, statusTime, err)
+		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrID, statusTime, err)
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 
-	marshalJson, _ := h.service.MarshalJson(status)
-
-	c.Data(http.StatusOK, "application/json", marshalJson)
+	c.JSON(http.StatusOK, status)
 }
 
-// GetById
+// GetByID
 // @Summary      Get EHR_STATUS by version id
 // @Description  Retrieves a particular version of the EHR_STATUS identified by `version_uid` and associated with the EHR identified by `ehr_id`.
 // @Tags         EHR_STATUS
@@ -189,39 +196,41 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an EHR_STATUS with `version_uid` does not exist."
 // @Failure      500         "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
-func (h EhrStatusHandler) GetById(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if !h.service.Doc.ValidateId(ehrId, types.EHR) {
+func (h EhrStatusHandler) GetByID(c *gin.Context) {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	versionUid := c.Param("versionid")
-	if !h.service.Doc.ValidateId(versionUid, types.EHR_STATUS) {
+	versionUID := c.Param("versionid")
+
+	if !h.service.Doc.ValidateID(versionUID, types.EhrStatus) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
-	docIndex, err := h.service.Doc.GetDocIndexByDocId(userId, versionUid, &ehrUUID, types.EHR_STATUS)
+	docIndex, err := h.service.Doc.GetDocIndexByDocID(userID, versionUID, &ehrUUID, types.EhrStatus)
 	if err != nil {
-		log.Printf("GetDocIndexByDocId userId: %s ehrId: %s versionId: %s error: %v", userId, ehrId, versionUid, err)
+		log.Printf("GetDocIndexByDocID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 
-	data, err := h.service.Doc.GetDocFromStorageById(userId, docIndex.StorageId, []byte(versionUid))
+	data, err := h.service.Doc.GetDocFromStorageByID(userID, docIndex.StorageID, []byte(versionUID))
 	if err != nil {
 		//TODO logging
 		c.AbortWithStatus(http.StatusNotFound)
@@ -231,7 +240,7 @@ func (h EhrStatusHandler) GetById(c *gin.Context) {
 	c.Data(http.StatusOK, "application/json", data)
 }
 
-func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrId string, ehrStatusId string, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseUrl+"/ehr/"+ehrId+"/ehr_status/"+ehrStatusId)
-	c.Header("ETag", ehrStatusId)
+func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrID string, ehrStatusID string, c *gin.Context) {
+	c.Header("Location", h.cfg.BaseURL+"/ehr/"+ehrID+"/ehr_status/"+ehrStatusID)
+	c.Header("ETag", ehrStatusID)
 }
