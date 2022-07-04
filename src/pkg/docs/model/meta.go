@@ -10,5 +10,6 @@ type DocumentMeta struct {
 	StorageID      *[32]byte
 	DocIDEncrypted []byte
 	Timestamp      uint64
+	Version        string
 	Status         status.DocumentStatus
 }

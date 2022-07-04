@@ -14,6 +14,7 @@ var (
 	ErrGetRuntimeCaller = errors.New("Can't get runtime.Caller")
 	ErrIsEmpty          = errors.New("Is empty")
 	ErrCustom           = errors.New("Custom error")
+	ErrObjectNotInit    = errors.New(`Object is not initialized`)
 )
 
 var Is = errors.Is

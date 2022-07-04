@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/Masterminds/semver"
 	"hms/gateway/pkg/compressor"
 
 	"github.com/google/uuid"
@@ -108,6 +109,115 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 	}
 
 	return nil, errors.ErrIsNotExist
+}
+
+func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseId(userId, ehrId, baseDocumentId string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
+
+	documentsMeta, err := d.getDocIndexesByDocId(userId, ehrId, baseDocumentId, documentType)
+	if err != nil {
+		return nil, err
+	}
+
+	var lastVersion *semver.Version
+	for _, currentDocumentMeta := range documentsMeta {
+		v, err := semver.NewVersion(currentDocumentMeta.Version)
+		if err != nil {
+			return nil, err
+		}
+
+		if documentMeta == nil || v.GreaterThan(lastVersion) {
+			documentMeta = currentDocumentMeta
+			lastVersion = v
+		}
+	}
+
+	return documentMeta, nil
+}
+
+func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userId, ehrId, baseDocumentId, version string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
+	documentsMeta, err := d.getDocIndexesByDocId(userId, ehrId, baseDocumentId, documentType)
+	if err != nil {
+		return nil, err
+	}
+
+	targetVersion, err := semver.NewVersion(version)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, composition := range documentsMeta {
+		v, err := semver.NewVersion(composition.Version)
+		if err != nil {
+			return nil, err
+		}
+
+		if v.Equal(targetVersion) {
+			documentMeta = composition
+			break
+		}
+	}
+
+	return documentMeta, nil
+}
+
+func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
+	userUUID, err := uuid.Parse(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Getting user privateKey
+	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	docIndexes, err := d.DocsIndex.Get(ehrId)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, docIndex := range docIndexes {
+		if docType > 0 && docIndex.TypeCode != docType {
+			continue
+		}
+
+		// Getting access key
+		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
+		indexKeyStr := hex.EncodeToString(indexKey[:])
+		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
+		if err != nil {
+			return nil, err
+		}
+
+		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
+		if err != nil {
+			return nil, err
+		}
+		if len(keyDecrypted) != 32 {
+			return nil, fmt.Errorf("document key length mismatch")
+		}
+
+		key, err := chacha_poly.NewKeyFromBytes(keyDecrypted)
+		if err != nil {
+			return nil, err
+		}
+
+		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIdEncrypted, ehrUUID[:])
+		if err != nil {
+			continue
+		}
+
+		if docId == string(docIdDecrypted) {
+			docs = append(docs, docIndex)
+		}
+	}
+	return docs, nil
 }
 
 func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID *[32]byte, authData []byte) (docBytes []byte, err error) {

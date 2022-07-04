@@ -38,17 +38,18 @@ type testWrap struct {
 	server     *httptest.Server
 	httpClient *http.Client
 	storage    *storage.Storager
+	api        *API
 }
 
 func Test_API(t *testing.T) {
 	var httpClient http.Client
-
-	testServer, storager := prepareTest(t)
+	testServer, storager, api := prepareTest(t)
 
 	testWrap := &testWrap{
 		server:     testServer,
 		httpClient: &httpClient,
 		storage:    &storager,
+		api:        api,
 	}
 	defer tearDown(*testWrap)
 
@@ -65,6 +66,16 @@ func Test_API(t *testing.T) {
 	t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData))
 	t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData))
 	t.Run("EHR get by subject", testWrap.ehrGetBySubject())
+	t.Run("EHR get by subject", testWrap.ehrGetBySubject(testData))
+	t.Run("COMPOSITION create Expected fail with wrong EhrId", testWrap.compositionCreateFail(testData))
+	t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData))
+	t.Run("COMPOSITION getting with correct EhrId", testWrap.compositionGetById(testData))
+	t.Run("COMPOSITION getting with wrong EhrId", testWrap.compositionGetByWrongId(testData))
+	t.Run("COMPOSITION update", testWrap.compositionUpdate(testData))
+	t.Run("COMPOSITION delete by wrong UID", testWrap.compositionDeleteByWrongId(testData))
+	t.Run("COMPOSITION delete", testWrap.compositionDeleteById(testData))
+	t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData))
+	t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData))
 	t.Run("Access group create", testWrap.accessGroupCreate(testData))
 	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
 	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
@@ -78,9 +89,8 @@ func Test_API(t *testing.T) {
 	t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData))
 }
 
-func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
+func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager, api *API) {
 	t.Helper()
-
 	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)
@@ -88,10 +98,11 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 
 	cfg.StoragePath += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
-	r := api.New(cfg).Build()
+	api = api.New(cfg)
+	r := api.Build()
 	ts = httptest.NewServer(r)
 
-	return ts, storage.Storage()
+	return ts, storage.Storage(), api
 }
 
 func tearDown(testWrap testWrap) {
@@ -658,6 +669,85 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *testData) func(t *te
 		if response.StatusCode != http.StatusNotFound {
 			t.Fatalf("Expected status %d, received %d", http.StatusNotFound, response.StatusCode)
 		}
+	}
+}
+
+func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+testData.compositionId, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected status: %v, received %v", http.StatusOK, response.StatusCode)
+		}
+
+		var composition model.Composition
+		if err = json.Unmarshal(data, &composition); err != nil {
+			t.Fatal(err)
+		}
+
+		// TODO composition.Uid.Value - should it be equal with versioned_object_uid?
+		composition.Name.Value = "Updated text"
+		updatedComposition, _ := json.Marshal(composition)
+
+		uid := testWrap.api.Composition.service.GetObjectVersionIdByUid(testData.compositionId)
+
+		request, err = http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+testData.ehrId+"/composition/"+uid.ObjectId(), bytes.NewReader(updatedComposition))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("If-Match", uid.String())
+
+		request.Header.Set("AuthUserId", testData.testUserId)
+
+		response, err = testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected status: %v, received %v", http.StatusOK, response.StatusCode)
+		}
+
+		if err = json.Unmarshal(data, &composition); err != nil {
+			t.Fatal(err)
+		}
+
+		if composition.Uid.Value == testData.compositionId {
+			t.Fatalf("Expected %s, received %s", composition.Uid.Value, testData.compositionId)
+		}
+
+		testData.compositionId = composition.Uid.Value
 	}
 }
 

@@ -1,6 +1,9 @@
 package model
 
-import "hms/gateway/pkg/docs/model/base"
+import (
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/types"
+)
 
 // Composition Content of one version in a VERSIONED_COMPOSITION. A Composition is considered the unit
 // of modification of the record, the unit of transmission in record Extracts, and the unit of
@@ -17,7 +20,11 @@ type Composition struct {
 	base.Locatable
 }
 
-func (e *Composition) Validate() bool {
-	//TODO
-	return true
+func (c *Composition) Validate() bool {
+	validation := true
+	if c.Type != types.COMPOSITION.String() {
+		validation = false
+	}
+
+	return validation
 }

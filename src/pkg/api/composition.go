@@ -26,7 +26,7 @@ type CompositionHandler struct {
 func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionHandler {
 	return &CompositionHandler{
 		cfg:     cfg,
-		service: composition.NewCompositionService(docService),
+		service: composition.NewCompositionService(docService, cfg),
 	}
 }
 
@@ -117,6 +117,8 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
+	// TODO what if composition with current UID already exist? 422 Unprocessable Entity
+
 	// Composition document creating
 	doc, err := h.service.CompositionCreate(userID, &ehrUUID, &groupAccessUUID, &request)
 	if err != nil {
@@ -176,6 +178,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	}
 
 	data, err := h.service.GetCompositionByID(userID, versionUID, &ehrUUID, types.Composition)
+	data, err := h.service.GetCompositionById(userId, ehrId, versionUid)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -289,8 +292,8 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	prevVersion := c.GetHeader("If-Match")
-	if prevVersion == "" {
+	precedingVersionUid := c.GetHeader("If-Match")
+	if precedingVersionUid == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "If-Match is empty"})
 		return
 	}
@@ -308,23 +311,66 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	// TODO 422 invalid body `Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
-	// TODO 404 `Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist.
-	// TODO 412 `Version conflict` is returned when `If-Match` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers.
+	data, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
+		return
+	}
 
-	//uuid, err := h.service.DeleteCompositionById(userId, ehrId, versionUid)
-	//switch err {
-	//case nil:
-	//	h.addResponseHeaders(ehrId, uuid, c)
-	//	c.AbortWithStatus(http.StatusNoContent)
-	//case errors.AlreadyDeleted:
-	//	c.AbortWithStatus(http.StatusBadRequest)
-	//case errors.IsNotExist:
-	//	c.AbortWithStatus(http.StatusNotFound)
-	//default:
-	//	log.Println(err)
-	//	c.AbortWithStatus(http.StatusInternalServerError)
-	//}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Panic("Cant close body request")
+		}
+	}(c.Request.Body)
+
+	var request model.Composition
+
+	if err = json.Unmarshal(data, &request); err != nil {
+		log.Println("Composition Create request unmarshal error", err)
+		c.AbortWithStatus(http.StatusUnprocessableEntity)
+		return
+	}
+
+	if !request.Validate() {
+		c.AbortWithStatus(http.StatusUnprocessableEntity)
+		return
+	}
+
+	if request.Uid.Value != "" && request.Uid.Value != precedingVersionUid {
+		// TODO fix me, do i need a parsing?
+		c.AbortWithStatus(http.StatusUnprocessableEntity)
+		return
+	}
+
+	lastComposition, err := h.service.GetLastCompositionByBaseId(userId, ehrId, versionUid)
+	if err != nil {
+		if errors.Is(err, errors.IsNotExist) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else {
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if lastComposition.Uid.Value != precedingVersionUid {
+		h.addResponseHeaders(ehrId, lastComposition.Uid.Value, c)
+		c.AbortWithStatus(http.StatusPreconditionFailed)
+		return
+	}
+
+	compositionUpdated, err := h.service.CompositionUpdate(userId, ehrId, lastComposition)
+
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	h.addResponseHeaders(ehrId, compositionUpdated.Uid.Value, c)
+	c.JSON(http.StatusOK, compositionUpdated)
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Composition, c *gin.Context) {
