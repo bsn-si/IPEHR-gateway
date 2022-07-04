@@ -23,7 +23,7 @@ import (
 )
 
 type Service struct {
-	cfg *config.Config
+	cfg             *config.Config
 	Doc             *service.DefaultDocumentService
 	DataSearchIndex *dataSearch.Index
 }
@@ -33,7 +33,7 @@ func NewCompositionService(docService *service.DefaultDocumentService) *Service 
 	return &Service{
 		Doc:             docService,
 		DataSearchIndex: dataSearch.New(),
-		cfg: cfg,
+		cfg:             cfg,
 	}
 }
 
@@ -218,8 +218,8 @@ func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string)
 	if documentMeta.Status == status.DELETED {
 		err = errors.AlreadyDeleted
 
-	return
-}
+		return
+	}
 
 	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(baseDocumentUid))
 	if err != nil {
@@ -230,46 +230,34 @@ func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string)
 }
 
 func (s *Service) DeleteCompositionByID(userID, ehrID, versionUID string) (newUID string, err error) {
-	// TODO!!! UpdateDocStatus rewrite
+	documentType := types.COMPOSITION
 
-	//documentUid := c.GetObjectVersionIdByUid(versionUid)
-	//baseDocumentUid := documentUid.BasedId()
-	//
-	//documentMeta, err := c.Doc.GetDocIndexByBaseIdAndVersion(userId, ehrId, baseDocumentUid, documentUid.VersionTreeId(), documentType)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//if documentMeta == nil {
-	//	return nil, errors.IsNotExist
-	//}
-	//
-	//if documentMeta.Status == status.DELETED {
-	//	err = errors.AlreadyDeleted
-	//	return
-	//}
+	documentUid := c.GetObjectVersionIdByUid(versionUid)
+	baseDocumentUid := documentUid.BasedId()
 
-	//documentMeta, err := c.getCompositionDocIndexById(userId, ehrId, versionUid)
-	//if err != nil {
-	//	return "", err
-	//}
-	//
-	//if documentMeta.Status == status.DELETED {
-	//	err = errors.AlreadyDeleted
-	//	return
-	//}
-	////?????????????????????
-	err = s.Doc.UpdateDocStatus(userID, ehrID, versionUID, types.Composition, status.ACTIVE, status.DELETED)
+	// TODO i dont like it, too much arguments
+	err = c.Doc.Update(
+		userId,
+		ehrId,
+		baseDocumentUid,
+		documentUid.VersionTreeId(),
+		documentType,
+		func(meta *model.DocumentMeta) error {
+			if meta.Status == status.DELETED {
+				return errors.AlreadyDeleted
+			}
+
+			meta.Status = status.DELETED
+			return nil
+		})
+
 	if err != nil {
-		if errors.Is(err, errors.ErrAlreadyUpdated) {
-			return "", errors.ErrAlreadyDeleted
-		}
+		return
+	}
 
+	if err, _ := documentUid.IncreaseUidVersion(); err != nil {
 		return "", err
 	}
 
-	}
-	//newUid = c.increaseUidVersion(versionUid)
-
-	return
+	return documentUid.String(), nil
 }

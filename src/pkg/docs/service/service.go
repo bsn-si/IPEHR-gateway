@@ -13,7 +13,6 @@ import (
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/service/docAccess"
@@ -145,19 +144,18 @@ func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userId, ehrId, ba
 		return nil, err
 	}
 
-	for _, composition := range documentsMeta {
-		v, err := semver.NewVersion(composition.Version)
+	for _, documentMeta := range documentsMeta {
+		v, err := semver.NewVersion(documentMeta.Version)
 		if err != nil {
 			return nil, err
 		}
 
 		if v.Equal(targetVersion) {
-			documentMeta = composition
-			break
+			return documentMeta, nil
 		}
 	}
 
-	return documentMeta, nil
+	return nil, nil
 }
 
 func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
@@ -275,69 +273,30 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID 
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) UpdateDocStatus(userID, ehrID, docID string, docType types.DocumentType, old, new status.DocumentStatus) (err error) {
-	userUUID, err := uuid.Parse(userID)
+func (d *DefaultDocumentService) Update(userId, ehrId, baseDocumentId, version string, documentType types.DocumentType, action func(*model.DocumentMeta) error) (err error) {
+	documentsMeta, err := d.getDocIndexesByDocId(userId, ehrId, baseDocumentId, documentType)
 	if err != nil {
 		return err
 	}
 
-	ehrUUID, err := uuid.Parse(ehrID)
+	targetVersion, err := semver.NewVersion(version)
 	if err != nil {
 		return err
 	}
 
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
-	if err != nil {
-		return err
-	}
-
-	docIndexes, err := d.DocsIndex.Get(ehrID)
-	if err != nil {
-		return err
-	}
-
-	for _, docIndex := range docIndexes {
-		if docType > 0 && docIndex.TypeCode != docType {
-			continue
-		}
-
-		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
-		indexKeyStr := hex.EncodeToString(indexKey[:])
-
-		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
+	for _, documentMeta := range documentsMeta {
+		v, err := semver.NewVersion(documentMeta.Version)
 		if err != nil {
 			return err
 		}
 
-		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-		if err != nil {
-			return err
-		}
-
-		if len(keyDecrypted) != 32 {
-			return fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
-		}
-
-		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
-		if err != nil {
-			return err
-		}
-
-		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
-		if err != nil {
-			continue
-		}
-
-		if docID == string(docIDDecrypted) {
-			if docIndex.Status == new {
-				return errors.ErrAlreadyUpdated
+		if v.Equal(targetVersion) {
+			err := action(documentMeta)
+			if err != nil {
+				return err
 			}
 
-			docIndex.Status = new
-
-			if err = d.DocsIndex.Replace(ehrID, docIndexes); err != nil {
+			if err = d.DocsIndex.Replace(ehrId, documentsMeta); err != nil {
 				return err
 			}
 
