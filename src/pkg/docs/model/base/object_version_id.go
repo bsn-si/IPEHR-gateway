@@ -11,7 +11,7 @@ import (
 // Globally unique identifier for one version of a versioned object; lexical form: object_id '::' creating_system_id '::' version_tree_id.
 // https://specifications.openehr.org/releases/BASE/latest/base_types.html#_object_version_id_class
 type ObjectVersionId struct {
-	Uid *UidBasedId `json:"uid,omitempty"`
+	UID *UIDBasedID `json:"uid,omitempty"`
 
 	objectId         string
 	creatingSystemId string
@@ -34,7 +34,7 @@ type Uid interface {
 func (o *ObjectVersionId) New(uid string, creatingSystemId string) {
 	o.parseUid(uid)
 	o.creatingSystemId = creatingSystemId
-	o.Uid = &UidBasedId{ObjectId{Value: o.String()}}
+	o.UID = &UIDBasedID{ObjectID{Value: o.String()}}
 }
 
 func (o *ObjectVersionId) String() string {
@@ -99,7 +99,7 @@ func (c *ObjectVersionId) isVersion(ver string) bool {
 func (c *ObjectVersionId) IncreaseUidVersion() (err error, ver string) {
 	ver = c.VersionTreeId()
 	if ver == "" {
-		err := errors.ObjectNotInit
+		err := errors.ErrObjectNotInit
 		return err, ""
 	}
 

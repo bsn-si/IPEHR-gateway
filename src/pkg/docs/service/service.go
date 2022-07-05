@@ -133,8 +133,8 @@ func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseId(userId, ehrId, b
 	return documentMeta, nil
 }
 
-func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userId, ehrId, baseDocumentId, version string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
-	documentsMeta, err := d.getDocIndexesByDocId(userId, ehrId, baseDocumentId, documentType)
+func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userID string, ehrUUID *uuid.UUID, baseDocumentId, version string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
+	documentsMeta, err := d.getDocIndexesByDocId(userID, ehrUUID.String(), baseDocumentId, documentType)
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +159,7 @@ func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userId, ehrId, ba
 }
 
 func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
+	// TODO replace args to *uuid.UUID type
 	userUUID, err := uuid.Parse(userId)
 	if err != nil {
 		return nil, err
@@ -186,7 +187,7 @@ func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId strin
 		}
 
 		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
+		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
 		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
 		if err != nil {
@@ -201,12 +202,12 @@ func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId strin
 			return nil, fmt.Errorf("document key length mismatch")
 		}
 
-		key, err := chacha_poly.NewKeyFromBytes(keyDecrypted)
+		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
 		if err != nil {
 			return nil, err
 		}
 
-		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIdEncrypted, ehrUUID[:])
+		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
 		if err != nil {
 			continue
 		}

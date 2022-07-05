@@ -97,7 +97,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Checking EHR does not exist
+	// Checking EHR does not exist???
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
@@ -177,8 +177,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.GetCompositionByID(userID, versionUID, &ehrUUID, types.Composition)
-	data, err := h.service.GetCompositionById(userId, ehrId, versionUid)
+	data, err := h.service.GetCompositionByID(userID, &ehrUUID, versionUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -238,11 +237,11 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	uuid, err := h.service.DeleteCompositionByID(userID, ehrID, versionUID)
+	uid, err := h.service.DeleteCompositionByID(userID, ehrID, versionUID)
 	//nolint:errorlint
 	switch err {
 	case nil:
-		h.addResponseHeaders(ehrID, uuid, c)
+		h.addResponseHeaders(ehrID, uid, c)
 		c.AbortWithStatus(http.StatusNoContent)
 	case errors.ErrAlreadyDeleted:
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -281,13 +280,19 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
 	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateId(ehrId, types.EHR) == false {
+	if h.service.Doc.ValidateID(ehrId, types.Ehr) == false {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
+	ehrUUID, err := uuid.Parse(ehrId)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	versionUid := c.Param("versioned_object_uid")
-	if h.service.Doc.ValidateId(versionUid, types.COMPOSITION) == false {
+	if h.service.Doc.ValidateID(versionUid, types.Composition) == false {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -305,9 +310,22 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	_, err := h.service.Doc.EhrsIndex.Get(userId)
-	if errors.Is(err, errors.IsNotExist) {
+	_, err = h.service.Doc.EhrsIndex.Get(userId)
+	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	groupIDStr := c.GetHeader("GroupAccessId")
+	if groupIDStr == "" {
+		groupIDStr = h.cfg.DefaultGroupAccessID
+	}
+
+	groupAccessUUID, err := uuid.Parse(groupIDStr)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -337,7 +355,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if request.Uid.Value != "" && request.Uid.Value != precedingVersionUid {
+	if request.UID.Value != "" && request.UID.Value != precedingVersionUid {
 		// TODO fix me, do i need a parsing?
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
 		return
@@ -345,7 +363,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 
 	lastComposition, err := h.service.GetLastCompositionByBaseId(userId, ehrId, versionUid)
 	if err != nil {
-		if errors.Is(err, errors.IsNotExist) {
+		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		} else {
@@ -355,13 +373,13 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		}
 	}
 
-	if lastComposition.Uid.Value != precedingVersionUid {
-		h.addResponseHeaders(ehrId, lastComposition.Uid.Value, c)
+	if lastComposition.UID.Value != precedingVersionUid {
+		h.addResponseHeaders(ehrId, lastComposition.UID.Value, c)
 		c.AbortWithStatus(http.StatusPreconditionFailed)
 		return
 	}
 
-	compositionUpdated, err := h.service.CompositionUpdate(userId, ehrId, lastComposition)
+	compositionUpdated, err := h.service.CompositionUpdate(userId, &ehrUUID, &groupAccessUUID, lastComposition)
 
 	if err != nil {
 		log.Println(err)
@@ -369,7 +387,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	h.addResponseHeaders(ehrId, compositionUpdated.Uid.Value, c)
+	h.addResponseHeaders(ehrId, compositionUpdated.UID.Value, c)
 	c.JSON(http.StatusOK, compositionUpdated)
 }
 

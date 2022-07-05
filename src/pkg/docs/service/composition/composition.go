@@ -4,21 +4,16 @@ import (
 	"encoding/json"
 	"github.com/google/uuid"
 	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/crypto/chacha_poly"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/errors"
 	"log"
 	"time"
 
-	"github.com/google/uuid"
-
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
-	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/service/dataSearch"
 )
 
@@ -28,8 +23,7 @@ type Service struct {
 	DataSearchIndex *dataSearch.Index
 }
 
-//func NewCompositionService(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionService {
-func NewCompositionService(docService *service.DefaultDocumentService) *Service {
+func NewCompositionService(docService *service.DefaultDocumentService, cfg *config.Config) *Service {
 	return &Service{
 		Doc:             docService,
 		DataSearchIndex: dataSearch.New(),
@@ -51,8 +45,8 @@ func (s *Service) CompositionCreate(userID string, ehrUUID, groupAccessUUID *uui
 	return
 }
 
-func (s CompositionService) CompositionUpdate(userId, ehrId string, composition *model.Composition) (*model.Composition, error) {
-	ehrUUID, err := uuid.Parse(ehrId)
+func (s *Service) CompositionUpdate(userID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
+	groupAccess, err := s.Doc.GroupAccessIndex.Get(userID, groupAccessUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,23 +56,23 @@ func (s CompositionService) CompositionUpdate(userId, ehrId string, composition 
 	}
 
 	// TODO should it be replaced with update method?
-	err = s.save(userId, ehrUUID, composition)
+	err = s.save(userID, ehrUUID, groupAccess, composition)
 
 	// TODO what we should do with prev composition?
 	return composition, err
 }
 
-func (s CompositionService) increaseCompositionVersion(c *model.Composition) (err error) {
-	cUid := s.GetObjectVersionIdByUid(c.Uid.Value)
+func (s *Service) increaseCompositionVersion(c *model.Composition) (err error) {
+	cUid := s.GetObjectVersionIdByUid(c.UID.Value)
 	if err, _ := cUid.IncreaseUidVersion(); err != nil {
 		return err
 	}
 
-	c.Uid.Value = cUid.String()
+	c.UID.Value = cUid.String()
 	return
 }
 
-func (s CompositionService) GetObjectVersionIdByUid(uid string) base.ObjectVersionId {
+func (s *Service) GetObjectVersionIdByUid(uid string) base.ObjectVersionId {
 	documentUid := base.ObjectVersionId{}
 	documentUid.New(uid, s.cfg.CreatingSystemId)
 	return documentUid
@@ -100,7 +94,7 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 		return
 	}
 
-	documentUid := s.GetObjectVersionIdByUid(doc.Uid.Value)
+	documentUid := s.GetObjectVersionIdByUid(doc.UID.Value)
 
 	baseDocumentUid := documentUid.BasedId()
 
@@ -169,16 +163,14 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 	return nil
 }
 
-//func (s *Service) GetCompositionByID(userID, versionUID string, ehrUUID *uuid.UUID, documentType types.DocumentType) (*model.Composition, error) {
-//	documentMeta, err := s.Doc.GetDocIndexByDocID(userID, versionUID, ehrUUID, documentType)
-func (c CompositionService) GetLastCompositionByBaseId(userId, ehrId, versionUid string) (composition *model.Composition, err error) {
+func (s *Service) GetLastCompositionByBaseId(userID, ehrId, versionUID string) (composition *model.Composition, err error) {
 	var documentMeta *model.DocumentMeta
-	documentType := types.COMPOSITION
+	documentType := types.Composition
 
-	documentUid := c.GetObjectVersionIdByUid(versionUid)
+	documentUid := s.GetObjectVersionIdByUid(versionUID)
 	baseDocumentUid := documentUid.BasedId()
 
-	documentMeta, err = c.Doc.GetLastVersionDocIndexByBaseId(userId, ehrId, baseDocumentUid, documentType)
+	documentMeta, err = s.Doc.GetLastVersionDocIndexByBaseId(userID, ehrId, baseDocumentUid, documentType)
 	if err != nil {
 		return nil, errors.ErrIsNotExist
 	}
@@ -189,62 +181,60 @@ func (c CompositionService) GetLastCompositionByBaseId(userId, ehrId, versionUid
 
 	decryptedData, err := s.Doc.GetDocFromStorageByID(userID, documentMeta.StorageID, []byte(versionUID))
 	if err != nil {
+		log.Println("GroupAccessIndex.Get error:", err)
 		return nil, err
 	}
 
-	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(baseDocumentUid))
-	if err != nil {
-		return nil, err
-	}
+	err = json.Unmarshal(decryptedData, &composition)
 
-	return c.ParseJson(decryptedData)
+	return
 }
+func (s *Service) GetCompositionByID(userID string, ehrUUID *uuid.UUID, versionUID string) (composition *model.Composition, err error) {
+	documentType := types.Composition
 
-func (c CompositionService) GetCompositionById(userId, ehrId, versionUid string) (composition *model.Composition, err error) {
-	documentType := types.COMPOSITION
-
-	documentUid := c.GetObjectVersionIdByUid(versionUid)
+	documentUid := s.GetObjectVersionIdByUid(versionUID)
 	baseDocumentUid := documentUid.BasedId()
 
-	documentMeta, err := c.Doc.GetDocIndexByBaseIdAndVersion(userId, ehrId, baseDocumentUid, documentUid.VersionTreeId(), documentType)
+	documentMeta, err := s.Doc.GetDocIndexByBaseIdAndVersion(userID, ehrUUID, baseDocumentUid, documentUid.VersionTreeId(), documentType)
 	if err != nil {
 		return nil, err
 	}
 
 	if documentMeta == nil {
-		return nil, errors.IsNotExist
+		return nil, errors.ErrIsNotExist
 	}
 
 	if documentMeta.Status == status.DELETED {
-		err = errors.AlreadyDeleted
+		err = errors.ErrAlreadyDeleted
 
 		return
 	}
 
-	decryptedData, err := c.Doc.GetDocFromStorageById(userId, documentMeta.StorageId, []byte(baseDocumentUid))
+	decryptedData, err := s.Doc.GetDocFromStorageByID(userID, documentMeta.StorageID, []byte(baseDocumentUid))
 	if err != nil {
 		return nil, err
 	}
+	err = json.Unmarshal(decryptedData, &composition)
 
-	return c.ParseJson(decryptedData)
+	return
 }
 
 func (s *Service) DeleteCompositionByID(userID, ehrID, versionUID string) (newUID string, err error) {
-	documentType := types.COMPOSITION
+	documentType := types.Composition
 
-	documentUid := c.GetObjectVersionIdByUid(versionUid)
+	documentUid := s.GetObjectVersionIdByUid(versionUID)
 	baseDocumentUid := documentUid.BasedId()
 
 	// TODO i dont like it, too much arguments
-	err = c.Doc.Update(
-		userId,
-		ehrId,
+	err = s.Doc.Update(
+		userID,
+		ehrID,
 		baseDocumentUid,
 		documentUid.VersionTreeId(),
 		documentType,
 		func(meta *model.DocumentMeta) error {
 			if meta.Status == status.DELETED {
-				return errors.AlreadyDeleted
+				return errors.ErrAlreadyDeleted
 			}
 
 			meta.Status = status.DELETED

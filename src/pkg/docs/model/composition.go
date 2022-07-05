@@ -1,8 +1,11 @@
 package model
 
 import (
+	"bytes"
+	"encoding/json"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/types"
+	"io/ioutil"
 )
 
 // Composition Content of one version in a VERSIONED_COMPOSITION. A Composition is considered the unit
@@ -22,9 +25,25 @@ type Composition struct {
 
 func (c *Composition) Validate() bool {
 	validation := true
-	if c.Type != types.COMPOSITION.String() {
+	if c.Type != types.Composition.String() {
 		validation = false
 	}
 
 	return validation
 }
+
+func (c *Composition) FromJson(reader *bytes.Reader) (err error) {
+	data, err := ioutil.ReadAll(reader)
+	if err == nil {
+		err = json.Unmarshal(data, &c)
+	}
+
+	//c.prepare()
+	return
+}
+
+//func (c *Composition) prepare() {
+// TODO we can move logic here like initialization, e.g.:
+//	c.ObjectVersionId.New(c.UID.Value, cfg.CreatingSystemId)
+// TODO but in what case we need global variables and its look like bad arch
+//}
