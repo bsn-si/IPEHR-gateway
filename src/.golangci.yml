@@ -11,7 +11,7 @@ linters:
     #- containedctx
     #- contextcheck
     #- cyclop
-    #- deadcode
+    - deadcode
     #- decorder
     #- depguard
     #- dogsled
@@ -25,7 +25,7 @@ linters:
     #- exhaustive
     #- exhaustivestruct
     #- exhaustruct
-    #- exportloopref
+    - exportloopref
     #- forbidigo
     #- forcetypeassert
     #- funlen
@@ -33,13 +33,13 @@ linters:
     #- gochecknoglobals
     #- gochecknoinits
     #- gocognit
-    #- goconst
+    - goconst
     #- gocritic
     #- gocyclo
     #- godot
     #- godox
     - goerr113
-    #- gofmt
+    - gofmt
     #- gofumpt
     #- goheader
     - goimports
@@ -50,7 +50,7 @@ linters:
     #- goprintffuncname
     - gosec
     #- gosimple
-    #- govet
+    - govet
     #- grouper
     - ifshort
     #- importas
@@ -79,8 +79,8 @@ linters:
     #- rowserrcheck
     #- scopelint
     #- sqlclosecheck
-    #- staticcheck
-    #- structcheck
+    - staticcheck
+    - structcheck
     #- stylecheck
     #- tagliatelle
     #- tenv
@@ -91,7 +91,7 @@ linters:
     - unconvert
     - unparam
     - unused
-    #- varcheck
+    - varcheck
     #- varnamelen
     #- wastedassign
     - whitespace

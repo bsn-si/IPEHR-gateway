@@ -11,6 +11,7 @@ type pathTest struct {
 	path, expected string
 }
 
+//nolint:gofmt
 var storagePathTests = []pathTest{
 	pathTest{"test", "%s/test"},
 	pathTest{"test/1", "%s/test/1"},

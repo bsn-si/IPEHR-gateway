@@ -256,6 +256,7 @@ func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Co
 	h.addResponseHeaders(ehrID, uid, c)
 
 	prefer := c.Request.Header.Get("Prefer")
+	//nolint:goconst
 	if prefer == "return=representation" {
 		c.JSON(http.StatusCreated, doc)
 	} else {
