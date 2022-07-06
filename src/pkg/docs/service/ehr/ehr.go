@@ -146,7 +146,7 @@ func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNam
 	doc.Type = types.EhrStatus.String()
 	doc.ArchetypeNodeID = "openEHR-EHR-EHR_STATUS.generic.v1"
 	doc.Name = base.DvText{Value: "EHR Status"}
-	doc.UID = &base.UIDBasedID{base.ObjectID{
+	doc.UID = &base.UIDBasedID{ObjectID: base.ObjectID{
 		Type:  "OBJECT_VERSION_ID",
 		Value: ehrStatusID,
 	}}

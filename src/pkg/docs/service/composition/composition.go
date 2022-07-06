@@ -2,13 +2,14 @@ package composition
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/errors"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/docs/model"
@@ -63,19 +64,21 @@ func (s *Service) CompositionUpdate(userID string, ehrUUID, groupAccessUUID *uui
 }
 
 func (s *Service) increaseCompositionVersion(c *model.Composition) (err error) {
-	cUid := s.GetObjectVersionIdByUid(c.UID.Value)
-	if err, _ := cUid.IncreaseUidVersion(); err != nil {
+	cUID := s.GetObjectVersionIDByUID(c.UID.Value)
+	if _, err := cUID.IncreaseUIDVersion(); err != nil {
 		return err
 	}
 
-	c.UID.Value = cUid.String()
+	c.UID.Value = cUID.String()
+
 	return
 }
 
-func (s *Service) GetObjectVersionIdByUid(uid string) base.ObjectVersionId {
-	documentUid := base.ObjectVersionId{}
-	documentUid.New(uid, s.cfg.CreatingSystemId)
-	return documentUid
+func (s *Service) GetObjectVersionIDByUID(uid string) base.ObjectVersionID {
+	documentUID := base.ObjectVersionID{}
+	documentUID.New(uid, s.cfg.CreatingSystemID)
+
+	return documentUID
 }
 
 func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, doc *model.Composition) (err error) {
@@ -94,9 +97,9 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 		return
 	}
 
-	documentUid := s.GetObjectVersionIdByUid(doc.UID.Value)
+	objectVersionID := s.GetObjectVersionIDByUID(doc.UID.Value)
 
-	baseDocumentUid := documentUid.BasedId()
+	baseDocumentUID := objectVersionID.BasedID()
 
 	if s.Doc.CompressionEnabled {
 		docBytes, err = s.Doc.Compressor.Compress(docBytes)
@@ -109,7 +112,7 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 	key := chachaPoly.GenerateKey()
 
 	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(baseDocumentUid))
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(baseDocumentUID))
 	if err != nil {
 		log.Println(err)
 		return
@@ -122,7 +125,7 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 		return
 	}
 
-	docIDEncrypted, err := key.EncryptWithAuthData([]byte(baseDocumentUid), ehrUUID[:])
+	docIDEncrypted, err := key.EncryptWithAuthData([]byte(baseDocumentUID), ehrUUID[:])
 	if err != nil {
 		return err
 	}
@@ -131,7 +134,7 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 	docIndex := &model.DocumentMeta{
 		TypeCode:       types.Composition,
 		DocIDEncrypted: docIDEncrypted,
-		Version:        documentUid.VersionTreeId(),
+		Version:        objectVersionID.VersionTreeID(),
 		StorageID:      docStorageID,
 		Timestamp:      uint64(time.Now().UnixNano()),
 		Status:         status.ACTIVE,
@@ -163,14 +166,15 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 	return nil
 }
 
-func (s *Service) GetLastCompositionByBaseId(userID, ehrId, versionUID string) (composition *model.Composition, err error) {
+func (s *Service) GetLastCompositionByBaseID(userID, ehrID, versionUID string) (composition *model.Composition, err error) {
 	var documentMeta *model.DocumentMeta
+
 	documentType := types.Composition
 
-	documentUid := s.GetObjectVersionIdByUid(versionUID)
-	baseDocumentUid := documentUid.BasedId()
+	documentUID := s.GetObjectVersionIDByUID(versionUID)
+	baseDocumentUID := documentUID.BasedID()
 
-	documentMeta, err = s.Doc.GetLastVersionDocIndexByBaseId(userID, ehrId, baseDocumentUid, documentType)
+	documentMeta, err = s.Doc.GetLastVersionDocIndexByBaseID(userID, ehrID, baseDocumentUID, documentType)
 	if err != nil {
 		return nil, errors.ErrIsNotExist
 	}
@@ -192,10 +196,10 @@ func (s *Service) GetLastCompositionByBaseId(userID, ehrId, versionUID string) (
 func (s *Service) GetCompositionByID(userID string, ehrUUID *uuid.UUID, versionUID string) (composition *model.Composition, err error) {
 	documentType := types.Composition
 
-	documentUid := s.GetObjectVersionIdByUid(versionUID)
-	baseDocumentUid := documentUid.BasedId()
+	documentUID := s.GetObjectVersionIDByUID(versionUID)
+	baseDocumentUID := documentUID.BasedID()
 
-	documentMeta, err := s.Doc.GetDocIndexByBaseIdAndVersion(userID, ehrUUID, baseDocumentUid, documentUid.VersionTreeId(), documentType)
+	documentMeta, err := s.Doc.GetDocIndexByBaseIDAndVersion(userID, ehrUUID, baseDocumentUID, documentUID.VersionTreeID(), documentType)
 	if err != nil {
 		return nil, err
 	}
@@ -210,10 +214,11 @@ func (s *Service) GetCompositionByID(userID string, ehrUUID *uuid.UUID, versionU
 		return
 	}
 
-	decryptedData, err := s.Doc.GetDocFromStorageByID(userID, documentMeta.StorageID, []byte(baseDocumentUid))
+	decryptedData, err := s.Doc.GetDocFromStorageByID(userID, documentMeta.StorageID, []byte(baseDocumentUID))
 	if err != nil {
 		return nil, err
 	}
+
 	err = json.Unmarshal(decryptedData, &composition)
 
 	return
@@ -222,15 +227,15 @@ func (s *Service) GetCompositionByID(userID string, ehrUUID *uuid.UUID, versionU
 func (s *Service) DeleteCompositionByID(userID, ehrID, versionUID string) (newUID string, err error) {
 	documentType := types.Composition
 
-	documentUid := s.GetObjectVersionIdByUid(versionUID)
-	baseDocumentUid := documentUid.BasedId()
+	documentUID := s.GetObjectVersionIDByUID(versionUID)
+	baseDocumentUID := documentUID.BasedID()
 
 	// TODO i dont like it, too much arguments
 	err = s.Doc.Update(
 		userID,
 		ehrID,
-		baseDocumentUid,
-		documentUid.VersionTreeId(),
+		baseDocumentUID,
+		documentUID.VersionTreeID(),
 		documentType,
 		func(meta *model.DocumentMeta) error {
 			if meta.Status == status.DELETED {
@@ -245,9 +250,9 @@ func (s *Service) DeleteCompositionByID(userID, ehrID, versionUID string) (newUI
 		return
 	}
 
-	if err, _ := documentUid.IncreaseUidVersion(); err != nil {
+	if _, err := documentUID.IncreaseUIDVersion(); err != nil {
 		return "", err
 	}
 
-	return documentUid.String(), nil
+	return documentUID.String(), nil
 }

@@ -7,15 +7,15 @@ import (
 	"strings"
 )
 
-// ObjectVersionId
+// ObjectVersionID
 // Globally unique identifier for one version of a versioned object; lexical form: object_id '::' creating_system_id '::' version_tree_id.
 // https://specifications.openehr.org/releases/BASE/latest/base_types.html#_object_version_id_class
-type ObjectVersionId struct {
+type ObjectVersionID struct {
 	UID *UIDBasedID `json:"uid,omitempty"`
 
-	objectId         string
-	creatingSystemId string
-	versionTreeId    string
+	objectID         string
+	creatingSystemID string
+	versionTreeID    string
 }
 
 const (
@@ -23,93 +23,95 @@ const (
 	uidDelimiter     = "::"
 )
 
-type Uid interface {
+type UID interface {
 	String() string
-	ObjectId() string
-	CreatingSystemId() string
-	VersionTreeId() string
+	ObjectID() string
+	CreatingSystemID() string
+	VersionTreeID() string
 	//IsBranch() bool
 }
 
-func (o *ObjectVersionId) New(uid string, creatingSystemId string) {
-	o.parseUid(uid)
-	o.creatingSystemId = creatingSystemId
+func (o *ObjectVersionID) New(UID string, creatingSystemID string) {
+	o.parseUID(UID)
+	o.creatingSystemID = creatingSystemID
 	o.UID = &UIDBasedID{ObjectID{Value: o.String()}}
 }
 
-func (o *ObjectVersionId) String() string {
-	uid := []string{o.ObjectId(), o.CreatingSystemId(), o.VersionTreeId()}
+func (o *ObjectVersionID) String() string {
+	uid := []string{o.ObjectID(), o.CreatingSystemID(), o.VersionTreeID()}
 	return strings.Join(uid, uidDelimiter)
 }
 
-func (o *ObjectVersionId) BasedId() string {
-	uid := []string{o.ObjectId(), o.CreatingSystemId()}
-	return strings.Join(uid, uidDelimiter)
+func (o *ObjectVersionID) BasedID() string {
+	UID := []string{o.ObjectID(), o.CreatingSystemID()}
+	return strings.Join(UID, uidDelimiter)
 }
 
-func (o *ObjectVersionId) ObjectId() string {
-	return o.objectId
+func (o *ObjectVersionID) ObjectID() string {
+	return o.objectID
 }
 
-func (o *ObjectVersionId) CreatingSystemId() string {
-	return o.creatingSystemId
+func (o *ObjectVersionID) CreatingSystemID() string {
+	return o.creatingSystemID
 }
 
-func (o *ObjectVersionId) VersionTreeId() string {
-	return o.versionTreeId
+func (o *ObjectVersionID) VersionTreeID() string {
+	return o.versionTreeID
 }
 
-func (o *ObjectVersionId) setVersionTreeId(ver string) {
+func (o *ObjectVersionID) setVersionTreeID(ver string) {
 	if ver == "" {
 		ver = startTrunkNumber
 	}
-	o.versionTreeId = ver
+
+	o.versionTreeID = ver
 }
 
-func (c *ObjectVersionId) parseUid(uid string) {
+func (o *ObjectVersionID) parseUID(UID string) {
 	re := regexp.MustCompile(uidDelimiter)
-	parts := re.Split(uid, -1)
-	length := len(parts)
-	if length == 0 {
+	parts := re.Split(UID, -1)
+
+	if length := len(parts); length == 0 {
 		return
 	} else if length == 1 {
-		c.creatingSystemId = ""
-		c.setVersionTreeId("")
+		o.creatingSystemID = ""
+		o.setVersionTreeID("")
 	} else if length == 2 {
-		// TODO спорный момент
 		ver := strings.Join(parts[1:2], "")
-		if c.isVersion(ver) != true {
-			c.creatingSystemId = ver
+		if !o.isVersion(ver) {
+			o.creatingSystemID = ver
 			ver = ""
 		}
-		c.setVersionTreeId(ver)
+		o.setVersionTreeID(ver)
 	} else if length == 3 {
-		c.creatingSystemId = strings.Join(parts[1:2], "")
-		c.setVersionTreeId(strings.Join(parts[2:3], ""))
+		o.creatingSystemID = strings.Join(parts[1:2], "")
+		o.setVersionTreeID(strings.Join(parts[2:3], ""))
 	}
 
-	c.objectId = strings.Join(parts[0:1], "")
+	o.objectID = strings.Join(parts[0:1], "")
 }
 
-func (c *ObjectVersionId) isVersion(ver string) bool {
-	re := regexp.MustCompile(`^(\d+.?)+$`)
+func (o *ObjectVersionID) isVersion(ver string) bool {
+	re := regexp.MustCompile(`^(\d+\.?)+$`)
 	return re.MatchString(ver)
 }
 
-func (c *ObjectVersionId) IncreaseUidVersion() (err error, ver string) {
-	ver = c.VersionTreeId()
+func (o *ObjectVersionID) IncreaseUIDVersion() (ver string, err error) {
+	ver = o.VersionTreeID()
 	if ver == "" {
 		err := errors.ErrObjectNotInit
-		return err, ""
+
+		return "", err
 	}
 
 	verInt, err := strconv.Atoi(ver)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	verInt++
 
 	ver = strconv.Itoa(verInt)
-	c.setVersionTreeId(ver)
-	return nil, ver
+	o.setVersionTreeID(ver)
+
+	return
 }

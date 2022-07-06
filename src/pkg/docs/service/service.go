@@ -3,8 +3,9 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/Masterminds/semver"
 	"hms/gateway/pkg/compressor"
+
+	"github.com/Masterminds/semver"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
@@ -110,14 +111,14 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 	return nil, errors.ErrIsNotExist
 }
 
-func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseId(userId, ehrId, baseDocumentId string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
-
-	documentsMeta, err := d.getDocIndexesByDocId(userId, ehrId, baseDocumentId, documentType)
+func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseID(userID, ehrID, baseDocumentID string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
+	documentsMeta, err := d.getDocIndexesByDocID(userID, ehrID, baseDocumentID, documentType)
 	if err != nil {
 		return nil, err
 	}
 
 	var lastVersion *semver.Version
+
 	for _, currentDocumentMeta := range documentsMeta {
 		v, err := semver.NewVersion(currentDocumentMeta.Version)
 		if err != nil {
@@ -133,8 +134,8 @@ func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseId(userId, ehrId, b
 	return documentMeta, nil
 }
 
-func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userID string, ehrUUID *uuid.UUID, baseDocumentId, version string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
-	documentsMeta, err := d.getDocIndexesByDocId(userID, ehrUUID.String(), baseDocumentId, documentType)
+func (d *DefaultDocumentService) GetDocIndexByBaseIDAndVersion(userID string, ehrUUID *uuid.UUID, baseDocumentID, version string, documentType types.DocumentType) (documentMeta *model.DocumentMeta, err error) {
+	documentsMeta, err := d.getDocIndexesByDocID(userID, ehrUUID.String(), baseDocumentID, documentType)
 	if err != nil {
 		return nil, err
 	}
@@ -158,25 +159,25 @@ func (d *DefaultDocumentService) GetDocIndexByBaseIdAndVersion(userID string, eh
 	return nil, nil
 }
 
-func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
+func (d *DefaultDocumentService) getDocIndexesByDocID(userID, ehrID, docID string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
 	// TODO replace args to *uuid.UUID type
-	userUUID, err := uuid.Parse(userId)
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
+	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	docIndexes, err := d.DocsIndex.Get(ehrId)
+	docIndexes, err := d.DocsIndex.Get(ehrID)
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +191,7 @@ func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId strin
 		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
 		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
+
 		if err != nil {
 			return nil, err
 		}
@@ -198,8 +200,9 @@ func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId strin
 		if err != nil {
 			return nil, err
 		}
+
 		if len(keyDecrypted) != 32 {
-			return nil, fmt.Errorf("document key length mismatch")
+			return nil, errors.ErrKeyLengthMismatch
 		}
 
 		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
@@ -207,15 +210,16 @@ func (d *DefaultDocumentService) getDocIndexesByDocId(userId, ehrId, docId strin
 			return nil, err
 		}
 
-		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
+		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
 		if err != nil {
 			continue
 		}
 
-		if docId == string(docIdDecrypted) {
+		if docID == string(docIDDecrypted) {
 			docs = append(docs, docIndex)
 		}
 	}
+
 	return docs, nil
 }
 
@@ -274,8 +278,8 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID 
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) Update(userId, ehrId, baseDocumentId, version string, documentType types.DocumentType, action func(*model.DocumentMeta) error) (err error) {
-	documentsMeta, err := d.getDocIndexesByDocId(userId, ehrId, baseDocumentId, documentType)
+func (d *DefaultDocumentService) Update(userID, ehrID, baseDocumentID, version string, documentType types.DocumentType, action func(*model.DocumentMeta) error) (err error) {
+	documentsMeta, err := d.getDocIndexesByDocID(userID, ehrID, baseDocumentID, documentType)
 	if err != nil {
 		return err
 	}
@@ -297,7 +301,7 @@ func (d *DefaultDocumentService) Update(userId, ehrId, baseDocumentId, version s
 				return err
 			}
 
-			if err = d.DocsIndex.Replace(ehrId, documentsMeta); err != nil {
+			if err = d.DocsIndex.Replace(ehrID, documentsMeta); err != nil {
 				return err
 			}
 

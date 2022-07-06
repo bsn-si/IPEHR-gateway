@@ -32,7 +32,7 @@ func (c *Composition) Validate() bool {
 	return validation
 }
 
-func (c *Composition) FromJson(reader *bytes.Reader) (err error) {
+func (c *Composition) FromJSON(reader *bytes.Reader) (err error) {
 	data, err := ioutil.ReadAll(reader)
 	if err == nil {
 		err = json.Unmarshal(data, &c)
@@ -44,6 +44,6 @@ func (c *Composition) FromJson(reader *bytes.Reader) (err error) {
 
 //func (c *Composition) prepare() {
 // TODO we can move logic here like initialization, e.g.:
-//	c.ObjectVersionId.New(c.UID.Value, cfg.CreatingSystemId)
+//	c.ObjectVersionID.New(c.UID.Value, cfg.CreatingSystemID)
 // TODO but in what case we need global variables and its look like bad arch
 //}

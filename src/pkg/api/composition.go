@@ -279,38 +279,38 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
-	ehrId := c.Param("ehrid")
-	if h.service.Doc.ValidateID(ehrId, types.Ehr) == false {
+	ehrID := c.Param("ehrid")
+	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	ehrUUID, err := uuid.Parse(ehrId)
+	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	versionUid := c.Param("versioned_object_uid")
-	if h.service.Doc.ValidateID(versionUid, types.Composition) == false {
+	versionUID := c.Param("versioned_object_uid")
+	if !h.service.Doc.ValidateID(versionUID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	precedingVersionUid := c.GetHeader("If-Match")
-	if precedingVersionUid == "" {
+	precedingVersionUID := c.GetHeader("If-Match")
+	if precedingVersionUID == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "If-Match is empty"})
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
 	// Checking EHR does not exist
-	_, err = h.service.Doc.EhrsIndex.Get(userId)
+	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
@@ -347,47 +347,54 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	if err = json.Unmarshal(data, &request); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
+
 		return
 	}
 
 	if !request.Validate() {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
+
 		return
 	}
 
-	if request.UID.Value != "" && request.UID.Value != precedingVersionUid {
+	if request.UID.Value != "" && request.UID.Value != precedingVersionUID {
 		// TODO fix me, do i need a parsing?
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
+
 		return
 	}
 
-	lastComposition, err := h.service.GetLastCompositionByBaseId(userId, ehrId, versionUid)
+	lastComposition, err := h.service.GetLastCompositionByBaseID(userID, ehrID, versionUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
-			return
-		} else {
-			log.Println(err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+
 			return
 		}
-	}
 
-	if lastComposition.UID.Value != precedingVersionUid {
-		h.addResponseHeaders(ehrId, lastComposition.UID.Value, c)
-		c.AbortWithStatus(http.StatusPreconditionFailed)
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
-	compositionUpdated, err := h.service.CompositionUpdate(userId, &ehrUUID, &groupAccessUUID, lastComposition)
+	if lastComposition.UID.Value != precedingVersionUID {
+		h.addResponseHeaders(ehrID, lastComposition.UID.Value, c)
+		c.AbortWithStatus(http.StatusPreconditionFailed)
+
+		return
+	}
+
+	compositionUpdated, err := h.service.CompositionUpdate(userID, &ehrUUID, &groupAccessUUID, lastComposition)
 
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
-	h.addResponseHeaders(ehrId, compositionUpdated.UID.Value, c)
+	h.addResponseHeaders(ehrID, compositionUpdated.UID.Value, c)
 	c.JSON(http.StatusOK, compositionUpdated)
 }
 

@@ -15,7 +15,7 @@ type Config struct {
 	Host                 string `json:"host"`
 	StoragePath          string `json:"storagePath"`
 	KeystoreKey          string `json:"keystoreKey"`
-	CreatingSystemId     string `json:"creatingSystemId"`
+	CreatingSystemID     string `json:"creatingSystemId"`
 	CompressionEnabled   bool   `json:"compressionEnabled"`
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
 	DefaultUserID        string `json:"defaultUserId"`

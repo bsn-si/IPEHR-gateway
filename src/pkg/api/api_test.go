@@ -43,6 +43,7 @@ type testWrap struct {
 
 func Test_API(t *testing.T) {
 	var httpClient http.Client
+
 	testServer, storager, cfg := prepareTest(t)
 
 	testWrap := &testWrap{
@@ -82,7 +83,9 @@ func Test_API(t *testing.T) {
 
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager, config2 *config.Config) {
 	t.Helper()
+
 	cfg, err := config.New()
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -665,31 +668,30 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *testData) func(t *te
 
 func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-
 		body, err := compositionCreateBodyRequest()
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		composition := model.Composition{}
-		if err = composition.FromJson(body); err != nil {
+		if err = composition.FromJSON(body); err != nil {
 			t.Fatal(err)
 		}
 
-		composition.ObjectVersionId.New(composition.UID.Value, testWrap.cfg.CreatingSystemId)
+		composition.ObjectVersionID.New(composition.UID.Value, testWrap.cfg.CreatingSystemID)
 
 		// TODO composition.Uid.Value - should it be equal with versioned_object_uid?
 		composition.Name.Value = "Updated text"
 		updatedComposition, _ := json.Marshal(composition)
 
-		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition/"+composition.ObjectVersionId.BasedId(), bytes.NewReader(updatedComposition))
+		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition/"+composition.ObjectVersionID.BasedID(), bytes.NewReader(updatedComposition))
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("GroupAccessId", testData.groupAccessID)
-		request.Header.Set("If-Match", composition.ObjectVersionId.String())
+		request.Header.Set("If-Match", composition.ObjectVersionID.String())
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("Prefer", "return=representation")
 

@@ -9,7 +9,7 @@ type Locatable struct {
 	Type            string `json:"_type"`
 	Name            DvText `json:"name"`
 	ArchetypeNodeID string `json:"archetype_node_id"`
-	ObjectVersionId
+	ObjectVersionID
 	Links            *[]Link     `json:"links,omitempty"`
 	ArchetypeDetails *Archetyped `json:"archetype_details,omitempty"`
 	Pathable         `json:"-"`
