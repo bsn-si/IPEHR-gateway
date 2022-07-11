@@ -1,12 +1,13 @@
 package base
 
 import (
-	"github.com/google/uuid"
 	"hms/gateway/pkg/errors"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // ObjectVersionID
@@ -62,10 +63,7 @@ func (o *ObjectVersionID) VersionTreeID() string {
 }
 
 func (o *ObjectVersionID) Equal(ver string) bool {
-	if o.VersionTreeID() == ver {
-		return true
-	}
-	return false
+	return o.VersionTreeID() == ver
 }
 
 func (o *ObjectVersionID) setVersionTreeID(ver string) {

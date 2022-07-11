@@ -242,6 +242,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	if err != nil {
 		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 

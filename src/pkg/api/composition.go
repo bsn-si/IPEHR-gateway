@@ -101,6 +101,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -180,6 +181,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -253,6 +255,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -260,18 +263,19 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 
 	newUID, err := h.service.DeleteCompositionByID(&userUUID, &ehrUUID, versionUID)
 
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		h.addResponseHeaders(ehrID, newUID, c)
 		c.AbortWithStatus(http.StatusNoContent)
-	case errors.ErrAlreadyDeleted:
+	case errors.Is(err, errors.ErrAlreadyDeleted):
 		c.AbortWithStatus(http.StatusBadRequest)
-	case errors.ErrIsNotExist:
+	case errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
 	default:
 		log.Println(err)

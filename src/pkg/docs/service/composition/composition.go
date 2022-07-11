@@ -2,12 +2,13 @@ package composition
 
 import (
 	"encoding/json"
-	"golang.org/x/crypto/sha3"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/errors"
 	"log"
 	"time"
+
+	"golang.org/x/crypto/sha3"
 
 	"github.com/google/uuid"
 

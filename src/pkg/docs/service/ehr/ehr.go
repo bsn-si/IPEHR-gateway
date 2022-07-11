@@ -3,9 +3,10 @@ package ehr
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/crypto/sha3"
 	"log"
 	"time"
+
+	"golang.org/x/crypto/sha3"
 
 	"github.com/google/uuid"
 

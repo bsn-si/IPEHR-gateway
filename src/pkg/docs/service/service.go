@@ -69,22 +69,22 @@ func (d *DefaultDocumentService) GetObjectVersionIDByUID(UID string) base.Object
 }
 
 func (d *DefaultDocumentService) Init(userUUID, ehrUUID *uuid.UUID, objectVersionID base.ObjectVersionID, docType types.DocumentType) {
-	d.ehrUUID = ehrUUID
-	d.userUUID = userUUID
-	d.objectVersionID = objectVersionID
-	d.docType = docType
+	d.indexData.ehrUUID = ehrUUID
+	d.indexData.userUUID = userUUID
+	d.indexData.objectVersionID = objectVersionID
+	d.indexData.docType = docType
 }
 
 func (d *DefaultDocumentService) SetDocIndexes(indexes *[]*model.DocumentMeta) {
-	d.docIndexes = indexes
+	d.indexData.docIndexes = indexes
 }
 
 func (d *DefaultDocumentService) GetDocIndexes() (*[]*model.DocumentMeta, error) {
-	if d.docIndexes == nil {
+	if d.indexData.docIndexes == nil {
 		return nil, errors.ErrIsNotExist
 	}
 
-	return d.docIndexes, nil
+	return d.indexData.docIndexes, nil
 }
 
 func (d *DefaultDocumentService) SaveDocIndexes() (err error) {
@@ -150,6 +150,7 @@ func (d *DefaultDocumentService) GetDocIndexesByEhrID() (*[]*model.DocumentMeta,
 	if err != nil {
 		return nil, err
 	}
+
 	d.SetDocIndexes(&docsIndexesNew)
 
 	return &docsIndexesNew, nil
@@ -203,10 +204,10 @@ func (d *DefaultDocumentService) GetDocIndexByBaseIDAndVersion() (*model.Documen
 	}
 
 	for _, documentMeta := range *documentsMeta {
+		// TODO OR uid===uid, but really compare strings is not good
 		if d.objectVersionID.Equal(documentMeta.Version) {
 			return documentMeta, nil
 		}
-		// TODO OR uid===uid, but really compare strings is not good
 	}
 
 	return nil, errors.ErrIsNotExist
