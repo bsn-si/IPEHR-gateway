@@ -85,8 +85,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
-
-	statusIDNew := uuid.New().String()
+	statusIDNew := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
 
 	statusNew, err := service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace)
 	if err != nil {
@@ -126,7 +125,7 @@ func TestStatusUpdate(t *testing.T) {
 	userID := uuid.New().String()
 	subjectNamespace := testStatus
 	subjectID1 := uuid.New().String()
-	statusID2 := uuid.New().String()
+	statusID2 := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
 	subjectID2 := uuid.New().String()
 
 	newEhr, err := getNewEhr(docService, userID, subjectID1, subjectNamespace)
@@ -189,7 +188,7 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
-	statusIDNew := uuid.New().String()
+	statusIDNew := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
 
 	_, err = service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace)
 	if err != nil {
