@@ -36,11 +36,12 @@ func (i *Index) Add(ehrID string, docIndex *model.DocumentMeta) error {
 
 // Replace EHR documents
 func (i *Index) Replace(ehrID string, docIndexes []*model.DocumentMeta) error {
-	return i.index.Replace(ehrID, docIndexes)
+	return i.index.Replace(ehrID, docIndexes) // TODO проверить как работает, заменяет ли все или только переданные
 }
 
 // Get EHR documents metadata
 func (i *Index) Get(ehrID string) (docIndexes []*model.DocumentMeta, err error) {
+	// TODO can we caching data?
 	err = i.index.GetByID(ehrID, &docIndexes)
 	return
 }

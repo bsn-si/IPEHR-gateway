@@ -38,19 +38,17 @@ type testWrap struct {
 	server     *httptest.Server
 	httpClient *http.Client
 	storage    *storage.Storager
-	cfg        *config.Config
 }
 
 func Test_API(t *testing.T) {
 	var httpClient http.Client
 
-	testServer, storager, cfg := prepareTest(t)
+	testServer, storager := prepareTest(t)
 
 	testWrap := &testWrap{
 		server:     testServer,
 		httpClient: &httpClient,
 		storage:    &storager,
-		cfg:        cfg,
 	}
 	defer tearDown(*testWrap)
 
@@ -81,7 +79,7 @@ func Test_API(t *testing.T) {
 	t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData))
 }
 
-func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager, config2 *config.Config) {
+func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
 	t.Helper()
 
 	cfg, err := config.New()
@@ -95,7 +93,7 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager, 
 	r := api.New(cfg).Build()
 	ts = httptest.NewServer(r)
 
-	return ts, storage.Storage(), cfg
+	return ts, storage.Storage()
 }
 
 func tearDown(testWrap testWrap) {
@@ -678,9 +676,8 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 			t.Fatal(err)
 		}
 
-		composition.ObjectVersionID.New(composition.UID.Value, testWrap.cfg.CreatingSystemID)
+		composition.ObjectVersionID.New(composition.UID.Value, "")
 
-		// TODO composition.Uid.Value - should it be equal with versioned_object_uid?
 		composition.Name.Value = "Updated text"
 		updatedComposition, _ := json.Marshal(composition)
 
@@ -766,7 +763,8 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 			t.Fatalf("Expected status: %v, received %v", http.StatusNoContent, response.StatusCode)
 		}
 
-		// Check answer for repeated query
+		t.Log("Checking the status of a re-request to remove")
+
 		response, err = testWrap.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())

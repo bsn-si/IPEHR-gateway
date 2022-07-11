@@ -222,9 +222,17 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.service.Doc.GetDocIndexByDocID(userID, versionUID, &ehrUUID, types.EhrStatus)
+	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		log.Printf("GetDocIndexByDocID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
+		return
+	}
+
+	objectVersionID := h.service.Doc.GetObjectVersionIDByUID(versionUID)
+	h.service.Doc.Init(&userUUID, &ehrUUID, objectVersionID, types.EhrStatus)
+
+	docIndex, err := h.service.Doc.GetDocIndexByBaseIDAndVersion()
+	if err != nil {
+		log.Printf("GetDocIndexByObjectVersionID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
 
 		return
@@ -232,7 +240,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 
 	data, err := h.service.Doc.GetDocFromStorageByID(userID, docIndex.StorageID, []byte(versionUID))
 	if err != nil {
-		//TODO logging
+		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

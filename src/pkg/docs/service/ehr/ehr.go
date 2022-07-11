@@ -3,6 +3,7 @@ package ehr
 import (
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/sha3"
 	"log"
 	"time"
 
@@ -33,16 +34,16 @@ func (s *Service) EhrCreate(userID string, request *model.EhrCreateRequest) (*mo
 func (s *Service) EhrCreateWithID(userID, ehrID string, request *model.EhrCreateRequest) (*model.EHR, error) {
 	var ehr model.EHR
 
-	ehr.SystemID.Value = s.Doc.GetSystemID() //TODO
+	ehr.SystemID.Value = s.Doc.GetSystemID()
 	ehr.EhrID.Value = ehrID
 
 	ehr.EhrStatus.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrStatus.ID.Value = uuid.New().String() + "::openEHRSys.example.com::1"
+	ehr.EhrStatus.ID.Value = uuid.New().String() + "::" + s.Doc.GetSystemID() + "::1"
 	ehr.EhrStatus.Namespace = "local"
 	ehr.EhrStatus.Type = "EHR_STATUS"
 
 	ehr.EhrAccess.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrAccess.ID.Value = uuid.New().String() + "::openEHRSys.example.com::1"
+	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + s.Doc.GetSystemID() + "::1"
 	ehr.EhrAccess.Namespace = "local"
 	ehr.EhrAccess.Type = "EHR_ACCESS"
 
@@ -200,6 +201,9 @@ func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) erro
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
+	objectVersionID := s.Doc.GetObjectVersionIDByUID(status.UID.Value)
+	baseDocumentUID := objectVersionID.BasedID()
+
 	statusStorageID, err := s.saveStatusToStorage(status, key)
 	if err != nil {
 		return fmt.Errorf("saveStatusToStorage error: %w", err)
@@ -219,17 +223,19 @@ func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) erro
 	}
 
 	// Doc id encryption
-	statusIDEncrypted, err := key.EncryptWithAuthData([]byte(status.UID.Value), ehrUUID[:]) //TODO should reduce doc.Uid.Value?
+	statusIDEncrypted, err := key.EncryptWithAuthData([]byte(objectVersionID.String()), ehrUUID[:])
 	if err != nil {
 		return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s statusUid: %s", err, ehrID, status.UID.Value)
 	}
 
 	// Appending EHR doc index
 	docIndex := &model.DocumentMeta{
-		TypeCode:       types.EhrStatus,
-		StorageID:      statusStorageID,
-		DocIDEncrypted: statusIDEncrypted,
-		Timestamp:      uint64(time.Now().Unix()),
+		TypeCode:            types.EhrStatus,
+		StorageID:           statusStorageID,
+		DocIDEncrypted:      statusIDEncrypted,
+		Version:             objectVersionID.VersionTreeID(),
+		BaseDocumentUIDHash: sha3.Sum256([]byte(baseDocumentUID)),
+		Timestamp:           uint64(time.Now().Unix()),
 	}
 
 	if err = s.Doc.DocsIndex.Add(ehrID, docIndex); err != nil {

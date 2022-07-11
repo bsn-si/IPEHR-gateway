@@ -1,7 +1,9 @@
 package base
 
 import (
+	"github.com/google/uuid"
 	"hms/gateway/pkg/errors"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,7 +15,7 @@ import (
 type ObjectVersionID struct {
 	UID *UIDBasedID `json:"uid,omitempty"`
 
-	objectID         string
+	objectID         uuid.UUID
 	creatingSystemID string
 	versionTreeID    string
 }
@@ -25,29 +27,29 @@ const (
 
 type UID interface {
 	String() string
-	ObjectID() string
+	ObjectID() uuid.UUID
 	CreatingSystemID() string
 	VersionTreeID() string
 	//IsBranch() bool
 }
 
 func (o *ObjectVersionID) New(UID string, creatingSystemID string) {
-	o.parseUID(UID)
 	o.creatingSystemID = creatingSystemID
+	o.parseUID(UID)
 	o.UID = &UIDBasedID{ObjectID{Value: o.String()}}
 }
 
 func (o *ObjectVersionID) String() string {
-	uid := []string{o.ObjectID(), o.CreatingSystemID(), o.VersionTreeID()}
+	uid := []string{o.ObjectID().String(), o.CreatingSystemID(), o.VersionTreeID()}
 	return strings.Join(uid, uidDelimiter)
 }
 
 func (o *ObjectVersionID) BasedID() string {
-	UID := []string{o.ObjectID(), o.CreatingSystemID()}
+	UID := []string{o.ObjectID().String(), o.CreatingSystemID()}
 	return strings.Join(UID, uidDelimiter)
 }
 
-func (o *ObjectVersionID) ObjectID() string {
+func (o *ObjectVersionID) ObjectID() uuid.UUID {
 	return o.objectID
 }
 
@@ -57,6 +59,13 @@ func (o *ObjectVersionID) CreatingSystemID() string {
 
 func (o *ObjectVersionID) VersionTreeID() string {
 	return o.versionTreeID
+}
+
+func (o *ObjectVersionID) Equal(ver string) bool {
+	if o.VersionTreeID() == ver {
+		return true
+	}
+	return false
 }
 
 func (o *ObjectVersionID) setVersionTreeID(ver string) {
@@ -74,7 +83,6 @@ func (o *ObjectVersionID) parseUID(UID string) {
 	if length := len(parts); length == 0 {
 		return
 	} else if length == 1 {
-		o.creatingSystemID = ""
 		o.setVersionTreeID("")
 	} else if length == 2 {
 		ver := strings.Join(parts[1:2], "")
@@ -88,11 +96,18 @@ func (o *ObjectVersionID) parseUID(UID string) {
 		o.setVersionTreeID(strings.Join(parts[2:3], ""))
 	}
 
-	o.objectID = strings.Join(parts[0:1], "")
+	objectID := strings.Join(parts[0:1], "")
+
+	objectUUID, err := uuid.Parse(objectID)
+	if err != nil {
+		log.Fatal(errors.ErrIncorrectFormat)
+	}
+
+	o.objectID = objectUUID
 }
 
 func (o *ObjectVersionID) isVersion(ver string) bool {
-	re := regexp.MustCompile(`^(\d+\.?)+$`)
+	re := regexp.MustCompile(`^(\d+)+$`)
 	return re.MatchString(ver)
 }
 
