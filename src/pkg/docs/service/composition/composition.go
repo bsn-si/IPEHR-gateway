@@ -79,10 +79,10 @@ func (s *Service) save(userUUID, ehrUUID *uuid.UUID, groupAccess *model.GroupAcc
 	objectVersionID := s.Doc.GetObjectVersionIDByUID(doc.UID.Value)
 	baseDocumentUID := objectVersionID.BasedID()
 
-	s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
+	initialData := s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
 
 	// Checking the existence of the Composition
-	if docMeta, err := s.Doc.GetDocIndexByObjectVersionID(); err == nil {
+	if docMeta, err := s.Doc.GetDocIndexByObjectVersionID(initialData); err == nil {
 		if docMeta != nil {
 			return errors.ErrAlreadyExist
 		}
@@ -135,13 +135,13 @@ func (s *Service) save(userUUID, ehrUUID *uuid.UUID, groupAccess *model.GroupAcc
 		Status:              status.ACTIVE,
 	}
 
-	docIndexes, err := s.Doc.GetDocIndexesByBaseID()
+	docIndexes, err := s.Doc.GetDocIndexesByBaseID(initialData)
 	if err != nil {
 		return
 	}
 
 	//TODO need replace it to transaction model, e.g. what will happen if saving in storage failed (strange I know, but...), but docIndexes was already updated?
-	if err = s.Doc.UpdateCollection(*docIndexes, func(meta *model.DocumentMeta) (err error) {
+	if err = s.Doc.UpdateCollection(initialData, *docIndexes, func(meta *model.DocumentMeta) (err error) {
 		meta.IsLastVersion = false
 		return
 	}); err != nil {
@@ -178,9 +178,9 @@ func (s *Service) GetLastCompositionByBaseID(userUUID, ehrUUID *uuid.UUID, versi
 	var documentMeta *model.DocumentMeta
 
 	objectVersionID := s.Doc.GetObjectVersionIDByUID(versionUID)
-	s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
+	initialData := s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
 
-	documentMeta, err = s.Doc.GetLastVersionDocIndexByBaseID()
+	documentMeta, err = s.Doc.GetLastVersionDocIndexByBaseID(initialData)
 	if err != nil {
 		return
 	}
@@ -202,9 +202,9 @@ func (s *Service) GetLastCompositionByBaseID(userUUID, ehrUUID *uuid.UUID, versi
 
 func (s *Service) GetCompositionByID(userUUID, ehrUUID *uuid.UUID, versionUID string) (composition *model.Composition, err error) {
 	objectVersionID := s.Doc.GetObjectVersionIDByUID(versionUID)
-	s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
+	initialData := s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
 
-	documentMeta, err := s.Doc.GetDocIndexByBaseIDAndVersion()
+	documentMeta, err := s.Doc.GetDocIndexByBaseIDAndVersion(initialData)
 	if err != nil {
 		return nil, err
 	}
@@ -231,15 +231,15 @@ func (s *Service) GetCompositionByID(userUUID, ehrUUID *uuid.UUID, versionUID st
 
 func (s *Service) DeleteCompositionByID(userUUID, ehrUUID *uuid.UUID, versionUID string) (newUID string, err error) {
 	objectVersionID := s.Doc.GetObjectVersionIDByUID(versionUID)
+	initialData := s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
 
-	s.Doc.Init(userUUID, ehrUUID, objectVersionID, types.Composition)
-
-	c, err := s.Doc.GetDocIndexByBaseIDAndVersion()
+	c, err := s.Doc.GetDocIndexByBaseIDAndVersion(initialData)
 	if err != nil {
 		return
 	}
 
 	err = s.Doc.Update(
+		initialData,
 		c,
 		func(meta *model.DocumentMeta) error {
 			if meta.Status == status.DELETED {

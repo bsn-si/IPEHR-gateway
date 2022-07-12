@@ -36,7 +36,7 @@ func (i *Index) Add(ehrID string, docIndex *model.DocumentMeta) error {
 
 // Replace EHR documents
 func (i *Index) Replace(ehrID string, docIndexes []*model.DocumentMeta) error {
-	return i.index.Replace(ehrID, docIndexes) // TODO проверить как работает, заменяет ли все или только переданные
+	return i.index.Replace(ehrID, docIndexes)
 }
 
 // Get EHR documents metadata
