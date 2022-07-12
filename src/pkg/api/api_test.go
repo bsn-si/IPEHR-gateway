@@ -524,7 +524,7 @@ func (testWrap *testWrap) ehrGetBySubject() func(t *testing.T) {
 		}
 
 		if ehrDoc.EhrID.Value != ehrID {
-			t.Error("Got wrong EHR")
+			t.Fatal("Got wrong EHR")
 		}
 	}
 }
@@ -541,8 +541,7 @@ func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
 
 		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+ehrID+"/composition", body)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
@@ -551,13 +550,12 @@ func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 		defer response.Body.Close()
 
 		if response.StatusCode == http.StatusCreated {
-			t.Errorf("Expected error, received status: %d", response.StatusCode)
+			t.Fatalf("Expected error, received status: %d", response.StatusCode)
 		}
 	}
 }
@@ -581,13 +579,12 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusCreated {
-			t.Errorf("Expected success, received status: %d", response.StatusCode)
+			t.Fatalf("Expected success, received status: %d", response.StatusCode)
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
@@ -597,8 +594,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 
 		var c model.Composition
 		if err = json.Unmarshal(data, &c); err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		testData.compositionID = c.UID.Value
