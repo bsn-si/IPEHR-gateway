@@ -89,6 +89,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		} else {
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
 		}
 

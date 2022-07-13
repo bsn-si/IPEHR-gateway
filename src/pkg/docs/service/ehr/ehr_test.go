@@ -94,7 +94,9 @@ func TestStatus(t *testing.T) {
 
 	// get current EHR status
 
-	statusGet, err := service.GetStatus(userID, ehrID)
+	ehrUUID, _ := uuid.Parse(ehrID)
+
+	statusGet, err := service.GetStatus(userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +147,9 @@ func TestStatusUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	statusGet3, err := service.GetStatus(userID, ehrID)
+	ehrUUID, _ := uuid.Parse(ehrID)
+
+	statusGet3, err := service.GetStatus(userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +200,9 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	// Test: docIndex is not exist yet
-	if _, err := service.GetStatusByNearestTime(userID, ehrID, time.Now(), types.EhrStatus); err != nil {
+	ehrUUID, _ := uuid.Parse(ehrID)
+
+	if _, err := service.GetStatusByNearestTime(userID, &ehrUUID, time.Now(), types.EhrStatus); err != nil {
 		t.Fatal("Should return status", err)
 	}
 }

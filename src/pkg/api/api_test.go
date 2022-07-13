@@ -22,6 +22,7 @@ import (
 	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/storage"
 )
 
@@ -672,7 +673,9 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 			t.Fatal(err)
 		}
 
-		composition.ObjectVersionID.New(composition.UID.Value, "")
+		objectVersionID := base.NewObjectVersionID(composition.UID.Value, "")
+
+		composition.ObjectVersionID = *objectVersionID
 
 		composition.Name.Value = "Updated text"
 		updatedComposition, _ := json.Marshal(composition)

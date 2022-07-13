@@ -10,7 +10,7 @@ type DocumentMeta struct {
 	StorageID           *[32]byte
 	DocIDEncrypted      []byte
 	Timestamp           uint64
-	BaseDocumentUIDHash [32]byte
+	BaseDocumentUIDHash *[32]byte
 	IsLastVersion       bool
 	Version             string
 	Status              status.DocumentStatus

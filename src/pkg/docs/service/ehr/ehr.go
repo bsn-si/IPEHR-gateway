@@ -16,6 +16,7 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 )
 
 type Service struct {
@@ -204,8 +205,9 @@ func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) erro
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
-	objectVersionID := s.Doc.GetObjectVersionIDByUID(status.UID.Value)
+	objectVersionID := base.NewObjectVersionID(status.UID.Value, s.Doc.GetSystemID())
 	baseDocumentUID := objectVersionID.BasedID()
+	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 
 	statusStorageID, err := s.saveStatusToStorage(status, key)
 	if err != nil {
@@ -237,7 +239,7 @@ func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) erro
 		StorageID:           statusStorageID,
 		DocIDEncrypted:      statusIDEncrypted,
 		Version:             objectVersionID.VersionTreeID(),
-		BaseDocumentUIDHash: sha3.Sum256([]byte(baseDocumentUID)),
+		BaseDocumentUIDHash: &baseDocumentUIDHash,
 		Timestamp:           uint64(time.Now().Unix()),
 	}
 
@@ -247,7 +249,7 @@ func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) erro
 
 	// Index Access
 	if err = s.Doc.DocAccessIndex.Add(userID, statusStorageID, key.Bytes()); err != nil {
-		return fmt.Errorf(".DocAccessIndex.Add error: %w userID: %s statusStorageID: %x", err, userID, statusStorageID)
+		return fmt.Errorf("DocAccessIndex.Add error: %w userID: %s statusStorageID: %x", err, userID, statusStorageID)
 	}
 
 	if err = s.UpdateStatus(userID, ehrID, status); err != nil {
@@ -258,54 +260,62 @@ func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) erro
 }
 
 // GetStatus Get current (last) status of EHR document
-func (s *Service) GetStatus(userID, ehrID string) (status *model.EhrStatus, err error) {
-	statusMeta, err := s.Doc.DocsIndex.GetLastByType(ehrID, types.EhrStatus)
+func (s *Service) GetStatus(userID string, ehrUUID *uuid.UUID) (*model.EhrStatus, error) {
+	statusMeta, err := s.Doc.DocsIndex.GetLastByType(ehrUUID.String(), types.EhrStatus)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("DocsIndex.GetLastByType error: %w ehrID %s docType %s", err, ehrUUID.String(), types.EhrStatus.String())
 	}
 
-	status, err = s.getStatusFromStorage(userID, ehrID, statusMeta)
+	status, err := s.getStatusFromStorage(userID, ehrUUID, statusMeta)
+	if err != nil {
+		return nil, fmt.Errorf("getStatusFromStorage error: %w userID %s ehrID %s", err, userID, ehrUUID.String())
+	}
 
-	return
+	return status, nil
 }
 
-func (s *Service) GetStatusBySubject(userID, subjectID, namespace string) (status *model.EhrStatus, err error) {
+func (s *Service) GetStatusBySubject(userID, subjectID, namespace string) (*model.EhrStatus, error) {
 	ehrID, err := s.Doc.SubjectIndex.GetEhrBySubject(subjectID, namespace)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("SubjectIndex.GetEhrBySubject error: %w subjectID %s namespace %s", err, subjectID, namespace)
 	}
 
 	statuses, err := s.Doc.DocsIndex.GetByType(ehrID, types.EhrStatus)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("DocsIndex.GetByType error: %w ehrID %s docType %s", err, ehrID, types.EhrStatus.String())
+	}
+
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		return nil, fmt.Errorf("UUID parse error: %w ehrID %s", err, ehrID)
 	}
 
 	for _, v := range statuses {
-		status, err = s.getStatusFromStorage(userID, ehrID, v)
+		status, err := s.getStatusFromStorage(userID, &ehrUUID, v)
 		if err != nil {
-			return
+			return nil, fmt.Errorf("getStatusFromStorage error: %w userID %s ehrUUID %s", err, userID, ehrID)
 		}
 
 		if status.Subject.ExternalRef.ID.Value == subjectID && status.Subject.ExternalRef.Namespace == namespace {
-			return
+			return status, nil
 		}
 	}
 
-	return
+	return nil, fmt.Errorf("GetStatusBySubject error: %w", errors.ErrIsNotExist)
 }
 
-func (s *Service) GetStatusByNearestTime(userID, ehrID string, nearestTime time.Time, docType types.DocumentType) (status *model.EhrStatus, err error) {
-	docIndex, err := s.Doc.DocsIndex.GetDocIndexByNearestTime(ehrID, nearestTime, docType)
+func (s *Service) GetStatusByNearestTime(userID string, ehrUUID *uuid.UUID, nearestTime time.Time, docType types.DocumentType) (*model.EhrStatus, error) {
+	docIndex, err := s.Doc.DocsIndex.GetByNearestTime(ehrUUID.String(), nearestTime, docType)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("DocsIndex.GetByNearestTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), nearestTime.String(), docType.String())
 	}
 
-	status, err = s.getStatusFromStorage(userID, ehrID, docIndex)
+	status, err := s.getStatusFromStorage(userID, ehrUUID, docIndex)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("getStatusFromStorage error: %w userID %s ehrID %s", err, userID, ehrUUID.String())
 	}
 
-	return
+	return status, nil
 }
 
 func (s *Service) saveStatusToStorage(status *model.EhrStatus, key *chachaPoly.Key) (storageID *[32]byte, err error) {
@@ -333,42 +343,37 @@ func (s *Service) saveStatusToStorage(status *model.EhrStatus, key *chachaPoly.K
 	return
 }
 
-func (s *Service) getStatusFromStorage(userID, ehrID string, statusMeta *model.DocumentMeta) (*model.EhrStatus, error) {
+func (s *Service) getStatusFromStorage(userID string, ehrUUID *uuid.UUID, statusMeta *model.DocumentMeta) (*model.EhrStatus, error) {
 	encryptedStatus, err := s.Doc.Storage.Get(statusMeta.StorageID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Storage.Get error: %w StorageID %x", err, statusMeta.StorageID)
 	}
 
 	statusKey, err := s.Doc.DocAccessIndex.GetDocumentKey(userID, statusMeta.StorageID)
 	if err != nil {
-		return nil, err
-	}
-
-	ehrUUID, err := uuid.Parse(ehrID)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetDocumentKey error: %w userID %s StorageID %x", err, userID, statusMeta.StorageID)
 	}
 
 	statusID, err := statusKey.DecryptWithAuthData(statusMeta.DocIDEncrypted, ehrUUID[:])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("DocIDEncrypted DecryptWithAuthData error: %w", err)
 	}
 
 	statusBytes, err := statusKey.DecryptWithAuthData(encryptedStatus, statusID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("encryptedStatus DecryptWithAuthData error: %w", err)
 	}
 
 	if s.Doc.CompressionEnabled {
 		statusBytes, err = s.Doc.Compressor.Decompress(statusBytes)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Decompress error: %w", err)
 		}
 	}
 
 	var status model.EhrStatus
 	if err = json.Unmarshal(statusBytes, &status); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("EHR status unmarshal error: %w", err)
 	}
 
 	return &status, nil

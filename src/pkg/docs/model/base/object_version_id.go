@@ -34,10 +34,15 @@ type UID interface {
 	//IsBranch() bool
 }
 
-func (o *ObjectVersionID) New(UID string, creatingSystemID string) {
-	o.creatingSystemID = creatingSystemID
+func NewObjectVersionID(UID string, creatingSystemID string) *ObjectVersionID {
+	o := &ObjectVersionID{
+		creatingSystemID: creatingSystemID,
+	}
+
 	o.parseUID(UID)
 	o.UID = &UIDBasedID{ObjectID{Value: o.String()}}
+
+	return o
 }
 
 func (o *ObjectVersionID) String() string {

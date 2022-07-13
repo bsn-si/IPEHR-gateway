@@ -97,14 +97,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		log.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-
-		return
-	}
-
 	// TODO move this checks into common???
 	// Checking EHR does not exist
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
@@ -127,7 +119,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(&userUUID, &ehrUUID, &groupAccessUUID, &request)
+	doc, err := h.service.Create(userID, &ehrUUID, &groupAccessUUID, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -177,14 +169,6 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		log.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-
-		return
-	}
-
 	// Checking EHR does not exist
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
@@ -192,7 +176,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.GetCompositionByID(&userUUID, &ehrUUID, versionUID)
+	data, err := h.service.GetByID(userID, &ehrUUID, versionUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -251,23 +235,14 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		log.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-
-		return
-	}
-
 	// Checking EHR does not exist
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
-
 		return
 	}
 
-	newUID, err := h.service.DeleteCompositionByID(&userUUID, &ehrUUID, versionUID)
+	newUID, err := h.service.DeleteByID(userID, &ehrUUID, versionUID)
 
 	switch {
 	case err == nil:
@@ -339,11 +314,6 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return
-	}
-
 	// Checking EHR does not exist
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
@@ -358,9 +328,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 
 	groupAccessUUID, err := uuid.Parse(groupIDStr)
 	if err != nil {
-		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
@@ -369,44 +337,32 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
 		return
 	}
+	defer c.Request.Body.Close()
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Panic("Cant close body request")
-		}
-	}(c.Request.Body)
+	var compositionUpdate model.Composition
 
-	var request model.Composition
-
-	if err = json.Unmarshal(data, &request); err != nil {
-		log.Println("Composition Create request unmarshal error", err)
+	if err = json.Unmarshal(data, &compositionUpdate); err != nil {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
-
 		return
 	}
 
-	if !request.Validate() {
+	if !compositionUpdate.Validate() {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
-
 		return
 	}
 
-	if request.UID.Value != precedingVersionUID {
+	if compositionUpdate.UID.Value != precedingVersionUID {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
-
 		return
 	}
 
-	compositionLast, err := h.service.GetLastCompositionByBaseID(&userUUID, &ehrUUID, versionUID)
+	compositionLast, err := h.service.GetLastByBaseID(userID, &ehrUUID, versionUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
-
 			return
 		}
 
-		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 
 		return
@@ -419,12 +375,9 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(&userUUID, &ehrUUID, &groupAccessUUID, compositionLast)
-
+	compositionUpdated, err := h.service.Update(userID, &ehrUUID, &groupAccessUUID, &compositionUpdate)
 	if err != nil {
-		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
