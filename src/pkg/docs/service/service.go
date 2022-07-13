@@ -42,7 +42,6 @@ type DefaultDocumentService struct {
 	GroupAccessIndex   *groupAccess.Index
 	Compressor         compressor.Interface
 	CompressionEnabled bool
-	IndexData
 }
 
 func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
@@ -68,7 +67,7 @@ func (d *DefaultDocumentService) GetObjectVersionIDByUID(UID string) base.Object
 	return documentUID
 }
 
-func (d *DefaultDocumentService) Init(userUUID, ehrUUID *uuid.UUID, objectVersionID base.ObjectVersionID, docType types.DocumentType) *IndexData {
+func (d *DefaultDocumentService) SetBaseParams(userUUID, ehrUUID *uuid.UUID, objectVersionID base.ObjectVersionID, docType types.DocumentType) *IndexData {
 	data := IndexData{
 		ehrUUID:         ehrUUID,
 		userUUID:        userUUID,

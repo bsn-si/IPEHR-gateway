@@ -228,7 +228,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	}
 
 	objectVersionID := h.service.Doc.GetObjectVersionIDByUID(versionUID)
-	initialData := h.service.Doc.Init(&userUUID, &ehrUUID, objectVersionID, types.EhrStatus)
+	initialData := h.service.Doc.SetBaseParams(&userUUID, &ehrUUID, objectVersionID, types.EhrStatus)
 
 	docIndex, err := h.service.Doc.GetDocIndexByBaseIDAndVersion(initialData)
 	if err != nil {
