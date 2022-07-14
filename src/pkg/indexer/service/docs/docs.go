@@ -41,6 +41,7 @@ func (i *Index) Replace(ehrID string, docIndexes []*model.DocumentMeta) error {
 
 // Get EHR documents metadata
 func (i *Index) Get(ehrID string) (docIndexes []*model.DocumentMeta, err error) {
+	// TODO can we caching data?
 	err = i.index.GetByID(ehrID, &docIndexes)
 	return
 }
@@ -85,7 +86,7 @@ func (i *Index) GetLastByType(ehrID string, docType types.DocumentType) (doc *mo
 	return doc, nil
 }
 
-func (i *Index) GetDocIndexByNearestTime(ehrID string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
+func (i *Index) GetByNearestTime(ehrID string, nearestTime time.Time, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
 	docIndexes, err := i.Get(ehrID)
 	if err != nil {
 		return nil, err

@@ -85,8 +85,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
-
-	statusIDNew := uuid.New().String()
+	statusIDNew := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
 
 	statusNew, err := service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace)
 	if err != nil {
@@ -95,7 +94,9 @@ func TestStatus(t *testing.T) {
 
 	// get current EHR status
 
-	statusGet, err := service.GetStatus(userID, ehrID)
+	ehrUUID, _ := uuid.Parse(ehrID)
+
+	statusGet, err := service.GetStatus(userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +127,7 @@ func TestStatusUpdate(t *testing.T) {
 	userID := uuid.New().String()
 	subjectNamespace := testStatus
 	subjectID1 := uuid.New().String()
-	statusID2 := uuid.New().String()
+	statusID2 := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
 	subjectID2 := uuid.New().String()
 
 	newEhr, err := getNewEhr(docService, userID, subjectID1, subjectNamespace)
@@ -146,7 +147,9 @@ func TestStatusUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	statusGet3, err := service.GetStatus(userID, ehrID)
+	ehrUUID, _ := uuid.Parse(ehrID)
+
+	statusGet3, err := service.GetStatus(userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +192,7 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
-	statusIDNew := uuid.New().String()
+	statusIDNew := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
 
 	_, err = service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace)
 	if err != nil {
@@ -197,7 +200,9 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	// Test: docIndex is not exist yet
-	if _, err := service.GetStatusByNearestTime(userID, ehrID, time.Now(), types.EhrStatus); err != nil {
+	ehrUUID, _ := uuid.Parse(ehrID)
+
+	if _, err := service.GetStatusByNearestTime(userID, &ehrUUID, time.Now(), types.EhrStatus); err != nil {
 		t.Fatal("Should return status", err)
 	}
 }

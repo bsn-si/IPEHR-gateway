@@ -13,6 +13,7 @@ import (
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
@@ -59,13 +60,11 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	/*
-		ehrUUID, err := uuid.Parse(ehrID)
-		if err != nil {
-			c.AbortWithStatus(http.StatusNotFound)
-			return
-		}
-	*/
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 
 	userID := c.GetString("userId")
 	if userID == "" {
@@ -75,7 +74,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 
 	IfMatch := c.Request.Header.Get("If-Match")
 
-	docLast, err := h.service.GetStatus(userID, ehrID)
+	docLast, err := h.service.GetStatus(userID, &ehrUUID)
 	if err != nil {
 		log.Println("ehrStatusService.Get error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting last EHR document status"})
@@ -155,6 +154,12 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	userID := c.GetString("userId")
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
@@ -171,7 +176,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	status, err := h.service.GetStatusByNearestTime(userID, ehrID, statusTime, types.EhrStatus)
+	status, err := h.service.GetStatusByNearestTime(userID, &ehrUUID, statusTime, types.EhrStatus)
 	if err != nil {
 		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrID, statusTime, err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -222,9 +227,11 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.service.Doc.GetDocIndexByDocID(userID, versionUID, &ehrUUID, types.EhrStatus)
+	objectVersionID := base.NewObjectVersionID(versionUID, h.service.Doc.GetSystemID())
+
+	docIndex, err := h.service.Doc.GetDocIndexByBaseIDAndVersion(&ehrUUID, objectVersionID, types.EhrStatus)
 	if err != nil {
-		log.Printf("GetDocIndexByDocID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
+		log.Printf("GetDocIndexByObjectVersionID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
 
 		return
@@ -232,8 +239,9 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 
 	data, err := h.service.Doc.GetDocFromStorageByID(userID, docIndex.StorageID, []byte(versionUID))
 	if err != nil {
-		//TODO logging
+		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 

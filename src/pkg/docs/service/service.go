@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hms/gateway/pkg/compressor"
+	"hms/gateway/pkg/docs/model/base"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
@@ -12,7 +13,6 @@ import (
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/service/docAccess"
@@ -52,12 +52,7 @@ func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 	}
 }
 
-func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUID *uuid.UUID, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, err
-	}
-
+func (d *DefaultDocumentService) GetDocIndexByObjectVersionID(userID string, ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID) (doc *model.DocumentMeta, err error) {
 	// Getting user privateKey
 	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
 	if err != nil {
@@ -69,13 +64,11 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 		return nil, err
 	}
 
-	for _, docIndex := range docIndexes {
-		if docType > 0 && docIndex.TypeCode != docType {
-			continue
-		}
+	objVersionIDString := objectVersionID.String()
 
+	for _, docIndex := range docIndexes {
 		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
+		indexKey := sha3.Sum256(append(docIndex.StorageID[:], []byte(userID)...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
 
 		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
@@ -102,7 +95,68 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 			continue
 		}
 
-		if docID == string(docIDDecrypted) {
+		if objVersionIDString == string(docIDDecrypted) {
+			return docIndex, nil
+		}
+	}
+
+	return nil, errors.ErrIsNotExist
+}
+
+func (d *DefaultDocumentService) GetDocIndexesByBaseID(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) ([]*model.DocumentMeta, error) {
+	docIndexes, err := d.DocsIndex.Get(ehrUUID.String())
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		docsMeta            []*model.DocumentMeta
+		basedID             = objectVersionID.BasedID()
+		baseDocumentUIDHash = sha3.Sum256([]byte(basedID))
+	)
+
+	for _, docIndex := range docIndexes {
+		if docType > 0 && docIndex.TypeCode != docType {
+			continue
+		}
+
+		if docIndex.BaseDocumentUIDHash == nil {
+			continue
+		}
+
+		if *docIndex.BaseDocumentUIDHash != baseDocumentUIDHash {
+			continue
+		}
+
+		docsMeta = append(docsMeta, docIndex)
+	}
+
+	return docsMeta, nil
+}
+
+func (d *DefaultDocumentService) GetDocIndexByBaseIDAndVersion(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) (*model.DocumentMeta, error) {
+	docIndexes, err := d.GetDocIndexesByBaseID(ehrUUID, objectVersionID, docType)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, docIndex := range docIndexes {
+		if docIndex.Version == objectVersionID.VersionTreeID() {
+			return docIndex, nil
+		}
+	}
+
+	return nil, errors.ErrIsNotExist
+}
+
+func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseID(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) (*model.DocumentMeta, error) {
+	docIndexes, err := d.GetDocIndexesByBaseID(ehrUUID, objectVersionID, docType)
+	if err != nil {
+		return nil, fmt.Errorf("GetDocIndexesByBaseID error: %w", err)
+	}
+
+	for _, docIndex := range docIndexes {
+		if docIndex.IsLastVersion {
 			return docIndex, nil
 		}
 	}
@@ -111,13 +165,8 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 }
 
 func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID *[32]byte, authData []byte) (docBytes []byte, err error) {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, err
-	}
-
 	// Getting access key
-	indexKey := sha3.Sum256(append(storageID[:], userUUID[:]...))
+	indexKey := sha3.Sum256(append(storageID[:], []byte(userID)...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
 
 	keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
@@ -165,77 +214,25 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID 
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) UpdateDocStatus(userID, ehrID, docID string, docType types.DocumentType, old, new status.DocumentStatus) (err error) {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return err
-	}
+func (d *DefaultDocumentService) UpdateCollection(ehrUUID *uuid.UUID, docIndexes, toUpdate []*model.DocumentMeta, action func(*model.DocumentMeta) error) (err error) {
+	changed := false
 
-	ehrUUID, err := uuid.Parse(ehrID)
-	if err != nil {
-		return err
-	}
-
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
-	if err != nil {
-		return err
-	}
-
-	docIndexes, err := d.DocsIndex.Get(ehrID)
-	if err != nil {
-		return err
-	}
-
-	for _, docIndex := range docIndexes {
-		if docType > 0 && docIndex.TypeCode != docType {
-			continue
-		}
-
-		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
-		indexKeyStr := hex.EncodeToString(indexKey[:])
-
-		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
+	for _, docIndex := range toUpdate {
+		err := action(docIndex)
 		if err != nil {
 			return err
 		}
 
-		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-		if err != nil {
+		changed = true
+	}
+
+	if changed {
+		if err = d.DocsIndex.Replace(ehrUUID.String(), docIndexes); err != nil {
 			return err
-		}
-
-		if len(keyDecrypted) != 32 {
-			return fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
-		}
-
-		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
-		if err != nil {
-			return err
-		}
-
-		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
-		if err != nil {
-			continue
-		}
-
-		if docID == string(docIDDecrypted) {
-			if docIndex.Status == new {
-				return errors.ErrAlreadyUpdated
-			}
-
-			docIndex.Status = new
-
-			if err = d.DocsIndex.Replace(ehrID, docIndexes); err != nil {
-				return err
-			}
-
-			return nil
 		}
 	}
 
-	return errors.ErrIsNotExist
+	return
 }
 
 func (d *DefaultDocumentService) GenerateID() string {
@@ -243,7 +240,8 @@ func (d *DefaultDocumentService) GenerateID() string {
 }
 
 func (d *DefaultDocumentService) GetSystemID() string {
-	return ""
+	// TODO how will we use it dynamically?
+	return "openEHRSys.example.com"
 }
 
 func (d *DefaultDocumentService) ValidateID(id string, docType types.DocumentType) bool {
