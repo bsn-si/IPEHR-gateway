@@ -134,6 +134,7 @@ func (o *ObjectVersionID) IncreaseUIDVersion() (ver string, err error) {
 		return "", err
 	}
 
+	// TODO fix it to increase last digit in id
 	verInt, err := strconv.Atoi(ver)
 	if err != nil {
 		return "", err

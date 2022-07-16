@@ -42,6 +42,7 @@ func NewEhrHandler(docService *service.DefaultDocumentService, cfg *config.Confi
 // @Accept       json
 // @Produce      json
 // @Param        AuthUserId  header    string                  true  "UserId UUID"
+// @Param        EhrSystemId header    string                  true  "The identifier of the system, typically a reverse domain identifier"
 // @Param        Prefer      header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request     body      model.EhrCreateRequest  true  "Query Request"
 // @Success      201         {object}  model.EhrSummary
@@ -116,6 +117,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        AuthUserId  header    string                  true  "UserId UUID"
+// @Param        EhrSystemId header    string                  true  "The identifier of the system, typically a reverse domain identifier"
 // @Param        Prefer      header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        ehr_id      path      string                  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        Request     body      model.EhrCreateRequest  true  "Query Request"
@@ -203,6 +205,7 @@ func (h EhrHandler) CreateWithID(c *gin.Context) {
 // @Produce      json
 // @Param        ehr_id      path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        AuthUserId         header    string  true  "UserId UUID"
+// @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary
 // @Failure      400                "Is returned when userId is empty"
 // @Failure      404                "Is returned when an EHR with ehr_id does not exist."
@@ -235,7 +238,6 @@ func (h EhrHandler) GetByID(c *gin.Context) {
 	// Getting doc from storage
 	docDecrypted, err := h.service.Doc.GetDocFromStorageByID(userID, doc.StorageID, []byte(ehrID))
 	if err != nil {
-		//TODO some logging
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
 		return
 	}
