@@ -2,7 +2,7 @@
 
 [![golangci-lint](https://github.com/bsn-si/IPEHR-gateway/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/bsn-si/IPEHR-gateway/actions/workflows/golangci-lint.yml)
 
-## Disclamer
+## Disclaimer
 
 The project is under active development and will gradually be supplemented.
 
@@ -12,7 +12,7 @@ Today common HMS applications store patients’ data in a local or a cloud DB wh
 
 -	Administrative overheard due to the rights provisioning on per patients/per record level.
 -	Patients lack control and visibility over who has access to their data which goes against natural data subject rights announced in GDPR (General Data Protection Regulation, chapter 3).
--	Super user access for DB and LDAP (access rights catalogue) create additional security risks.
+-	Superuser access for DB and LDAP (access rights catalogue) create additional security risks.
 -	In case of a data breach full registry will be compromised.
 
 The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of storing the data registry. Patients’ data will be stored in Filecoin network and will be accessed directly by stakeholders in case they have proper rights. Access rights and documents’ indexes will be stored on a blockchain in a smart-contract. Every data subject will have full unalienable control over his data and manage access rights on a personal level.
@@ -29,7 +29,7 @@ The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of 
 
 - all data is stored in a decentralized storage;
 - data encryption;
-- self management of user’s access rights;
+- self-management of user’s access rights;
 - data integrity and authenticity is guaranteed by a smart contract.
 
 ## Development roadmap
@@ -102,7 +102,7 @@ The following methods are based on the [standard specification of OpenEHR](https
 
 ## Workflow example
 
-You can use [this](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project#workflow-example) insctuction and try to create, update or get EHR
+You can use [this](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project#workflow-example) instruction and try to create, update or get EHR
 For now we have the following methods:
 
 - Create an EHR (also with exact id or different parameters)
