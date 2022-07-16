@@ -29,23 +29,23 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) EhrCreate(userID string, request *model.EhrCreateRequest) (*model.EHR, error) {
-	return s.EhrCreateWithID(userID, uuid.New().String(), request)
+func (s *Service) EhrCreate(userID string, ehrSystemID *base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
+	return s.EhrCreateWithID(userID, uuid.New().String(), ehrSystemID, request)
 }
 
-func (s *Service) EhrCreateWithID(userID, ehrID string, request *model.EhrCreateRequest) (*model.EHR, error) {
+func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID *base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
 	var ehr model.EHR
 
-	ehr.SystemID.Value = s.Doc.GetSystemID()
+	ehr.SystemID.Value = ehrSystemID.String()
 	ehr.EhrID.Value = ehrID
 
 	ehr.EhrStatus.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrStatus.ID.Value = uuid.New().String() + "::" + s.Doc.GetSystemID() + "::1"
+	ehr.EhrStatus.ID.Value = uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	ehr.EhrStatus.Namespace = "local"
 	ehr.EhrStatus.Type = "EHR_STATUS"
 
 	ehr.EhrAccess.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + s.Doc.GetSystemID() + "::1"
+	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	ehr.EhrAccess.Namespace = "local"
 	ehr.EhrAccess.Type = "EHR_ACCESS"
 
@@ -61,7 +61,7 @@ func (s *Service) EhrCreateWithID(userID, ehrID string, request *model.EhrCreate
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
-	_, err = s.CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace)
+	_, err = s.CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace, ehrSystemID)
 	if err != nil {
 		return nil, fmt.Errorf("create status error: %w", err)
 	}
@@ -144,7 +144,7 @@ func (s *Service) GetDocBySubject(userID, subjectID, namespace string) (docDecry
 	return docDecrypted, nil
 }
 
-func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace string) (doc *model.EhrStatus, err error) {
+func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace string, ehrSystemID *base.EhrSystemID) (doc *model.EhrStatus, err error) {
 	doc = &model.EhrStatus{}
 	doc.Type = types.EhrStatus.String()
 	doc.ArchetypeNodeID = "openEHR-EHR-EHR_STATUS.generic.v1"
@@ -167,7 +167,7 @@ func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNam
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	err = s.SaveStatus(ehrID, userID, doc)
+	err = s.SaveStatus(ehrID, userID, ehrSystemID, doc)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrID, userID)
 	}
@@ -201,11 +201,15 @@ func (s *Service) UpdateStatus(userID, ehrID string, status *model.EhrStatus) (e
 	return nil
 }
 
-func (s *Service) SaveStatus(ehrID, userID string, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ehrID, userID string, ehrSystemID *base.EhrSystemID, status *model.EhrStatus) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
-	objectVersionID := base.NewObjectVersionID(status.UID.Value, s.Doc.GetSystemID())
+	objectVersionID, err := base.NewObjectVersionID(status.UID.Value, ehrSystemID)
+	if err != nil {
+		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
+	}
+
 	baseDocumentUID := objectVersionID.BasedID()
 	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 

@@ -55,7 +55,9 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
+	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+
+	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -116,7 +118,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err = h.service.SaveStatus(ehrID, userID, &status); err != nil {
+	if err = h.service.SaveStatus(ehrID, userID, &ehrSystemID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR_STATUS saving error"})
 		return
 	}
@@ -149,7 +151,9 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status [get]
 func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
+	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+
+	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -203,7 +207,9 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
+	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+
+	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -216,7 +222,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("versionid")
 
-	if !h.service.Doc.ValidateID(versionUID, types.EhrStatus) {
+	if !h.service.Doc.ValidateID(versionUID, &ehrSystemID, types.EhrStatus) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -227,7 +233,12 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	objectVersionID := base.NewObjectVersionID(versionUID, h.service.Doc.GetSystemID())
+	objectVersionID, err := base.NewObjectVersionID(versionUID, &ehrSystemID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ehrSystemID not match with versionUID"})
+
+		return
+	}
 
 	docIndex, err := h.service.Doc.GetDocIndexByBaseIDAndVersion(&ehrUUID, objectVersionID, types.EhrStatus)
 	if err != nil {
