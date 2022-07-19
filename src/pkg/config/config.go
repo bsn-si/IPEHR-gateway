@@ -13,12 +13,21 @@ type Config struct {
 	BaseURL              string `json:"baseUrl"`
 	DataPath             string `json:"dataPath"`
 	Host                 string `json:"host"`
-	StoragePath          string `json:"storagePath"`
 	KeystoreKey          string `json:"keystoreKey"`
 	CompressionEnabled   bool   `json:"compressionEnabled"`
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
 	DefaultUserID        string `json:"defaultUserId"`
 	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
+	Storage              struct {
+		Localfile struct {
+			StoragePath string `json:"storagePath"`
+		}
+		Filecoin struct {
+			LotusRpcEndpoint string
+			AuthToken        string
+			FilesPath        string
+		} `json:"filecoin"`
+	} `json:"storage"`
 
 	path string
 }
