@@ -16,7 +16,7 @@ type ObjectVersionID struct {
 	UID *UIDBasedID `json:"uid,omitempty"`
 
 	objectID         uuid.UUID
-	creatingSystemID *EhrSystemID
+	creatingSystemID EhrSystemID
 	versionTreeID    string
 }
 
@@ -28,12 +28,12 @@ const (
 type UID interface {
 	String() string
 	ObjectID() uuid.UUID
-	CreatingSystemID() *EhrSystemID
+	CreatingSystemID() EhrSystemID
 	VersionTreeID() string
 	//IsBranch() bool
 }
 
-func NewObjectVersionID(UID string, creatingSystemID *EhrSystemID) (*ObjectVersionID, error) {
+func NewObjectVersionID(UID string, creatingSystemID EhrSystemID) (*ObjectVersionID, error) {
 	o := &ObjectVersionID{
 		creatingSystemID: creatingSystemID,
 	}
@@ -61,7 +61,7 @@ func (o *ObjectVersionID) ObjectID() uuid.UUID {
 	return o.objectID
 }
 
-func (o *ObjectVersionID) CreatingSystemID() *EhrSystemID {
+func (o *ObjectVersionID) CreatingSystemID() EhrSystemID {
 	return o.creatingSystemID
 }
 

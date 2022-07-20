@@ -16,7 +16,7 @@ func (a *API) EhrSystemID(c *gin.Context) {
 		return
 	}
 
-	c.Set("ehrSystemID", *ehrSystemID)
+	c.Set("ehrSystemID", ehrSystemID)
 
 	c.Next()
 }

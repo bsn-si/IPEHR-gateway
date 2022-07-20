@@ -34,7 +34,7 @@ func NewCompositionService(docService *service.DefaultDocumentService, cfg *conf
 	}
 }
 
-func (s *Service) Create(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID *base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Create(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
 	groupAccess, err := s.Doc.GroupAccessIndex.Get(userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("GroupAccessIndex.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
@@ -48,7 +48,7 @@ func (s *Service) Create(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehr
 	return composition, nil
 }
 
-func (s *Service) Update(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID *base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Update(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
 	groupAccess, err := s.Doc.GroupAccessIndex.Get(userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("GroupAccessIndex.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
@@ -67,7 +67,7 @@ func (s *Service) Update(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehr
 	return composition, nil
 }
 
-func (s *Service) increaseVersion(c *model.Composition, ehrSystemID *base.EhrSystemID) error {
+func (s *Service) increaseVersion(c *model.Composition, ehrSystemID base.EhrSystemID) error {
 	if c == nil || c.UID == nil || c.UID.Value == "" {
 		return fmt.Errorf("%w Incorrect composition UID", errors.ErrIncorrectFormat)
 	}
@@ -86,7 +86,7 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID *base.EhrSys
 	return nil
 }
 
-func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID *base.EhrSystemID, doc *model.Composition) error {
+func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
@@ -195,7 +195,7 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 	return nil
 }
 
-func (s *Service) GetLastByBaseID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID *base.EhrSystemID) (*model.Composition, error) {
+func (s *Service) GetLastByBaseID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (*model.Composition, error) {
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		return nil, fmt.Errorf("GetLastByBaseID error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
@@ -223,7 +223,7 @@ func (s *Service) GetLastByBaseID(userID string, ehrUUID *uuid.UUID, versionUID 
 	return composition, nil
 }
 
-func (s *Service) GetByID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID *base.EhrSystemID) (*model.Composition, error) {
+func (s *Service) GetByID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (*model.Composition, error) {
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		return nil, fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())
@@ -251,7 +251,7 @@ func (s *Service) GetByID(userID string, ehrUUID *uuid.UUID, versionUID string, 
 	return &composition, nil
 }
 
-func (s *Service) DeleteByID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID *base.EhrSystemID) (newUID string, err error) {
+func (s *Service) DeleteByID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (newUID string, err error) {
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())

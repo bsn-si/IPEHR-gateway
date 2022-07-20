@@ -29,11 +29,11 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) EhrCreate(userID string, ehrSystemID *base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
+func (s *Service) EhrCreate(userID string, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
 	return s.EhrCreateWithID(userID, uuid.New().String(), ehrSystemID, request)
 }
 
-func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID *base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
+func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
 	var ehr model.EHR
 
 	ehr.SystemID.Value = ehrSystemID.String()
@@ -144,7 +144,7 @@ func (s *Service) GetDocBySubject(userID, subjectID, namespace string) (docDecry
 	return docDecrypted, nil
 }
 
-func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace string, ehrSystemID *base.EhrSystemID) (doc *model.EhrStatus, err error) {
+func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace string, ehrSystemID base.EhrSystemID) (doc *model.EhrStatus, err error) {
 	doc = &model.EhrStatus{}
 	doc.Type = types.EhrStatus.String()
 	doc.ArchetypeNodeID = "openEHR-EHR-EHR_STATUS.generic.v1"
@@ -201,7 +201,7 @@ func (s *Service) UpdateStatus(userID, ehrID string, status *model.EhrStatus) (e
 	return nil
 }
 
-func (s *Service) SaveStatus(ehrID, userID string, ehrSystemID *base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ehrID, userID string, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 

@@ -57,7 +57,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -123,7 +123,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(userID, &ehrUUID, &groupAccessUUID, &ehrSystemID, &request)
+	doc, err := h.service.Create(userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -153,7 +153,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -166,7 +166,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("version_uid")
 
-	if !h.service.Doc.ValidateID(versionUID, &ehrSystemID, types.Composition) {
+	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -184,7 +184,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.GetByID(userID, &ehrUUID, versionUID, &ehrSystemID)
+	data, err := h.service.GetByID(userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -223,7 +223,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -235,7 +235,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	}
 
 	versionUID := c.Param("preceding_version_uid")
-	if !h.service.Doc.ValidateID(versionUID, &ehrSystemID, types.Composition) {
+	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -253,7 +253,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	newUID, err := h.service.DeleteByID(userID, &ehrUUID, versionUID, &ehrSystemID)
+	newUID, err := h.service.DeleteByID(userID, &ehrUUID, versionUID, ehrSystemID)
 
 	switch {
 	case err == nil:
@@ -299,7 +299,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -311,7 +311,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	}
 
 	versionUID := c.Param("versioned_object_uid")
-	if !h.service.Doc.ValidateID(versionUID, &ehrSystemID, types.Composition) {
+	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -370,7 +370,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionLast, err := h.service.GetLastByBaseID(userID, &ehrUUID, versionUID, &ehrSystemID)
+	compositionLast, err := h.service.GetLastByBaseID(userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -389,7 +389,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(userID, &ehrUUID, &groupAccessUUID, &ehrSystemID, &compositionUpdate)
+	compositionUpdated, err := h.service.Update(userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

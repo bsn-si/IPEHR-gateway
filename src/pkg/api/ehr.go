@@ -88,7 +88,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(userID, &ehrSystemID, &request)
+	doc, err := h.service.EhrCreate(userID, ehrSystemID, &request)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -133,7 +133,7 @@ func (h EhrHandler) CreateWithID(c *gin.Context) {
 
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
@@ -183,7 +183,7 @@ func (h EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(userID, ehrID, &ehrSystemID, &request)
+	newDoc, err := h.service.EhrCreateWithID(userID, ehrID, ehrSystemID, &request)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -215,7 +215,7 @@ func (h EhrHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}

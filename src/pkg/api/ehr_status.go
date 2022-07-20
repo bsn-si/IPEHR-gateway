@@ -58,7 +58,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -119,7 +119,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err = h.service.SaveStatus(ehrID, userID, &ehrSystemID, &status); err != nil {
+	if err = h.service.SaveStatus(ehrID, userID, ehrSystemID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR_STATUS saving error"})
 		return
 	}
@@ -155,7 +155,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -212,7 +212,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, &ehrSystemID, types.Ehr) {
+	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -225,7 +225,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("versionid")
 
-	if !h.service.Doc.ValidateID(versionUID, &ehrSystemID, types.EhrStatus) {
+	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.EhrStatus) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -236,7 +236,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	objectVersionID, err := base.NewObjectVersionID(versionUID, &ehrSystemID)
+	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ehrSystemID not match with versionUID"})
 
