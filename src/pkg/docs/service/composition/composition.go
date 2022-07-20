@@ -34,13 +34,13 @@ func NewCompositionService(docService *service.DefaultDocumentService, cfg *conf
 	}
 }
 
-func (s *Service) Create(userID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Create(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
 	groupAccess, err := s.Doc.GroupAccessIndex.Get(userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("GroupAccessIndex.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
 	}
 
-	err = s.save(userID, ehrUUID, groupAccess, composition)
+	err = s.save(userID, ehrUUID, groupAccess, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
@@ -48,17 +48,17 @@ func (s *Service) Create(userID string, ehrUUID, groupAccessUUID *uuid.UUID, com
 	return composition, nil
 }
 
-func (s *Service) Update(userID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Update(userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
 	groupAccess, err := s.Doc.GroupAccessIndex.Get(userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("GroupAccessIndex.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
 	}
 
-	if err = s.increaseVersion(composition); err != nil {
+	if err = s.increaseVersion(composition, ehrSystemID); err != nil {
 		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
 	}
 
-	err = s.save(userID, ehrUUID, groupAccess, composition)
+	err = s.save(userID, ehrUUID, groupAccess, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
@@ -67,12 +67,16 @@ func (s *Service) Update(userID string, ehrUUID, groupAccessUUID *uuid.UUID, com
 	return composition, nil
 }
 
-func (s *Service) increaseVersion(c *model.Composition) error {
+func (s *Service) increaseVersion(c *model.Composition, ehrSystemID base.EhrSystemID) error {
 	if c == nil || c.UID == nil || c.UID.Value == "" {
 		return fmt.Errorf("%w Incorrect composition UID", errors.ErrIncorrectFormat)
 	}
 
-	objectVersionID := base.NewObjectVersionID(c.UID.Value, s.Doc.GetSystemID())
+	objectVersionID, err := base.NewObjectVersionID(c.UID.Value, ehrSystemID)
+	if err != nil {
+		return fmt.Errorf("increaseVersion error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
+	}
+
 	if _, err := objectVersionID.IncreaseUIDVersion(); err != nil {
 		return fmt.Errorf("Composition %s IncreaseUIDVersion error: %w", c.UID.Value, err)
 	}
@@ -82,8 +86,12 @@ func (s *Service) increaseVersion(c *model.Composition) error {
 	return nil
 }
 
-func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, doc *model.Composition) error {
-	objectVersionID := base.NewObjectVersionID(doc.UID.Value, s.Doc.GetSystemID())
+func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
+	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
+	if err != nil {
+		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
+	}
+
 	baseDocumentUID := objectVersionID.BasedID()
 	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 
@@ -187,8 +195,11 @@ func (s *Service) save(userID string, ehrUUID *uuid.UUID, groupAccess *model.Gro
 	return nil
 }
 
-func (s *Service) GetLastByBaseID(userID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error) {
-	objectVersionID := base.NewObjectVersionID(versionUID, s.Doc.GetSystemID())
+func (s *Service) GetLastByBaseID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (*model.Composition, error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+	if err != nil {
+		return nil, fmt.Errorf("GetLastByBaseID error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
+	}
 
 	documentMeta, err := s.Doc.GetLastVersionDocIndexByBaseID(ehrUUID, objectVersionID, types.Composition)
 	if err != nil {
@@ -212,8 +223,11 @@ func (s *Service) GetLastByBaseID(userID string, ehrUUID *uuid.UUID, versionUID 
 	return composition, nil
 }
 
-func (s *Service) GetByID(userID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error) {
-	objectVersionID := base.NewObjectVersionID(versionUID, s.Doc.GetSystemID())
+func (s *Service) GetByID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (*model.Composition, error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+	if err != nil {
+		return nil, fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())
+	}
 
 	docIndex, err := s.Doc.GetDocIndexByBaseIDAndVersion(ehrUUID, objectVersionID, types.Composition)
 	if err != nil {
@@ -237,10 +251,14 @@ func (s *Service) GetByID(userID string, ehrUUID *uuid.UUID, versionUID string) 
 	return &composition, nil
 }
 
-func (s *Service) DeleteByID(userID string, ehrUUID *uuid.UUID, versionUID string) (newUID string, err error) {
+func (s *Service) DeleteByID(userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (newUID string, err error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+	if err != nil {
+		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())
+	}
+
 	var (
 		docIndex            *model.DocumentMeta
-		objectVersionID     = base.NewObjectVersionID(versionUID, s.Doc.GetSystemID())
 		basedID             = objectVersionID.BasedID()
 		baseDocumentUIDHash = sha3.Sum256([]byte(basedID))
 	)

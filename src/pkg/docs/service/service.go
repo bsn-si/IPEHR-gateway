@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/compressor"
 	"hms/gateway/pkg/docs/model/base"
 
@@ -239,12 +240,16 @@ func (d *DefaultDocumentService) GenerateID() string {
 	return uuid.New().String()
 }
 
-func (d *DefaultDocumentService) GetSystemID() string {
-	// TODO how will we use it dynamically?
-	return "openEHRSys.example.com"
+func (d *DefaultDocumentService) GetSystemID() base.EhrSystemID {
+	ehrSystemID, _ := base.NewEhrSystemID(common.EhrSystemID)
+	return ehrSystemID
 }
 
-func (d *DefaultDocumentService) ValidateID(id string, docType types.DocumentType) bool {
-	//TODO
+func (d *DefaultDocumentService) ValidateID(id string, systemID base.EhrSystemID, docType types.DocumentType) bool {
+	if docType == types.Composition {
+		_, err := base.NewObjectVersionID(id, systemID)
+		return err == nil
+	}
+
 	return true
 }

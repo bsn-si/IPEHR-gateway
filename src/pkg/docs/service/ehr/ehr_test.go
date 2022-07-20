@@ -47,7 +47,9 @@ func TestSave(t *testing.T) {
 
 	testUserID := uuid.New().String()
 
-	ehrDoc, err := ehrService.EhrCreate(testUserID, &ehrReq)
+	ehrSystemID := ehrService.Doc.GetSystemID()
+
+	ehrDoc, err := ehrService.EhrCreate(testUserID, ehrSystemID, &ehrReq)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,10 +86,12 @@ func TestStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ehrID := newEhr.EhrID.Value
-	statusIDNew := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
+	ehrSystemID := service.Doc.GetSystemID()
 
-	statusNew, err := service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace)
+	ehrID := newEhr.EhrID.Value
+	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
+
+	statusNew, err := service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,10 +128,12 @@ func TestStatusUpdate(t *testing.T) {
 
 	docService := service.NewDefaultDocumentService(cfg)
 	service := ehr.NewService(docService)
+	ehrSystemID := service.Doc.GetSystemID()
+
 	userID := uuid.New().String()
 	subjectNamespace := testStatus
 	subjectID1 := uuid.New().String()
-	statusID2 := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
+	statusID2 := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	subjectID2 := uuid.New().String()
 
 	newEhr, err := getNewEhr(docService, userID, subjectID1, subjectNamespace)
@@ -137,12 +143,12 @@ func TestStatusUpdate(t *testing.T) {
 
 	ehrID := newEhr.EhrID.Value
 
-	statusNew2, err := service.CreateStatus(userID, ehrID, statusID2, subjectID2, subjectNamespace)
+	statusNew2, err := service.CreateStatus(userID, ehrID, statusID2, subjectID2, subjectNamespace, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = service.SaveStatus(ehrID, userID, statusNew2)
+	err = service.SaveStatus(ehrID, userID, ehrSystemID, statusNew2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,6 +168,7 @@ func TestStatusUpdate(t *testing.T) {
 func getNewEhr(docService *service.DefaultDocumentService, userID, subjectID, subjectNamespace string) (*model.EHR, error) {
 	var (
 		service           = ehr.NewService(docService)
+		ehrSystemID       = service.Doc.GetSystemID()
 		createRequestByte = fakeData.EhrCreateCustomRequest(subjectID, subjectNamespace)
 		createRequest     model.EhrCreateRequest
 	)
@@ -170,7 +177,7 @@ func getNewEhr(docService *service.DefaultDocumentService, userID, subjectID, su
 		return nil, err
 	}
 
-	return service.EhrCreate(userID, &createRequest)
+	return service.EhrCreate(userID, ehrSystemID, &createRequest)
 }
 
 func TestGetStatusByNearestTime(t *testing.T) {
@@ -181,6 +188,7 @@ func TestGetStatusByNearestTime(t *testing.T) {
 
 	docService := service.NewDefaultDocumentService(cfg)
 	service := ehr.NewService(docService)
+	ehrSystemID := service.Doc.GetSystemID()
 	userID := uuid.New().String()
 	subjectID1 := uuid.New().String()
 	subjectNamespace := testStatus
@@ -192,9 +200,9 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
-	statusIDNew := uuid.New().String() + "::" + service.Doc.GetSystemID() + "::1"
+	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 
-	_, err = service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace)
+	_, err = service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
