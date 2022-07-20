@@ -10,8 +10,8 @@
     "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
     "storage": {
         "filecoin": {
-            "lotusRpcEndpoint": "http://lotus.dev.bsn.si",
-            "authToken": "",
+            "lotusRpcEndpoint": "http://lotus.dev.bsn.si/rpc/v0",
+            "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.IXRD51_C2V8RcgkAjFg3ZKl6eKGV_5Moda535yuolX4",
             "filesPath": "../data/filecoin_tmp"
         }
     }
