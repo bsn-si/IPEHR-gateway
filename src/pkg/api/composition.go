@@ -101,11 +101,22 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// TODO move this checks into common???
 	// Checking EHR does not exist
+	/* old-style
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	*/
+	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	switch {
+	case err != nil && errors.Is(err, errors.ErrIsNotExist):
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	case err != nil:
+		log.Println("GetEhrIDByUser error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -118,7 +129,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
@@ -178,9 +188,21 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
+	/* old-style
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	*/
+	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	switch {
+	case err != nil && errors.Is(err, errors.ErrIsNotExist):
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	case err != nil:
+		log.Println("GetEhrIDByUser error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -247,14 +269,25 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
+	/* old-style
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
+	*/
+	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	switch {
+	case err != nil && errors.Is(err, errors.ErrIsNotExist):
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	case err != nil:
+		log.Println("GetEhrIDByUser error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	newUID, err := h.service.DeleteByID(userID, &ehrUUID, versionUID, ehrSystemID)
-
 	switch {
 	case err == nil:
 		h.addResponseHeaders(ehrID, newUID, c)
@@ -329,9 +362,21 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
+	/* old-style
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	*/
+	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	switch {
+	case err != nil && errors.Is(err, errors.ErrIsNotExist):
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	case err != nil:
+		log.Println("GetEhrIDByUser error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -378,14 +423,12 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		}
 
 		c.AbortWithStatus(http.StatusInternalServerError)
-
 		return
 	}
 
 	if compositionLast.UID.Value != precedingVersionUID {
 		h.addResponseHeaders(ehrID, compositionLast.UID.Value, c)
 		c.AbortWithStatus(http.StatusPreconditionFailed)
-
 		return
 	}
 

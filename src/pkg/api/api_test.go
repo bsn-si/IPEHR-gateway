@@ -86,7 +86,6 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	t.Helper()
 
 	cfg, err := config.New()
-
 	if err != nil {
 		t.Fatal(err)
 	}

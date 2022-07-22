@@ -1,6 +1,7 @@
 package ehr_test
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"testing"
@@ -49,7 +50,9 @@ func TestSave(t *testing.T) {
 
 	ehrSystemID := ehrService.Doc.GetSystemID()
 
-	ehrDoc, err := ehrService.EhrCreate(testUserID, ehrSystemID, &ehrReq)
+	ctx := context.Background()
+
+	ehrDoc, err := ehrService.EhrCreate(ctx, testUserID, ehrSystemID, &ehrReq)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,11 +90,11 @@ func TestStatus(t *testing.T) {
 	}
 
 	ehrSystemID := service.Doc.GetSystemID()
-
 	ehrID := newEhr.EhrID.Value
 	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
+	ctx := context.Background()
 
-	statusNew, err := service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
+	statusNew, err := service.CreateStatus(ctx, userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,13 +145,14 @@ func TestStatusUpdate(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
+	ctx := context.Background()
 
-	statusNew2, err := service.CreateStatus(userID, ehrID, statusID2, subjectID2, subjectNamespace, ehrSystemID)
+	statusNew2, err := service.CreateStatus(ctx, userID, ehrID, statusID2, subjectID2, subjectNamespace, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = service.SaveStatus(ehrID, userID, ehrSystemID, statusNew2)
+	err = service.SaveStatus(ctx, ehrID, userID, ehrSystemID, statusNew2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +181,7 @@ func getNewEhr(docService *service.DefaultDocumentService, userID, subjectID, su
 		return nil, err
 	}
 
-	return service.EhrCreate(userID, ehrSystemID, &createRequest)
+	return service.EhrCreate(context.Background(), userID, ehrSystemID, &createRequest)
 }
 
 func TestGetStatusByNearestTime(t *testing.T) {
@@ -201,8 +205,9 @@ func TestGetStatusByNearestTime(t *testing.T) {
 
 	ehrID := newEhr.EhrID.Value
 	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
+	ctx := context.Background()
 
-	_, err = service.CreateStatus(userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
+	_, err = service.CreateStatus(ctx, userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
