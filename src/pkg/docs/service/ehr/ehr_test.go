@@ -3,6 +3,7 @@ package ehr_test
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -22,11 +23,12 @@ const testStatus = "test_status"
 
 func TestSave(t *testing.T) {
 	jsonDoc := fakeData.EhrCreateRequest()
-
 	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
 	storage.Init(sc)
 
-	cfg, err := config.New()
+	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
+
+	cfg, err := config.New(cfgPath)
 	if err != nil {
 		t.Fatal(err)
 	}
