@@ -191,7 +191,9 @@ func getNewEhr(docService *service.DefaultDocumentService, userID, subjectID, su
 }
 
 func TestGetStatusByNearestTime(t *testing.T) {
-	cfg, err := config.New()
+	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
+
+	cfg, err := config.New(cfgPath)
 	if err != nil {
 		t.Fatal(err)
 	}
