@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"hms/gateway/pkg/common/utils"
@@ -20,6 +21,11 @@ type Config struct {
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
 	DefaultUserID        string `json:"defaultUserId"`
 	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
+	Contract             struct {
+		Address     string `json:"address"`
+		Endpoint    string `json:"endpoint"`
+		PrivKeyPath string `json:"privKeyPath"`
+	} `json:"contract"`
 
 	path string
 }
@@ -42,6 +48,10 @@ func New(params ...string) (cfg *Config, err error) {
 		path: path,
 	}
 	err = cfg.load()
+
+	cfgJSON, _ := json.MarshalIndent(cfg, "", "    ")
+
+	log.Println("IPEHR Config:", string(cfgJSON))
 
 	return
 }

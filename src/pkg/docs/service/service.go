@@ -16,9 +16,9 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/service/docAccess"
 	"hms/gateway/pkg/indexer/service/docs"
-	"hms/gateway/pkg/indexer/service/ehrs"
 	"hms/gateway/pkg/indexer/service/groupAccess"
 	"hms/gateway/pkg/indexer/service/subject"
 	"hms/gateway/pkg/keystore"
@@ -26,9 +26,10 @@ import (
 )
 
 type DefaultDocumentService struct {
-	Storage            storage.Storager
-	Keystore           *keystore.KeyStore
-	EhrsIndex          *ehrs.Index
+	Storage  storage.Storager
+	Keystore *keystore.KeyStore
+	Index    *indexer.Index
+	//EhrsIndex          *ehrs.Index
 	DocsIndex          *docs.Index
 	DocAccessIndex     *docAccess.Index
 	SubjectIndex       *subject.Index
@@ -41,9 +42,10 @@ func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
 	ks := keystore.New(cfg.KeystoreKey)
 
 	return &DefaultDocumentService{
-		Storage:            storage.Storage(),
-		Keystore:           ks,
-		EhrsIndex:          ehrs.New(),
+		Storage:  storage.Storage(),
+		Keystore: ks,
+		Index:    indexer.New(cfg.Contract.Address, cfg.Contract.Endpoint, cfg.Contract.PrivKeyPath),
+		//EhrsIndex:          ehrs.New(),
 		DocsIndex:          docs.New(),
 		DocAccessIndex:     docAccess.New(ks),
 		SubjectIndex:       subject.New(),

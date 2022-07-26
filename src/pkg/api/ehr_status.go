@@ -119,7 +119,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err = h.service.SaveStatus(ehrID, userID, ehrSystemID, &status); err != nil {
+	if err = h.service.SaveStatus(c, ehrID, userID, ehrSystemID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR_STATUS saving error"})
 		return
 	}

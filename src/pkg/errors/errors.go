@@ -17,6 +17,7 @@ var (
 	ErrObjectNotInit     = errors.New(`Object is not initialized`)
 	ErrKeyLengthMismatch = errors.New(`Document key length mismatch`)
 	ErrDocumentsNotSame  = errors.New(`Documents is mismatched`)
+	ErrTimeout           = errors.New("Timeout")
 )
 
 var Is = errors.Is

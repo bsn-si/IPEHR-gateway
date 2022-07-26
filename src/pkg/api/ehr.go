@@ -79,16 +79,29 @@ func (h EhrHandler) Create(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
+	/* old-style
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if !errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
+		return
+	}
+	*/
+	ehrUUID, err := h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	switch {
+	case err == nil && ehrUUID != nil:
+		c.AbortWithStatus(http.StatusConflict)
+		return
+	case err != nil && !errors.Is(err, errors.ErrIsNotExist):
+		log.Println("GetEhrIDByUser error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(userID, ehrSystemID, &request)
+	doc, err := h.service.EhrCreate(c, userID, ehrSystemID, &request)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -176,14 +189,26 @@ func (h EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
+	/* old-style
 	_, err = h.service.Doc.EhrsIndex.Get(userID)
 	if !errors.Is(err, errors.ErrIsNotExist) {
 		c.AbortWithStatus(http.StatusConflict)
 		return
 	}
+	*/
+	ehrUUID, err := h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	switch {
+	case err == nil && ehrUUID != nil:
+		c.AbortWithStatus(http.StatusConflict)
+		return
+	case err != nil && !errors.Is(err, errors.ErrIsNotExist):
+		log.Println("GetEhrIDByUser error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(userID, ehrID, ehrSystemID, &request)
+	newDoc, err := h.service.EhrCreateWithID(c, userID, ehrID, ehrSystemID, &request)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
