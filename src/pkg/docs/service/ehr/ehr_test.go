@@ -74,7 +74,9 @@ func TestStatus(t *testing.T) {
 	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
 	storage.Init(sc)
 
-	cfg, err := config.New()
+	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
+
+	cfg, err := config.New(cfgPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +128,9 @@ func TestStatus(t *testing.T) {
 }
 
 func TestStatusUpdate(t *testing.T) {
-	cfg, err := config.New()
+	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
+
+	cfg, err := config.New(cfgPath)
 	if err != nil {
 		t.Fatal(err)
 	}
