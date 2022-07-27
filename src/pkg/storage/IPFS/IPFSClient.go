@@ -7,6 +7,8 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+
+	"hms/gateway/pkg/errors"
 )
 
 type ipfsAddResult struct {
@@ -57,7 +59,7 @@ func (i *Client) Add(fileContent []byte) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("IPFS add request status %s", resp.Status)
+		return "", fmt.Errorf("IPFS add request error: %w status %s", errors.ErrCustom, resp.Status)
 	}
 
 	result := ipfsAddResult{}
