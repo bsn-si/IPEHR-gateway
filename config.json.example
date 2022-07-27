@@ -11,7 +11,7 @@
     "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
     "storage": {
         "ipfs": {
-            "endpointUrl": "http://127.0.0.1:5001/api/v0"
+            "endpointUrl": "http://lotus.dev.bsn.si:5001/api/v0"
         }
     }
 }
