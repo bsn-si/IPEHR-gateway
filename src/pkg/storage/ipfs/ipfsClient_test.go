@@ -19,12 +19,12 @@ func TestAddFile(t *testing.T) {
 
 	testIpfsClient := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURL)
 
-	cid, err := testIpfsClient.Add(fileContent)
+	c, err := testIpfsClient.Add(fileContent)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fileCloser, err := testIpfsClient.Get(cid)
+	fileCloser, err := testIpfsClient.Get(c)
 	if err != nil {
 		t.Fatal(err)
 	}
