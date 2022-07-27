@@ -1,6 +1,8 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrAuthorization     = errors.New("Authorization error")
@@ -21,9 +23,3 @@ var (
 )
 
 var Is = errors.Is
-
-var IsNot = func(err, target error) bool {
-	result := errors.Is(err, target)
-
-	return !result
-}
