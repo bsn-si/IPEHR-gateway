@@ -1,9 +1,8 @@
-package IPFS_test
+package ipfs_test
 
 import (
 	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/storage/IPFS"
-	"hms/gateway/pkg/storage/IPFS/HTTPClientMock"
+	"hms/gateway/pkg/storage/ipfs"
 	"testing"
 )
 
@@ -14,16 +13,11 @@ func TestAddFile(t *testing.T) {
 	}
 
 	expectedCid := "QmPYKPZhu6LdLrZJUbmUTPFCogwmmenaKMH5XMsrEBNG3m"
-
 	fileContent := []byte("dfgg dtghreyh .sm,dfdsoiqwuefbw3586 (!!!) test one")
 
-	// Uncomment the line below if You want to test with real IPFS node
-	//testHttpClient := httpClient.New()
-	testHTTPClient := HTTPClientMock.New()
-	testHTTPClient.SetPostRes([]byte(`{"Name":"file.txt","Hash":"` + expectedCid + `","Size":"58"}`))
-	testIpfsClient := IPFS.New(cfg.IpfsNodeAPI, testHTTPClient)
+	testIpfsClient := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURL)
 
-	cid, err := testIpfsClient.Add(&fileContent)
+	cid, err := testIpfsClient.Add(fileContent)
 	if err != nil {
 		t.Fatal(err)
 	}

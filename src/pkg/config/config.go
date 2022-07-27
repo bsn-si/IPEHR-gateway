@@ -20,7 +20,11 @@ type Config struct {
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
 	DefaultUserID        string `json:"defaultUserId"`
 	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
-	IpfsNodeAPI          string `json:"ipfsNodeAPI"`
+	Storage              struct {
+		Ipfs struct {
+			EndpointURL string `json:"endpointUrl"`
+		} `json:"ipfs"`
+	} `json:"storage"`
 
 	path string
 }
