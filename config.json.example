@@ -13,5 +13,10 @@
         "ipfs": {
             "endpointUrl": "http://lotus.dev.bsn.si:5001/api/v0"
         }
+    },
+    "contract": {
+        "address": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
+        "endpoint": "https://goerli.infura.io/v3/<API-KEY>",
+        "privKeyPath": "../.blockchain.key"
     }
 }

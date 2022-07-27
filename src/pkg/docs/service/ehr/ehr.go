@@ -1,14 +1,14 @@
 package ehr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
-	"golang.org/x/crypto/sha3"
-
 	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
@@ -29,11 +29,11 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) EhrCreate(userID string, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
-	return s.EhrCreateWithID(userID, uuid.New().String(), ehrSystemID, request)
+func (s *Service) EhrCreate(ctx context.Context, userID string, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
+	return s.EhrCreateWithID(ctx, userID, uuid.New().String(), ehrSystemID, request)
 }
 
-func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
+func (s *Service) EhrCreateWithID(ctx context.Context, userID, ehrID string, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest) (*model.EHR, error) {
 	var ehr model.EHR
 
 	ehr.SystemID.Value = ehrSystemID.String()
@@ -51,7 +51,7 @@ func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID base.EhrSyst
 
 	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
 
-	err := s.SaveEhr(userID, &ehr)
+	err := s.SaveEhr(ctx, userID, &ehr)
 	if err != nil {
 		return nil, fmt.Errorf("ehr save error: %w", err)
 	}
@@ -61,7 +61,7 @@ func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID base.EhrSyst
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
-	_, err = s.CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace, ehrSystemID)
+	_, err = s.CreateStatus(ctx, userID, ehrID, ehrStatusID, subjectID, subjectNamespace, ehrSystemID)
 	if err != nil {
 		return nil, fmt.Errorf("create status error: %w", err)
 	}
@@ -69,7 +69,7 @@ func (s *Service) EhrCreateWithID(userID, ehrID string, ehrSystemID base.EhrSyst
 	return &ehr, nil
 }
 
-func (s *Service) SaveEhr(userID string, doc *model.EHR) error {
+func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) error {
 	docBytes, err := json.Marshal(doc)
 	if err != nil {
 		return fmt.Errorf("ehr marshal error: %w", err)
@@ -98,9 +98,29 @@ func (s *Service) SaveEhr(userID string, doc *model.EHR) error {
 	}
 
 	// Index EHR userID -> docStorageID
+	/* old-style
 	if err = s.Doc.EhrsIndex.Replace(userID, docStorageID); err != nil {
 		return fmt.Errorf("ehr index replace error: %w. userID: %s docStorageID: %x", err, userID, docStorageID)
 	}
+	*/
+
+	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
+	if err != nil {
+		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
+	}
+
+	ehrIndexTx, err := s.Doc.Index.SetEhrUser(userID, &ehrUUID)
+	if err != nil {
+		return fmt.Errorf("Index.SetEhrUser error: %w", err)
+	}
+	// TODO write tx to DB
+
+	txStatus, err := s.Doc.Index.TxWait(ctx, ehrIndexTx)
+	if err != nil {
+		return fmt.Errorf("Index.SetEhrUser TxWait error: %w", err)
+	}
+
+	_ = txStatus
 
 	// Index Docs ehr_id -> doc_meta
 	docIndex := &model.DocumentMeta{
@@ -108,6 +128,7 @@ func (s *Service) SaveEhr(userID string, doc *model.EHR) error {
 		StorageID: docStorageID,
 		Timestamp: uint64(time.Now().UnixNano()),
 	}
+
 	// First record in doc index
 	if err = s.Doc.DocsIndex.Add(doc.EhrID.Value, docIndex); err != nil {
 		return fmt.Errorf("docIndex add error: %w. ehrId: %s", err, doc.EhrID.Value)
@@ -144,7 +165,7 @@ func (s *Service) GetDocBySubject(userID, subjectID, namespace string) (docDecry
 	return docDecrypted, nil
 }
 
-func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNamespace string, ehrSystemID base.EhrSystemID) (doc *model.EhrStatus, err error) {
+func (s *Service) CreateStatus(ctx context.Context, userID, ehrID, ehrStatusID, subjectID, subjectNamespace string, ehrSystemID base.EhrSystemID) (doc *model.EhrStatus, err error) {
 	doc = &model.EhrStatus{}
 	doc.Type = types.EhrStatus.String()
 	doc.ArchetypeNodeID = "openEHR-EHR-EHR_STATUS.generic.v1"
@@ -167,7 +188,7 @@ func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNam
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	err = s.SaveStatus(ehrID, userID, ehrSystemID, doc)
+	err = s.SaveStatus(ctx, ehrID, userID, ehrSystemID, doc)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrID, userID)
 	}
@@ -175,7 +196,7 @@ func (s *Service) CreateStatus(userID, ehrID, ehrStatusID, subjectID, subjectNam
 	return doc, nil
 }
 
-func (s *Service) UpdateStatus(userID, ehrID string, status *model.EhrStatus) (err error) {
+func (s *Service) UpdateStatus(ctx context.Context, userID, ehrID string, status *model.EhrStatus) (err error) {
 	docMeta, err := s.Doc.DocsIndex.GetLastByType(ehrID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("DocsIndex.GetLastByType error: %w. ehrID: %s", err, ehrID)
@@ -193,7 +214,7 @@ func (s *Service) UpdateStatus(userID, ehrID string, status *model.EhrStatus) (e
 
 	if status.UID.Value != ehr.EhrStatus.ID.Value {
 		ehr.EhrStatus.ID.Value = status.UID.Value
-		if err = s.SaveEhr(userID, &ehr); err != nil {
+		if err = s.SaveEhr(ctx, userID, &ehr); err != nil {
 			return fmt.Errorf("ehr save error: %w", err)
 		}
 	}
@@ -201,7 +222,7 @@ func (s *Service) UpdateStatus(userID, ehrID string, status *model.EhrStatus) (e
 	return nil
 }
 
-func (s *Service) SaveStatus(ehrID, userID string, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, ehrID, userID string, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
@@ -256,7 +277,7 @@ func (s *Service) SaveStatus(ehrID, userID string, ehrSystemID base.EhrSystemID,
 		return fmt.Errorf("DocAccessIndex.Add error: %w userID: %s statusStorageID: %x", err, userID, statusStorageID)
 	}
 
-	if err = s.UpdateStatus(userID, ehrID, status); err != nil {
+	if err = s.UpdateStatus(ctx, userID, ehrID, status); err != nil {
 		return fmt.Errorf("UpdateStatus error: %w userID: %s ehrID: %s", err, userID, ehrID)
 	}
 

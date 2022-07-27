@@ -2,7 +2,6 @@ package errors
 
 import (
 	"errors"
-	"fmt"
 )
 
 var (
@@ -20,17 +19,7 @@ var (
 	ErrObjectNotInit     = errors.New(`Object is not initialized`)
 	ErrKeyLengthMismatch = errors.New(`Document key length mismatch`)
 	ErrDocumentsNotSame  = errors.New(`Documents is mismatched`)
-	ErrPOSTRequestFailed = errors.New(`POST request failed`)
+	ErrTimeout           = errors.New("Timeout")
 )
 
 var Is = errors.Is
-
-var IsNot = func(err, target error) bool {
-	result := errors.Is(err, target)
-
-	return !result
-}
-
-func RequestError(status string, body string) error {
-	return fmt.Errorf("%w: %s (%s)", ErrPOSTRequestFailed, status, body)
-}
