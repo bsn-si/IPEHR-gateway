@@ -3,61 +3,54 @@ package service
 import (
 	"encoding/hex"
 	"fmt"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/compressor"
-	"hms/gateway/pkg/docs/model/base"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/service/docAccess"
 	"hms/gateway/pkg/indexer/service/docs"
 	"hms/gateway/pkg/indexer/service/groupAccess"
 	"hms/gateway/pkg/indexer/service/subject"
-	"hms/gateway/pkg/keystore"
-	"hms/gateway/pkg/storage"
+	"hms/gateway/pkg/infrastructure"
 )
 
 type DefaultDocumentService struct {
-	Storage  storage.Storager
-	Keystore *keystore.KeyStore
-	Index    *indexer.Index
+	Infra *infrastructure.Infra
 	//EhrsIndex          *ehrs.Index
-	DocsIndex          *docs.Index
-	DocAccessIndex     *docAccess.Index
-	SubjectIndex       *subject.Index
-	GroupAccessIndex   *groupAccess.Index
-	Compressor         compressor.Interface
-	CompressionEnabled bool
+	DocsIndex        *docs.Index
+	DocAccessIndex   *docAccess.Index
+	SubjectIndex     *subject.Index
+	GroupAccessIndex *groupAccess.Index
+	Proc             *processing.Proc
 }
 
-func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
-	ks := keystore.New(cfg.KeystoreKey)
+func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
+	proc := processing.New(infra.LocalDB, infra.EthClient)
+	proc.Start()
 
 	return &DefaultDocumentService{
-		Storage:  storage.Storage(),
-		Keystore: ks,
-		Index:    indexer.New(cfg.Contract.Address, cfg.Contract.Endpoint, cfg.Contract.PrivKeyPath),
+		Infra: infra,
+		Proc:  proc,
 		//EhrsIndex:          ehrs.New(),
-		DocsIndex:          docs.New(),
-		DocAccessIndex:     docAccess.New(ks),
-		SubjectIndex:       subject.New(),
-		GroupAccessIndex:   groupAccess.New(ks),
-		Compressor:         compressor.New(cfg.CompressionLevel),
-		CompressionEnabled: cfg.CompressionEnabled,
+		DocsIndex:        docs.New(),
+		DocAccessIndex:   docAccess.New(infra.Keystore),
+		SubjectIndex:     subject.New(),
+		GroupAccessIndex: groupAccess.New(infra.Keystore),
 	}
 }
 
 func (d *DefaultDocumentService) GetDocIndexByObjectVersionID(userID string, ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID) (doc *model.DocumentMeta, err error) {
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := d.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +171,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID 
 	}
 
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := d.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +189,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID 
 
 	copy(docKey[:], keyDecrypted)
 
-	docEncrypted, err := d.Storage.Get(storageID)
+	docEncrypted, err := d.Infra.LocalStorage.Get(storageID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,8 +200,8 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID 
 		return nil, err
 	}
 
-	if d.CompressionEnabled {
-		docDecrypted, err = d.Compressor.Decompress(docDecrypted)
+	if d.Infra.CompressionEnabled {
+		docDecrypted, err = d.Infra.Compressor.Decompress(docDecrypted)
 		if err != nil {
 			return nil, err
 		}

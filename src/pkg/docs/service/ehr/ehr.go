@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
@@ -15,17 +16,18 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
 type Service struct {
-	Doc *service.DefaultDocumentService
+	*service.DefaultDocumentService
 }
 
 func NewService(docService *service.DefaultDocumentService) *Service {
 	return &Service{
-		Doc: docService,
+		docService,
 	}
 }
 
@@ -70,13 +72,18 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, ehrID string, ehr
 }
 
 func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) error {
+	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
+	if err != nil {
+		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
+	}
+
 	docBytes, err := json.Marshal(doc)
 	if err != nil {
 		return fmt.Errorf("ehr marshal error: %w", err)
 	}
 
-	if s.Doc.CompressionEnabled {
-		docBytes, err = s.Doc.Compressor.Compress(docBytes)
+	if s.Infra.CompressionEnabled {
+		docBytes, err = s.Infra.Compressor.Compress(docBytes)
 		if err != nil {
 			return fmt.Errorf("ehr compress error: %w", err)
 		}
@@ -92,9 +99,23 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	}
 
 	// Storage saving
-	docStorageID, err := s.Doc.Storage.Add(docEncrypted)
+	/*
+		docStorageID, err := s.Doc.Storage.Add(docEncrypted)
+		if err != nil {
+			return fmt.Errorf("ehr storage saving error: %w", err)
+		}
+	*/
+	CID, err := s.Infra.IpfsClient.Add(docEncrypted)
 	if err != nil {
-		return fmt.Errorf("ehr storage saving error: %w", err)
+		return fmt.Errorf("IpfsClient.Add error: %w", err)
+	}
+
+	// Start processing request
+	reqID := ctx.(*gin.Context).GetString("reqId")
+
+	err = s.Proc.AddRequest(reqID, userID, ehrUUID.String(), CID.String())
+	if err != nil {
+		return fmt.Errorf("Proc.AddRequest error: %w", err)
 	}
 
 	// Index EHR userID -> docStorageID
@@ -104,59 +125,58 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	}
 	*/
 
-	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
-	if err != nil {
-		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
-	}
-
-	ehrIndexTx, err := s.Doc.Index.SetEhrUser(userID, &ehrUUID)
+	ehrIndexTx, err := s.Infra.Index.SetEhrUser(userID, &ehrUUID)
 	if err != nil {
 		return fmt.Errorf("Index.SetEhrUser error: %w", err)
 	}
-	// TODO write tx to DB
 
-	txStatus, err := s.Doc.Index.TxWait(ctx, ehrIndexTx)
+	err = s.Proc.AddBlockchainTx(reqID, ehrIndexTx, "", processing.TxSetEhrUser, processing.StatusPending)
 	if err != nil {
-		return fmt.Errorf("Index.SetEhrUser TxWait error: %w", err)
+		return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
 	}
 
-	_ = txStatus
+	/*
+		txStatus, err := s.Doc.Index.TxWait(ctx, ehrIndexTx)
+		if err != nil {
+			return fmt.Errorf("Index.SetEhrUser TxWait error: %w", err)
+		}
 
-	// Index Docs ehr_id -> doc_meta
-	docIndex := &model.DocumentMeta{
-		TypeCode:  types.Ehr,
-		StorageID: docStorageID,
-		Timestamp: uint64(time.Now().UnixNano()),
-	}
+		// Index Docs ehr_id -> doc_meta
+		docIndex := &model.DocumentMeta{
+			TypeCode: types.Ehr,
+			StorageID: docStorageID,
+			Timestamp: uint64(time.Now().UnixNano()),
+		}
 
-	// First record in doc index
-	if err = s.Doc.DocsIndex.Add(doc.EhrID.Value, docIndex); err != nil {
-		return fmt.Errorf("docIndex add error: %w. ehrId: %s", err, doc.EhrID.Value)
-	}
+		// First record in doc index
+		if err = s.Doc.DocsIndex.Add(doc.EhrID.Value, docIndex); err != nil {
+			return fmt.Errorf("docIndex add error: %w. ehrId: %s", err, doc.EhrID.Value)
+		}
 
-	// Index Access
-	if err = s.Doc.DocAccessIndex.Add(userID, docStorageID, key.Bytes()); err != nil {
-		return fmt.Errorf("docAccessIndex add error: %w. userID: %s docStorageID: %x", err, userID, docStorageID)
-	}
+		// Index Access
+		if err = s.Doc.DocAccessIndex.Add(userID, docStorageID, key.Bytes()); err != nil {
+			return fmt.Errorf("docAccessIndex add error: %w. userID: %s docStorageID: %x", err, userID, docStorageID)
+		}
+	*/
 
 	return nil
 }
 
 // GetDocBySubject Get decrypted document by subject
 func (s *Service) GetDocBySubject(userID, subjectID, namespace string) (docDecrypted []byte, err error) {
-	ehrID, err := s.Doc.SubjectIndex.GetEhrBySubject(subjectID, namespace)
+	ehrID, err := s.SubjectIndex.GetEhrBySubject(subjectID, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("SubjectIndex GetDocBySubject error: %w. userID: %s subjectID: %s namespace: %s", err, userID, subjectID, namespace)
 	}
 
 	// Getting docStorageID
-	doc, err := s.Doc.DocsIndex.GetLastByType(ehrID, types.Ehr)
+	doc, err := s.DocsIndex.GetLastByType(ehrID, types.Ehr)
 	if err != nil {
 		return nil, fmt.Errorf("DocsIndex GetLastByType error: %w. ehrID: %s", err, ehrID)
 	}
 
 	// Getting doc from storage
-	docDecrypted, err = s.Doc.GetDocFromStorageByID(userID, doc.StorageID, []byte(ehrID))
+	docDecrypted, err = s.GetDocFromStorageByID(userID, doc.StorageID, []byte(ehrID))
 	if err != nil {
 		log.Println("Can't get encrypted doc", err)
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w. userID: %s, doc.StorageID: %x ehrID: %s", err, userID, doc.StorageID, ehrID)
@@ -197,12 +217,12 @@ func (s *Service) CreateStatus(ctx context.Context, userID, ehrID, ehrStatusID, 
 }
 
 func (s *Service) UpdateStatus(ctx context.Context, userID, ehrID string, status *model.EhrStatus) (err error) {
-	docMeta, err := s.Doc.DocsIndex.GetLastByType(ehrID, types.Ehr)
+	docMeta, err := s.DocsIndex.GetLastByType(ehrID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("DocsIndex.GetLastByType error: %w. ehrID: %s", err, ehrID)
 	}
 
-	ehrDecrypted, err := s.Doc.GetDocFromStorageByID(userID, docMeta.StorageID, []byte(ehrID))
+	ehrDecrypted, err := s.GetDocFromStorageByID(userID, docMeta.StorageID, []byte(ehrID))
 	if err != nil {
 		return fmt.Errorf("GetDocFromStorageByID error: %w. userID: %s StorageID: %x ehrID: %s", err, userID, docMeta.StorageID, ehrID)
 	}
@@ -242,7 +262,7 @@ func (s *Service) SaveStatus(ctx context.Context, ehrID, userID string, ehrSyste
 	subjectID := status.Subject.ExternalRef.ID.Value
 	subjectNamespace := status.Subject.ExternalRef.Namespace
 
-	err = s.Doc.SubjectIndex.AddEhrSubjectsIndex(ehrID, subjectID, subjectNamespace)
+	err = s.SubjectIndex.AddEhrSubjectsIndex(ehrID, subjectID, subjectNamespace)
 	if err != nil {
 		return fmt.Errorf("SubjectIndex.AddEhrSubjectsIndex error: %w ehrID: %s subjectID: %s subjectNamespace: %s", err, ehrID, subjectID, subjectNamespace)
 	}
@@ -268,12 +288,12 @@ func (s *Service) SaveStatus(ctx context.Context, ehrID, userID string, ehrSyste
 		Timestamp:           uint64(time.Now().Unix()),
 	}
 
-	if err = s.Doc.DocsIndex.Add(ehrID, docIndex); err != nil {
+	if err = s.DocsIndex.Add(ehrID, docIndex); err != nil {
 		return fmt.Errorf("DocsIndex.Add error: %w ehrID: %s", err, ehrID)
 	}
 
 	// Index Access
-	if err = s.Doc.DocAccessIndex.Add(userID, statusStorageID, key.Bytes()); err != nil {
+	if err = s.DocAccessIndex.Add(userID, statusStorageID, key.Bytes()); err != nil {
 		return fmt.Errorf("DocAccessIndex.Add error: %w userID: %s statusStorageID: %x", err, userID, statusStorageID)
 	}
 
@@ -286,7 +306,7 @@ func (s *Service) SaveStatus(ctx context.Context, ehrID, userID string, ehrSyste
 
 // GetStatus Get current (last) status of EHR document
 func (s *Service) GetStatus(userID string, ehrUUID *uuid.UUID) (*model.EhrStatus, error) {
-	statusMeta, err := s.Doc.DocsIndex.GetLastByType(ehrUUID.String(), types.EhrStatus)
+	statusMeta, err := s.DocsIndex.GetLastByType(ehrUUID.String(), types.EhrStatus)
 	if err != nil {
 		return nil, fmt.Errorf("DocsIndex.GetLastByType error: %w ehrID %s docType %s", err, ehrUUID.String(), types.EhrStatus.String())
 	}
@@ -300,12 +320,12 @@ func (s *Service) GetStatus(userID string, ehrUUID *uuid.UUID) (*model.EhrStatus
 }
 
 func (s *Service) GetStatusBySubject(userID, subjectID, namespace string) (*model.EhrStatus, error) {
-	ehrID, err := s.Doc.SubjectIndex.GetEhrBySubject(subjectID, namespace)
+	ehrID, err := s.SubjectIndex.GetEhrBySubject(subjectID, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("SubjectIndex.GetEhrBySubject error: %w subjectID %s namespace %s", err, subjectID, namespace)
 	}
 
-	statuses, err := s.Doc.DocsIndex.GetByType(ehrID, types.EhrStatus)
+	statuses, err := s.DocsIndex.GetByType(ehrID, types.EhrStatus)
 	if err != nil {
 		return nil, fmt.Errorf("DocsIndex.GetByType error: %w ehrID %s docType %s", err, ehrID, types.EhrStatus.String())
 	}
@@ -330,7 +350,7 @@ func (s *Service) GetStatusBySubject(userID, subjectID, namespace string) (*mode
 }
 
 func (s *Service) GetStatusByNearestTime(userID string, ehrUUID *uuid.UUID, nearestTime time.Time, docType types.DocumentType) (*model.EhrStatus, error) {
-	docIndex, err := s.Doc.DocsIndex.GetByNearestTime(ehrUUID.String(), nearestTime, docType)
+	docIndex, err := s.DocsIndex.GetByNearestTime(ehrUUID.String(), nearestTime, docType)
 	if err != nil {
 		return nil, fmt.Errorf("DocsIndex.GetByNearestTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), nearestTime.String(), docType.String())
 	}
@@ -349,8 +369,8 @@ func (s *Service) saveStatusToStorage(status *model.EhrStatus, key *chachaPoly.K
 		return
 	}
 
-	if s.Doc.CompressionEnabled {
-		statusBytes, err = s.Doc.Compressor.Compress(statusBytes)
+	if s.Infra.CompressionEnabled {
+		statusBytes, err = s.Infra.Compressor.Compress(statusBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -363,18 +383,18 @@ func (s *Service) saveStatusToStorage(status *model.EhrStatus, key *chachaPoly.K
 	}
 
 	// Storage saving
-	storageID, err = s.Doc.Storage.Add(statusEncrypted)
+	storageID, err = s.Infra.LocalStorage.Add(statusEncrypted)
 
 	return
 }
 
 func (s *Service) getStatusFromStorage(userID string, ehrUUID *uuid.UUID, statusMeta *model.DocumentMeta) (*model.EhrStatus, error) {
-	encryptedStatus, err := s.Doc.Storage.Get(statusMeta.StorageID)
+	encryptedStatus, err := s.Infra.LocalStorage.Get(statusMeta.StorageID)
 	if err != nil {
 		return nil, fmt.Errorf("Storage.Get error: %w StorageID %x", err, statusMeta.StorageID)
 	}
 
-	statusKey, err := s.Doc.DocAccessIndex.GetDocumentKey(userID, statusMeta.StorageID)
+	statusKey, err := s.DocAccessIndex.GetDocumentKey(userID, statusMeta.StorageID)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocumentKey error: %w userID %s StorageID %x", err, userID, statusMeta.StorageID)
 	}
@@ -389,8 +409,8 @@ func (s *Service) getStatusFromStorage(userID string, ehrUUID *uuid.UUID, status
 		return nil, fmt.Errorf("encryptedStatus DecryptWithAuthData error: %w", err)
 	}
 
-	if s.Doc.CompressionEnabled {
-		statusBytes, err = s.Doc.Compressor.Decompress(statusBytes)
+	if s.Infra.CompressionEnabled {
+		statusBytes, err = s.Infra.Compressor.Decompress(statusBytes)
 		if err != nil {
 			return nil, fmt.Errorf("Decompress error: %w", err)
 		}

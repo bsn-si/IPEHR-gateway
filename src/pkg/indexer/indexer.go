@@ -36,7 +36,7 @@ type Index struct {
 	transactOpts *bind.TransactOpts
 }
 
-func New(contractAddr, endpoint, keyPath string) *Index {
+func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 	ctx := context.Background()
 
 	key, err := os.ReadFile(keyPath)
@@ -45,11 +45,6 @@ func New(contractAddr, endpoint, keyPath string) *Index {
 	}
 
 	privateKey, err := crypto.HexToECDSA(strings.TrimSpace(string(key)))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	client, err := ethclient.Dial(endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}

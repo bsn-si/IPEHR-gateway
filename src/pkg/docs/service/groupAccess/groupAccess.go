@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
@@ -18,18 +17,18 @@ type Service struct {
 	DefaultGroupAccessUUID *uuid.UUID
 }
 
-func NewGroupAccessService(docService *service.DefaultDocumentService, cfg *config.Config) *Service {
-	groupUUID, err := uuid.Parse(cfg.DefaultGroupAccessID)
+func NewGroupAccessService(docService *service.DefaultDocumentService, defaultGroupAccessID, defaultUserID string) *Service {
+	groupUUID, err := uuid.Parse(defaultGroupAccessID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_, err = uuid.Parse(cfg.DefaultUserID)
+	_, err = uuid.Parse(defaultUserID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if _, err = docService.GroupAccessIndex.Get(cfg.DefaultUserID, &groupUUID); err != nil {
+	if _, err = docService.GroupAccessIndex.Get(defaultUserID, &groupUUID); err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			groupAccess := &model.GroupAccess{
 				GroupUUID:   &groupUUID,
@@ -37,7 +36,7 @@ func NewGroupAccessService(docService *service.DefaultDocumentService, cfg *conf
 				Key:         chachaPoly.GenerateKey(),
 			}
 
-			err = docService.GroupAccessIndex.Add(cfg.DefaultUserID, groupAccess)
+			err = docService.GroupAccessIndex.Add(defaultUserID, groupAccess)
 			if err != nil {
 				log.Fatal(err)
 			}

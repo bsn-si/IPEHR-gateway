@@ -17,7 +17,10 @@ func TestAddFile(t *testing.T) {
 	//expectedCid := "QmPYKPZhu6LdLrZJUbmUTPFCogwmmenaKMH5XMsrEBNG3m"
 	fileContent := []byte("dfgg dtghreyh .sm,dfdsoiqwuefbw3586 (!!!) test one")
 
-	testIpfsClient := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURL)
+	testIpfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURL)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	c, err := testIpfsClient.Add(fileContent)
 	if err != nil {

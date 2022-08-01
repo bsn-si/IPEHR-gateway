@@ -19,16 +19,46 @@ type ipfsAddResult struct {
 	Size string
 }
 
+type ipfsVersionResult struct {
+	Commit  string
+	Golang  string
+	Repo    string
+	System  string
+	Version string
+}
+
 type Client struct {
 	apiURL     string
 	httpClient *http.Client
+	version    string
 }
 
-func NewClient(apiURL string) *Client {
-	return &Client{
+func NewClient(apiURL string) (*Client, error) {
+	client := &Client{
 		apiURL:     apiURL,
 		httpClient: http.DefaultClient,
 	}
+
+	url := apiURL + "/version"
+	resp, err := client.httpClient.Post(url, "", nil)
+	if err != nil {
+		return nil, fmt.Errorf("IPFS NewClient error: %w apiURL %s", err, apiURL)
+	}
+	defer resp.Body.Close()
+
+	result := &ipfsVersionResult{}
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		return nil, fmt.Errorf("IPFS version response decode error: %w", err)
+	}
+
+	if result.Version == "" {
+		return nil, fmt.Errorf("IPFS version error: %w", errors.ErrCustom)
+	}
+
+	client.version = result.Version
+
+	return client, nil
 }
 
 // Add file to an IPFS node with CID version 0
@@ -66,7 +96,6 @@ func (i *Client) Add(fileContent []byte) (*cid.Cid, error) {
 	}
 
 	result := &ipfsAddResult{}
-
 	err = json.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
 		return nil, fmt.Errorf("IPFS add response decode error: %w", err)

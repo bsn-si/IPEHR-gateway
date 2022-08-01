@@ -8,7 +8,7 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func (a *API) Auth(c *gin.Context) {
+func auth(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 	if userID == "" {
 		_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)

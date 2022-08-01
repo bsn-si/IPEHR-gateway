@@ -10,7 +10,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/storage"
+	"hms/gateway/pkg/infrastructure"
 )
 
 // @title        IPEHR Gateway API
@@ -36,18 +36,15 @@ type API struct {
 	GroupAccess *GroupAccessHandler
 }
 
-func New(cfg *config.Config) *API {
-	sc := storage.NewConfig(cfg.StoragePath)
-	storage.Init(sc)
-
-	docService := service.NewDefaultDocumentService(cfg)
+func New(cfg *config.Config, infra *infrastructure.Infra) *API {
+	docService := service.NewDefaultDocumentService(cfg, infra)
 
 	return &API{
-		Ehr:         NewEhrHandler(docService, cfg),
-		EhrStatus:   NewEhrStatusHandler(docService, cfg),
-		Composition: NewCompositionHandler(docService, cfg),
-		Query:       NewQueryHandler(docService, cfg),
-		GroupAccess: NewGroupAccessHandler(docService, cfg),
+		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
+		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
+		Composition: NewCompositionHandler(docService, cfg.BaseURL, cfg.DefaultGroupAccessID),
+		Query:       NewQueryHandler(docService),
+		GroupAccess: NewGroupAccessHandler(docService, cfg.BaseURL, cfg.DefaultGroupAccessID, cfg.DefaultUserID),
 	}
 }
 
@@ -78,8 +75,9 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	//r.Use(Recovery, app_errors.ErrHandler)
 
 	// Other methods should be authorized
-	r.Use(a.Auth)
-	r.Use(a.EhrSystemID)
+	r.Use(auth)
+	r.Use(requestId)
+	r.Use(ehrSystemID)
 	r.POST("", a.Ehr.Create)
 	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
 	r.PUT("/:ehrid", a.Ehr.CreateWithID)
@@ -96,7 +94,7 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 }
 
 func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
-	r.Use(a.Auth)
+	r.Use(auth)
 	r.GET("/group/:group_id", a.GroupAccess.Get)
 	r.POST("/group", a.GroupAccess.Create)
 
@@ -104,7 +102,7 @@ func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
 }
 
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
-	r.Use(a.Auth)
+	r.Use(auth)
 	r.POST("/aql", a.Query.ExecPost)
 
 	return a

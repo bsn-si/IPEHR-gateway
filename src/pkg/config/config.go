@@ -31,6 +31,9 @@ type Config struct {
 		Endpoint    string `json:"endpoint"`
 		PrivKeyPath string `json:"privKeyPath"`
 	} `json:"contract"`
+	DB struct {
+		FilePath string `json:"filePath"`
+	} `json:"db"`
 
 	path string
 }

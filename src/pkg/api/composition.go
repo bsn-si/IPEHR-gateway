@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
@@ -20,14 +19,16 @@ import (
 )
 
 type CompositionHandler struct {
-	cfg     *config.Config
-	service *composition.Service
+	service              *composition.Service
+	baseURL              string
+	defaultGroupAccessID string
 }
 
-func NewCompositionHandler(docService *service.DefaultDocumentService, cfg *config.Config) *CompositionHandler {
+func NewCompositionHandler(docService *service.DefaultDocumentService, baseURL, defaultGroupAccessID string) *CompositionHandler {
 	return &CompositionHandler{
-		cfg:     cfg,
-		service: composition.NewCompositionService(docService, cfg),
+		service:              composition.NewCompositionService(docService),
+		baseURL:              baseURL,
+		defaultGroupAccessID: defaultGroupAccessID,
 	}
 }
 
@@ -57,7 +58,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -109,7 +110,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 	*/
-	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -122,7 +123,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 
 	groupIDStr := c.GetHeader("GroupAccessId")
 	if groupIDStr == "" {
-		groupIDStr = h.cfg.DefaultGroupAccessID
+		groupIDStr = h.defaultGroupAccessID
 	}
 
 	groupAccessUUID, err := uuid.Parse(groupIDStr)
@@ -163,7 +164,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -176,7 +177,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("version_uid")
 
-	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.Composition) {
+	if !h.service.ValidateID(versionUID, ehrSystemID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -195,7 +196,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		return
 	}
 	*/
-	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -245,7 +246,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -257,7 +258,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	}
 
 	versionUID := c.Param("preceding_version_uid")
-	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.Composition) {
+	if !h.service.ValidateID(versionUID, ehrSystemID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -276,7 +277,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 	*/
-	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -332,7 +333,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -344,7 +345,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	}
 
 	versionUID := c.Param("versioned_object_uid")
-	if !h.service.Doc.ValidateID(versionUID, ehrSystemID, types.Composition) {
+	if !h.service.ValidateID(versionUID, ehrSystemID, types.Composition) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -369,7 +370,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 	*/
-	_, err = h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -382,7 +383,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 
 	groupIDStr := c.GetHeader("GroupAccessId")
 	if groupIDStr == "" {
-		groupIDStr = h.cfg.DefaultGroupAccessID
+		groupIDStr = h.defaultGroupAccessID
 	}
 
 	groupAccessUUID, err := uuid.Parse(groupIDStr)
@@ -456,6 +457,6 @@ func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Co
 }
 
 func (h *CompositionHandler) addResponseHeaders(ehrID string, uid string, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseURL+"/v1/ehr/"+ehrID+"/composition/"+uid)
+	c.Header("Location", h.baseURL+"/v1/ehr/"+ehrID+"/composition/"+uid)
 	c.Header("ETag", uid)
 }

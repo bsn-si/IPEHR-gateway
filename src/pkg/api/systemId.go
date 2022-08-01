@@ -1,14 +1,15 @@
 package api
 
 import (
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/errors"
 )
 
-func (a *API) EhrSystemID(c *gin.Context) {
+func ehrSystemID(c *gin.Context) {
 	ehrSystemID, err := base.NewEhrSystemID(c.Request.Header.Get("EhrSystemId"))
 
 	if err != nil {

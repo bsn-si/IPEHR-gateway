@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
@@ -18,14 +17,14 @@ import (
 )
 
 type EhrHandler struct {
-	cfg     *config.Config
 	service *ehr.Service
+	baseURL string
 }
 
-func NewEhrHandler(docService *service.DefaultDocumentService, cfg *config.Config) *EhrHandler {
+func NewEhrHandler(docService *service.DefaultDocumentService, baseURL string) *EhrHandler {
 	return &EhrHandler{
-		cfg:     cfg,
 		service: ehr.NewService(docService),
+		baseURL: baseURL,
 	}
 }
 
@@ -52,7 +51,7 @@ func NewEhrHandler(docService *service.DefaultDocumentService, cfg *config.Confi
 // @Failure      409         "Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
 // @Failure      500         "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr [post]
-func (h EhrHandler) Create(c *gin.Context) {
+func (h *EhrHandler) Create(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
@@ -86,7 +85,7 @@ func (h EhrHandler) Create(c *gin.Context) {
 		return
 	}
 	*/
-	ehrUUID, err := h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err == nil && ehrUUID != nil:
 		c.AbortWithStatus(http.StatusConflict)
@@ -146,13 +145,13 @@ func (h EhrHandler) CreateWithID(c *gin.Context) {
 
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
 
 	// Checking EHR does not exist
-	doc, err := h.service.Doc.DocsIndex.GetLastByType(ehrID, types.Ehr)
+	doc, err := h.service.DocsIndex.GetLastByType(ehrID, types.Ehr)
 	if err != nil && !errors.Is(err, errors.ErrIsNotExist) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "EHR retrieve error"})
 		return
@@ -196,7 +195,7 @@ func (h EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 	*/
-	ehrUUID, err := h.service.Doc.Index.GetEhrUUIDByUserID(c, userID)
+	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err == nil && ehrUUID != nil:
 		c.AbortWithStatus(http.StatusConflict)
@@ -240,7 +239,7 @@ func (h EhrHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	if !h.service.Doc.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -252,7 +251,7 @@ func (h EhrHandler) GetByID(c *gin.Context) {
 	}
 
 	// Getting docStorageID
-	doc, err := h.service.Doc.DocsIndex.GetLastByType(ehrID, types.Ehr)
+	doc, err := h.service.DocsIndex.GetLastByType(ehrID, types.Ehr)
 	if err != nil {
 		log.Println("GetLastDocIndexByType", "ehrId", ehrID, err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -261,7 +260,7 @@ func (h EhrHandler) GetByID(c *gin.Context) {
 	}
 
 	// Getting doc from storage
-	docDecrypted, err := h.service.Doc.GetDocFromStorageByID(userID, doc.StorageID, []byte(ehrID))
+	docDecrypted, err := h.service.GetDocFromStorageByID(userID, doc.StorageID, []byte(ehrID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
 		return
@@ -314,7 +313,7 @@ func (h EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 }
 
 func (h *EhrHandler) respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseURL+"/v1/ehr/"+doc.EhrID.Value)
+	c.Header("Location", h.baseURL+"/v1/ehr/"+doc.EhrID.Value)
 	c.Header("ETag", doc.EhrID.Value)
 
 	prefer := c.Request.Header.Get("Prefer")

@@ -8,21 +8,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/groupAccess"
 )
 
 type GroupAccessHandler struct {
-	cfg     *config.Config
 	service *groupAccess.Service
+	baseURL string
 }
 
-func NewGroupAccessHandler(docService *service.DefaultDocumentService, cfg *config.Config) *GroupAccessHandler {
+func NewGroupAccessHandler(docService *service.DefaultDocumentService, baseURL, defaultGroupAccessID, defaultUserID string) *GroupAccessHandler {
 	return &GroupAccessHandler{
-		cfg:     cfg,
-		service: groupAccess.NewGroupAccessService(docService, cfg),
+		service: groupAccess.NewGroupAccessService(docService, defaultGroupAccessID, defaultUserID),
+		baseURL: baseURL,
 	}
 }
 
@@ -110,7 +109,7 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 }
 
 func (h *GroupAccessHandler) respondWithDoc(doc *model.GroupAccess, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseURL+"/v1/access/group/"+doc.GroupUUID.String())
+	c.Header("Location", h.baseURL+"/v1/access/group/"+doc.GroupUUID.String())
 	c.Header("ETag", doc.GroupUUID.String())
 
 	c.JSON(http.StatusCreated, doc)
