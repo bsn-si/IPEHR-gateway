@@ -57,8 +57,7 @@ func TestSave(t *testing.T) {
 	jsonDoc := fakeData.EhrCreateRequest()
 
 	var ehrReq model.EhrCreateRequest
-	err := json.Unmarshal(jsonDoc, &ehrReq)
-	if err != nil {
+	if err := json.Unmarshal(jsonDoc, &ehrReq); err != nil {
 		t.Fatal(err)
 	}
 
@@ -78,12 +77,12 @@ func TestSave(t *testing.T) {
 	}
 
 	// Check that subject index is added
-	ehrID, err := docService.SubjectIndex.GetEhrBySubject(testSubjectID, testSubjectNamespace)
+	ehrUUID, err := docService.Infra.Index.GetEhrUUIDBySubject(ctx, testSubjectID, testSubjectNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if ehrID != ehrDoc.EhrID.Value {
+	if ehrUUID.String() != ehrDoc.EhrID.Value {
 		t.Errorf("Incorrect ehrID in SubjectIndex")
 	}
 }
@@ -103,35 +102,23 @@ func TestStatus(t *testing.T) {
 
 	ehrSystemID := ehrService.GetSystemID()
 	ehrID := newEhr.EhrID.Value
+	ehrUUID, _ := uuid.Parse(ehrID)
 	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	ctx := context.Background()
 
-	statusNew, err := ehrService.CreateStatus(ctx, userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
+	statusNew, err := ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// get current EHR status
-
-	ehrUUID, _ := uuid.Parse(ehrID)
-
-	statusGet, err := ehrService.GetStatus(userID, &ehrUUID)
+	statusGet, err := ehrService.GetStatus(ctx, userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if statusGet.UID.Value != statusNew.UID.Value {
 		t.Fatalf("Expected %s, received %s", statusGet.UID.Value, statusNew.UID.Value)
-	}
-
-	// get status by subject
-	statusGet2, err := ehrService.GetStatusBySubject(userID, subjectID2, subjectNamespace)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if statusGet2.UID.Value != statusIDNew {
-		t.Error("Got wrong status by subject")
 	}
 }
 
@@ -151,21 +138,20 @@ func TestStatusUpdate(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
+	ehrUUID, _ := uuid.Parse(ehrID)
 	ctx := context.Background()
 
-	statusNew2, err := ehrService.CreateStatus(ctx, userID, ehrID, statusID2, subjectID2, subjectNamespace, ehrSystemID)
+	statusNew2, err := ehrService.CreateStatus(ctx, userID, statusID2, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = ehrService.SaveStatus(ctx, ehrID, userID, ehrSystemID, statusNew2)
+	err = ehrService.SaveStatus(ctx, userID, &ehrUUID, ehrSystemID, statusNew2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ehrUUID, _ := uuid.Parse(ehrID)
-
-	statusGet3, err := ehrService.GetStatus(userID, &ehrUUID)
+	statusGet3, err := ehrService.GetStatus(ctx, userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,18 +190,18 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	ehrID := newEhr.EhrID.Value
+	ehrUUID, _ := uuid.Parse(ehrID)
 	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	ctx := context.Background()
 
-	_, err = ehrService.CreateStatus(ctx, userID, ehrID, statusIDNew, subjectID2, subjectNamespace, ehrSystemID)
+	_, err = ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Test: docIndex is not exist yet
-	ehrUUID, _ := uuid.Parse(ehrID)
 
-	if _, err := ehrService.GetStatusByNearestTime(userID, &ehrUUID, time.Now(), types.EhrStatus); err != nil {
+	if _, err := ehrService.GetStatusByNearestTime(ctx, userID, &ehrUUID, time.Now(), types.EhrStatus); err != nil {
 		t.Fatal("Should return status", err)
 	}
 }

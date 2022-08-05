@@ -27,11 +27,13 @@ type (
 	}
 
 	Request struct {
-		ReqID   string `gorm:"primaryKey"`
-		UserID  string
-		EhrUUID string
-		Kind    RequestKind
-		CID     string
+		ReqID       string `gorm:"primaryKey"`
+		UserID      string
+		EhrUUID     string
+		Kind        RequestKind
+		CID         string
+		BaseUIDHash string
+		Version     string
 	}
 
 	BlockchainTx struct {
@@ -47,24 +49,25 @@ type (
 
 const (
 	StatusFailed  TxStatus = 0
-	StatusSuccess          = 1
-	StatusPending          = 2
+	StatusSuccess TxStatus = 1
+	StatusPending TxStatus = 2
 
-	RequestEhrCreate                     RequestKind = 0
-	RequestEhrGetBySubjectIDAndNamespace             = 1
-	RequestEhrGetByID                                = 2
-	RequestEhrStatusUpdate                           = 3
-	RequestEhrStatusGetById                          = 4
-	RequestEhrStatusGetByTime                        = 5
-	RequestCompositionCreate                         = 6
-	RequestCompositionUpdate                         = 7
-	RequestCompositionGetById                        = 8
-	RequestCompositionDelete                         = 9
+	RequestEhrCreate          RequestKind = 0
+	RequestEhrGetBySubject    RequestKind = 1
+	RequestEhrGetByID         RequestKind = 2
+	RequestEhrStatusUpdate    RequestKind = 3
+	RequestEhrStatusGetByID   RequestKind = 4
+	RequestEhrStatusGetByTime RequestKind = 5
+	RequestCompositionCreate  RequestKind = 6
+	RequestCompositionUpdate  RequestKind = 7
+	RequestCompositionGetByID RequestKind = 8
+	RequestCompositionDelete  RequestKind = 9
 
 	TxSetEhrUser      TxKind = 0
-	TxSetEhrBySubject        = 1
-	TxSetEhrDocs             = 2
-	TxSetDocAccess           = 3
+	TxSetEhrBySubject TxKind = 1
+	TxSetEhrDocs      TxKind = 2
+	TxSetDocAccess    TxKind = 3
+	TxDeleteDoc       TxKind = 4
 )
 
 func New(db *gorm.DB, ethClient *ethclient.Client) *Proc {
@@ -75,14 +78,8 @@ func New(db *gorm.DB, ethClient *ethclient.Client) *Proc {
 	}
 }
 
-func (p *Proc) AddRequest(reqID, userID, ehrUUID, CID string) error {
-	result := p.db.Create(&Request{
-		ReqID:   reqID,
-		UserID:  userID,
-		EhrUUID: ehrUUID,
-		CID:     CID,
-	})
-	if result.Error != nil {
+func (p *Proc) AddRequest(req *Request) error {
+	if result := p.db.Create(req); result.Error != nil {
 		return fmt.Errorf("db.Create error: %w", result.Error)
 	}
 
@@ -112,7 +109,7 @@ func (p *Proc) Start() {
 		for {
 			select {
 			case <-ticker.C:
-				if p.lock == false {
+				if !p.lock {
 					p.exec()
 				}
 			case <-p.done:
@@ -132,6 +129,7 @@ func (p *Proc) exec() {
 
 	for {
 		tx := BlockchainTx{}
+
 		result := p.db.First(&tx)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			break
@@ -154,8 +152,8 @@ func (p *Proc) exec() {
 
 		if receipt.Status != uint64(tx.Status) {
 			tx.Status = TxStatus(receipt.Status)
-			result = p.db.Save(&tx)
-			if result.Error != nil {
+
+			if result = p.db.Save(&tx); result.Error != nil {
 				log.Println("db.Save error:", result.Error)
 				break
 			}
@@ -203,14 +201,14 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 			TxSetEhrDocs,
 			TxSetDocAccess,
 		}
-	case RequestEhrGetBySubjectIDAndNamespace:
+	case RequestEhrGetBySubject:
 	case RequestEhrGetByID:
 	case RequestEhrStatusUpdate:
-	case RequestEhrStatusGetById:
+	case RequestEhrStatusGetByID:
 	case RequestEhrStatusGetByTime:
 	case RequestCompositionCreate:
 	case RequestCompositionUpdate:
-	case RequestCompositionGetById:
+	case RequestCompositionGetByID:
 	case RequestCompositionDelete:
 	default:
 		return false, fmt.Errorf("%w Unknown request.Kind %d", errors.ErrCustom, request.Kind)
@@ -218,6 +216,7 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 
 	for _, txKind := range txsToCheck {
 		tx := &BlockchainTx{}
+
 		result := p.db.Model(tx).Where("req_id = ? AND kind = ?", reqID, txKind).First(tx)
 		if result.Error != nil {
 			return false, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)

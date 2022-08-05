@@ -10,6 +10,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/infrastructure"
 )
 
@@ -38,13 +39,14 @@ type API struct {
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
+	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
-		Composition: NewCompositionHandler(docService, cfg.BaseURL, cfg.DefaultGroupAccessID),
+		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL, cfg.DefaultGroupAccessID),
 		Query:       NewQueryHandler(docService),
-		GroupAccess: NewGroupAccessHandler(docService, cfg.BaseURL, cfg.DefaultGroupAccessID, cfg.DefaultUserID),
+		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 	}
 }
 
@@ -76,7 +78,7 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 
 	// Other methods should be authorized
 	r.Use(auth)
-	r.Use(requestId)
+	r.Use(requestID)
 	r.Use(ehrSystemID)
 	r.POST("", a.Ehr.Create)
 	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)

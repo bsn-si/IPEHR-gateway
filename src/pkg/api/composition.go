@@ -14,6 +14,7 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
+	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
@@ -24,9 +25,9 @@ type CompositionHandler struct {
 	defaultGroupAccessID string
 }
 
-func NewCompositionHandler(docService *service.DefaultDocumentService, baseURL, defaultGroupAccessID string) *CompositionHandler {
+func NewCompositionHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL, defaultGroupAccessID string) *CompositionHandler {
 	return &CompositionHandler{
-		service:              composition.NewCompositionService(docService),
+		service:              composition.NewCompositionService(docService, groupAccessService),
 		baseURL:              baseURL,
 		defaultGroupAccessID: defaultGroupAccessID,
 	}
@@ -134,7 +135,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request)
+	doc, err := h.service.Create(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
@@ -207,7 +208,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.GetByID(userID, &ehrUUID, versionUID, ehrSystemID)
+	data, err := h.service.GetByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -288,7 +289,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	newUID, err := h.service.DeleteByID(userID, &ehrUUID, versionUID, ehrSystemID)
+	newUID, err := h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
 	switch {
 	case err == nil:
 		h.addResponseHeaders(ehrID, newUID, c)
@@ -416,7 +417,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionLast, err := h.service.GetLastByBaseID(userID, &ehrUUID, versionUID, ehrSystemID)
+	compositionLast, err := h.service.GetLastByBaseID(c, userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -433,7 +434,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
+	compositionUpdated, err := h.service.Update(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

@@ -20,7 +20,7 @@ import (
 type Infra struct {
 	LocalDB            *gorm.DB
 	Keystore           *keystore.KeyStore
-	HttpClient         *http.Client
+	HTTPClient         *http.Client
 	EthClient          *ethclient.Client
 	IpfsClient         *ipfs.Client
 	Index              *indexer.Index
@@ -38,8 +38,13 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	db.AutoMigrate(&processing.Request{})
-	db.AutoMigrate(&processing.BlockchainTx{})
+	if err = db.AutoMigrate(&processing.Request{}); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = db.AutoMigrate(&processing.BlockchainTx{}); err != nil {
+		log.Fatal(err)
+	}
 
 	ks := keystore.New(cfg.KeystoreKey)
 
@@ -56,7 +61,7 @@ func New(cfg *config.Config) *Infra {
 	return &Infra{
 		LocalDB:            db,
 		Keystore:           ks,
-		HttpClient:         http.DefaultClient,
+		HTTPClient:         http.DefaultClient,
 		EthClient:          ehtClient,
 		IpfsClient:         ipfsClient,
 		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient),

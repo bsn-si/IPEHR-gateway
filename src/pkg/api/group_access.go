@@ -18,9 +18,9 @@ type GroupAccessHandler struct {
 	baseURL string
 }
 
-func NewGroupAccessHandler(docService *service.DefaultDocumentService, baseURL, defaultGroupAccessID, defaultUserID string) *GroupAccessHandler {
+func NewGroupAccessHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL string) *GroupAccessHandler {
 	return &GroupAccessHandler{
-		service: groupAccess.NewGroupAccessService(docService, defaultGroupAccessID, defaultUserID),
+		service: groupAccessService,
 		baseURL: baseURL,
 	}
 }
@@ -63,7 +63,7 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 		return
 	}
 
-	newGroupAccess, err := h.service.Create(userID, &request)
+	newGroupAccess, err := h.service.Create(c, userID, &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Group Access creating error"})
 		return
@@ -99,7 +99,7 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 		return
 	}
 
-	accessGroup, err := h.service.Get(userID, &groupUUID)
+	accessGroup, err := h.service.Get(c, userID, &groupUUID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Group access not found"})
 		return

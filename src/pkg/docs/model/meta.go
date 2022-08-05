@@ -6,12 +6,12 @@ import (
 )
 
 type DocumentMeta struct {
-	TypeCode            types.DocumentType
-	StorageID           *[32]byte
-	DocIDEncrypted      []byte
-	Timestamp           uint64
-	BaseDocumentUIDHash *[32]byte
-	IsLastVersion       bool
-	Version             string
-	Status              status.DocumentStatus
+	TypeCode        types.DocumentType
+	CID             *[32]byte
+	DocUIDEncrypted []byte
+	DocBaseUIDHash  *[32]byte
+	IsLastVersion   bool
+	Version         string
+	Status          status.DocumentStatus
+	Timestamp       uint64
 }

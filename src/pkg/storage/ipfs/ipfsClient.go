@@ -40,6 +40,7 @@ func NewClient(apiURL string) (*Client, error) {
 	}
 
 	url := apiURL + "/version"
+
 	resp, err := client.httpClient.Post(url, "", nil)
 	if err != nil {
 		return nil, fmt.Errorf("IPFS NewClient error: %w apiURL %s", err, apiURL)
@@ -47,8 +48,7 @@ func NewClient(apiURL string) (*Client, error) {
 	defer resp.Body.Close()
 
 	result := &ipfsVersionResult{}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return nil, fmt.Errorf("IPFS version response decode error: %w", err)
 	}
 
@@ -62,8 +62,8 @@ func NewClient(apiURL string) (*Client, error) {
 }
 
 // Add file to an IPFS node with CID version 0
-// Returns CID or error
-func (i *Client) Add(fileContent []byte) (*cid.Cid, error) {
+// Returns CID in *[32]byte representation or error
+func (i *Client) Add(fileContent []byte) (*[32]byte, error) {
 	var (
 		url             = i.apiURL + "/add?cid-version=0"
 		requestBody     bytes.Buffer
@@ -96,8 +96,8 @@ func (i *Client) Add(fileContent []byte) (*cid.Cid, error) {
 	}
 
 	result := &ipfsAddResult{}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil {
+
+	if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
 		return nil, fmt.Errorf("IPFS add response decode error: %w", err)
 	}
 
@@ -106,13 +106,21 @@ func (i *Client) Add(fileContent []byte) (*cid.Cid, error) {
 		return nil, fmt.Errorf("IPFS add response CID parse error: %w", err)
 	}
 
-	return &CID, nil
+	cid := new([32]byte)
+	copy(cid[:], CID.Bytes()[2:])
+
+	return cid, nil
 }
 
 // Get file from IPFS node by CID
 // Returns ReadCloser or error
 // Need to Close()
-func (i *Client) Get(CID *cid.Cid) (io.ReadCloser, error) {
+func (i *Client) Get(cidBytes *[32]byte) (io.ReadCloser, error) {
+	CID, err := cid.Cast(append([]byte{18, 32}, cidBytes[:]...))
+	if err != nil {
+		return nil, fmt.Errorf("cid.Cast error: %w cidBytes %x", err, cidBytes)
+	}
+
 	url := i.apiURL + "/cat?arg=" + CID.String()
 
 	resp, err := i.httpClient.Post(url, "", nil)

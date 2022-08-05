@@ -3,13 +3,18 @@ package api
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
-func requestId(c *gin.Context) {
+func requestID(c *gin.Context) {
 	id := make([]byte, 8)
-	rand.Read(id)
+
+	if _, err := rand.Read(id); err != nil {
+		log.Println("Make requestID error:", err)
+	}
+
 	c.Set("reqId", hex.EncodeToString(id))
 	c.Next()
 }
