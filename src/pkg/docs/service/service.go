@@ -1,65 +1,52 @@
 package service
 
 import (
-	"encoding/hex"
+	"context"
 	"fmt"
-	"hms/gateway/pkg/compressor"
+	"io/ioutil"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/sha3"
+	"github.com/ipfs/go-cid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/status"
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/service/docAccess"
-	"hms/gateway/pkg/indexer/service/docs"
-	"hms/gateway/pkg/indexer/service/ehrs"
-	"hms/gateway/pkg/indexer/service/groupAccess"
-	"hms/gateway/pkg/indexer/service/subject"
-	"hms/gateway/pkg/keystore"
-	"hms/gateway/pkg/storage"
+	"hms/gateway/pkg/infrastructure"
 )
 
 type DefaultDocumentService struct {
-	Storage            storage.Storager
-	Keystore           *keystore.KeyStore
-	EhrsIndex          *ehrs.Index
-	DocsIndex          *docs.Index
-	DocAccessIndex     *docAccess.Index
-	SubjectIndex       *subject.Index
-	GroupAccessIndex   *groupAccess.Index
-	Compressor         compressor.Interface
-	CompressionEnabled bool
+	Infra *infrastructure.Infra
+	Proc  *processing.Proc
+	//EhrsIndex          *ehrs.Index
+	//DocsIndex        *docs.Index
+	//DocAccessIndex   *docAccess.Index
+	//SubjectIndex     *subject.Index
+	//GroupAccessIndex *groupAccess.Index
 }
 
-func NewDefaultDocumentService(cfg *config.Config) *DefaultDocumentService {
-	ks := keystore.New(cfg.KeystoreKey)
+func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
+	proc := processing.New(infra.LocalDB, infra.EthClient, infra.FilecoinClient)
+	proc.Start()
 
 	return &DefaultDocumentService{
-		Storage:            storage.Storage(),
-		Keystore:           ks,
-		EhrsIndex:          ehrs.New(),
-		DocsIndex:          docs.New(),
-		DocAccessIndex:     docAccess.New(ks),
-		SubjectIndex:       subject.New(),
-		GroupAccessIndex:   groupAccess.New(ks),
-		Compressor:         compressor.New(cfg.CompressionLevel),
-		CompressionEnabled: cfg.CompressionEnabled,
+		Infra: infra,
+		Proc:  proc,
+		//EhrsIndex:          ehrs.New(),
+		//DocsIndex:        docs.New(),
+		//DocAccessIndex:   docAccess.New(infra.Keystore),
+		//SubjectIndex:     subject.New(),
+		//GroupAccessIndex: groupAccess.New(infra.Keystore),
 	}
 }
 
-func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUID *uuid.UUID, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, err
-	}
-
+/* TODO брать из блокчейна
+func (d *DefaultDocumentService) GetDocIndexByObjectVersionID(userID string, ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID) (doc *model.DocumentMeta, err error) {
 	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := d.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,13 +56,11 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 		return nil, err
 	}
 
-	for _, docIndex := range docIndexes {
-		if docType > 0 && docIndex.TypeCode != docType {
-			continue
-		}
+	objVersionIDString := objectVersionID.String()
 
+	for _, docIndex := range docIndexes {
 		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
+		indexKey := sha3.Sum256(append(docIndex.CID[:], []byte(userID)...))
 		indexKeyStr := hex.EncodeToString(indexKey[:])
 
 		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
@@ -102,151 +87,183 @@ func (d *DefaultDocumentService) GetDocIndexByDocID(userID, docID string, ehrUUI
 			continue
 		}
 
-		if docID == string(docIDDecrypted) {
+		if objVersionIDString == string(docIDDecrypted) {
 			return docIndex, nil
 		}
 	}
 
 	return nil, errors.ErrIsNotExist
 }
+*/
 
-func (d *DefaultDocumentService) GetDocFromStorageByID(userID string, storageID *[32]byte, authData []byte) (docBytes []byte, err error) {
-	userUUID, err := uuid.Parse(userID)
+/* TODO брать из блокчейна
+func (d *DefaultDocumentService) GetDocIndexesByBaseID(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) ([]*model.DocumentMeta, error) {
+	docIndexes, err := d.DocsIndex.Get(ehrUUID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	// Getting access key
-	indexKey := sha3.Sum256(append(storageID[:], userUUID[:]...))
-	indexKeyStr := hex.EncodeToString(indexKey[:])
-
-	keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
-	if err != nil {
-		return nil, err
-	}
-
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(keyDecrypted) != 32 {
-		return nil, fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
-	}
-
-	var docKey chachaPoly.Key
-
-	copy(docKey[:], keyDecrypted)
-
-	docEncrypted, err := d.Storage.Get(storageID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Doc decryption
-	docDecrypted, err := docKey.DecryptWithAuthData(docEncrypted, authData)
-	if err != nil {
-		return nil, err
-	}
-
-	if d.CompressionEnabled {
-		docDecrypted, err = d.Compressor.Decompress(docDecrypted)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return docDecrypted, nil
-}
-
-func (d *DefaultDocumentService) UpdateDocStatus(userID, ehrID, docID string, docType types.DocumentType, old, new status.DocumentStatus) (err error) {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return err
-	}
-
-	ehrUUID, err := uuid.Parse(ehrID)
-	if err != nil {
-		return err
-	}
-
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userID)
-	if err != nil {
-		return err
-	}
-
-	docIndexes, err := d.DocsIndex.Get(ehrID)
-	if err != nil {
-		return err
-	}
+	var (
+		docsMeta            []*model.DocumentMeta
+		basedID             = objectVersionID.BasedID()
+		baseDocumentUIDHash = sha3.Sum256([]byte(basedID))
+	)
 
 	for _, docIndex := range docIndexes {
 		if docType > 0 && docIndex.TypeCode != docType {
 			continue
 		}
 
-		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.StorageID[:], userUUID[:]...))
-		indexKeyStr := hex.EncodeToString(indexKey[:])
-
-		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
-		if err != nil {
-			return err
-		}
-
-		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-		if err != nil {
-			return err
-		}
-
-		if len(keyDecrypted) != 32 {
-			return fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
-		}
-
-		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
-		if err != nil {
-			return err
-		}
-
-		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
-		if err != nil {
+		if docIndex.BaseDocumentUIDHash == nil {
 			continue
 		}
 
-		if docID == string(docIDDecrypted) {
-			if docIndex.Status == new {
-				return errors.ErrAlreadyUpdated
-			}
+		if *docIndex.BaseDocumentUIDHash != baseDocumentUIDHash {
+			continue
+		}
 
-			docIndex.Status = new
+		docsMeta = append(docsMeta, docIndex)
+	}
 
-			if err = d.DocsIndex.Replace(ehrID, docIndexes); err != nil {
-				return err
-			}
+	return docsMeta, nil
+}
+*/
 
-			return nil
+/* TODO брать из блокчейна
+func (d *DefaultDocumentService) GetDocIndexByBaseIDAndVersion(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) (*model.DocumentMeta, error) {
+	docIndexes, err := d.GetDocIndexesByBaseID(ehrUUID, objectVersionID, docType)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, docIndex := range docIndexes {
+		if docIndex.Version == objectVersionID.VersionTreeID() {
+			return docIndex, nil
 		}
 	}
 
-	return errors.ErrIsNotExist
+	return nil, errors.ErrIsNotExist
 }
+*/
+
+/* TODO брать из блокчейна
+func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseID(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) (*model.DocumentMeta, error) {
+	docIndexes, err := d.GetDocIndexesByBaseID(ehrUUID, objectVersionID, docType)
+	if err != nil {
+		return nil, fmt.Errorf("GetDocIndexesByBaseID error: %w", err)
+	}
+
+	for _, docIndex := range docIndexes {
+		if docIndex.IsLastVersion {
+			return docIndex, nil
+		}
+	}
+
+	return nil, errors.ErrIsNotExist
+}
+*/
+
+func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error) {
+	// Get doc key
+	var docKey *chachaPoly.Key
+	{
+		docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID)
+		if err != nil {
+			return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
+		}
+
+		userPubKey, userPrivateKey, err := d.Infra.Keystore.Get(userID)
+		if err != nil {
+			return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
+		}
+
+		docKeyBytes, err := keybox.OpenAnonymous(docKeyEncr, userPubKey, userPrivateKey)
+		if err != nil {
+			return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
+		}
+
+		docKey, err = chachaPoly.NewKeyFromBytes(docKeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+		}
+	}
+
+	// Get EHR_STATUS encrypted
+	var docEncrypted []byte
+	{
+		reader, err := d.Infra.IpfsClient.Get(CID)
+		if err != nil {
+			return nil, fmt.Errorf("IpfsClient.Get error: %w CID %s", err, CID.String())
+		}
+		defer reader.Close()
+
+		docEncrypted, err = ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, fmt.Errorf("ipfs read error: %w", err)
+		}
+	}
+
+	// Decrypt and decompress
+	var docDecrypted []byte
+	{
+		docID, err := docKey.DecryptWithAuthData(docIDEncrypted, authData)
+		if err != nil {
+			return nil, fmt.Errorf("DocIDEncrypted DecryptWithAuthData error: %w", err)
+		}
+
+		docDecrypted, err = docKey.DecryptWithAuthData(docEncrypted, docID)
+		if err != nil {
+			return nil, fmt.Errorf("docEncrypted DecryptWithAuthData error: %w", err)
+		}
+
+		if d.Infra.CompressionEnabled {
+			docDecrypted, err = d.Infra.Compressor.Decompress(docDecrypted)
+			if err != nil {
+				return nil, fmt.Errorf("Decompress error: %w", err)
+			}
+		}
+	}
+
+	return docDecrypted, nil
+}
+
+/* TODO будет на блокчейне
+func (d *DefaultDocumentService) UpdateCollection(ehrUUID *uuid.UUID, docIndexes, toUpdate []*model.DocumentMeta, action func(*model.DocumentMeta) error) (err error) {
+	changed := false
+
+	for _, docIndex := range toUpdate {
+		err := action(docIndex)
+		if err != nil {
+			return err
+		}
+
+		changed = true
+	}
+
+	if changed {
+		if err = d.DocsIndex.Replace(ehrUUID.String(), docIndexes); err != nil {
+			return err
+		}
+	}
+
+	return
+}
+*/
 
 func (d *DefaultDocumentService) GenerateID() string {
 	return uuid.New().String()
 }
 
-func (d *DefaultDocumentService) GetSystemID() string {
-	return ""
+func (d *DefaultDocumentService) GetSystemID() base.EhrSystemID {
+	ehrSystemID, _ := base.NewEhrSystemID(common.EhrSystemID)
+	return ehrSystemID
 }
 
-func (d *DefaultDocumentService) ValidateID(id string, docType types.DocumentType) bool {
-	//TODO
+func (d *DefaultDocumentService) ValidateID(id string, systemID base.EhrSystemID, docType types.DocumentType) bool {
+	if docType == types.Composition {
+		_, err := base.NewObjectVersionID(id, systemID)
+		return err == nil
+	}
+
 	return true
 }

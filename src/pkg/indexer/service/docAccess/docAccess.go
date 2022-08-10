@@ -3,8 +3,8 @@ package docAccess
 
 import (
 	"encoding/hex"
+	"fmt"
 
-	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/crypto/chachaPoly"
@@ -27,11 +27,6 @@ func New(ks *keystore.KeyStore) *Index {
 
 // Add user's document key
 func (u *Index) Add(userID string, docStorageID *[32]byte, docKey []byte) error {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return err
-	}
-
 	// Getting user publicKey
 	userPubKey, _, err := u.keystore.Get(userID)
 	if err != nil {
@@ -45,7 +40,7 @@ func (u *Index) Add(userID string, docStorageID *[32]byte, docKey []byte) error 
 	}
 
 	// Index doc_id -> encrypted_doc_key
-	indexKey := sha3.Sum256(append(docStorageID[:], userUUID[:]...))
+	indexKey := sha3.Sum256(append(docStorageID[:], []byte(userID)...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
 
 	if err = u.index.Add(indexKeyStr, keyEncrypted); err != nil {
@@ -64,35 +59,30 @@ func (u *Index) Get(userID string) ([]byte, error) {
 	return keyEncrypted, err
 }
 
-func (u *Index) GetDocumentKey(userID string, docStorageID *[32]byte) (docKey *chachaPoly.Key, err error) {
-	userUUID, err := uuid.Parse(userID)
-	if err != nil {
-		return
-	}
-
+func (u *Index) GetDocumentKey(userID string, docStorageID *[32]byte) (*chachaPoly.Key, error) {
 	userPubKey, userPrivateKey, err := u.keystore.Get(userID)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
 	}
 
-	indexKey := sha3.Sum256(append(docStorageID[:], userUUID[:]...))
+	indexKey := sha3.Sum256(append(docStorageID[:], []byte(userID)...))
 	indexKeyStr := hex.EncodeToString(indexKey[:])
 
 	var keyEncrypted []byte
 
 	err = u.index.GetByID(indexKeyStr, &keyEncrypted)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("index.GetByID error: %w indexKey %s", err, indexKeyStr)
 	}
 
 	docKeyBytes, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivateKey)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
 	}
 
-	docKey, err = chachaPoly.NewKeyFromBytes(docKeyBytes)
+	docKey, err := chachaPoly.NewKeyFromBytes(docKeyBytes)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
 	}
 
 	return docKey, nil

@@ -22,12 +22,15 @@ import (
 	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 )
 
 type testData struct {
 	ehrID         string
 	ehrStatusID   string
+	ehrSystemID   string
 	testUserID    string
 	testUserID2   string
 	groupAccessID string
@@ -53,6 +56,7 @@ func Test_API(t *testing.T) {
 	defer tearDown(*testWrap)
 
 	testData := &testData{
+		ehrSystemID: common.EhrSystemID,
 		testUserID:  uuid.New().String(),
 		testUserID2: uuid.New().String(),
 	}
@@ -64,14 +68,15 @@ func Test_API(t *testing.T) {
 	t.Run("EHR_STATUS getting", testWrap.ehrStatusGet(testData))
 	t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData))
 	t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData))
-	t.Run("EHR get by subject", testWrap.ehrGetBySubject())
+	t.Run("EHR get by subject", testWrap.ehrGetBySubject(testData))
 	t.Run("Access group create", testWrap.accessGroupCreate(testData))
 	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
 	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
-	t.Run("COMPOSITION create Expected fail with wrong EhrId", testWrap.compositionCreateFail())
+	t.Run("COMPOSITION create Expected fail with wrong EhrId", testWrap.compositionCreateFail(testData))
 	t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData))
 	t.Run("COMPOSITION getting with correct EhrId", testWrap.compositionGetByID(testData))
 	t.Run("COMPOSITION getting with wrong EhrId", testWrap.compositionGetByWrongID(testData))
+	t.Run("COMPOSITION update", testWrap.compositionUpdate(testData))
 	t.Run("COMPOSITION delete by wrong UID", testWrap.compositionDeleteByWrongID(testData))
 	t.Run("COMPOSITION delete", testWrap.compositionDeleteByID(testData))
 	t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData))
@@ -81,14 +86,17 @@ func Test_API(t *testing.T) {
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
 	t.Helper()
 
-	cfg, err := config.New()
+	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
+
+	cfg, err := config.New(cfgPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cfg.StoragePath += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
-	r := api.New(cfg).Build()
+	infra := infrastructure.New(cfg)
+	r := api.New(cfg, infra).Build()
 	ts = httptest.NewServer(r)
 
 	return ts, storage.Storage()
@@ -114,6 +122,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -163,6 +172,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID2)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -205,6 +215,7 @@ func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *testData) func(t 
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID2)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -230,6 +241,7 @@ func (testWrap *testWrap) ehrGetByID(testData *testData) func(t *testing.T) {
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -273,6 +285,7 @@ func (testWrap *testWrap) ehrStatusGet(testData *testData) func(t *testing.T) {
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -316,6 +329,7 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *testData) func(t *
 		q.Add("version_at_time", versionAtTime.Format(common.OpenEhrTimeFormat))
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.URL.RawQuery = q.Encode()
 
 		response, err := testWrap.httpClient.Do(request)
@@ -377,6 +391,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("If-Match", testData.ehrStatusID)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -418,6 +433,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err = testWrap.httpClient.Do(request)
 		if err != nil {
@@ -450,7 +466,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 	}
 }
 
-func (testWrap *testWrap) ehrGetBySubject() func(t *testing.T) {
+func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Adding document with specific subject
 		userID := uuid.New().String()
@@ -471,6 +487,7 @@ func (testWrap *testWrap) ehrGetBySubject() func(t *testing.T) {
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", userID)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -497,6 +514,7 @@ func (testWrap *testWrap) ehrGetBySubject() func(t *testing.T) {
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", userID)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err = testWrap.httpClient.Do(request)
 		if err != nil {
@@ -522,12 +540,12 @@ func (testWrap *testWrap) ehrGetBySubject() func(t *testing.T) {
 		}
 
 		if ehrDoc.EhrID.Value != ehrID {
-			t.Error("Got wrong EHR")
+			t.Fatal("Got wrong EHR")
 		}
 	}
 }
 
-func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
+func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		userID := uuid.New().String()
 		ehrID := uuid.New().String()
@@ -539,23 +557,22 @@ func (testWrap *testWrap) compositionCreateFail() func(t *testing.T) {
 
 		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+ehrID+"/composition", body)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", userID)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 		defer response.Body.Close()
 
 		if response.StatusCode == http.StatusCreated {
-			t.Errorf("Expected error, received status: %d", response.StatusCode)
+			t.Fatalf("Expected error, received status: %d", response.StatusCode)
 		}
 	}
 }
@@ -576,16 +593,16 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("GroupAccessId", testData.groupAccessID)
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusCreated {
-			t.Errorf("Expected success, received status: %d", response.StatusCode)
+			t.Fatalf("Expected success, received status: %d", response.StatusCode)
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
@@ -595,8 +612,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 
 		var c model.Composition
 		if err = json.Unmarshal(data, &c); err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		testData.compositionID = c.UID.Value
@@ -611,6 +627,8 @@ func (testWrap *testWrap) compositionGetByID(testData *testData) func(t *testing
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("GroupAccessId", testData.groupAccessID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -648,6 +666,7 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *testData) func(t *te
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -661,6 +680,74 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *testData) func(t *te
 	}
 }
 
+func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		body, err := compositionCreateBodyRequest()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		composition := model.Composition{}
+		if err = composition.FromJSON(body); err != nil {
+			t.Fatal(err)
+		}
+
+		//ehrSystemID := ehrService.Doc.GetSystemID()
+		ehrSystemID, _ := base.NewEhrSystemID(testData.ehrSystemID)
+		objectVersionID, err := base.NewObjectVersionID(composition.UID.Value, ehrSystemID)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		composition.ObjectVersionID = *objectVersionID
+
+		composition.Name.Value = "Updated text"
+		updatedComposition, _ := json.Marshal(composition)
+
+		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition/"+composition.ObjectVersionID.BasedID(), bytes.NewReader(updatedComposition))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("GroupAccessId", testData.groupAccessID)
+		request.Header.Set("If-Match", composition.ObjectVersionID.String())
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected status: %v, received %v", http.StatusOK, response.StatusCode)
+		}
+
+		if err = json.Unmarshal(data, &composition); err != nil {
+			t.Fatal(err)
+		}
+
+		if composition.UID.Value == testData.compositionID {
+			t.Fatalf("Expected %s, received %s", composition.UID.Value, testData.compositionID)
+		}
+
+		testData.compositionID = composition.UID.Value
+	}
+}
+
 func (testWrap *testWrap) compositionDeleteByWrongID(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		request, err := http.NewRequest(http.MethodDelete, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition/"+uuid.New().String(), nil)
@@ -669,6 +756,7 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *testData) func(t 
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -690,6 +778,7 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -701,7 +790,8 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 			t.Fatalf("Expected status: %v, received %v", http.StatusNoContent, response.StatusCode)
 		}
 
-		// Check answer for repeated query
+		t.Log("Checking the status of a re-request to remove")
+
 		response, err = testWrap.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())

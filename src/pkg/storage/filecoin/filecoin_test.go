@@ -3,38 +3,55 @@ package filecoin_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
-	"hms/gateway/pkg/common/fakeData"
+	"github.com/ipfs/go-cid"
+
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/storage/filecoin"
 )
 
 func TestStartDeal(t *testing.T) {
-
-	storage, err := prepare(t)
+	filecoinClient, err := prepare(t)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer clean(t, storage)
-
-	testData, err := fakeData.GetByteArray(1024)
-	if err != nil {
-		t.Fatal(err)
-	}
+	defer clean(t, filecoinClient)
 
 	ctx := context.Background()
 
-	deal, err := storage.StartDeal(ctx, testData)
+	CID, err := cid.Decode("QmPYKPZhu6LdLrZJUbmUTPFCogwmmenaKMH5XMsrEBNG3m")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log(deal)
+	dataSize := uint64(50)
+
+	dealCID, minerAddr, err := filecoinClient.StartDeal(ctx, &CID, dataSize)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("dealCid:", dealCID, "minerAddress:", minerAddr)
 }
 
-func prepare(t *testing.T) (*filecoin.Storage, error) {
+func TestFindMiner(t *testing.T) {
+	filecoinClient, err := prepare(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clean(t, filecoinClient)
+
+	dataSize := uint64(1000000)
+	minerAddress, err := filecoinClient.FindMiner(dataSize)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("Miner address:", minerAddress)
+}
+
+func prepare(t *testing.T) (*filecoin.Client, error) {
 	t.Helper()
 
 	cfg, err := config.New()
@@ -42,36 +59,20 @@ func prepare(t *testing.T) (*filecoin.Storage, error) {
 		return nil, err
 	}
 
-	// For testing purposes
-	cfg.Storage.Filecoin.FilesPath = "/tmp/filecoin.tmp." + fakeData.GetRandomStringWithLength(8)
-
-	_, err = os.Stat(cfg.Storage.Filecoin.FilesPath)
-	if os.IsNotExist(err) {
-		if err = os.MkdirAll(cfg.Storage.Filecoin.FilesPath, os.ModePerm); err != nil {
-			return nil, err
-		}
-	}
-
 	filecoinCfg := (filecoin.Config)(cfg.Storage.Filecoin)
 
-	storage, err := filecoin.New(&filecoinCfg)
+	client, err := filecoin.NewClient(&filecoinCfg)
 	if err != nil {
 		return nil, fmt.Errorf("filecoin.New error: %w", err)
 	}
 
-	return storage, nil
+	return client, nil
 }
 
-func clean(t *testing.T, s *filecoin.Storage) error {
+func clean(t *testing.T, s *filecoin.Client) error {
 	t.Helper()
 
 	s.Close()
-
-	err := os.RemoveAll(s.FilesPath())
-	if err != nil {
-		t.Error(err)
-		return err
-	}
 
 	return nil
 }

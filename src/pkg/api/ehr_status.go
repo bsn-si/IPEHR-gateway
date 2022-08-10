@@ -9,24 +9,25 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
 )
 
 type EhrStatusHandler struct {
-	cfg     *config.Config
 	service *ehr.Service
+	baseURL string
 }
 
-func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config.Config) *EhrStatusHandler {
+func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL string) *EhrStatusHandler {
 	return &EhrStatusHandler{
-		cfg:     cfg,
 		service: ehr.NewService(docService),
+		baseURL: baseURL,
 	}
 }
 
@@ -38,6 +39,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config
 // @Produce      json
 // @Param        ehr_id      path      string                 true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        AuthUserId  header    string                 true  "UserId UUID"
+// @Param        EhrSystemId header    string                 true  "The identifier of the system, typically a reverse domain identifier"
 // @Param        If-Match    header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`) must be specified."
 // @Param        Prefer      header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request     body      model.EhrStatusUpdate  true  "EHR_STATUS"
@@ -54,18 +56,18 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, cfg *config
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
+	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 
-	/*
-		ehrUUID, err := uuid.Parse(ehrID)
-		if err != nil {
-			c.AbortWithStatus(http.StatusNotFound)
-			return
-		}
-	*/
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
 
 	userID := c.GetString("userId")
 	if userID == "" {
@@ -75,7 +77,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 
 	IfMatch := c.Request.Header.Get("If-Match")
 
-	docLast, err := h.service.GetStatus(userID, ehrID)
+	docLast, err := h.service.GetStatus(c, userID, &ehrUUID)
 	if err != nil {
 		log.Println("ehrStatusService.Get error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting last EHR document status"})
@@ -117,7 +119,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err = h.service.SaveStatus(ehrID, userID, &status); err != nil {
+	if err = h.service.SaveStatus(c, userID, &ehrUUID, ehrSystemID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR_STATUS saving error"})
 		return
 	}
@@ -143,6 +145,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_at_time  query     string  true  "A given time in the extended ISO 8601 format. Example: 2015-01-20T19:30:22.765+01:00"
 // @Param        AuthUserId   header    string  true  "UserId UUID"
+// @Param        EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200          {object}  model.EhrStatusUpdate
 // @Failure      400              "Is returned when the request has invalid content such as an invalid `version_at_time` format."
 // @Failure      404              "Is returned when EHR with `ehr_id` does not exist or a version of an EHR_STATUS resource does not exist at the specified `version_at_time`"
@@ -150,7 +153,15 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status [get]
 func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
+	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -171,7 +182,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	status, err := h.service.GetStatusByNearestTime(userID, ehrID, statusTime, types.EhrStatus)
+	status, err := h.service.GetStatusByNearestTime(c, userID, &ehrUUID, statusTime, types.EhrStatus)
 	if err != nil {
 		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrID, statusTime, err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -191,6 +202,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Param        ehr_id           path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid  path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 // @Param        AuthUserId       header    string  true  "UserId UUID"
+// @Param        EhrSystemId      header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200              {object}  model.EhrStatusUpdate
 // @Failure      400          "Is returned when AuthUserId is not specified"
 // @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an EHR_STATUS with `version_uid` does not exist."
@@ -198,7 +210,9 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	if !h.service.Doc.ValidateID(ehrID, types.Ehr) {
+	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+
+	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -211,7 +225,7 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("versionid")
 
-	if !h.service.Doc.ValidateID(versionUID, types.EhrStatus) {
+	if !h.service.ValidateID(versionUID, ehrSystemID, types.EhrStatus) {
 		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
@@ -222,18 +236,28 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	docIndex, err := h.service.Doc.GetDocIndexByDocID(userID, versionUID, &ehrUUID, types.EhrStatus)
+	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
-		log.Printf("GetDocIndexByDocID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ehrSystemID not match with versionUID"})
+		return
+	}
+
+	baseDocumentUID := objectVersionID.BasedID()
+	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
+
+	docMeta, err := h.service.Infra.Index.GetDocByVersion(c, &ehrUUID, types.EhrStatus, &baseDocumentUIDHash, objectVersionID.VersionTreeID())
+	if err != nil {
+		log.Printf("GetDocIndexByObjectVersionID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
 
 		return
 	}
 
-	data, err := h.service.Doc.GetDocFromStorageByID(userID, docIndex.StorageID, []byte(versionUID))
+	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), []byte(versionUID), docMeta.DocUIDEncrypted)
 	if err != nil {
-		//TODO logging
+		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
+
 		return
 	}
 
@@ -241,6 +265,6 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 }
 
 func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrID string, ehrStatusID string, c *gin.Context) {
-	c.Header("Location", h.cfg.BaseURL+"/ehr/"+ehrID+"/ehr_status/"+ehrStatusID)
+	c.Header("Location", h.baseURL+"/ehr/"+ehrID+"/ehr_status/"+ehrStatusID)
 	c.Header("ETag", ehrStatusID)
 }

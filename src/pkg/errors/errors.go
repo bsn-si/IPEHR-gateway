@@ -1,6 +1,8 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrAuthorization    = errors.New("Authorization error")
@@ -15,6 +17,9 @@ var (
 	ErrIsEmpty          = errors.New("Is empty")
 	ErrCustom           = errors.New("Custom error")
 	ErrIsUnsupported    = errors.New("Unsupported")
+	ErrTimeout          = errors.New("Timeout")
+	ErrNotFound         = errors.New("Not found")
+	ErrObjectNotInit    = errors.New(`Object is not initialized`)
 )
 
 var Is = errors.Is

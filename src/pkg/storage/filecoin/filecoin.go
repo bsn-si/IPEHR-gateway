@@ -2,119 +2,227 @@ package filecoin
 
 import (
 	"context"
-	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	jsonrpc "github.com/filecoin-project/go-jsonrpc"
 	lotusapi "github.com/filecoin-project/lotus/api"
 	"github.com/ipfs/go-cid"
-	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/errors"
 )
 
-type Storage struct {
-	filesPath   string
-	rpcEndpoint string
-	authToken   string
-	api         *lotusapi.FullNodeStruct
-	closer      jsonrpc.ClientCloser
+type DealStatus = storagemarket.StorageDealStatus
+
+type Client struct {
+	rpcEndpoint   string
+	authToken     string
+	dealsMaxPrice uint64
+	api           *lotusapi.FullNodeStruct
+	closer        jsonrpc.ClientCloser
+	httpClient    *http.Client
 }
 
 type Config struct {
 	LotusRpcEndpoint string
 	AuthToken        string
-	FilesPath        string
+	DealsMaxPrice    uint64
 }
 
-func New(cfg *Config) (*Storage, error) {
-	_, err := os.Stat(cfg.FilesPath)
-	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("FilesPath is not exist: %w", err)
+type filrepMinersResult struct {
+	Miners []struct {
+		Id              uint
+		Address         string
+		Status          bool
+		Reachability    string
+		UptimeAverage   float64
+		Price           string
+		VerifiedPrice   string
+		MinPieceSize    string
+		MaxPieceSize    string
+		RawPower        string
+		QualityAdjPower string
+		IsoCode         string
+		Region          string
+		Score           string
+		Scores          struct {
+			Total                  string
+			Uptime                 string
+			StorageDeals           string
+			CommittedSectorsProofs string
+		}
+		FreeSpace    string
+		StorageDeals struct {
+			Total           uint
+			NoPenalties     uint
+			SuccessRate     string
+			AveragePrice    string
+			DataStored      string
+			Slashed         uint
+			Terminated      uint
+			FaultTerminated uint
+			Recent30days    uint
+		}
+		GoldenPath struct {
+			StorageDealSuccessRate   bool
+			RetrievalDealSuccessRate bool
+			FastRetrieval            *bool
+			VerifiedDealNoPrice      bool
+			FaultsBelowThreshold     bool
+		}
+		Rank       string
+		RegionRank string
+	}
+}
+
+func NewClient(cfg *Config) (*Client, error) {
+	c := &Client{
+		rpcEndpoint:   cfg.LotusRpcEndpoint,
+		authToken:     cfg.AuthToken,
+		dealsMaxPrice: cfg.DealsMaxPrice,
+		api:           &lotusapi.FullNodeStruct{},
+		httpClient:    http.DefaultClient,
 	}
 
-	s := &Storage{
-		filesPath:   cfg.FilesPath,
-		rpcEndpoint: cfg.LotusRpcEndpoint,
-		authToken:   cfg.AuthToken,
-		api:         &lotusapi.FullNodeStruct{},
-	}
-
-	s.closer, err = jsonrpc.NewMergeClient(
+	var err error
+	c.closer, err = jsonrpc.NewMergeClient(
 		context.Background(),
-		s.rpcEndpoint,
+		c.rpcEndpoint,
 		"Filecoin",
-		[]interface{}{&s.api.Internal, &s.api.CommonStruct.Internal},
-		http.Header{"Authorization": []string{"Bearer " + s.authToken}},
+		[]interface{}{&c.api.Internal, &c.api.CommonStruct.Internal},
+		http.Header{"Authorization": []string{"Bearer " + c.authToken}},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Connecting with lotus failed: %w", err)
 	}
 
-	return s, nil
+	return c, nil
 }
 
-func (s *Storage) Add(ctx context.Context, data []byte) (*[32]byte, error) {
-	return nil, errors.ErrIsUnsupported
-}
-
-func (s *Storage) StartDeal(ctx context.Context, data []byte) (*cid.Cid, error) {
-	// Считаем хэш
-	h := sha3.Sum256(data)
-	filename := hex.EncodeToString(h[:])
-	filepath := s.filesPath + "/" + filename
-
-	// Сохраняем во временный файл
-	err := os.WriteFile(filepath, data, 0600)
+func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint64) (*cid.Cid, []byte, error) {
+	walletAddr, err := c.api.WalletDefaultAddress(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("WriteFile error: %w path %s", err, filepath)
-	}
-
-	// ClientImport
-	importRes, err := s.api.ClientImport(ctx, lotusapi.FileRef{Path: filepath, IsCAR: false})
-	if err != nil {
-		return nil, fmt.Errorf("Lotus ClientImport error: %w filepath %s", err, filepath)
-	}
-
-	walletAddr, err := s.api.WalletDefaultAddress(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Lotus WalletDefaultAddress error: %w", err)
+		return nil, nil, fmt.Errorf("Lotus WalletDefaultAddress error: %w", err)
 	}
 
 	// MinerAddress
-	// TODO нужна система выбора майнера
-	minerAddr, err := address.NewFromString("f01662887")
+	minerAddr, err := c.FindMiner(dataSizeBytes)
 	if err != nil {
-		return nil, fmt.Errorf("Miner address parsing error: %w", err)
+		return nil, nil, fmt.Errorf("Miner address parsing error: %w", err)
 	}
 
 	// ClientStartDeal
-	deal, err := s.api.ClientStartDeal(ctx, &lotusapi.StartDealParams{
+	deal, err := c.api.ClientStartDeal(ctx, &lotusapi.StartDealParams{
 		Data: &storagemarket.DataRef{
 			TransferType: storagemarket.TTGraphsync,
-			Root:         importRes.Root,
+			Root:         *CID,
 		},
 		Wallet: walletAddr,
-		Miner:  minerAddr,
+		Miner:  *minerAddr,
 		//EpochPrice:        big.NewInt(500000000), // TODO What should the price be?
-		MinBlocksDuration: 640000, // TODO what is it?
-		DealStartEpoch:    200,    // TODO what is it?
-		VerifiedDeal:      false,  // TODO make verified
-		FastRetrieval:     true,
+		//MinBlocksDuration: 640000, // TODO what is it?
+		//DealStartEpoch:    200,
+		VerifiedDeal:  false, // TODO make verified
+		FastRetrieval: true,
 		//ProviderCollateral big.Int
 	})
 
-	return deal, nil
+	return deal, minerAddr.Bytes(), nil
 }
 
-func (s *Storage) Close() {
-	s.closer()
+func (c *Client) GetDealStatus(ctx context.Context, CID *cid.Cid) (storagemarket.StorageDealStatus, error) {
+	dealInfo, err := c.api.ClientGetDealInfo(ctx, *CID)
+	if err != nil {
+		return 0, fmt.Errorf("Lotus ClientGetDealInfo error: %w CID %s", err, CID.String())
+	}
+
+	return dealInfo.State, nil
 }
 
-func (s *Storage) FilesPath() string {
-	return s.filesPath
+func (c *Client) Close() {
+	c.closer()
+}
+
+func (c *Client) FindMiner(dataSizeBytes uint64) (*address.Address, error) {
+	url := "https://api.filrep.io/api/v1/miners?"
+	url += "sortBy=score"
+	url += "&limit=100"
+
+	resp, err := c.httpClient.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("httpClient.Get error: %w url %s", err, url)
+	}
+	defer resp.Body.Close()
+
+	var result filrepMinersResult
+
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return nil, fmt.Errorf("Miners decode error: %w", err)
+	}
+
+	for _, m := range result.Miners {
+		price, err := strconv.ParseUint(m.Price, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		minPieceSize, err := strconv.ParseUint(m.MinPieceSize, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		maxPieceSize, err := strconv.ParseUint(m.MaxPieceSize, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		freeSpace, err := strconv.ParseUint(m.FreeSpace, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		dataStored, err := strconv.ParseUint(m.FreeSpace, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		switch {
+		case !m.Status:
+			continue
+		case m.Reachability != "reachable":
+			continue
+		case m.UptimeAverage < 0.99:
+			continue
+		case price > c.dealsMaxPrice:
+			continue
+		case dataSizeBytes < minPieceSize || dataSizeBytes > maxPieceSize:
+			continue
+		case m.Score != "100":
+			continue
+		case freeSpace < (1 << 40): // 1TB
+			continue
+		case m.StorageDeals.Total < 100:
+			continue
+		case m.StorageDeals.Total != m.StorageDeals.NoPenalties:
+			continue
+		case dataStored < (1 << 40): // 1TB
+			continue
+		}
+
+		addr, err := address.NewFromString(m.Address)
+		if err != nil {
+			log.Println("Filecoin findMiner address parse error:", err)
+			continue
+		}
+
+		return &addr, nil
+	}
+
+	return nil, fmt.Errorf("%w: No eligible miner was found", errors.ErrNotFound)
 }

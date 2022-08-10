@@ -8,20 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/query"
 )
 
 type QueryHandler struct {
-	cfg     *config.Config
 	service *query.Service
 }
 
-func NewQueryHandler(docService *service.DefaultDocumentService, cfg *config.Config) *QueryHandler {
+func NewQueryHandler(docService *service.DefaultDocumentService) *QueryHandler {
 	return &QueryHandler{
-		cfg:     cfg,
 		service: query.NewQueryService(docService),
 	}
 }

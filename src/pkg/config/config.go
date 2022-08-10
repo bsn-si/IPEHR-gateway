@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"hms/gateway/pkg/common/utils"
@@ -14,20 +15,32 @@ type Config struct {
 	DataPath             string `json:"dataPath"`
 	Host                 string `json:"host"`
 	KeystoreKey          string `json:"keystoreKey"`
+	CreatingSystemID     string `json:"creatingSystemId"`
 	CompressionEnabled   bool   `json:"compressionEnabled"`
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
 	DefaultUserID        string `json:"defaultUserId"`
 	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
 	Storage              struct {
 		Localfile struct {
-			StoragePath string `json:"storagePath"`
+			Path string
+		}
+		Ipfs struct {
+			EndpointURL string `json:"endpointUrl"`
 		}
 		Filecoin struct {
 			LotusRpcEndpoint string
 			AuthToken        string
-			FilesPath        string
-		} `json:"filecoin"`
-	} `json:"storage"`
+			DealsMaxPrice    uint64
+		}
+	}
+	Contract struct {
+		Address     string
+		Endpoint    string
+		PrivKeyPath string
+	}
+	DB struct {
+		FilePath string `json:"filePath"`
+	} `json:"db"`
 
 	path string
 }
@@ -50,6 +63,10 @@ func New(params ...string) (cfg *Config, err error) {
 		path: path,
 	}
 	err = cfg.load()
+
+	cfgJSON, _ := json.MarshalIndent(cfg, "", "    ")
+
+	log.Println("IPEHR Config:", string(cfgJSON))
 
 	return
 }

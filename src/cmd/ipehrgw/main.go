@@ -11,6 +11,7 @@ import (
 	"hms/gateway/pkg/api"
 	_ "hms/gateway/pkg/api/docs"
 	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/infrastructure"
 )
 
 func main() {
@@ -25,7 +26,9 @@ func main() {
 		panic(err)
 	}
 
-	a := api.New(cfg).Build()
+	infra := infrastructure.New(cfg)
+
+	a := api.New(cfg, infra).Build()
 
 	//TODO complete CORS config
 	a.Use(cors.Default())
