@@ -225,7 +225,7 @@ func (s *Service) CreateStatus(ctx context.Context, userID, ehrStatusID, subject
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	err = s.SaveStatus(ctx, userID, ehrUUID, ehrSystemID, doc)
+	err = s.SaveStatus(ctx, userID, ehrUUID, ehrSystemID, doc, true)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
 	}
@@ -259,7 +259,7 @@ func (s *Service) UpdateStatus(ctx context.Context, userID string, ehrUUID *uuid
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus, isNew bool) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
@@ -278,13 +278,18 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 	}
 
 	// Start processing request
-	reqID := ctx.(*gin.Context).GetString("reqId")
+	requestKind := processing.RequestEhrStatusUpdate
+	if isNew {
+		requestKind = processing.RequestEhrStatusCreate
+	}
+
+	reqID := ctx.(*gin.Context).GetString("reqId") + "_" + string(requestKind)
 	{
 		procReq := &processing.Request{
 			ReqID:   reqID,
 			UserID:  userID,
 			EhrUUID: ehrUUID.String(),
-			Kind:    processing.RequestEhrStatusUpdate,
+			Kind:    requestKind,
 			CID:     hex.EncodeToString(cidBytes[:]),
 		}
 		err = s.Proc.AddRequest(procReq)

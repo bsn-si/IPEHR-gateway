@@ -2,6 +2,7 @@ package processing
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -27,13 +28,14 @@ type (
 	}
 
 	Request struct {
-		ReqID       string `gorm:"primaryKey"`
-		UserID      string
-		EhrUUID     string
-		Kind        RequestKind
-		CID         string
-		BaseUIDHash string
-		Version     string
+		ReqID         string `gorm:"primaryKey"`
+		UserID        string
+		EhrUUID       string
+		Kind          RequestKind
+		CID           string
+		BaseUIDHash   string
+		Version       string
+		BlockchainTxs []BlockchainTx `gorm:"foreignKey:ReqID"`
 	}
 
 	BlockchainTx struct {
@@ -52,16 +54,17 @@ const (
 	StatusSuccess TxStatus = 1
 	StatusPending TxStatus = 2
 
-	RequestEhrCreate          RequestKind = 0
-	RequestEhrGetBySubject    RequestKind = 1
-	RequestEhrGetByID         RequestKind = 2
-	RequestEhrStatusUpdate    RequestKind = 3
-	RequestEhrStatusGetByID   RequestKind = 4
-	RequestEhrStatusGetByTime RequestKind = 5
-	RequestCompositionCreate  RequestKind = 6
-	RequestCompositionUpdate  RequestKind = 7
-	RequestCompositionGetByID RequestKind = 8
-	RequestCompositionDelete  RequestKind = 9
+	RequestEhrCreate RequestKind = iota
+	RequestEhrGetBySubject
+	RequestEhrGetByID
+	RequestEhrStatusCreate
+	RequestEhrStatusUpdate
+	RequestEhrStatusGetByID
+	RequestEhrStatusGetByTime
+	RequestCompositionCreate
+	RequestCompositionUpdate
+	RequestCompositionGetByID
+	RequestCompositionDelete
 
 	TxSetEhrUser      TxKind = 0
 	TxSetEhrBySubject TxKind = 1
@@ -203,6 +206,7 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 		}
 	case RequestEhrGetBySubject:
 	case RequestEhrGetByID:
+	case RequestEhrStatusCreate:
 	case RequestEhrStatusUpdate:
 	case RequestEhrStatusGetByID:
 	case RequestEhrStatusGetByTime:
@@ -222,10 +226,57 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 			return false, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)
 		}
 
+		// а он не может быть failed? что тогда реквест вообще не закроется?
 		if tx.Status != StatusSuccess {
 			return false, nil
 		}
 	}
 
 	return true, nil
+}
+
+func (p *Proc) GetRequestByID(reqID string, userID string) ([]byte, error) {
+	var requestData Request
+
+	result := p.db.Model(&Request{}).
+		Where(Request{UserID: userID}).
+		Where(Request{ReqID: reqID}).
+		Preload("BlockchainTxs").
+		Find(&requestData)
+	if result.Error != nil {
+		return nil, fmt.Errorf("GetRequestByID error: %w reqID %s userID %s", result.Error, reqID, userID)
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, nil
+	}
+
+	resultBytes, err := json.Marshal(requestData)
+	if err != nil {
+		return nil, fmt.Errorf("GetRequestByID marshal error: %w", err)
+	}
+
+	return resultBytes, nil
+}
+
+func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
+	var requestData Request
+
+	err := p.db.Model(&Request{}).
+		Where(Request{UserID: userID}).
+		Limit(limit).
+		Offset(offset).
+		Preload("BlockchainTxs").
+		Find(&requestData).
+		Error
+	if err != nil {
+		return nil, fmt.Errorf("GetRequests error: %w, userID %s", err, userID)
+	}
+
+	resultBytes, err := json.Marshal(requestData)
+	if err != nil {
+		return nil, fmt.Errorf("GetRequestByID marshal error: %w", err)
+	}
+
+	return resultBytes, nil
 }

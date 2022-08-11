@@ -35,6 +35,7 @@ type API struct {
 	Composition *CompositionHandler
 	Query       *QueryHandler
 	GroupAccess *GroupAccessHandler
+	Request     *RequestHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -47,6 +48,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL, cfg.DefaultGroupAccessID),
 		Query:       NewQueryHandler(docService),
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
+		Request:     NewRequestHandler(docService),
 	}
 }
 
@@ -61,11 +63,13 @@ func (a *API) Build() *gin.Engine {
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
 	query := v1.Group("query")
+	requests := v1.Group("requests")
 
 	a.setRedirections(r).
 		buildEhrAPI(ehr).
 		buildGroupAccessAPI(access).
-		buildQueryAPI(query)
+		buildQueryAPI(query).
+		buildRequestsAPI(requests)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -106,6 +110,14 @@ func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 	r.Use(auth)
 	r.POST("/aql", a.Query.ExecPost)
+
+	return a
+}
+
+func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
+	r.Use(auth)
+	r.GET("/", a.Request.GetAll)
+	r.GET("/:reqId", a.Request.GetByID)
 
 	return a
 }

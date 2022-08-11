@@ -35,6 +35,7 @@ type testData struct {
 	testUserID2   string
 	groupAccessID string
 	compositionID string
+	requestID     string
 }
 
 type testWrap struct {
@@ -62,6 +63,7 @@ func Test_API(t *testing.T) {
 	}
 
 	t.Run("EHR creating", testWrap.ehrCreate(testData))
+	t.Run("Get transaction requests", testWrap.requests(testData))
 	t.Run("EHR creating with id", testWrap.ehrCreateWithID(testData))
 	t.Run("EHR creating with id for the same user", testWrap.ehrCreateWithIDForSameUser(testData))
 	t.Run("EHR getting", testWrap.ehrGetByID(testData))
@@ -111,6 +113,59 @@ func tearDown(testWrap testWrap) {
 	}
 }
 
+func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		if testData.requestID == "" {
+			t.Fatal("Can not test because requestID is empty")
+		}
+
+		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/"+testData.requestID, nil)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Errorf("Expected nil, received %s", err.Error())
+			return
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+		}
+
+		t.Log("Requests: GetAll")
+		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/", nil)
+
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err = testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Errorf("Expected nil, received %s", err.Error())
+			return
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+		}
+	}
+}
+
 func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr", ehrCreateBodyRequest())
@@ -150,6 +205,8 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 			t.Error(err)
 			return
 		}
+
+		testData.requestID = response.Header.Get("RequestId")
 
 		testData.ehrID = response.Header.Get("ETag")
 		if testData.ehrID == "" {
@@ -201,6 +258,8 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 		if newEhrID != ehrID2 {
 			t.Fatal("EhrID is not matched")
 		}
+
+		testData.requestID = response.Header.Get("RequestId")
 	}
 }
 

@@ -146,7 +146,7 @@ func TestStatusUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = ehrService.SaveStatus(ctx, userID, &ehrUUID, ehrSystemID, statusNew2)
+	err = ehrService.SaveStatus(ctx, userID, &ehrUUID, ehrSystemID, statusNew2, false)
 	if err != nil {
 		t.Fatal(err)
 	}
