@@ -1,6 +1,7 @@
 package base
 
 import (
+	"fmt"
 	"hms/gateway/pkg/errors"
 	"regexp"
 	"strconv"
@@ -126,23 +127,22 @@ func (o *ObjectVersionID) isVersion(ver string) bool {
 	return re.MatchString(ver)
 }
 
-func (o *ObjectVersionID) IncreaseUIDVersion() (ver string, err error) {
-	ver = o.VersionTreeID()
-	if ver == "" {
-		err := errors.ErrObjectNotInit
-
-		return "", err
+func (o *ObjectVersionID) IncreaseUIDVersion() (string, error) {
+	if o.VersionTreeID() == "" {
+		return "", errors.ErrObjectNotInit
 	}
 
-	// TODO fix it to increase last digit in id
-	verInt, err := strconv.Atoi(ver)
+	parts := strings.Split(o.VersionTreeID(), ".")
+	last := len(parts) - 1
+
+	verInt, err := strconv.Atoi(parts[last])
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("IncreaseUIDVersion error: %w o.VersionTreeID %s", err, o.VersionTreeID())
 	}
-	verInt++
 
-	ver = strconv.Itoa(verInt)
-	o.setVersionTreeID(ver)
+	parts[last] = strconv.Itoa(verInt + 1)
 
-	return
+	o.setVersionTreeID(strings.Join(parts, "."))
+
+	return o.VersionTreeID(), nil
 }

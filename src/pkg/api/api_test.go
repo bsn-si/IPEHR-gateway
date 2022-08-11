@@ -23,6 +23,7 @@ import (
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 )
 
@@ -92,9 +93,10 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 		t.Fatal(err)
 	}
 
-	cfg.StoragePath += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
-	r := api.New(cfg).Build()
+	infra := infrastructure.New(cfg)
+	r := api.New(cfg, infra).Build()
 	ts = httptest.NewServer(r)
 
 	return ts, storage.Storage()

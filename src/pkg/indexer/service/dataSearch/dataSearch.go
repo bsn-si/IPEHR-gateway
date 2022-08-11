@@ -516,7 +516,7 @@ func (i *Index) UpdateIndexWithNewContent(content interface{}, groupAccess *mode
 
 	iterate(content, node)
 
-	//node.dump()
+	node.dump()
 
 	return i.index.Replace("INDEX", node)
 }

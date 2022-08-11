@@ -17,9 +17,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
+	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/ehrIndexer"
 	"hms/gateway/pkg/storage"
@@ -36,7 +39,7 @@ type Index struct {
 	transactOpts *bind.TransactOpts
 }
 
-func New(contractAddr, endpoint, keyPath string) *Index {
+func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 	ctx := context.Background()
 
 	key, err := os.ReadFile(keyPath)
@@ -45,11 +48,6 @@ func New(contractAddr, endpoint, keyPath string) *Index {
 	}
 
 	privateKey, err := crypto.HexToECDSA(strings.TrimSpace(string(key)))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	client, err := ethclient.Dial(endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -113,6 +111,159 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	}
 
 	return &ehrUUID, nil
+}
+
+func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (string, error) {
+	tx, err := i.ehrIndex.AddEhrDoc(
+		i.transactOpts,
+		new(big.Int).SetBytes(ehrUUID[:]),
+		ehrIndexer.EhrIndexerDocumentMeta{
+			DocType:        uint8(docMeta.TypeCode),
+			Status:         uint8(docMeta.Status),
+			StorageId:      new(big.Int).SetBytes(docMeta.CID[:]),
+			DocIdEncrypted: docMeta.DocUIDEncrypted,
+			Timestamp:      uint32(docMeta.Timestamp),
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.SetEhrDoc error: %w", err)
+	}
+
+	log.Printf("SetEhrDoc tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+
+	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType) (*model.DocumentMeta, error) {
+	// TODO
+	return &model.DocumentMeta{}, nil
+}
+
+func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error) {
+	// TODO
+	return &model.DocumentMeta{}, nil
+}
+
+func (i *Index) GetDocByTime(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, timestamp uint32) (*model.DocumentMeta, error) {
+	// TODO
+	return &model.DocumentMeta{}, nil
+}
+
+func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version string) (*model.DocumentMeta, error) {
+	// TODO
+	return &model.DocumentMeta{}, nil
+}
+
+func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (string, error) {
+	tx, err := i.ehrIndex.SetDocAccess(
+		i.transactOpts,
+		new(big.Int).SetBytes(key[:]),
+		value,
+	)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
+	}
+
+	log.Printf("SetDocAccess tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+
+	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.Cid) ([]byte, error) {
+	docAccessIndexKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+
+	callOpts := &bind.CallOpts{
+		Context: ctx,
+	}
+
+	docAccessValue, err := i.ehrIndex.DocAccess(callOpts, new(big.Int).SetBytes(docAccessIndexKey[:]))
+	if err != nil {
+		return nil, fmt.Errorf("ehrIndex.DocAccess error: %w", err)
+	}
+
+	return docAccessValue, nil
+}
+
+func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte) (string, error) {
+	// TODO переименовать в контракте DataAccess -> GroupAccess
+	tx, err := i.ehrIndex.SetDataAccess(
+		i.transactOpts,
+		new(big.Int).SetBytes(key[:]),
+		value,
+	)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.SetDataAccess error: %w", err)
+	}
+
+	log.Printf("SetDataAccess tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+
+	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uuid.UUID) ([]byte, error) {
+	dataAccessIndexKey := sha3.Sum256(append([]byte(userID), groupUUID[:]...))
+
+	callOpts := &bind.CallOpts{
+		Context: ctx,
+	}
+
+	dataAccessValue, err := i.ehrIndex.DataAccess(callOpts, new(big.Int).SetBytes(dataAccessIndexKey[:]))
+	if err != nil {
+		return nil, fmt.Errorf("ehrIndex.DataAccess error: %w", err)
+	}
+
+	log.Printf("dataAccessValue: %x", dataAccessValue)
+
+	if len(dataAccessValue) == 0 {
+		return nil, errors.ErrIsNotExist
+	}
+
+	return dataAccessValue, nil
+}
+
+func (i *Index) SetSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (string, error) {
+	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
+
+	tx, err := i.ehrIndex.SetEhrSubject(
+		i.transactOpts,
+		new(big.Int).SetBytes(subjectKey[:]),
+		new(big.Int).SetBytes(ehrUUID[:]),
+	)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.SetSubject error: %w", err)
+	}
+
+	log.Printf("SetSubject tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+
+	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNamespace string) (*uuid.UUID, error) {
+	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
+
+	callOpts := &bind.CallOpts{
+		Context: ctx,
+	}
+
+	ehrUUIDRaw, err := i.ehrIndex.EhrSubject(
+		callOpts,
+		new(big.Int).SetBytes(subjectKey[:]),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("ehrIndex.EhrSubjec error: %w", err)
+	}
+
+	ehrUUID, err := uuid.ParseBytes(ehrUUIDRaw.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("ehrUUID ParseBytes error: %w ehrUUIDRaw %x", err, ehrUUIDRaw.Bytes())
+	}
+
+	return &ehrUUID, nil
+}
+
+func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version string) (string, error) {
+	// TODO
+	return "", nil
 }
 
 func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {

@@ -11,6 +11,7 @@ import (
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/indexer"
+	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 )
 
@@ -75,7 +76,9 @@ func TestEhrByUserIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	index := indexer.New(cfg.Contract.Address, cfg.Contract.Endpoint, cfg.Contract.PrivKeyPath)
+	infra := infrastructure.New(cfg)
+
+	index := indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, infra.EthClient)
 
 	userID := fakeData.GetRandomStringWithLength(16)
 	ehrUUID := uuid.New()
