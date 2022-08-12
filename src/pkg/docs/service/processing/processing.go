@@ -18,7 +18,7 @@ import (
 )
 
 type (
-	TxStatus    uint8
+	Status      uint8
 	TxKind      uint8
 	RequestKind uint8
 
@@ -31,10 +31,11 @@ type (
 	}
 
 	Request struct {
-		ReqID        string `gorm:"primaryKey"`
+		ReqID        string      `gorm:"index:idx_request,unique"`
+		Kind         RequestKind `gorm:"index:idx_request,unique"`
+		Status       Status
 		UserID       string
 		EhrUUID      string
-		Kind         RequestKind
 		CID          string
 		DealCID      string
 		MinerAddress string
@@ -45,19 +46,19 @@ type (
 	Tx struct {
 		gorm.Model
 		Time    time.Time
-		ReqID   string `gorm:"index:idx_tx,unique"`
-		Kind    TxKind `gorm:"index:idx_tx,unique"`
+		ReqID   string
+		Kind    TxKind
 		Hash    string
-		Status  TxStatus
+		Status  Status
 		Comment string
 	}
 )
 
 const (
-	StatusFailed     TxStatus = 0
-	StatusSuccess    TxStatus = 1
-	StatusPending    TxStatus = 2
-	StatusProcessing TxStatus = 3
+	StatusFailed     Status = 0
+	StatusSuccess    Status = 1
+	StatusPending    Status = 2
+	StatusProcessing Status = 3
 
 	RequestEhrCreate          RequestKind = 0
 	RequestEhrGetBySubject    RequestKind = 1
@@ -95,8 +96,19 @@ func (p *Proc) AddRequest(req *Request) error {
 	return nil
 }
 
-func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind, status TxStatus) error {
-	result := p.db.Create(&Tx{
+func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind, status Status) error {
+	if reqID == "" {
+		return fmt.Errorf("%w reqID %s", errors.ErrIncorrectRequest, reqID)
+	}
+
+	var req Request
+
+	result := p.db.Model(&req).First(&req, "req_id = ?", reqID)
+	if result.Error != nil {
+		return fmt.Errorf("db request get error: %w reqID %s", result.Error, reqID)
+	}
+
+	result = p.db.Create(&Tx{
 		Time:    time.Now(),
 		ReqID:   reqID,
 		Kind:    kind,
@@ -147,34 +159,42 @@ func (p *Proc) execBlockchain() {
 		TxDeleteDoc,
 	}
 
+	statuses := []Status{
+		StatusPending,
+		StatusProcessing,
+	}
+
 	for {
 		tx := Tx{}
 
-		result := p.db.Where("kind IN ?", txKinds).First(&tx)
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		result := p.db.Model(&tx).Find(&tx, "kind IN ? AND status IN ?", txKinds, statuses).Limit(1)
+		if result.Error != nil || result.RowsAffected == 0 {
 			break
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		h := common.HexToHash(tx.Hash)
 
+		var status Status
 		receipt, err := p.ethClient.TransactionReceipt(ctx, h)
 		if err != nil {
 			if errors.Is(err, ethereum.NotFound) {
-				receipt.Status = uint64(StatusPending)
+				status = StatusPending
 			} else {
 				log.Printf("TransactionReceipt error: %v txHash %s", err, h.String())
 				break
 			}
+		} else {
+			status = Status(receipt.Status)
 		}
 
-		if receipt.Status != uint64(tx.Status) {
-			tx.Status = TxStatus(receipt.Status)
+		log.Println("Tx", tx.Hash, "status", status)
 
-			if result = p.db.Save(&tx); result.Error != nil {
-				log.Println("db.Save error:", result.Error)
+		if status != tx.Status {
+			if result = p.db.Model(&tx).Update("status", status); result.Error != nil {
+				log.Println("db.Update error:", result.Error)
 				break
 			}
 
@@ -185,21 +205,25 @@ func (p *Proc) execBlockchain() {
 			}
 
 			if done {
-				// delete transactions connected with reqID
-				result = p.db.Where("req_id = ?", tx.ReqID).Delete(&Tx{})
+				// update tx statuses
+				result = p.db.Exec("UPDATE txes SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
 				if result.Error != nil {
-					log.Printf("db txs delete error: %v reqID %s", result.Error, tx.ReqID)
+					//log.Printf("db txs update error: %v reqID %s", result.Error, tx.ReqID)
 					break
 				}
 
-				// delete request with reqID
-				result = p.db.Delete(&Request{}, tx.ReqID)
+				// update request status
+				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
 				if result.Error != nil {
-					log.Printf("db request delete error: %v reqID %s", result.Error, tx.ReqID)
+					//log.Printf("db request delete error: %v reqID %s", result.Error, tx.ReqID)
 					break
 				}
 			}
+
+			continue
 		}
+
+		break
 	}
 }
 
@@ -208,10 +232,15 @@ func (p *Proc) execFilecoin() {
 		TxFilecoinStartDeal,
 	}
 
+	statuses := []Status{
+		StatusPending,
+		StatusProcessing,
+	}
+
 	for {
 		tx := Tx{}
 
-		result := p.db.Where("kind IN ?", txKinds).First(&tx)
+		result := p.db.Where("kind IN ? AND statuses IN ?", txKinds, statuses).First(&tx)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			break
 		}
@@ -250,9 +279,9 @@ func (p *Proc) execFilecoin() {
 func (p *Proc) isRequestDone(reqID string) (bool, error) {
 	request := Request{}
 
-	result := p.db.First(&request, reqID)
+	result := p.db.Find(&request, "req_id = ?", reqID).Limit(1)
 	if result.Error != nil {
-		return false, fmt.Errorf("db.First error: %w", result.Error)
+		return false, fmt.Errorf("db.Find error: %w", result.Error)
 	}
 
 	var txsToCheck []TxKind
@@ -264,7 +293,7 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 			TxSetEhrBySubject,
 			TxSetEhrDocs,
 			TxSetDocAccess,
-			TxFilecoinStartDeal,
+			//TxFilecoinStartDeal,
 		}
 	case RequestEhrGetBySubject:
 	case RequestEhrGetByID:
@@ -275,13 +304,13 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 		txsToCheck = []TxKind{
 			TxSetEhrDocs,
 			TxSetDocAccess,
-			TxFilecoinStartDeal,
+			//TxFilecoinStartDeal,
 		}
 	case RequestCompositionUpdate:
 		txsToCheck = []TxKind{
 			TxSetEhrDocs,
 			TxSetDocAccess,
-			TxFilecoinStartDeal,
+			//TxFilecoinStartDeal,
 		}
 	case RequestCompositionGetByID:
 	case RequestCompositionDelete:
@@ -290,17 +319,29 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 	}
 
 	for _, txKind := range txsToCheck {
-		tx := &Tx{}
+		var txs []Tx
 
-		result := p.db.Model(tx).Where("req_id = ? AND kind = ?", reqID, txKind).First(tx)
+		result := p.db.Model(&Tx{}).Where("req_id = ? AND kind = ?", reqID, txKind).Find(&txs)
 		if result.Error != nil {
 			return false, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)
 		}
 
-		if tx.Status != StatusSuccess {
-			return false, nil
+		for _, tx := range txs {
+			if tx.Status != StatusSuccess {
+				return false, nil
+			}
 		}
 	}
 
 	return true, nil
+}
+
+func (p *Proc) RequestStatus(reqID string) (Status, error) {
+	var req Request
+	result := p.db.Model(&req).Where("req_id = ?", reqID).First(&req)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return req.Status, nil
 }

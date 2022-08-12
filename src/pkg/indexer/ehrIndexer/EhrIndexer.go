@@ -30,16 +30,21 @@ var (
 
 // EhrIndexerDocumentMeta is an auto generated low-level Go binding around an user-defined struct.
 type EhrIndexerDocumentMeta struct {
-	DocType        uint8
-	Status         uint8
-	StorageId      *big.Int
-	DocIdEncrypted []byte
-	Timestamp      uint32
+	DocType         uint8
+	Status          uint8
+	CID             []byte
+	DealCID         []byte
+	MinerAddress    []byte
+	DocUIDEncrypted []byte
+	DocBaseUIDHash  [32]byte
+	Version         [32]byte
+	IsLast          bool
+	Timestamp       uint32
 }
 
 // EhrIndexerMetaData contains all meta data concerning the EhrIndexer contract.
 var EhrIndexerMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"DataAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"userId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"DocAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"ehrId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"storageId\",\"type\":\"uint256\"}],\"name\":\"EhrDocAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"subjectKey\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"ehrId\",\"type\":\"uint256\"}],\"name\":\"EhrSubjectSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"ehrId\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint8\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"storageId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"docIdEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"docMeta\",\"type\":\"tuple\"}],\"name\":\"addEhrDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"dataAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"docAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ehrDocs\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"storageId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"docIdEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ehrSubject\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ehrUsers\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"ehrId\",\"type\":\"uint256\"}],\"name\":\"getEhrDocs\",\"outputs\":[{\"components\":[{\"internalType\":\"uint8\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint8\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"storageId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"docIdEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"userId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_access\",\"type\":\"bytes\"}],\"name\":\"setDataAccess\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"userId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_access\",\"type\":\"bytes\"}],\"name\":\"setDocAccess\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"subjectKey\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_ehrId\",\"type\":\"uint256\"}],\"name\":\"setEhrSubject\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"userId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ehrId\",\"type\":\"uint256\"}],\"name\":\"setEhrUser\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"DocAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"}],\"name\":\"EhrDocAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"EhrSubjectSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"GroupAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"docMeta\",\"type\":\"tuple\"}],\"name\":\"addEhrDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dataSearch\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"nodeType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"nodeID\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"deleteDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"docAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ehrDocs\",\"outputs\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrSubject\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrUsers\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"name\":\"getDocByTime\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"getDocByVersion\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"}],\"name\":\"getDocLastByBaseID\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getEhrDocs\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getLastEhrDocByType\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"groupAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"setDocAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"setEhrSubject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"setEhrUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"setGroupAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // EhrIndexerABI is the input ABI used to generate the binding from.
@@ -219,41 +224,55 @@ func (_EhrIndexer *EhrIndexerCallerSession) AllowedChange(arg0 common.Address) (
 	return _EhrIndexer.Contract.AllowedChange(&_EhrIndexer.CallOpts, arg0)
 }
 
-// DataAccess is a free data retrieval call binding the contract method 0x47f5105d.
+// DataSearch is a free data retrieval call binding the contract method 0x4be82179.
 //
-// Solidity: function dataAccess(uint256 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerCaller) DataAccess(opts *bind.CallOpts, arg0 *big.Int) ([]byte, error) {
+// Solidity: function dataSearch() view returns(bytes32 nodeType, bytes32 nodeID)
+func (_EhrIndexer *EhrIndexerCaller) DataSearch(opts *bind.CallOpts) (struct {
+	NodeType [32]byte
+	NodeID   [32]byte
+}, error) {
 	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "dataAccess", arg0)
+	err := _EhrIndexer.contract.Call(opts, &out, "dataSearch")
 
+	outstruct := new(struct {
+		NodeType [32]byte
+		NodeID   [32]byte
+	})
 	if err != nil {
-		return *new([]byte), err
+		return *outstruct, err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+	outstruct.NodeType = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	outstruct.NodeID = *abi.ConvertType(out[1], new([32]byte)).(*[32]byte)
 
-	return out0, err
+	return *outstruct, err
 
 }
 
-// DataAccess is a free data retrieval call binding the contract method 0x47f5105d.
+// DataSearch is a free data retrieval call binding the contract method 0x4be82179.
 //
-// Solidity: function dataAccess(uint256 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerSession) DataAccess(arg0 *big.Int) ([]byte, error) {
-	return _EhrIndexer.Contract.DataAccess(&_EhrIndexer.CallOpts, arg0)
+// Solidity: function dataSearch() view returns(bytes32 nodeType, bytes32 nodeID)
+func (_EhrIndexer *EhrIndexerSession) DataSearch() (struct {
+	NodeType [32]byte
+	NodeID   [32]byte
+}, error) {
+	return _EhrIndexer.Contract.DataSearch(&_EhrIndexer.CallOpts)
 }
 
-// DataAccess is a free data retrieval call binding the contract method 0x47f5105d.
+// DataSearch is a free data retrieval call binding the contract method 0x4be82179.
 //
-// Solidity: function dataAccess(uint256 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerCallerSession) DataAccess(arg0 *big.Int) ([]byte, error) {
-	return _EhrIndexer.Contract.DataAccess(&_EhrIndexer.CallOpts, arg0)
+// Solidity: function dataSearch() view returns(bytes32 nodeType, bytes32 nodeID)
+func (_EhrIndexer *EhrIndexerCallerSession) DataSearch() (struct {
+	NodeType [32]byte
+	NodeID   [32]byte
+}, error) {
+	return _EhrIndexer.Contract.DataSearch(&_EhrIndexer.CallOpts)
 }
 
-// DocAccess is a free data retrieval call binding the contract method 0x8ae39fb9.
+// DocAccess is a free data retrieval call binding the contract method 0x4b5a743b.
 //
-// Solidity: function docAccess(uint256 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerCaller) DocAccess(opts *bind.CallOpts, arg0 *big.Int) ([]byte, error) {
+// Solidity: function docAccess(bytes32 ) view returns(bytes)
+func (_EhrIndexer *EhrIndexerCaller) DocAccess(opts *bind.CallOpts, arg0 [32]byte) ([]byte, error) {
 	var out []interface{}
 	err := _EhrIndexer.contract.Call(opts, &out, "docAccess", arg0)
 
@@ -267,39 +286,49 @@ func (_EhrIndexer *EhrIndexerCaller) DocAccess(opts *bind.CallOpts, arg0 *big.In
 
 }
 
-// DocAccess is a free data retrieval call binding the contract method 0x8ae39fb9.
+// DocAccess is a free data retrieval call binding the contract method 0x4b5a743b.
 //
-// Solidity: function docAccess(uint256 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerSession) DocAccess(arg0 *big.Int) ([]byte, error) {
+// Solidity: function docAccess(bytes32 ) view returns(bytes)
+func (_EhrIndexer *EhrIndexerSession) DocAccess(arg0 [32]byte) ([]byte, error) {
 	return _EhrIndexer.Contract.DocAccess(&_EhrIndexer.CallOpts, arg0)
 }
 
-// DocAccess is a free data retrieval call binding the contract method 0x8ae39fb9.
+// DocAccess is a free data retrieval call binding the contract method 0x4b5a743b.
 //
-// Solidity: function docAccess(uint256 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerCallerSession) DocAccess(arg0 *big.Int) ([]byte, error) {
+// Solidity: function docAccess(bytes32 ) view returns(bytes)
+func (_EhrIndexer *EhrIndexerCallerSession) DocAccess(arg0 [32]byte) ([]byte, error) {
 	return _EhrIndexer.Contract.DocAccess(&_EhrIndexer.CallOpts, arg0)
 }
 
-// EhrDocs is a free data retrieval call binding the contract method 0x4c4df71f.
+// EhrDocs is a free data retrieval call binding the contract method 0xa14b8188.
 //
-// Solidity: function ehrDocs(uint256 , uint256 ) view returns(uint8 docType, uint8 status, uint256 storageId, bytes docIdEncrypted, uint32 timestamp)
-func (_EhrIndexer *EhrIndexerCaller) EhrDocs(opts *bind.CallOpts, arg0 *big.Int, arg1 *big.Int) (struct {
-	DocType        uint8
-	Status         uint8
-	StorageId      *big.Int
-	DocIdEncrypted []byte
-	Timestamp      uint32
+// Solidity: function ehrDocs(bytes32 , uint8 , uint256 ) view returns(uint8 docType, uint8 status, bytes CID, bytes dealCID, bytes minerAddress, bytes docUIDEncrypted, bytes32 docBaseUIDHash, bytes32 version, bool isLast, uint32 timestamp)
+func (_EhrIndexer *EhrIndexerCaller) EhrDocs(opts *bind.CallOpts, arg0 [32]byte, arg1 uint8, arg2 *big.Int) (struct {
+	DocType         uint8
+	Status          uint8
+	CID             []byte
+	DealCID         []byte
+	MinerAddress    []byte
+	DocUIDEncrypted []byte
+	DocBaseUIDHash  [32]byte
+	Version         [32]byte
+	IsLast          bool
+	Timestamp       uint32
 }, error) {
 	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "ehrDocs", arg0, arg1)
+	err := _EhrIndexer.contract.Call(opts, &out, "ehrDocs", arg0, arg1, arg2)
 
 	outstruct := new(struct {
-		DocType        uint8
-		Status         uint8
-		StorageId      *big.Int
-		DocIdEncrypted []byte
-		Timestamp      uint32
+		DocType         uint8
+		Status          uint8
+		CID             []byte
+		DealCID         []byte
+		MinerAddress    []byte
+		DocUIDEncrypted []byte
+		DocBaseUIDHash  [32]byte
+		Version         [32]byte
+		IsLast          bool
+		Timestamp       uint32
 	})
 	if err != nil {
 		return *outstruct, err
@@ -307,108 +336,216 @@ func (_EhrIndexer *EhrIndexerCaller) EhrDocs(opts *bind.CallOpts, arg0 *big.Int,
 
 	outstruct.DocType = *abi.ConvertType(out[0], new(uint8)).(*uint8)
 	outstruct.Status = *abi.ConvertType(out[1], new(uint8)).(*uint8)
-	outstruct.StorageId = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
-	outstruct.DocIdEncrypted = *abi.ConvertType(out[3], new([]byte)).(*[]byte)
-	outstruct.Timestamp = *abi.ConvertType(out[4], new(uint32)).(*uint32)
+	outstruct.CID = *abi.ConvertType(out[2], new([]byte)).(*[]byte)
+	outstruct.DealCID = *abi.ConvertType(out[3], new([]byte)).(*[]byte)
+	outstruct.MinerAddress = *abi.ConvertType(out[4], new([]byte)).(*[]byte)
+	outstruct.DocUIDEncrypted = *abi.ConvertType(out[5], new([]byte)).(*[]byte)
+	outstruct.DocBaseUIDHash = *abi.ConvertType(out[6], new([32]byte)).(*[32]byte)
+	outstruct.Version = *abi.ConvertType(out[7], new([32]byte)).(*[32]byte)
+	outstruct.IsLast = *abi.ConvertType(out[8], new(bool)).(*bool)
+	outstruct.Timestamp = *abi.ConvertType(out[9], new(uint32)).(*uint32)
 
 	return *outstruct, err
 
 }
 
-// EhrDocs is a free data retrieval call binding the contract method 0x4c4df71f.
+// EhrDocs is a free data retrieval call binding the contract method 0xa14b8188.
 //
-// Solidity: function ehrDocs(uint256 , uint256 ) view returns(uint8 docType, uint8 status, uint256 storageId, bytes docIdEncrypted, uint32 timestamp)
-func (_EhrIndexer *EhrIndexerSession) EhrDocs(arg0 *big.Int, arg1 *big.Int) (struct {
-	DocType        uint8
-	Status         uint8
-	StorageId      *big.Int
-	DocIdEncrypted []byte
-	Timestamp      uint32
+// Solidity: function ehrDocs(bytes32 , uint8 , uint256 ) view returns(uint8 docType, uint8 status, bytes CID, bytes dealCID, bytes minerAddress, bytes docUIDEncrypted, bytes32 docBaseUIDHash, bytes32 version, bool isLast, uint32 timestamp)
+func (_EhrIndexer *EhrIndexerSession) EhrDocs(arg0 [32]byte, arg1 uint8, arg2 *big.Int) (struct {
+	DocType         uint8
+	Status          uint8
+	CID             []byte
+	DealCID         []byte
+	MinerAddress    []byte
+	DocUIDEncrypted []byte
+	DocBaseUIDHash  [32]byte
+	Version         [32]byte
+	IsLast          bool
+	Timestamp       uint32
 }, error) {
-	return _EhrIndexer.Contract.EhrDocs(&_EhrIndexer.CallOpts, arg0, arg1)
+	return _EhrIndexer.Contract.EhrDocs(&_EhrIndexer.CallOpts, arg0, arg1, arg2)
 }
 
-// EhrDocs is a free data retrieval call binding the contract method 0x4c4df71f.
+// EhrDocs is a free data retrieval call binding the contract method 0xa14b8188.
 //
-// Solidity: function ehrDocs(uint256 , uint256 ) view returns(uint8 docType, uint8 status, uint256 storageId, bytes docIdEncrypted, uint32 timestamp)
-func (_EhrIndexer *EhrIndexerCallerSession) EhrDocs(arg0 *big.Int, arg1 *big.Int) (struct {
-	DocType        uint8
-	Status         uint8
-	StorageId      *big.Int
-	DocIdEncrypted []byte
-	Timestamp      uint32
+// Solidity: function ehrDocs(bytes32 , uint8 , uint256 ) view returns(uint8 docType, uint8 status, bytes CID, bytes dealCID, bytes minerAddress, bytes docUIDEncrypted, bytes32 docBaseUIDHash, bytes32 version, bool isLast, uint32 timestamp)
+func (_EhrIndexer *EhrIndexerCallerSession) EhrDocs(arg0 [32]byte, arg1 uint8, arg2 *big.Int) (struct {
+	DocType         uint8
+	Status          uint8
+	CID             []byte
+	DealCID         []byte
+	MinerAddress    []byte
+	DocUIDEncrypted []byte
+	DocBaseUIDHash  [32]byte
+	Version         [32]byte
+	IsLast          bool
+	Timestamp       uint32
 }, error) {
-	return _EhrIndexer.Contract.EhrDocs(&_EhrIndexer.CallOpts, arg0, arg1)
+	return _EhrIndexer.Contract.EhrDocs(&_EhrIndexer.CallOpts, arg0, arg1, arg2)
 }
 
-// EhrSubject is a free data retrieval call binding the contract method 0xdbe3281f.
+// EhrSubject is a free data retrieval call binding the contract method 0xfe1b5580.
 //
-// Solidity: function ehrSubject(uint256 ) view returns(uint256)
-func (_EhrIndexer *EhrIndexerCaller) EhrSubject(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
+// Solidity: function ehrSubject(bytes32 ) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerCaller) EhrSubject(opts *bind.CallOpts, arg0 [32]byte) ([32]byte, error) {
 	var out []interface{}
 	err := _EhrIndexer.contract.Call(opts, &out, "ehrSubject", arg0)
 
 	if err != nil {
-		return *new(*big.Int), err
+		return *new([32]byte), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
 
 	return out0, err
 
 }
 
-// EhrSubject is a free data retrieval call binding the contract method 0xdbe3281f.
+// EhrSubject is a free data retrieval call binding the contract method 0xfe1b5580.
 //
-// Solidity: function ehrSubject(uint256 ) view returns(uint256)
-func (_EhrIndexer *EhrIndexerSession) EhrSubject(arg0 *big.Int) (*big.Int, error) {
+// Solidity: function ehrSubject(bytes32 ) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerSession) EhrSubject(arg0 [32]byte) ([32]byte, error) {
 	return _EhrIndexer.Contract.EhrSubject(&_EhrIndexer.CallOpts, arg0)
 }
 
-// EhrSubject is a free data retrieval call binding the contract method 0xdbe3281f.
+// EhrSubject is a free data retrieval call binding the contract method 0xfe1b5580.
 //
-// Solidity: function ehrSubject(uint256 ) view returns(uint256)
-func (_EhrIndexer *EhrIndexerCallerSession) EhrSubject(arg0 *big.Int) (*big.Int, error) {
+// Solidity: function ehrSubject(bytes32 ) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerCallerSession) EhrSubject(arg0 [32]byte) ([32]byte, error) {
 	return _EhrIndexer.Contract.EhrSubject(&_EhrIndexer.CallOpts, arg0)
 }
 
-// EhrUsers is a free data retrieval call binding the contract method 0x2046667a.
+// EhrUsers is a free data retrieval call binding the contract method 0x5113c226.
 //
-// Solidity: function ehrUsers(uint256 ) view returns(uint256)
-func (_EhrIndexer *EhrIndexerCaller) EhrUsers(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
+// Solidity: function ehrUsers(bytes32 ) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerCaller) EhrUsers(opts *bind.CallOpts, arg0 [32]byte) ([32]byte, error) {
 	var out []interface{}
 	err := _EhrIndexer.contract.Call(opts, &out, "ehrUsers", arg0)
 
 	if err != nil {
-		return *new(*big.Int), err
+		return *new([32]byte), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
 
 	return out0, err
 
 }
 
-// EhrUsers is a free data retrieval call binding the contract method 0x2046667a.
+// EhrUsers is a free data retrieval call binding the contract method 0x5113c226.
 //
-// Solidity: function ehrUsers(uint256 ) view returns(uint256)
-func (_EhrIndexer *EhrIndexerSession) EhrUsers(arg0 *big.Int) (*big.Int, error) {
+// Solidity: function ehrUsers(bytes32 ) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerSession) EhrUsers(arg0 [32]byte) ([32]byte, error) {
 	return _EhrIndexer.Contract.EhrUsers(&_EhrIndexer.CallOpts, arg0)
 }
 
-// EhrUsers is a free data retrieval call binding the contract method 0x2046667a.
+// EhrUsers is a free data retrieval call binding the contract method 0x5113c226.
 //
-// Solidity: function ehrUsers(uint256 ) view returns(uint256)
-func (_EhrIndexer *EhrIndexerCallerSession) EhrUsers(arg0 *big.Int) (*big.Int, error) {
+// Solidity: function ehrUsers(bytes32 ) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerCallerSession) EhrUsers(arg0 [32]byte) ([32]byte, error) {
 	return _EhrIndexer.Contract.EhrUsers(&_EhrIndexer.CallOpts, arg0)
 }
 
-// GetEhrDocs is a free data retrieval call binding the contract method 0xc0e06345.
+// GetDocByTime is a free data retrieval call binding the contract method 0x4f722b16.
 //
-// Solidity: function getEhrDocs(uint256 ehrId) view returns((uint8,uint8,uint256,bytes,uint32)[])
-func (_EhrIndexer *EhrIndexerCaller) GetEhrDocs(opts *bind.CallOpts, ehrId *big.Int) ([]EhrIndexerDocumentMeta, error) {
+// Solidity: function getDocByTime(bytes32 ehrId, uint8 docType, uint32 timestamp) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCaller) GetDocByTime(opts *bind.CallOpts, ehrId [32]byte, docType uint8, timestamp uint32) (EhrIndexerDocumentMeta, error) {
 	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "getEhrDocs", ehrId)
+	err := _EhrIndexer.contract.Call(opts, &out, "getDocByTime", ehrId, docType, timestamp)
+
+	if err != nil {
+		return *new(EhrIndexerDocumentMeta), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(EhrIndexerDocumentMeta)).(*EhrIndexerDocumentMeta)
+
+	return out0, err
+
+}
+
+// GetDocByTime is a free data retrieval call binding the contract method 0x4f722b16.
+//
+// Solidity: function getDocByTime(bytes32 ehrId, uint8 docType, uint32 timestamp) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerSession) GetDocByTime(ehrId [32]byte, docType uint8, timestamp uint32) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetDocByTime(&_EhrIndexer.CallOpts, ehrId, docType, timestamp)
+}
+
+// GetDocByTime is a free data retrieval call binding the contract method 0x4f722b16.
+//
+// Solidity: function getDocByTime(bytes32 ehrId, uint8 docType, uint32 timestamp) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCallerSession) GetDocByTime(ehrId [32]byte, docType uint8, timestamp uint32) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetDocByTime(&_EhrIndexer.CallOpts, ehrId, docType, timestamp)
+}
+
+// GetDocByVersion is a free data retrieval call binding the contract method 0x179fcacf.
+//
+// Solidity: function getDocByVersion(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCaller) GetDocByVersion(opts *bind.CallOpts, ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (EhrIndexerDocumentMeta, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "getDocByVersion", ehrId, docType, docBaseUIDHash, version)
+
+	if err != nil {
+		return *new(EhrIndexerDocumentMeta), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(EhrIndexerDocumentMeta)).(*EhrIndexerDocumentMeta)
+
+	return out0, err
+
+}
+
+// GetDocByVersion is a free data retrieval call binding the contract method 0x179fcacf.
+//
+// Solidity: function getDocByVersion(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerSession) GetDocByVersion(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetDocByVersion(&_EhrIndexer.CallOpts, ehrId, docType, docBaseUIDHash, version)
+}
+
+// GetDocByVersion is a free data retrieval call binding the contract method 0x179fcacf.
+//
+// Solidity: function getDocByVersion(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCallerSession) GetDocByVersion(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetDocByVersion(&_EhrIndexer.CallOpts, ehrId, docType, docBaseUIDHash, version)
+}
+
+// GetDocLastByBaseID is a free data retrieval call binding the contract method 0x949c8e77.
+//
+// Solidity: function getDocLastByBaseID(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCaller) GetDocLastByBaseID(opts *bind.CallOpts, ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte) (EhrIndexerDocumentMeta, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "getDocLastByBaseID", ehrId, docType, docBaseUIDHash)
+
+	if err != nil {
+		return *new(EhrIndexerDocumentMeta), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(EhrIndexerDocumentMeta)).(*EhrIndexerDocumentMeta)
+
+	return out0, err
+
+}
+
+// GetDocLastByBaseID is a free data retrieval call binding the contract method 0x949c8e77.
+//
+// Solidity: function getDocLastByBaseID(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerSession) GetDocLastByBaseID(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetDocLastByBaseID(&_EhrIndexer.CallOpts, ehrId, docType, docBaseUIDHash)
+}
+
+// GetDocLastByBaseID is a free data retrieval call binding the contract method 0x949c8e77.
+//
+// Solidity: function getDocLastByBaseID(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCallerSession) GetDocLastByBaseID(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetDocLastByBaseID(&_EhrIndexer.CallOpts, ehrId, docType, docBaseUIDHash)
+}
+
+// GetEhrDocs is a free data retrieval call binding the contract method 0xeec6b331.
+//
+// Solidity: function getEhrDocs(bytes32 ehrId, uint8 docType) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32)[])
+func (_EhrIndexer *EhrIndexerCaller) GetEhrDocs(opts *bind.CallOpts, ehrId [32]byte, docType uint8) ([]EhrIndexerDocumentMeta, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "getEhrDocs", ehrId, docType)
 
 	if err != nil {
 		return *new([]EhrIndexerDocumentMeta), err
@@ -420,18 +557,80 @@ func (_EhrIndexer *EhrIndexerCaller) GetEhrDocs(opts *bind.CallOpts, ehrId *big.
 
 }
 
-// GetEhrDocs is a free data retrieval call binding the contract method 0xc0e06345.
+// GetEhrDocs is a free data retrieval call binding the contract method 0xeec6b331.
 //
-// Solidity: function getEhrDocs(uint256 ehrId) view returns((uint8,uint8,uint256,bytes,uint32)[])
-func (_EhrIndexer *EhrIndexerSession) GetEhrDocs(ehrId *big.Int) ([]EhrIndexerDocumentMeta, error) {
-	return _EhrIndexer.Contract.GetEhrDocs(&_EhrIndexer.CallOpts, ehrId)
+// Solidity: function getEhrDocs(bytes32 ehrId, uint8 docType) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32)[])
+func (_EhrIndexer *EhrIndexerSession) GetEhrDocs(ehrId [32]byte, docType uint8) ([]EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetEhrDocs(&_EhrIndexer.CallOpts, ehrId, docType)
 }
 
-// GetEhrDocs is a free data retrieval call binding the contract method 0xc0e06345.
+// GetEhrDocs is a free data retrieval call binding the contract method 0xeec6b331.
 //
-// Solidity: function getEhrDocs(uint256 ehrId) view returns((uint8,uint8,uint256,bytes,uint32)[])
-func (_EhrIndexer *EhrIndexerCallerSession) GetEhrDocs(ehrId *big.Int) ([]EhrIndexerDocumentMeta, error) {
-	return _EhrIndexer.Contract.GetEhrDocs(&_EhrIndexer.CallOpts, ehrId)
+// Solidity: function getEhrDocs(bytes32 ehrId, uint8 docType) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32)[])
+func (_EhrIndexer *EhrIndexerCallerSession) GetEhrDocs(ehrId [32]byte, docType uint8) ([]EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetEhrDocs(&_EhrIndexer.CallOpts, ehrId, docType)
+}
+
+// GetLastEhrDocByType is a free data retrieval call binding the contract method 0x15dbcf1a.
+//
+// Solidity: function getLastEhrDocByType(bytes32 ehrId, uint8 docType) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCaller) GetLastEhrDocByType(opts *bind.CallOpts, ehrId [32]byte, docType uint8) (EhrIndexerDocumentMeta, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "getLastEhrDocByType", ehrId, docType)
+
+	if err != nil {
+		return *new(EhrIndexerDocumentMeta), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(EhrIndexerDocumentMeta)).(*EhrIndexerDocumentMeta)
+
+	return out0, err
+
+}
+
+// GetLastEhrDocByType is a free data retrieval call binding the contract method 0x15dbcf1a.
+//
+// Solidity: function getLastEhrDocByType(bytes32 ehrId, uint8 docType) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerSession) GetLastEhrDocByType(ehrId [32]byte, docType uint8) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetLastEhrDocByType(&_EhrIndexer.CallOpts, ehrId, docType)
+}
+
+// GetLastEhrDocByType is a free data retrieval call binding the contract method 0x15dbcf1a.
+//
+// Solidity: function getLastEhrDocByType(bytes32 ehrId, uint8 docType) view returns((uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32))
+func (_EhrIndexer *EhrIndexerCallerSession) GetLastEhrDocByType(ehrId [32]byte, docType uint8) (EhrIndexerDocumentMeta, error) {
+	return _EhrIndexer.Contract.GetLastEhrDocByType(&_EhrIndexer.CallOpts, ehrId, docType)
+}
+
+// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+//
+// Solidity: function groupAccess(bytes32 ) view returns(bytes)
+func (_EhrIndexer *EhrIndexerCaller) GroupAccess(opts *bind.CallOpts, arg0 [32]byte) ([]byte, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "groupAccess", arg0)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
+}
+
+// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+//
+// Solidity: function groupAccess(bytes32 ) view returns(bytes)
+func (_EhrIndexer *EhrIndexerSession) GroupAccess(arg0 [32]byte) ([]byte, error) {
+	return _EhrIndexer.Contract.GroupAccess(&_EhrIndexer.CallOpts, arg0)
+}
+
+// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+//
+// Solidity: function groupAccess(bytes32 ) view returns(bytes)
+func (_EhrIndexer *EhrIndexerCallerSession) GroupAccess(arg0 [32]byte) ([]byte, error) {
+	return _EhrIndexer.Contract.GroupAccess(&_EhrIndexer.CallOpts, arg0)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -465,25 +664,67 @@ func (_EhrIndexer *EhrIndexerCallerSession) Owner() (common.Address, error) {
 	return _EhrIndexer.Contract.Owner(&_EhrIndexer.CallOpts)
 }
 
-// AddEhrDoc is a paid mutator transaction binding the contract method 0xe94feafc.
+// AddEhrDoc is a paid mutator transaction binding the contract method 0xf69ffe32.
 //
-// Solidity: function addEhrDoc(uint256 ehrId, (uint8,uint8,uint256,bytes,uint32) docMeta) returns()
-func (_EhrIndexer *EhrIndexerTransactor) AddEhrDoc(opts *bind.TransactOpts, ehrId *big.Int, docMeta EhrIndexerDocumentMeta) (*types.Transaction, error) {
+// Solidity: function addEhrDoc(bytes32 ehrId, (uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32) docMeta) returns()
+func (_EhrIndexer *EhrIndexerTransactor) AddEhrDoc(opts *bind.TransactOpts, ehrId [32]byte, docMeta EhrIndexerDocumentMeta) (*types.Transaction, error) {
 	return _EhrIndexer.contract.Transact(opts, "addEhrDoc", ehrId, docMeta)
 }
 
-// AddEhrDoc is a paid mutator transaction binding the contract method 0xe94feafc.
+// AddEhrDoc is a paid mutator transaction binding the contract method 0xf69ffe32.
 //
-// Solidity: function addEhrDoc(uint256 ehrId, (uint8,uint8,uint256,bytes,uint32) docMeta) returns()
-func (_EhrIndexer *EhrIndexerSession) AddEhrDoc(ehrId *big.Int, docMeta EhrIndexerDocumentMeta) (*types.Transaction, error) {
+// Solidity: function addEhrDoc(bytes32 ehrId, (uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32) docMeta) returns()
+func (_EhrIndexer *EhrIndexerSession) AddEhrDoc(ehrId [32]byte, docMeta EhrIndexerDocumentMeta) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.AddEhrDoc(&_EhrIndexer.TransactOpts, ehrId, docMeta)
 }
 
-// AddEhrDoc is a paid mutator transaction binding the contract method 0xe94feafc.
+// AddEhrDoc is a paid mutator transaction binding the contract method 0xf69ffe32.
 //
-// Solidity: function addEhrDoc(uint256 ehrId, (uint8,uint8,uint256,bytes,uint32) docMeta) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) AddEhrDoc(ehrId *big.Int, docMeta EhrIndexerDocumentMeta) (*types.Transaction, error) {
+// Solidity: function addEhrDoc(bytes32 ehrId, (uint8,uint8,bytes,bytes,bytes,bytes,bytes32,bytes32,bool,uint32) docMeta) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) AddEhrDoc(ehrId [32]byte, docMeta EhrIndexerDocumentMeta) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.AddEhrDoc(&_EhrIndexer.TransactOpts, ehrId, docMeta)
+}
+
+// DeleteDoc is a paid mutator transaction binding the contract method 0xe9a330cc.
+//
+// Solidity: function deleteDoc(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) returns()
+func (_EhrIndexer *EhrIndexerTransactor) DeleteDoc(opts *bind.TransactOpts, ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "deleteDoc", ehrId, docType, docBaseUIDHash, version)
+}
+
+// DeleteDoc is a paid mutator transaction binding the contract method 0xe9a330cc.
+//
+// Solidity: function deleteDoc(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) returns()
+func (_EhrIndexer *EhrIndexerSession) DeleteDoc(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.DeleteDoc(&_EhrIndexer.TransactOpts, ehrId, docType, docBaseUIDHash, version)
+}
+
+// DeleteDoc is a paid mutator transaction binding the contract method 0xe9a330cc.
+//
+// Solidity: function deleteDoc(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) DeleteDoc(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.DeleteDoc(&_EhrIndexer.TransactOpts, ehrId, docType, docBaseUIDHash, version)
+}
+
+// Multicall is a paid mutator transaction binding the contract method 0xac9650d8.
+//
+// Solidity: function multicall(bytes[] data) returns(bytes[] results)
+func (_EhrIndexer *EhrIndexerTransactor) Multicall(opts *bind.TransactOpts, data [][]byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "multicall", data)
+}
+
+// Multicall is a paid mutator transaction binding the contract method 0xac9650d8.
+//
+// Solidity: function multicall(bytes[] data) returns(bytes[] results)
+func (_EhrIndexer *EhrIndexerSession) Multicall(data [][]byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.Multicall(&_EhrIndexer.TransactOpts, data)
+}
+
+// Multicall is a paid mutator transaction binding the contract method 0xac9650d8.
+//
+// Solidity: function multicall(bytes[] data) returns(bytes[] results)
+func (_EhrIndexer *EhrIndexerTransactorSession) Multicall(data [][]byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.Multicall(&_EhrIndexer.TransactOpts, data)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
@@ -509,107 +750,107 @@ func (_EhrIndexer *EhrIndexerTransactorSession) RenounceOwnership() (*types.Tran
 
 // SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
 //
-// Solidity: function setAllowed(address addr, bool allowed) returns(bool)
+// Solidity: function setAllowed(address addr, bool allowed) returns()
 func (_EhrIndexer *EhrIndexerTransactor) SetAllowed(opts *bind.TransactOpts, addr common.Address, allowed bool) (*types.Transaction, error) {
 	return _EhrIndexer.contract.Transact(opts, "setAllowed", addr, allowed)
 }
 
 // SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
 //
-// Solidity: function setAllowed(address addr, bool allowed) returns(bool)
+// Solidity: function setAllowed(address addr, bool allowed) returns()
 func (_EhrIndexer *EhrIndexerSession) SetAllowed(addr common.Address, allowed bool) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.SetAllowed(&_EhrIndexer.TransactOpts, addr, allowed)
 }
 
 // SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
 //
-// Solidity: function setAllowed(address addr, bool allowed) returns(bool)
+// Solidity: function setAllowed(address addr, bool allowed) returns()
 func (_EhrIndexer *EhrIndexerTransactorSession) SetAllowed(addr common.Address, allowed bool) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.SetAllowed(&_EhrIndexer.TransactOpts, addr, allowed)
 }
 
-// SetDataAccess is a paid mutator transaction binding the contract method 0x4bb5a1ba.
+// SetDocAccess is a paid mutator transaction binding the contract method 0x65bde879.
 //
-// Solidity: function setDataAccess(uint256 userId, bytes _access) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactor) SetDataAccess(opts *bind.TransactOpts, userId *big.Int, _access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "setDataAccess", userId, _access)
+// Solidity: function setDocAccess(bytes32 key, bytes access) returns()
+func (_EhrIndexer *EhrIndexerTransactor) SetDocAccess(opts *bind.TransactOpts, key [32]byte, access []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "setDocAccess", key, access)
 }
 
-// SetDataAccess is a paid mutator transaction binding the contract method 0x4bb5a1ba.
+// SetDocAccess is a paid mutator transaction binding the contract method 0x65bde879.
 //
-// Solidity: function setDataAccess(uint256 userId, bytes _access) returns(uint256)
-func (_EhrIndexer *EhrIndexerSession) SetDataAccess(userId *big.Int, _access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetDataAccess(&_EhrIndexer.TransactOpts, userId, _access)
+// Solidity: function setDocAccess(bytes32 key, bytes access) returns()
+func (_EhrIndexer *EhrIndexerSession) SetDocAccess(key [32]byte, access []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetDocAccess(&_EhrIndexer.TransactOpts, key, access)
 }
 
-// SetDataAccess is a paid mutator transaction binding the contract method 0x4bb5a1ba.
+// SetDocAccess is a paid mutator transaction binding the contract method 0x65bde879.
 //
-// Solidity: function setDataAccess(uint256 userId, bytes _access) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactorSession) SetDataAccess(userId *big.Int, _access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetDataAccess(&_EhrIndexer.TransactOpts, userId, _access)
+// Solidity: function setDocAccess(bytes32 key, bytes access) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) SetDocAccess(key [32]byte, access []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetDocAccess(&_EhrIndexer.TransactOpts, key, access)
 }
 
-// SetDocAccess is a paid mutator transaction binding the contract method 0x1efa95ce.
+// SetEhrSubject is a paid mutator transaction binding the contract method 0xfa0e2b69.
 //
-// Solidity: function setDocAccess(uint256 userId, bytes _access) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactor) SetDocAccess(opts *bind.TransactOpts, userId *big.Int, _access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "setDocAccess", userId, _access)
+// Solidity: function setEhrSubject(bytes32 subjectKey, bytes32 ehrId) returns()
+func (_EhrIndexer *EhrIndexerTransactor) SetEhrSubject(opts *bind.TransactOpts, subjectKey [32]byte, ehrId [32]byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "setEhrSubject", subjectKey, ehrId)
 }
 
-// SetDocAccess is a paid mutator transaction binding the contract method 0x1efa95ce.
+// SetEhrSubject is a paid mutator transaction binding the contract method 0xfa0e2b69.
 //
-// Solidity: function setDocAccess(uint256 userId, bytes _access) returns(uint256)
-func (_EhrIndexer *EhrIndexerSession) SetDocAccess(userId *big.Int, _access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetDocAccess(&_EhrIndexer.TransactOpts, userId, _access)
+// Solidity: function setEhrSubject(bytes32 subjectKey, bytes32 ehrId) returns()
+func (_EhrIndexer *EhrIndexerSession) SetEhrSubject(subjectKey [32]byte, ehrId [32]byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetEhrSubject(&_EhrIndexer.TransactOpts, subjectKey, ehrId)
 }
 
-// SetDocAccess is a paid mutator transaction binding the contract method 0x1efa95ce.
+// SetEhrSubject is a paid mutator transaction binding the contract method 0xfa0e2b69.
 //
-// Solidity: function setDocAccess(uint256 userId, bytes _access) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactorSession) SetDocAccess(userId *big.Int, _access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetDocAccess(&_EhrIndexer.TransactOpts, userId, _access)
+// Solidity: function setEhrSubject(bytes32 subjectKey, bytes32 ehrId) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrSubject(subjectKey [32]byte, ehrId [32]byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetEhrSubject(&_EhrIndexer.TransactOpts, subjectKey, ehrId)
 }
 
-// SetEhrSubject is a paid mutator transaction binding the contract method 0x46db77a1.
+// SetEhrUser is a paid mutator transaction binding the contract method 0xfbdbd13b.
 //
-// Solidity: function setEhrSubject(uint256 subjectKey, uint256 _ehrId) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactor) SetEhrSubject(opts *bind.TransactOpts, subjectKey *big.Int, _ehrId *big.Int) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "setEhrSubject", subjectKey, _ehrId)
-}
-
-// SetEhrSubject is a paid mutator transaction binding the contract method 0x46db77a1.
-//
-// Solidity: function setEhrSubject(uint256 subjectKey, uint256 _ehrId) returns(uint256)
-func (_EhrIndexer *EhrIndexerSession) SetEhrSubject(subjectKey *big.Int, _ehrId *big.Int) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetEhrSubject(&_EhrIndexer.TransactOpts, subjectKey, _ehrId)
-}
-
-// SetEhrSubject is a paid mutator transaction binding the contract method 0x46db77a1.
-//
-// Solidity: function setEhrSubject(uint256 subjectKey, uint256 _ehrId) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrSubject(subjectKey *big.Int, _ehrId *big.Int) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetEhrSubject(&_EhrIndexer.TransactOpts, subjectKey, _ehrId)
-}
-
-// SetEhrUser is a paid mutator transaction binding the contract method 0x651f1972.
-//
-// Solidity: function setEhrUser(uint256 userId, uint256 ehrId) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactor) SetEhrUser(opts *bind.TransactOpts, userId *big.Int, ehrId *big.Int) (*types.Transaction, error) {
+// Solidity: function setEhrUser(bytes32 userId, bytes32 ehrId) returns()
+func (_EhrIndexer *EhrIndexerTransactor) SetEhrUser(opts *bind.TransactOpts, userId [32]byte, ehrId [32]byte) (*types.Transaction, error) {
 	return _EhrIndexer.contract.Transact(opts, "setEhrUser", userId, ehrId)
 }
 
-// SetEhrUser is a paid mutator transaction binding the contract method 0x651f1972.
+// SetEhrUser is a paid mutator transaction binding the contract method 0xfbdbd13b.
 //
-// Solidity: function setEhrUser(uint256 userId, uint256 ehrId) returns(uint256)
-func (_EhrIndexer *EhrIndexerSession) SetEhrUser(userId *big.Int, ehrId *big.Int) (*types.Transaction, error) {
+// Solidity: function setEhrUser(bytes32 userId, bytes32 ehrId) returns()
+func (_EhrIndexer *EhrIndexerSession) SetEhrUser(userId [32]byte, ehrId [32]byte) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, userId, ehrId)
 }
 
-// SetEhrUser is a paid mutator transaction binding the contract method 0x651f1972.
+// SetEhrUser is a paid mutator transaction binding the contract method 0xfbdbd13b.
 //
-// Solidity: function setEhrUser(uint256 userId, uint256 ehrId) returns(uint256)
-func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrUser(userId *big.Int, ehrId *big.Int) (*types.Transaction, error) {
+// Solidity: function setEhrUser(bytes32 userId, bytes32 ehrId) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrUser(userId [32]byte, ehrId [32]byte) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, userId, ehrId)
+}
+
+// SetGroupAccess is a paid mutator transaction binding the contract method 0xe40671ac.
+//
+// Solidity: function setGroupAccess(bytes32 key, bytes access) returns()
+func (_EhrIndexer *EhrIndexerTransactor) SetGroupAccess(opts *bind.TransactOpts, key [32]byte, access []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "setGroupAccess", key, access)
+}
+
+// SetGroupAccess is a paid mutator transaction binding the contract method 0xe40671ac.
+//
+// Solidity: function setGroupAccess(bytes32 key, bytes access) returns()
+func (_EhrIndexer *EhrIndexerSession) SetGroupAccess(key [32]byte, access []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetGroupAccess(&_EhrIndexer.TransactOpts, key, access)
+}
+
+// SetGroupAccess is a paid mutator transaction binding the contract method 0xe40671ac.
+//
+// Solidity: function setGroupAccess(bytes32 key, bytes access) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) SetGroupAccess(key [32]byte, access []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetGroupAccess(&_EhrIndexer.TransactOpts, key, access)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
@@ -631,141 +872,6 @@ func (_EhrIndexer *EhrIndexerSession) TransferOwnership(newOwner common.Address)
 // Solidity: function transferOwnership(address newOwner) returns()
 func (_EhrIndexer *EhrIndexerTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.TransferOwnership(&_EhrIndexer.TransactOpts, newOwner)
-}
-
-// EhrIndexerDataAccessChangedIterator is returned from FilterDataAccessChanged and is used to iterate over the raw logs and unpacked data for DataAccessChanged events raised by the EhrIndexer contract.
-type EhrIndexerDataAccessChangedIterator struct {
-	Event *EhrIndexerDataAccessChanged // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *EhrIndexerDataAccessChangedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(EhrIndexerDataAccessChanged)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(EhrIndexerDataAccessChanged)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *EhrIndexerDataAccessChangedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *EhrIndexerDataAccessChangedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// EhrIndexerDataAccessChanged represents a DataAccessChanged event raised by the EhrIndexer contract.
-type EhrIndexerDataAccessChanged struct {
-	UserId *big.Int
-	Access []byte
-	Raw    types.Log // Blockchain specific contextual infos
-}
-
-// FilterDataAccessChanged is a free log retrieval operation binding the contract event 0xa9d658ce394dcc3ebc71e2f72f6440b8e02d9831bb72f3c59a622d6130e150bb.
-//
-// Solidity: event DataAccessChanged(uint256 userId, bytes access)
-func (_EhrIndexer *EhrIndexerFilterer) FilterDataAccessChanged(opts *bind.FilterOpts) (*EhrIndexerDataAccessChangedIterator, error) {
-
-	logs, sub, err := _EhrIndexer.contract.FilterLogs(opts, "DataAccessChanged")
-	if err != nil {
-		return nil, err
-	}
-	return &EhrIndexerDataAccessChangedIterator{contract: _EhrIndexer.contract, event: "DataAccessChanged", logs: logs, sub: sub}, nil
-}
-
-// WatchDataAccessChanged is a free log subscription operation binding the contract event 0xa9d658ce394dcc3ebc71e2f72f6440b8e02d9831bb72f3c59a622d6130e150bb.
-//
-// Solidity: event DataAccessChanged(uint256 userId, bytes access)
-func (_EhrIndexer *EhrIndexerFilterer) WatchDataAccessChanged(opts *bind.WatchOpts, sink chan<- *EhrIndexerDataAccessChanged) (event.Subscription, error) {
-
-	logs, sub, err := _EhrIndexer.contract.WatchLogs(opts, "DataAccessChanged")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(EhrIndexerDataAccessChanged)
-				if err := _EhrIndexer.contract.UnpackLog(event, "DataAccessChanged", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseDataAccessChanged is a log parse operation binding the contract event 0xa9d658ce394dcc3ebc71e2f72f6440b8e02d9831bb72f3c59a622d6130e150bb.
-//
-// Solidity: event DataAccessChanged(uint256 userId, bytes access)
-func (_EhrIndexer *EhrIndexerFilterer) ParseDataAccessChanged(log types.Log) (*EhrIndexerDataAccessChanged, error) {
-	event := new(EhrIndexerDataAccessChanged)
-	if err := _EhrIndexer.contract.UnpackLog(event, "DataAccessChanged", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
 }
 
 // EhrIndexerDocAccessChangedIterator is returned from FilterDocAccessChanged and is used to iterate over the raw logs and unpacked data for DocAccessChanged events raised by the EhrIndexer contract.
@@ -837,14 +943,14 @@ func (it *EhrIndexerDocAccessChangedIterator) Close() error {
 
 // EhrIndexerDocAccessChanged represents a DocAccessChanged event raised by the EhrIndexer contract.
 type EhrIndexerDocAccessChanged struct {
-	UserId *big.Int
+	Key    [32]byte
 	Access []byte
 	Raw    types.Log // Blockchain specific contextual infos
 }
 
-// FilterDocAccessChanged is a free log retrieval operation binding the contract event 0xdfd7c68e099c5d969e8a9417e6319e2f985e5d2657e7f54b4af4a309aefcccbf.
+// FilterDocAccessChanged is a free log retrieval operation binding the contract event 0x96a63afebe577b3909fe26d5e194804fa47790fc5d1fc6c80f31b67c69b878fb.
 //
-// Solidity: event DocAccessChanged(uint256 userId, bytes access)
+// Solidity: event DocAccessChanged(bytes32 key, bytes access)
 func (_EhrIndexer *EhrIndexerFilterer) FilterDocAccessChanged(opts *bind.FilterOpts) (*EhrIndexerDocAccessChangedIterator, error) {
 
 	logs, sub, err := _EhrIndexer.contract.FilterLogs(opts, "DocAccessChanged")
@@ -854,9 +960,9 @@ func (_EhrIndexer *EhrIndexerFilterer) FilterDocAccessChanged(opts *bind.FilterO
 	return &EhrIndexerDocAccessChangedIterator{contract: _EhrIndexer.contract, event: "DocAccessChanged", logs: logs, sub: sub}, nil
 }
 
-// WatchDocAccessChanged is a free log subscription operation binding the contract event 0xdfd7c68e099c5d969e8a9417e6319e2f985e5d2657e7f54b4af4a309aefcccbf.
+// WatchDocAccessChanged is a free log subscription operation binding the contract event 0x96a63afebe577b3909fe26d5e194804fa47790fc5d1fc6c80f31b67c69b878fb.
 //
-// Solidity: event DocAccessChanged(uint256 userId, bytes access)
+// Solidity: event DocAccessChanged(bytes32 key, bytes access)
 func (_EhrIndexer *EhrIndexerFilterer) WatchDocAccessChanged(opts *bind.WatchOpts, sink chan<- *EhrIndexerDocAccessChanged) (event.Subscription, error) {
 
 	logs, sub, err := _EhrIndexer.contract.WatchLogs(opts, "DocAccessChanged")
@@ -891,9 +997,9 @@ func (_EhrIndexer *EhrIndexerFilterer) WatchDocAccessChanged(opts *bind.WatchOpt
 	}), nil
 }
 
-// ParseDocAccessChanged is a log parse operation binding the contract event 0xdfd7c68e099c5d969e8a9417e6319e2f985e5d2657e7f54b4af4a309aefcccbf.
+// ParseDocAccessChanged is a log parse operation binding the contract event 0x96a63afebe577b3909fe26d5e194804fa47790fc5d1fc6c80f31b67c69b878fb.
 //
-// Solidity: event DocAccessChanged(uint256 userId, bytes access)
+// Solidity: event DocAccessChanged(bytes32 key, bytes access)
 func (_EhrIndexer *EhrIndexerFilterer) ParseDocAccessChanged(log types.Log) (*EhrIndexerDocAccessChanged, error) {
 	event := new(EhrIndexerDocAccessChanged)
 	if err := _EhrIndexer.contract.UnpackLog(event, "DocAccessChanged", log); err != nil {
@@ -972,14 +1078,14 @@ func (it *EhrIndexerEhrDocAddedIterator) Close() error {
 
 // EhrIndexerEhrDocAdded represents a EhrDocAdded event raised by the EhrIndexer contract.
 type EhrIndexerEhrDocAdded struct {
-	EhrId     *big.Int
-	StorageId *big.Int
-	Raw       types.Log // Blockchain specific contextual infos
+	EhrId [32]byte
+	CID   []byte
+	Raw   types.Log // Blockchain specific contextual infos
 }
 
-// FilterEhrDocAdded is a free log retrieval operation binding the contract event 0xa6ed15209306a2d07d3ca4688cf4fb7d3fcd021baa6c2fb66b0af5e5598ed437.
+// FilterEhrDocAdded is a free log retrieval operation binding the contract event 0x0477812eb2952d83d4085b67b0669f6c20e2a052588fbf64e7d8113a8bfb2442.
 //
-// Solidity: event EhrDocAdded(uint256 ehrId, uint256 storageId)
+// Solidity: event EhrDocAdded(bytes32 ehrId, bytes CID)
 func (_EhrIndexer *EhrIndexerFilterer) FilterEhrDocAdded(opts *bind.FilterOpts) (*EhrIndexerEhrDocAddedIterator, error) {
 
 	logs, sub, err := _EhrIndexer.contract.FilterLogs(opts, "EhrDocAdded")
@@ -989,9 +1095,9 @@ func (_EhrIndexer *EhrIndexerFilterer) FilterEhrDocAdded(opts *bind.FilterOpts) 
 	return &EhrIndexerEhrDocAddedIterator{contract: _EhrIndexer.contract, event: "EhrDocAdded", logs: logs, sub: sub}, nil
 }
 
-// WatchEhrDocAdded is a free log subscription operation binding the contract event 0xa6ed15209306a2d07d3ca4688cf4fb7d3fcd021baa6c2fb66b0af5e5598ed437.
+// WatchEhrDocAdded is a free log subscription operation binding the contract event 0x0477812eb2952d83d4085b67b0669f6c20e2a052588fbf64e7d8113a8bfb2442.
 //
-// Solidity: event EhrDocAdded(uint256 ehrId, uint256 storageId)
+// Solidity: event EhrDocAdded(bytes32 ehrId, bytes CID)
 func (_EhrIndexer *EhrIndexerFilterer) WatchEhrDocAdded(opts *bind.WatchOpts, sink chan<- *EhrIndexerEhrDocAdded) (event.Subscription, error) {
 
 	logs, sub, err := _EhrIndexer.contract.WatchLogs(opts, "EhrDocAdded")
@@ -1026,9 +1132,9 @@ func (_EhrIndexer *EhrIndexerFilterer) WatchEhrDocAdded(opts *bind.WatchOpts, si
 	}), nil
 }
 
-// ParseEhrDocAdded is a log parse operation binding the contract event 0xa6ed15209306a2d07d3ca4688cf4fb7d3fcd021baa6c2fb66b0af5e5598ed437.
+// ParseEhrDocAdded is a log parse operation binding the contract event 0x0477812eb2952d83d4085b67b0669f6c20e2a052588fbf64e7d8113a8bfb2442.
 //
-// Solidity: event EhrDocAdded(uint256 ehrId, uint256 storageId)
+// Solidity: event EhrDocAdded(bytes32 ehrId, bytes CID)
 func (_EhrIndexer *EhrIndexerFilterer) ParseEhrDocAdded(log types.Log) (*EhrIndexerEhrDocAdded, error) {
 	event := new(EhrIndexerEhrDocAdded)
 	if err := _EhrIndexer.contract.UnpackLog(event, "EhrDocAdded", log); err != nil {
@@ -1107,14 +1213,14 @@ func (it *EhrIndexerEhrSubjectSetIterator) Close() error {
 
 // EhrIndexerEhrSubjectSet represents a EhrSubjectSet event raised by the EhrIndexer contract.
 type EhrIndexerEhrSubjectSet struct {
-	SubjectKey *big.Int
-	EhrId      *big.Int
+	SubjectKey [32]byte
+	EhrId      [32]byte
 	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterEhrSubjectSet is a free log retrieval operation binding the contract event 0x7ab0e5c4dd7715a5cbe4c5dadf9bedd539a85f9bbf0bea823cbaf83d9dce54ea.
+// FilterEhrSubjectSet is a free log retrieval operation binding the contract event 0xa162c4f1c6de6f45639be0d9608d4603bc8ff3d7890ce493368734ee95710a5b.
 //
-// Solidity: event EhrSubjectSet(uint256 subjectKey, uint256 ehrId)
+// Solidity: event EhrSubjectSet(bytes32 subjectKey, bytes32 ehrId)
 func (_EhrIndexer *EhrIndexerFilterer) FilterEhrSubjectSet(opts *bind.FilterOpts) (*EhrIndexerEhrSubjectSetIterator, error) {
 
 	logs, sub, err := _EhrIndexer.contract.FilterLogs(opts, "EhrSubjectSet")
@@ -1124,9 +1230,9 @@ func (_EhrIndexer *EhrIndexerFilterer) FilterEhrSubjectSet(opts *bind.FilterOpts
 	return &EhrIndexerEhrSubjectSetIterator{contract: _EhrIndexer.contract, event: "EhrSubjectSet", logs: logs, sub: sub}, nil
 }
 
-// WatchEhrSubjectSet is a free log subscription operation binding the contract event 0x7ab0e5c4dd7715a5cbe4c5dadf9bedd539a85f9bbf0bea823cbaf83d9dce54ea.
+// WatchEhrSubjectSet is a free log subscription operation binding the contract event 0xa162c4f1c6de6f45639be0d9608d4603bc8ff3d7890ce493368734ee95710a5b.
 //
-// Solidity: event EhrSubjectSet(uint256 subjectKey, uint256 ehrId)
+// Solidity: event EhrSubjectSet(bytes32 subjectKey, bytes32 ehrId)
 func (_EhrIndexer *EhrIndexerFilterer) WatchEhrSubjectSet(opts *bind.WatchOpts, sink chan<- *EhrIndexerEhrSubjectSet) (event.Subscription, error) {
 
 	logs, sub, err := _EhrIndexer.contract.WatchLogs(opts, "EhrSubjectSet")
@@ -1161,12 +1267,147 @@ func (_EhrIndexer *EhrIndexerFilterer) WatchEhrSubjectSet(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseEhrSubjectSet is a log parse operation binding the contract event 0x7ab0e5c4dd7715a5cbe4c5dadf9bedd539a85f9bbf0bea823cbaf83d9dce54ea.
+// ParseEhrSubjectSet is a log parse operation binding the contract event 0xa162c4f1c6de6f45639be0d9608d4603bc8ff3d7890ce493368734ee95710a5b.
 //
-// Solidity: event EhrSubjectSet(uint256 subjectKey, uint256 ehrId)
+// Solidity: event EhrSubjectSet(bytes32 subjectKey, bytes32 ehrId)
 func (_EhrIndexer *EhrIndexerFilterer) ParseEhrSubjectSet(log types.Log) (*EhrIndexerEhrSubjectSet, error) {
 	event := new(EhrIndexerEhrSubjectSet)
 	if err := _EhrIndexer.contract.UnpackLog(event, "EhrSubjectSet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// EhrIndexerGroupAccessChangedIterator is returned from FilterGroupAccessChanged and is used to iterate over the raw logs and unpacked data for GroupAccessChanged events raised by the EhrIndexer contract.
+type EhrIndexerGroupAccessChangedIterator struct {
+	Event *EhrIndexerGroupAccessChanged // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *EhrIndexerGroupAccessChangedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(EhrIndexerGroupAccessChanged)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(EhrIndexerGroupAccessChanged)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *EhrIndexerGroupAccessChangedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *EhrIndexerGroupAccessChangedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// EhrIndexerGroupAccessChanged represents a GroupAccessChanged event raised by the EhrIndexer contract.
+type EhrIndexerGroupAccessChanged struct {
+	Key    [32]byte
+	Access []byte
+	Raw    types.Log // Blockchain specific contextual infos
+}
+
+// FilterGroupAccessChanged is a free log retrieval operation binding the contract event 0x1ade2dc6533b425f330a611adaf78bb5cf637acdcdb83feecbf619232691da86.
+//
+// Solidity: event GroupAccessChanged(bytes32 key, bytes access)
+func (_EhrIndexer *EhrIndexerFilterer) FilterGroupAccessChanged(opts *bind.FilterOpts) (*EhrIndexerGroupAccessChangedIterator, error) {
+
+	logs, sub, err := _EhrIndexer.contract.FilterLogs(opts, "GroupAccessChanged")
+	if err != nil {
+		return nil, err
+	}
+	return &EhrIndexerGroupAccessChangedIterator{contract: _EhrIndexer.contract, event: "GroupAccessChanged", logs: logs, sub: sub}, nil
+}
+
+// WatchGroupAccessChanged is a free log subscription operation binding the contract event 0x1ade2dc6533b425f330a611adaf78bb5cf637acdcdb83feecbf619232691da86.
+//
+// Solidity: event GroupAccessChanged(bytes32 key, bytes access)
+func (_EhrIndexer *EhrIndexerFilterer) WatchGroupAccessChanged(opts *bind.WatchOpts, sink chan<- *EhrIndexerGroupAccessChanged) (event.Subscription, error) {
+
+	logs, sub, err := _EhrIndexer.contract.WatchLogs(opts, "GroupAccessChanged")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(EhrIndexerGroupAccessChanged)
+				if err := _EhrIndexer.contract.UnpackLog(event, "GroupAccessChanged", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseGroupAccessChanged is a log parse operation binding the contract event 0x1ade2dc6533b425f330a611adaf78bb5cf637acdcdb83feecbf619232691da86.
+//
+// Solidity: event GroupAccessChanged(bytes32 key, bytes access)
+func (_EhrIndexer *EhrIndexerFilterer) ParseGroupAccessChanged(log types.Log) (*EhrIndexerGroupAccessChanged, error) {
+	event := new(EhrIndexerGroupAccessChanged)
+	if err := _EhrIndexer.contract.UnpackLog(event, "GroupAccessChanged", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

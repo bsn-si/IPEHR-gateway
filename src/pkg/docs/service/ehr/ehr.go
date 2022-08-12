@@ -12,12 +12,14 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/processing"
+	docStatus "hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 )
 
@@ -106,10 +108,14 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	}
 
 	// Filecoin saving
-	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
-	if err != nil {
-		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
-	}
+	/*
+		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+		if err != nil {
+			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+		}
+	*/
+	dealCID := fakeData.Cid()
+	minerAddr := []byte("123")
 
 	// Start processing request
 	reqID := ctx.(*gin.Context).GetString("reqId")
@@ -127,10 +133,12 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
-		if err != nil {
-			return fmt.Errorf("Proc.AddTx error: %w", err)
-		}
+		/*
+			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+			if err != nil {
+				return fmt.Errorf("Proc.AddTx error: %w", err)
+			}
+		*/
 	}
 
 	// Index EHR userID -> docStorageID
@@ -149,11 +157,13 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	// Index Docs ehr_id -> doc_meta
 	{
 		docMeta := &model.DocumentMeta{
-			TypeCode:     types.Ehr,
+			DocType:      uint8(types.Ehr),
+			Status:       uint8(docStatus.ACTIVE),
 			CID:          CID.Bytes(),
 			DealCID:      dealCID.Bytes(),
 			MinerAddress: minerAddr,
-			Timestamp:    uint64(time.Now().UnixNano()),
+			IsLast:       true,
+			Timestamp:    uint32(time.Now().Unix()),
 		}
 
 		docIndexTx, err := s.Infra.Index.AddEhrDoc(&ehrUUID, docMeta)
@@ -161,7 +171,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, docIndexTx, "", processing.TxSetEhrDocs, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docIndexTx, "Common EHR", processing.TxSetEhrDocs, processing.StatusPending)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -186,7 +196,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, docAccessTx, "", processing.TxSetDocAccess, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docAccessTx, "Common EHR access", processing.TxSetDocAccess, processing.StatusPending)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -248,7 +258,7 @@ func (s *Service) CreateStatus(ctx context.Context, userID, ehrStatusID, subject
 	return doc, nil
 }
 
-func (s *Service) UpdateStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) (err error) {
+func (s *Service) UpdateEhr(ctx context.Context, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) (err error) {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -311,10 +321,14 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 	}
 
 	// Filecoin saving
-	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))
-	if err != nil {
-		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
-	}
+	/*
+		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))
+		if err != nil {
+			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+		}
+	*/
+	dealCID := fakeData.Cid()
+	minerAddr := []byte("123")
 
 	// Start processing request
 	reqID := ctx.(*gin.Context).GetString("reqId")
@@ -333,10 +347,12 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
-		if err != nil {
-			return fmt.Errorf("Proc.AddTx error: %w", err)
-		}
+		/*
+			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+			if err != nil {
+				return fmt.Errorf("Proc.AddTx error: %w", err)
+			}
+		*/
 	}
 
 	// Index subject and namespace
@@ -363,12 +379,16 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		docMeta := &model.DocumentMeta{
-			TypeCode:        types.EhrStatus,
+			DocType:         uint8(types.EhrStatus),
+			Status:          uint8(docStatus.ACTIVE),
 			CID:             CID.Bytes(),
+			DealCID:         dealCID.Bytes(),
+			MinerAddress:    minerAddr,
 			DocUIDEncrypted: statusIDEncrypted,
-			Version:         objectVersionID.VersionTreeID(),
-			DocBaseUIDHash:  &baseDocumentUIDHash,
-			Timestamp:       uint64(time.Now().Unix()),
+			DocBaseUIDHash:  baseDocumentUIDHash,
+			Version:         *objectVersionID.VersionBytes(),
+			IsLast:          true,
+			Timestamp:       uint32(time.Now().Unix()),
 		}
 
 		docIndexTx, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
@@ -376,7 +396,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, docIndexTx, "", processing.TxSetEhrDocs, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docIndexTx, "EHR Status", processing.TxSetEhrDocs, processing.StatusPending)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -401,15 +421,21 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, docAccessTx, "", processing.TxSetDocAccess, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docAccessTx, "EHR Status access", processing.TxSetDocAccess, processing.StatusPending)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
 	}
 
-	if err = s.UpdateStatus(ctx, userID, ehrUUID, status); err != nil {
-		return fmt.Errorf("UpdateStatus error: %w userID: %s ehrID: %s", err, userID, ehrUUID.String())
-	}
+	/*
+		TODO требуется изменени логики
+		Не нужно сохранять новый EHR,
+		а нужно при запросах EHR доставать старый и приделывать ему актуальный статус.
+
+		if err = s.UpdateEhr(ctx, userID, ehrUUID, status); err != nil {
+			return fmt.Errorf("UpdateStatus error: %w userID: %s ehrID: %s", err, userID, ehrUUID.String())
+		}
+	*/
 
 	return nil
 }
