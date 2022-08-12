@@ -178,6 +178,7 @@ func (p *Proc) execBlockchain() {
 		h := common.HexToHash(tx.Hash)
 
 		var status Status
+
 		receipt, err := p.ethClient.TransactionReceipt(ctx, h)
 		if err != nil {
 			if errors.Is(err, ethereum.NotFound) {
@@ -270,9 +271,7 @@ func (p *Proc) execFilecoin() {
 				}
 			}
 		case StatusPending, StatusSuccess:
-			// do nothing
 		}
-
 	}
 }
 
@@ -338,6 +337,7 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 
 func (p *Proc) RequestStatus(reqID string) (Status, error) {
 	var req Request
+
 	result := p.db.Model(&req).Where("req_id = ?", reqID).First(&req)
 	if result.Error != nil {
 		return 0, result.Error

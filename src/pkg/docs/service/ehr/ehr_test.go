@@ -53,6 +53,7 @@ func prepare(t *testing.T) {
 	ehrService = ehr.NewService(docService)
 }
 
+// nolint
 func requestWait(reqID string, timeout time.Duration) error {
 	t := time.Now().Add(timeout)
 
@@ -84,8 +85,8 @@ func TestSave(t *testing.T) {
 	)
 
 	var ehrReq model.EhrCreateRequest
-	jsonDoc := fakeData.EhrCreateRequest()
 
+	jsonDoc := fakeData.EhrCreateRequest()
 	if err := json.Unmarshal(jsonDoc, &ehrReq); err != nil {
 		t.Fatal(err)
 	}
@@ -130,8 +131,8 @@ func TestStatus(t *testing.T) {
 	)
 
 	var createRequest model.EhrCreateRequest
-	createRequestByte := fakeData.EhrCreateCustomRequest(subjectID1, subjectNamespace)
 
+	createRequestByte := fakeData.EhrCreateCustomRequest(subjectID1, subjectNamespace)
 	if err := json.Unmarshal(createRequestByte, &createRequest); err != nil {
 		t.Fatal(err)
 	}

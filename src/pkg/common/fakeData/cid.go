@@ -9,6 +9,8 @@ import (
 
 func Cid() *cid.Cid {
 	p := make([]byte, 256)
+
+	// nolint
 	_, err := rand.Read(p)
 	if err != nil {
 		panic(err)

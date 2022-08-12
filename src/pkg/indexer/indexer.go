@@ -76,6 +76,7 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 
 func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (string, error) {
 	var uID, eID [32]byte
+
 	copy(uID[:], []byte(userID))
 	copy(eID[:], ehrUUID[:])
 
