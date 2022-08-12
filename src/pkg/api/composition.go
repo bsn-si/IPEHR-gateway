@@ -103,14 +103,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Checking EHR does not exist
-	/* old-style
-	_, err = h.service.Doc.EhrsIndex.Get(userID)
-	if errors.Is(err, errors.ErrIsNotExist) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-	*/
 	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):

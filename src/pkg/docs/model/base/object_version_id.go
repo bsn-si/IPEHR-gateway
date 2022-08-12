@@ -19,6 +19,7 @@ type ObjectVersionID struct {
 	objectID         uuid.UUID
 	creatingSystemID EhrSystemID
 	versionTreeID    string
+	versionBytes     *[32]byte
 }
 
 const (
@@ -49,7 +50,7 @@ func NewObjectVersionID(UID string, creatingSystemID EhrSystemID) (*ObjectVersio
 }
 
 func (o *ObjectVersionID) String() string {
-	uid := []string{o.ObjectID().String(), o.CreatingSystemID().String(), o.VersionTreeID()}
+	uid := []string{o.ObjectID().String(), o.CreatingSystemID().String(), o.VersionString()}
 	return strings.Join(uid, uidDelimiter)
 }
 
@@ -66,12 +67,16 @@ func (o *ObjectVersionID) CreatingSystemID() EhrSystemID {
 	return o.creatingSystemID
 }
 
-func (o *ObjectVersionID) VersionTreeID() string {
+func (o *ObjectVersionID) VersionString() string {
 	return o.versionTreeID
 }
 
+func (o *ObjectVersionID) VersionBytes() *[32]byte {
+	return o.versionBytes
+}
+
 func (o *ObjectVersionID) Equal(ver string) bool {
-	return o.VersionTreeID() == ver
+	return o.VersionString() == ver
 }
 
 func (o *ObjectVersionID) setVersionTreeID(ver string) {
@@ -80,6 +85,9 @@ func (o *ObjectVersionID) setVersionTreeID(ver string) {
 	}
 
 	o.versionTreeID = ver
+
+	o.versionBytes = &[32]byte{}
+	copy(o.versionBytes[:], []byte(o.versionTreeID))
 }
 
 func (o *ObjectVersionID) parseUID(UID string) (err error) {
@@ -128,21 +136,21 @@ func (o *ObjectVersionID) isVersion(ver string) bool {
 }
 
 func (o *ObjectVersionID) IncreaseUIDVersion() (string, error) {
-	if o.VersionTreeID() == "" {
+	if o.VersionString() == "" {
 		return "", errors.ErrObjectNotInit
 	}
 
-	parts := strings.Split(o.VersionTreeID(), ".")
+	parts := strings.Split(o.VersionString(), ".")
 	last := len(parts) - 1
 
 	verInt, err := strconv.Atoi(parts[last])
 	if err != nil {
-		return "", fmt.Errorf("IncreaseUIDVersion error: %w o.VersionTreeID %s", err, o.VersionTreeID())
+		return "", fmt.Errorf("IncreaseUIDVersion error: %w o.VersionTreeID %s", err, o.VersionString())
 	}
 
 	parts[last] = strconv.Itoa(verInt + 1)
 
 	o.setVersionTreeID(strings.Join(parts, "."))
 
-	return o.VersionTreeID(), nil
+	return o.VersionString(), nil
 }

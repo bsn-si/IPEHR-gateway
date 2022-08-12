@@ -29,14 +29,14 @@ type Client struct {
 }
 
 type Config struct {
-	LotusRpcEndpoint string
+	LotusRPCEndpoint string
 	AuthToken        string
 	DealsMaxPrice    uint64
 }
 
 type filrepMinersResult struct {
 	Miners []struct {
-		Id              uint
+		ID              uint
 		Address         string
 		Status          bool
 		Reachability    string
@@ -82,7 +82,7 @@ type filrepMinersResult struct {
 
 func NewClient(cfg *Config) (*Client, error) {
 	c := &Client{
-		rpcEndpoint:   cfg.LotusRpcEndpoint,
+		rpcEndpoint:   cfg.LotusRPCEndpoint,
 		authToken:     cfg.AuthToken,
 		dealsMaxPrice: cfg.DealsMaxPrice,
 		api:           &lotusapi.FullNodeStruct{},
@@ -90,6 +90,7 @@ func NewClient(cfg *Config) (*Client, error) {
 	}
 
 	var err error
+
 	c.closer, err = jsonrpc.NewMergeClient(
 		context.Background(),
 		c.rpcEndpoint,
@@ -131,6 +132,9 @@ func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint
 		FastRetrieval: true,
 		//ProviderCollateral big.Int
 	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("Lotus.API.ClientStartDeal error: %w", err)
+	}
 
 	return deal, minerAddr.Bytes(), nil
 }

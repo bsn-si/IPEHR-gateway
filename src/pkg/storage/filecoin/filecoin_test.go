@@ -16,6 +16,7 @@ func TestStartDeal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	defer clean(t, filecoinClient)
 
 	ctx := context.Background()
@@ -40,9 +41,11 @@ func TestFindMiner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	defer clean(t, filecoinClient)
 
 	dataSize := uint64(1000000)
+
 	minerAddress, err := filecoinClient.FindMiner(dataSize)
 	if err != nil {
 		t.Fatal(err)
@@ -69,10 +72,8 @@ func prepare(t *testing.T) (*filecoin.Client, error) {
 	return client, nil
 }
 
-func clean(t *testing.T, s *filecoin.Client) error {
+func clean(t *testing.T, s *filecoin.Client) {
 	t.Helper()
 
 	s.Close()
-
-	return nil
 }

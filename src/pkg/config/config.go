@@ -28,7 +28,7 @@ type Config struct {
 			EndpointURL string `json:"endpointUrl"`
 		}
 		Filecoin struct {
-			LotusRpcEndpoint string
+			LotusRPCEndpoint string
 			AuthToken        string
 			DealsMaxPrice    uint64
 		}

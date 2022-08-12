@@ -16,13 +16,13 @@
             "endpointUrl": "http://lotus.dev.bsn.si:5001/api/v0"
         },
         "filecoin": {
-            "lotusRpcEndpoint": "http://lotus.dev.bsn.si/rpc/v0",
+            "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v0",
             "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.IXRD51_C2V8RcgkAjFg3ZKl6eKGV_5Moda535yuolX4",
             "dealsMaxPrice": 1000000000
         }
     },
     "contract": {
-        "address": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
+        "address": "0x8b436367bd884A939420F855f961E31D346D14bB",
         "endpoint": "https://goerli.infura.io/v3/<API-KEY>",
         "privKeyPath": "../.blockchain.key"
     },

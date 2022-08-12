@@ -1,13 +1,13 @@
 package ehr_test
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common/fakeData"
@@ -15,7 +15,9 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 )
@@ -42,7 +44,7 @@ func prepare(t *testing.T) {
 
 	infra = infrastructure.New(cfg)
 
-	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10))
 	storage.Init(sc)
 
 	infra.LocalStorage = storage.Storage()
@@ -51,28 +53,56 @@ func prepare(t *testing.T) {
 	ehrService = ehr.NewService(docService)
 }
 
+// nolint
+func requestWait(reqID string, timeout time.Duration) error {
+	t := time.Now().Add(timeout)
+
+	for {
+		if time.Now().After(t) {
+			return errors.ErrTimeout
+		}
+
+		status, err := docService.Proc.RequestStatus(reqID)
+		if err != nil {
+			return err
+		}
+
+		if status == processing.StatusSuccess {
+			return nil
+		}
+
+		time.Sleep(3 * time.Second)
+	}
+}
+
 func TestSave(t *testing.T) {
 	prepare(t)
 
-	jsonDoc := fakeData.EhrCreateRequest()
+	var (
+		testUserID  = uuid.New().String()
+		ehrSystemID = ehrService.GetSystemID()
+		ctx         = &gin.Context{}
+	)
 
 	var ehrReq model.EhrCreateRequest
+
+	jsonDoc := fakeData.EhrCreateRequest()
 	if err := json.Unmarshal(jsonDoc, &ehrReq); err != nil {
 		t.Fatal(err)
 	}
 
 	testSubjectID := ehrReq.Subject.ExternalRef.ID.Value
-
 	testSubjectNamespace := ehrReq.Subject.ExternalRef.Namespace
 
-	testUserID := uuid.New().String()
-
-	ehrSystemID := ehrService.GetSystemID()
-
-	ctx := context.Background()
+	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
+	ctx.Set("reqId", reqID)
 
 	ehrDoc, err := ehrService.EhrCreate(ctx, testUserID, ehrSystemID, &ehrReq)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = requestWait(reqID, 1*time.Minute); err != nil {
 		t.Fatal(err)
 	}
 
@@ -83,31 +113,59 @@ func TestSave(t *testing.T) {
 	}
 
 	if ehrUUID.String() != ehrDoc.EhrID.Value {
-		t.Errorf("Incorrect ehrID in SubjectIndex")
+		t.Fatalf("Expected %s, received %s", ehrDoc.EhrID.Value, ehrUUID.String())
 	}
 }
 
 func TestStatus(t *testing.T) {
+	t.Skip()
+
 	prepare(t)
 
-	userID := uuid.New().String()
-	subjectID1 := uuid.New().String()
-	subjectNamespace := testStatus
-	subjectID2 := uuid.New().String()
+	var (
+		userID           = uuid.New().String()
+		ehrSystemID      = ehrService.GetSystemID()
+		subjectID1       = uuid.New().String()
+		subjectNamespace = testStatus
+		ctx              = &gin.Context{}
+	)
 
-	newEhr, err := getNewEhr(userID, subjectID1, subjectNamespace)
+	var createRequest model.EhrCreateRequest
+
+	createRequestByte := fakeData.EhrCreateCustomRequest(subjectID1, subjectNamespace)
+	if err := json.Unmarshal(createRequestByte, &createRequest); err != nil {
+		t.Fatal(err)
+	}
+
+	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
+	ctx.Set("reqId", reqID)
+
+	newEhr, err := ehrService.EhrCreate(ctx, userID, ehrSystemID, &createRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ehrSystemID := ehrService.GetSystemID()
+	t.Log("EHR_STATUS_UID:", newEhr.EhrStatus.ID.Value)
+
+	if err = requestWait(reqID, time.Minute); err != nil {
+		t.Fatal(err)
+	}
+
 	ehrID := newEhr.EhrID.Value
 	ehrUUID, _ := uuid.Parse(ehrID)
 	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
-	ctx := context.Background()
 
-	statusNew, err := ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
+	reqID = "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
+	ctx.Set("reqId", reqID)
+
+	subjectID2 := uuid.New().String()
+
+	_, err = ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = requestWait(reqID, time.Minute); err != nil {
 		t.Fatal(err)
 	}
 
@@ -117,50 +175,12 @@ func TestStatus(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if statusGet.UID.Value != statusNew.UID.Value {
-		t.Fatalf("Expected %s, received %s", statusGet.UID.Value, statusNew.UID.Value)
+	if statusGet.UID.Value != statusIDNew {
+		t.Fatalf("Expected %s, received %s", statusIDNew, statusGet.UID.Value)
 	}
 }
 
-func TestStatusUpdate(t *testing.T) {
-	prepare(t)
-
-	ehrSystemID := ehrService.GetSystemID()
-	userID := uuid.New().String()
-	subjectNamespace := testStatus
-	subjectID1 := uuid.New().String()
-	statusID2 := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
-	subjectID2 := uuid.New().String()
-
-	newEhr, err := getNewEhr(userID, subjectID1, subjectNamespace)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ehrID := newEhr.EhrID.Value
-	ehrUUID, _ := uuid.Parse(ehrID)
-	ctx := context.Background()
-
-	statusNew2, err := ehrService.CreateStatus(ctx, userID, statusID2, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = ehrService.SaveStatus(ctx, userID, &ehrUUID, ehrSystemID, statusNew2)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	statusGet3, err := ehrService.GetStatus(ctx, userID, &ehrUUID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if statusGet3.UID.Value != statusID2 {
-		t.Error("Got wrong updated status")
-	}
-}
-
+/*
 func getNewEhr(userID, subjectID, subjectNamespace string) (*model.EHR, error) {
 	var (
 		ehrSystemID       = ehrService.GetSystemID()
@@ -172,30 +192,55 @@ func getNewEhr(userID, subjectID, subjectNamespace string) (*model.EHR, error) {
 		return nil, err
 	}
 
-	return ehrService.EhrCreate(context.Background(), userID, ehrSystemID, &createRequest)
+	ctx.Set("reqId", "test_"+strconv.FormatInt(time.Now().UnixNano()/1e3, 10))
+
+	return ehrService.EhrCreate(ctx, userID, ehrSystemID, &createRequest)
 }
+*/
 
 func TestGetStatusByNearestTime(t *testing.T) {
 	prepare(t)
 
-	ehrSystemID := ehrService.GetSystemID()
-	userID := uuid.New().String()
-	subjectID1 := uuid.New().String()
-	subjectNamespace := testStatus
-	subjectID2 := uuid.New().String()
+	var (
+		ehrSystemID       = ehrService.GetSystemID()
+		userID            = uuid.New().String()
+		subjectID1        = uuid.New().String()
+		subjectNamespace  = testStatus
+		subjectID2        = uuid.New().String()
+		createRequestByte = fakeData.EhrCreateCustomRequest(subjectID1, subjectNamespace)
+		createRequest     model.EhrCreateRequest
+		ctx               = &gin.Context{}
+	)
 
-	newEhr, err := getNewEhr(userID, subjectID1, subjectNamespace)
+	if err := json.Unmarshal(createRequestByte, &createRequest); err != nil {
+		t.Fatal(err)
+	}
+
+	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
+	ctx.Set("reqId", reqID)
+
+	newEhr, err := ehrService.EhrCreate(ctx, userID, ehrSystemID, &createRequest)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = requestWait(reqID, time.Minute); err != nil {
 		t.Fatal(err)
 	}
 
 	ehrID := newEhr.EhrID.Value
 	ehrUUID, _ := uuid.Parse(ehrID)
 	statusIDNew := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
-	ctx := context.Background()
+
+	reqID = "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
+	ctx.Set("reqId", reqID)
 
 	_, err = ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
 	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = requestWait(reqID, time.Minute); err != nil {
 		t.Fatal(err)
 	}
 
