@@ -8,7 +8,6 @@ import (
 
 func Test_Config(t *testing.T) {
 	t.Run("GetConfig fallback to example config file", func(t *testing.T) {
-
 		cfg, err := config.New()
 		if err != nil {
 			t.Fatal(err)
