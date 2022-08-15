@@ -23,6 +23,8 @@ import (
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
+	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 )
@@ -31,8 +33,11 @@ type testData struct {
 	ehrID         string
 	ehrStatusID   string
 	ehrSystemID   string
+	subject       string
+	namespace     string
 	testUserID    string
 	testUserID2   string
+	ehrID2        string
 	groupAccessID string
 	compositionID string
 	requestID     string
@@ -67,10 +72,10 @@ func Test_API(t *testing.T) {
 	t.Run("EHR creating with id", testWrap.ehrCreateWithID(testData))
 	t.Run("EHR creating with id for the same user", testWrap.ehrCreateWithIDForSameUser(testData))
 	t.Run("EHR getting", testWrap.ehrGetByID(testData))
+	t.Run("EHR get by subject", testWrap.ehrGetBySubject(testData))
 	t.Run("EHR_STATUS getting", testWrap.ehrStatusGet(testData))
 	t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData))
 	t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData))
-	t.Run("EHR get by subject", testWrap.ehrGetBySubject(testData))
 	t.Run("Access group create", testWrap.accessGroupCreate(testData))
 	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
 	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
@@ -95,7 +100,7 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 		t.Fatal(err)
 	}
 
-	cfg.StoragePath += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
+	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	infra := infrastructure.New(cfg)
 	r := api.New(cfg, infra).Build()
@@ -120,7 +125,6 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 		}
 
 		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/"+testData.requestID, nil)
-
 		if err != nil {
 			t.Error(err)
 			return
@@ -142,8 +146,8 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 		}
 
 		t.Log("Requests: GetAll")
-		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/", nil)
 
+		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -220,7 +224,12 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 	return func(t *testing.T) {
 		ehrID2 := uuid.New().String()
 
-		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+ehrID2, ehrCreateBodyRequest())
+		testData.subject = uuid.New().String()
+		testData.namespace = "test_namespace"
+
+		createRequest := fakeData.EhrCreateCustomRequest(testData.subject, testData.namespace)
+
+		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+ehrID2, bytes.NewReader(createRequest))
 		if err != nil {
 			t.Error(err)
 			return
@@ -259,7 +268,15 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 			t.Fatal("EhrID is not matched")
 		}
 
+		testData.ehrID2 = ehrID2
 		testData.requestID = response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", testData.requestID)
+
+		err = requestWait(testData.testUserID2, testData.requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -335,9 +352,56 @@ func (testWrap *testWrap) ehrGetByID(testData *testData) func(t *testing.T) {
 	}
 }
 
+func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		// Check document by subject
+		url := testWrap.server.URL + "/v1/ehr?subject_id=" + testData.subject + "&subject_namespace=" + testData.namespace
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("AuthUserId", testData.testUserID2)
+		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatal(err)
+		}
+
+		var ehrDoc model.EHR
+
+		err = json.Unmarshal(data, &ehrDoc)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if ehrDoc.EhrID.Value != testData.ehrID2 {
+			t.Fatalf("Expected %s, received %s", testData.ehrID2, ehrDoc.EhrID.Value)
+		}
+	}
+}
+
 func (testWrap *testWrap) ehrStatusGet(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", testData.ehrID, testData.ehrStatusID), nil)
+		ehrID := testData.ehrID
+		statusID := testData.ehrStatusID
+		url := testWrap.server.URL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", ehrID, statusID)
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -442,8 +506,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 
 		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+fmt.Sprintf("/v1/ehr/%s/ehr_status", testData.ehrID), bytes.NewReader(req))
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
@@ -454,8 +517,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
@@ -463,10 +525,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 			t.Fatalf("Response body read error: %v", err)
 		}
 
-		err = response.Body.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
+		response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
 			t.Fatalf("Expected %d, received %d body: %s", http.StatusOK, response.StatusCode, data)
@@ -474,8 +533,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 
 		var ehrStatus model.EhrStatus
 		if err = json.Unmarshal(data, &ehrStatus); err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		updatedEhrStatusID := response.Header.Get("ETag")
@@ -483,6 +541,15 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 		if updatedEhrStatusID != newEhrStatusID {
 			t.Log("Response body:", string(data))
 			t.Fatal("EHR_STATUS uid in ETag mismatch")
+		}
+
+		requestID := response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", requestID)
+
+		err = requestWait(testData.testUserID, requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
 		}
 
 		// Checking EHR_STATUS changes
@@ -515,91 +582,10 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 		var ehr model.EHR
 		if err = json.Unmarshal(data, &ehr); err != nil {
 			t.Fatal(err)
-			return
 		}
 
 		if ehr.EhrStatus.ID.Value != updatedEhrStatusID {
 			t.Fatalf("EHR_STATUS id mismatch. Expected %s, received %s", updatedEhrStatusID, ehr.EhrStatus.ID.Value)
-			return
-		}
-	}
-}
-
-func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T) {
-	return func(t *testing.T) {
-		// Adding document with specific subject
-		userID := uuid.New().String()
-		ehrID := uuid.New().String()
-
-		subjectID := uuid.New().String()
-		subjectNamespace := "test_test"
-
-		createRequest := fakeData.EhrCreateCustomRequest(subjectID, subjectNamespace)
-
-		url := testWrap.server.URL + "/v1/ehr/" + ehrID
-
-		request, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(createRequest))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", userID)
-		request.Header.Set("Prefer", "return=representation")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-
-		_, err = ioutil.ReadAll(response.Body)
-		if err != nil {
-			t.Fatalf("Response body read error: %v", err)
-		}
-
-		response.Body.Close()
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
-		}
-
-		// Check document by subject
-		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr?subject_id="+subjectID+"&subject_namespace="+subjectNamespace, nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", userID)
-		request.Header.Set("Prefer", "return=representation")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err = testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		data, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		response.Body.Close()
-
-		if response.StatusCode != http.StatusOK {
-			t.Fatal(err)
-		}
-
-		var ehrDoc model.EHR
-
-		err = json.Unmarshal(data, &ehrDoc)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if ehrDoc.EhrID.Value != ehrID {
-			t.Fatal("Got wrong EHR")
 		}
 	}
 }
@@ -643,7 +629,9 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 			t.Fatal(err)
 		}
 
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition", body)
+		url := testWrap.server.URL + "/v1/ehr/" + testData.ehrID + "/composition"
+
+		request, err := http.NewRequest(http.MethodPost, url, body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -675,6 +663,14 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 		}
 
 		testData.compositionID = c.UID.Value
+		testData.requestID = response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", testData.requestID)
+
+		err = requestWait(testData.testUserID, testData.requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -803,13 +799,24 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 			t.Fatalf("Expected %s, received %s", composition.UID.Value, testData.compositionID)
 		}
 
+		testData.requestID = response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", testData.requestID)
+
+		err = requestWait(testData.testUserID, testData.requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		testData.compositionID = composition.UID.Value
 	}
 }
 
 func (testWrap *testWrap) compositionDeleteByWrongID(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodDelete, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition/"+uuid.New().String(), nil)
+		url := testWrap.server.URL + "/v1/ehr/" + testData.ehrID + "/composition/" + uuid.New().String()
+
+		request, err := http.NewRequest(http.MethodDelete, url, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -826,12 +833,23 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *testData) func(t 
 		if response.StatusCode != http.StatusNotFound {
 			t.Fatalf("Expected status: %v, received %v", http.StatusNotFound, response.StatusCode)
 		}
+
+		testData.requestID = response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", testData.requestID)
+
+		err = requestWait(testData.testUserID, testData.requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
 func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		request, err := http.NewRequest(http.MethodDelete, testWrap.server.URL+"/v1/ehr/"+testData.ehrID+"/composition/"+testData.compositionID, nil)
+		url := testWrap.server.URL + "/v1/ehr/" + testData.ehrID + "/composition/" + testData.compositionID
+
+		request, err := http.NewRequest(http.MethodDelete, url, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -849,6 +867,15 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 			t.Fatalf("Expected status: %v, received %v", http.StatusNoContent, response.StatusCode)
 		}
 
+		testData.requestID = response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", testData.requestID)
+
+		err = requestWait(testData.testUserID, testData.requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		t.Log("Checking the status of a re-request to remove")
 
 		response, err = testWrap.httpClient.Do(request)
@@ -859,6 +886,15 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 
 		if response.StatusCode != http.StatusBadRequest {
 			t.Fatalf("Expected status: %v, received %v", http.StatusBadRequest, response.StatusCode)
+		}
+
+		testData.requestID = response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", testData.requestID)
+
+		err = requestWait(testData.testUserID, testData.requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
@@ -1039,6 +1075,40 @@ func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing
 
 		if testData.groupAccessID != groupAccessGot.GroupUUID.String() {
 			t.Fatal("Got wrong group")
+		}
+	}
+}
+
+func requestWait(userID, requestID string, tw *testWrap) error {
+	request, err := http.NewRequest(http.MethodGet, tw.server.URL+"/v1/requests/"+requestID, nil)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", userID)
+
+	for {
+		time.Sleep(3 * time.Second)
+
+		response, err := tw.httpClient.Do(request)
+		if err != nil {
+			return err
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			return fmt.Errorf("%w: request %s getting error: %v", errors.ErrCustom, requestID, response.Status)
+		}
+
+		var request processing.Request
+
+		if err = json.NewDecoder(response.Body).Decode(&request); err != nil {
+			return err
+		}
+
+		if request.Status == processing.StatusSuccess {
+			return nil
 		}
 	}
 }

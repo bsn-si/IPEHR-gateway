@@ -14,7 +14,6 @@ type Config struct {
 	BaseURL              string `json:"baseUrl"`
 	DataPath             string `json:"dataPath"`
 	Host                 string `json:"host"`
-	StoragePath          string `json:"storagePath"`
 	KeystoreKey          string `json:"keystoreKey"`
 	CreatingSystemID     string `json:"creatingSystemId"`
 	CompressionEnabled   bool   `json:"compressionEnabled"`
@@ -22,15 +21,23 @@ type Config struct {
 	DefaultUserID        string `json:"defaultUserId"`
 	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
 	Storage              struct {
+		Localfile struct {
+			Path string
+		}
 		Ipfs struct {
 			EndpointURL string `json:"endpointUrl"`
-		} `json:"ipfs"`
-	} `json:"storage"`
+		}
+		Filecoin struct {
+			LotusRPCEndpoint string
+			AuthToken        string
+			DealsMaxPrice    uint64
+		}
+	}
 	Contract struct {
-		Address     string `json:"address"`
-		Endpoint    string `json:"endpoint"`
-		PrivKeyPath string `json:"privKeyPath"`
-	} `json:"contract"`
+		Address     string
+		Endpoint    string
+		PrivKeyPath string
+	}
 	DB struct {
 		FilePath string `json:"filePath"`
 	} `json:"db"`

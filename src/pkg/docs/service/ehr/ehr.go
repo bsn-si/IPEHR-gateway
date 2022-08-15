@@ -12,12 +12,14 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/processing"
+	docStatus "hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 )
 
@@ -54,19 +56,24 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 
 	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
 
-	err := s.SaveEhr(ctx, userID, &ehr)
-	if err != nil {
-		return nil, fmt.Errorf("ehr save error: %w", err)
-	}
-
 	// Creating EHR_STATUS
 	ehrStatusID := ehr.EhrStatus.ID.Value
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
-	_, err = s.CreateStatus(ctx, userID, ehrStatusID, subjectID, subjectNamespace, ehrUUID, ehrSystemID)
+	doc, err := s.CreateStatus(ctx, userID, ehrStatusID, subjectID, subjectNamespace, ehrUUID, ehrSystemID)
 	if err != nil {
 		return nil, fmt.Errorf("create status error: %w", err)
+	}
+
+	err = s.SaveStatus(ctx, userID, ehrUUID, ehrSystemID, doc, true)
+	if err != nil {
+		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
+	}
+
+	err = s.SaveEhr(ctx, userID, &ehr)
+	if err != nil {
+		return nil, fmt.Errorf("SaveEhr error: %w", err)
 	}
 
 	return &ehr, nil
@@ -94,30 +101,50 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	key := chachaPoly.GenerateKey()
 
 	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(doc.EhrID.Value))
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, ehrUUID[:])
 	if err != nil {
 		return fmt.Errorf("ehr encryption error: %w", err)
 	}
 
-	// Storage saving
-	cidBytes, err := s.Infra.IpfsClient.Add(docEncrypted)
+	// IPFS saving
+	CID, err := s.Infra.IpfsClient.Add(docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
+
+	// Filecoin saving
+	/*
+		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+		if err != nil {
+			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+		}
+	*/
+	dealCID := fakeData.Cid()
+	minerAddr := []byte("123")
 
 	// Start processing request
 	reqID := ctx.(*gin.Context).GetString("reqId")
 	{
 		procReq := &processing.Request{
-			ReqID:   reqID,
-			UserID:  userID,
-			EhrUUID: ehrUUID.String(),
-			Kind:    processing.RequestEhrCreate,
-			CID:     hex.EncodeToString(cidBytes[:]),
+			ReqID:        reqID,
+			Kind:         processing.RequestEhrCreate,
+			Status:       processing.StatusProcessing,
+			UserID:       userID,
+			EhrUUID:      ehrUUID.String(),
+			CID:          CID.String(),
+			DealCID:      dealCID.String(),
+			MinerAddress: hex.EncodeToString(minerAddr),
 		}
 		if err = s.Proc.AddRequest(procReq); err != nil {
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
 		}
+
+		/*
+			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+			if err != nil {
+				return fmt.Errorf("Proc.AddTx error: %w", err)
+			}
+		*/
 	}
 
 	// Index EHR userID -> docStorageID
@@ -127,18 +154,29 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			return fmt.Errorf("Index.SetEhrUser error: %w", err)
 		}
 
-		err = s.Proc.AddBlockchainTx(reqID, ehrIndexTx, "", processing.TxSetEhrUser, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, ehrIndexTx, "", processing.TxSetEhrUser, processing.StatusPending)
 		if err != nil {
-			return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
+			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
 	}
 
 	// Index Docs ehr_id -> doc_meta
 	{
+		ehrIDEncrypted, err := key.EncryptWithAuthData(ehrUUID[:], ehrUUID[:])
+		if err != nil {
+			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s", err, ehrUUID.String())
+		}
+
 		docMeta := &model.DocumentMeta{
-			TypeCode:  types.Ehr,
-			CID:       cidBytes,
-			Timestamp: uint64(time.Now().UnixNano()),
+			DocType:         uint8(types.Ehr),
+			Status:          uint8(docStatus.ACTIVE),
+			CID:             CID.Bytes(),
+			DealCID:         dealCID.Bytes(),
+			MinerAddress:    minerAddr,
+			DocUIDEncrypted: ehrIDEncrypted,
+			DocBaseUIDHash:  [32]byte{},
+			IsLast:          true,
+			Timestamp:       uint32(time.Now().Unix()),
 		}
 
 		docIndexTx, err := s.Infra.Index.AddEhrDoc(&ehrUUID, docMeta)
@@ -146,9 +184,9 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 
-		err = s.Proc.AddBlockchainTx(reqID, docIndexTx, "", processing.TxSetEhrDocs, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docIndexTx, "Common EHR", processing.TxSetEhrDocs, processing.StatusPending)
 		if err != nil {
-			return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
+			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
 	}
 
@@ -164,16 +202,16 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		docAccessKey := sha3.Sum256(append(cidBytes[:], []byte(userID)...))
+		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
 		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		err = s.Proc.AddBlockchainTx(reqID, docAccessTx, "", processing.TxSetDocAccess, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docAccessTx, "Common EHR access", processing.TxSetDocAccess, processing.StatusPending)
 		if err != nil {
-			return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
+			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
 	}
 
@@ -194,7 +232,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 	}
 
 	// Getting doc from storage
-	docDecrypted, err = s.GetDocFromStorageByID(ctx, userID, docMeta.CID, ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err = s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w. userID: %s, doc.CID: %x ehrUUID: %s", err, userID, docMeta.CID, ehrUUID.String())
 	}
@@ -225,21 +263,16 @@ func (s *Service) CreateStatus(ctx context.Context, userID, ehrStatusID, subject
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	err = s.SaveStatus(ctx, userID, ehrUUID, ehrSystemID, doc, true)
-	if err != nil {
-		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
-	}
-
 	return doc, nil
 }
 
-func (s *Service) UpdateStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) (err error) {
+func (s *Service) UpdateEhr(ctx context.Context, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) (err error) {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
 	}
 
-	ehrDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.CID, ehrUUID[:], docMeta.DocUIDEncrypted)
+	ehrDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		return fmt.Errorf("GetDocFromStorageByID error: %w. userID: %s StorageID: %x ehrID: %s", err, userID, docMeta.CID, ehrUUID.String())
 	}
@@ -268,34 +301,65 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
 	}
 
-	baseDocumentUID := objectVersionID.BasedID()
-	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	// Storage saving
-	cidBytes, err := s.saveStatusToStorage(status, key)
+	statusBytes, err := json.Marshal(status)
 	if err != nil {
-		return fmt.Errorf("saveStatusToStorage error: %w", err)
+		return fmt.Errorf("json.Marshal error: %w", err)
 	}
+
+	if s.Infra.CompressionEnabled {
+		statusBytes, err = s.Infra.Compressor.Compress(statusBytes)
+		if err != nil {
+			return fmt.Errorf("Compress error: %w", err)
+		}
+	}
+
+	// Document encryption
+	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(status.UID.Value))
+	if err != nil {
+		return fmt.Errorf("EncryptWithAuthData error: %w", err)
+	}
+
+	// IPFS saving
+	CID, err := s.Infra.IpfsClient.Add(statusEncrypted)
+	if err != nil {
+		return fmt.Errorf("IpfsClient.Add error: %w", err)
+	}
+
+	// Filecoin saving
+	/*
+		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))
+		if err != nil {
+			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+		}
+	*/
+	dealCID := fakeData.Cid()
+	minerAddr := []byte("123")
 
 	// Start processing request
-	requestKind := processing.RequestEhrStatusUpdate
-	if isNew {
-		requestKind = processing.RequestEhrStatusCreate
-	}
-
-	reqID := ctx.(*gin.Context).GetString("reqId") + "_" + string(requestKind)
+	reqID := ctx.(*gin.Context).GetString("reqId")
 	{
 		procReq := &processing.Request{
-			ReqID:   reqID,
-			UserID:  userID,
-			EhrUUID: ehrUUID.String(),
-			Kind:    requestKind,
-			CID:     hex.EncodeToString(cidBytes[:]),
+			ReqID:        reqID,
+			Kind:         processing.RequestEhrStatusCreate,
+			Status:       processing.StatusProcessing,
+			CID:          CID.String(),
+			DealCID:      dealCID.String(),
+			MinerAddress: hex.EncodeToString(minerAddr),
 		}
 		err = s.Proc.AddRequest(procReq)
 		if err != nil {
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
 		}
+
+		/*
+			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+			if err != nil {
+				return fmt.Errorf("Proc.AddTx error: %w", err)
+			}
+		*/
 	}
 
 	// Index subject and namespace
@@ -308,9 +372,9 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			return fmt.Errorf("Index.SetSubject error: %w ehrID: %s subjectID: %s subjectNamespace: %s", err, ehrUUID.String(), subjectID, subjectNamespace)
 		}
 
-		err = s.Proc.AddBlockchainTx(reqID, setSubjectTx, "", processing.TxSetEhrBySubject, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, setSubjectTx, "", processing.TxSetEhrBySubject, processing.StatusPending)
 		if err != nil {
-			return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
+			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
 	}
 
@@ -322,12 +386,16 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		docMeta := &model.DocumentMeta{
-			TypeCode:        types.EhrStatus,
-			CID:             cidBytes,
+			DocType:         uint8(types.EhrStatus),
+			Status:          uint8(docStatus.ACTIVE),
+			CID:             CID.Bytes(),
+			DealCID:         dealCID.Bytes(),
+			MinerAddress:    minerAddr,
 			DocUIDEncrypted: statusIDEncrypted,
-			Version:         objectVersionID.VersionTreeID(),
-			DocBaseUIDHash:  &baseDocumentUIDHash,
-			Timestamp:       uint64(time.Now().Unix()),
+			DocBaseUIDHash:  baseDocumentUIDHash,
+			Version:         *objectVersionID.VersionBytes(),
+			IsLast:          true,
+			Timestamp:       uint32(time.Now().Unix()),
 		}
 
 		docIndexTx, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
@@ -335,9 +403,9 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 
-		err = s.Proc.AddBlockchainTx(reqID, docIndexTx, "", processing.TxSetEhrDocs, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docIndexTx, "EHR Status", processing.TxSetEhrDocs, processing.StatusPending)
 		if err != nil {
-			return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
+			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
 	}
 
@@ -353,21 +421,17 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		docAccessKey := sha3.Sum256(append(cidBytes[:], []byte(userID)...))
+		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
 		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		err = s.Proc.AddBlockchainTx(reqID, docAccessTx, "", processing.TxSetDocAccess, processing.StatusPending)
+		err = s.Proc.AddTx(reqID, docAccessTx, "EHR Status access", processing.TxSetDocAccess, processing.StatusPending)
 		if err != nil {
-			return fmt.Errorf("Proc.AddBlockchainTx error: %w", err)
+			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
-	}
-
-	if err = s.UpdateStatus(ctx, userID, ehrUUID, status); err != nil {
-		return fmt.Errorf("UpdateStatus error: %w userID: %s ehrID: %s", err, userID, ehrUUID.String())
 	}
 
 	return nil
@@ -380,7 +444,7 @@ func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UU
 		return nil, fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.CID, ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w", err)
 	}
@@ -432,7 +496,7 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehr
 		return nil, fmt.Errorf("DocsIndex.GetByNearestTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), nearestTime.String(), docType.String())
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.CID, ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w", err)
 	}
@@ -443,34 +507,6 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehr
 	}
 
 	return &status, nil
-}
-
-func (s *Service) saveStatusToStorage(status *model.EhrStatus, key *chachaPoly.Key) (*[32]byte, error) {
-	statusBytes, err := json.Marshal(status)
-	if err != nil {
-		return nil, fmt.Errorf("json.Marshal error: %w", err)
-	}
-
-	if s.Infra.CompressionEnabled {
-		statusBytes, err = s.Infra.Compressor.Compress(statusBytes)
-		if err != nil {
-			return nil, fmt.Errorf("Compress error: %w", err)
-		}
-	}
-
-	// Document encryption
-	statusEncrypted, err := key.EncryptWithAuthData(statusBytes, []byte(status.UID.Value))
-	if err != nil {
-		return nil, fmt.Errorf("EncryptWithAuthData error: %w", err)
-	}
-
-	// Storage saving
-	cid, err := s.Infra.IpfsClient.Add(statusEncrypted)
-	if err != nil {
-		return nil, fmt.Errorf("IpfsClient.Add error: %w", err)
-	}
-
-	return cid, nil
 }
 
 /*

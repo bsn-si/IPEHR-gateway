@@ -2,10 +2,7 @@
 package docs
 
 import (
-	"time"
-
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
 )
@@ -46,6 +43,7 @@ func (i *Index) Get(ehrID string) (docIndexes []*model.DocumentMeta, err error) 
 	return
 }
 
+/*
 func (i *Index) GetByType(ehrID string, docType types.DocumentType) (docs []*model.DocumentMeta, err error) {
 	docIndexes, err := i.Get(ehrID)
 	if err != nil {
@@ -53,7 +51,7 @@ func (i *Index) GetByType(ehrID string, docType types.DocumentType) (docs []*mod
 	}
 
 	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docType {
+		if docIndex.DocType == uint8(docType) {
 			docs = append(docs, docIndex)
 		}
 	}
@@ -72,7 +70,7 @@ func (i *Index) GetLastByType(ehrID string, docType types.DocumentType) (doc *mo
 	}
 
 	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docType {
+		if docIndex.DocType == uint8(docType) {
 			if doc == nil || docIndex.Timestamp >= doc.Timestamp {
 				doc = docIndex
 			}
@@ -92,10 +90,10 @@ func (i *Index) GetByNearestTime(ehrID string, nearestTime time.Time, docType ty
 		return nil, err
 	}
 
-	t := uint64(nearestTime.Unix())
+	t := uint32(nearestTime.Unix())
 
 	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docType {
+		if docIndex.DocType == uint8(docType) {
 			if docIndex.Timestamp <= t {
 				doc = docIndex
 			} else {
@@ -110,3 +108,4 @@ func (i *Index) GetByNearestTime(ehrID string, nearestTime time.Time, docType ty
 
 	return doc, err
 }
+*/

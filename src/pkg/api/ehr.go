@@ -248,8 +248,9 @@ func (h EhrHandler) GetByID(c *gin.Context) {
 	}
 
 	// Getting doc from storage
-	docDecrypted, err := h.service.GetDocFromStorageByID(c, userID, docMeta.CID, ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
+		log.Printf("GetDocFromStorageByID error: %v\ndocMeta: %+v", err, docMeta)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
 		return
 	}

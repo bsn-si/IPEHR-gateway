@@ -62,8 +62,8 @@ func NewClient(apiURL string) (*Client, error) {
 }
 
 // Add file to an IPFS node with CID version 0
-// Returns CID in *[32]byte representation or error
-func (i *Client) Add(fileContent []byte) (*[32]byte, error) {
+// Returns CID or error
+func (i *Client) Add(fileContent []byte) (*cid.Cid, error) {
 	var (
 		url             = i.apiURL + "/add?cid-version=0"
 		requestBody     bytes.Buffer
@@ -106,21 +106,13 @@ func (i *Client) Add(fileContent []byte) (*[32]byte, error) {
 		return nil, fmt.Errorf("IPFS add response CID parse error: %w", err)
 	}
 
-	cid := new([32]byte)
-	copy(cid[:], CID.Bytes()[2:])
-
-	return cid, nil
+	return &CID, nil
 }
 
 // Get file from IPFS node by CID
 // Returns ReadCloser or error
 // Need to Close()
-func (i *Client) Get(cidBytes *[32]byte) (io.ReadCloser, error) {
-	CID, err := cid.Cast(append([]byte{18, 32}, cidBytes[:]...))
-	if err != nil {
-		return nil, fmt.Errorf("cid.Cast error: %w cidBytes %x", err, cidBytes)
-	}
-
+func (i *Client) Get(CID *cid.Cid) (io.ReadCloser, error) {
 	url := i.apiURL + "/cat?arg=" + CID.String()
 
 	resp, err := i.httpClient.Post(url, "", nil)

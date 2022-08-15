@@ -124,6 +124,11 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
+	if err = h.service.UpdateEhr(c, userID, &ehrUUID, &status); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR updating error"})
+		return
+	}
+
 	h.setLocationAndETagHeaders(ehrID, status.UID.Value, c)
 
 	switch c.Request.Header.Get("Prefer") {
@@ -182,15 +187,23 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	status, err := h.service.GetStatusByNearestTime(c, userID, &ehrUUID, statusTime, types.EhrStatus)
+	docMeta, err := h.service.Infra.Index.GetDocByTime(c, &ehrUUID, types.EhrStatus, uint32(statusTime.Unix()))
 	if err != nil {
-		log.Printf("GetDocIndexByNearestTime: ehrId: %s statusTime: %s error: %v", ehrID, statusTime, err)
+		log.Printf("GetDocIndexByTime userID: %s ehrID: %x time %d error: %v", userID, ehrUUID[:], uint32(statusTime.Unix()), err)
 		c.AbortWithStatus(http.StatusNotFound)
 
 		return
 	}
 
-	c.JSON(http.StatusOK, status)
+	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
+	if err != nil {
+		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s error: %v", userID, ehrID, err)
+		c.AbortWithStatus(http.StatusNotFound)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
 }
 
 // GetByID
@@ -245,15 +258,15 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	baseDocumentUID := objectVersionID.BasedID()
 	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 
-	docMeta, err := h.service.Infra.Index.GetDocByVersion(c, &ehrUUID, types.EhrStatus, &baseDocumentUIDHash, objectVersionID.VersionTreeID())
+	docMeta, err := h.service.Infra.Index.GetDocByVersion(c, &ehrUUID, types.EhrStatus, &baseDocumentUIDHash, objectVersionID.VersionBytes())
 	if err != nil {
-		log.Printf("GetDocIndexByObjectVersionID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
+		log.Printf("Index.GetDocByVersion userID: %s ehrID: %x baseDocumentUIDHash: %x error: %v", userID, ehrUUID[:], baseDocumentUIDHash, err)
 		c.AbortWithStatus(http.StatusNotFound)
 
 		return
 	}
 
-	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.CID, []byte(versionUID), docMeta.DocUIDEncrypted)
+	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
@@ -267,4 +280,5 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrID string, ehrStatusID string, c *gin.Context) {
 	c.Header("Location", h.baseURL+"/ehr/"+ehrID+"/ehr_status/"+ehrStatusID)
 	c.Header("ETag", ehrStatusID)
+	c.Header("RequestId", c.GetString("reqId"))
 }

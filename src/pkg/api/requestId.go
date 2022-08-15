@@ -16,6 +16,7 @@ func requestID(c *gin.Context) {
 		if _, err := rand.Read(id); err != nil {
 			log.Println("Make requestID error:", err)
 		}
+
 		reqID = hex.EncodeToString(id)
 	}
 

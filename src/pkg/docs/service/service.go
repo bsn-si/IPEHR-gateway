@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/google/uuid"
+	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
@@ -28,7 +29,7 @@ type DefaultDocumentService struct {
 }
 
 func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
-	proc := processing.New(infra.LocalDB, infra.EthClient)
+	proc := processing.New(infra.LocalDB, infra.EthClient, infra.FilecoinClient)
 	proc.Start()
 
 	return &DefaultDocumentService{
@@ -162,11 +163,11 @@ func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseID(ehrUUID *uuid.UU
 }
 */
 
-func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID string, cidBytes *[32]byte, authData, docIDEncrypted []byte) ([]byte, error) {
+func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error) {
 	// Get doc key
 	var docKey *chachaPoly.Key
 	{
-		docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, cidBytes)
+		docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID)
 		if err != nil {
 			return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
 		}
@@ -187,12 +188,12 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 		}
 	}
 
-	// Get EHR_STATUS encrypted
+	// Get doc encrypted
 	var docEncrypted []byte
 	{
-		reader, err := d.Infra.IpfsClient.Get(cidBytes)
+		reader, err := d.Infra.IpfsClient.Get(CID)
 		if err != nil {
-			return nil, fmt.Errorf("IpfsClient.Get error: %w CID hex %x", err, cidBytes)
+			return nil, fmt.Errorf("IpfsClient.Get error: %w CID %s", err, CID.String())
 		}
 		defer reader.Close()
 

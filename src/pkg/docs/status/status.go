@@ -3,8 +3,8 @@ package status
 type DocumentStatus uint8
 
 const (
-	ACTIVE  DocumentStatus = 1
-	DELETED DocumentStatus = 2
+	ACTIVE  DocumentStatus = 0
+	DELETED DocumentStatus = 1
 )
 
 var statusNames = map[DocumentStatus]string{

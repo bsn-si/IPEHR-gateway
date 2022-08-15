@@ -103,14 +103,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Checking EHR does not exist
-	/* old-style
-	_, err = h.service.Doc.EhrsIndex.Get(userID)
-	if errors.Is(err, errors.ErrIsNotExist) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-	*/
 	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
@@ -137,6 +129,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	// Composition document creating
 	doc, err := h.service.Create(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request)
 	if err != nil {
+		log.Println("Composition creating error:", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
 		return
 	}
@@ -190,13 +183,6 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	/* old-style
-	_, err = h.service.Doc.EhrsIndex.Get(userID)
-	if errors.Is(err, errors.ErrIsNotExist) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-	*/
 	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
@@ -210,17 +196,15 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 
 	data, err := h.service.GetByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
-		if errors.Is(err, errors.ErrIsNotExist) {
+		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
-			return
 		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
 			c.AbortWithStatus(http.StatusNoContent)
-			return
 		} else {
 			log.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
-			return
 		}
+		return
 	}
 
 	c.JSON(http.StatusOK, data)
@@ -270,38 +254,31 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	// Checking EHR does not exist
-	/* old-style
-	_, err = h.service.Doc.EhrsIndex.Get(userID)
-	if errors.Is(err, errors.ErrIsNotExist) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-	*/
 	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
-	switch {
-	case err != nil && errors.Is(err, errors.ErrIsNotExist):
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	case err != nil:
-		log.Println("GetEhrIDByUser error:", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+	if err != nil {
+		if errors.Is(err, errors.ErrIsNotExist) {
+			c.AbortWithStatus(http.StatusNotFound)
+		} else {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
 		return
 	}
 
 	newUID, err := h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
-	switch {
-	case err == nil:
-		h.addResponseHeaders(ehrID, newUID, c)
-		c.AbortWithStatus(http.StatusNoContent)
-	case errors.Is(err, errors.ErrAlreadyDeleted):
-		c.AbortWithStatus(http.StatusBadRequest)
-	case errors.Is(err, errors.ErrIsNotExist):
-		c.AbortWithStatus(http.StatusNotFound)
-	default:
-		log.Println(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
+			c.AbortWithStatus(http.StatusBadRequest)
+		} else {
+			log.Println("DeleteByID error:", err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+		return
 	}
+
+	h.addResponseHeaders(ehrID, newUID, c)
+	c.AbortWithStatus(http.StatusNoContent)
 }
 
 // Update
@@ -363,14 +340,6 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	// Checking EHR does not exist
-	/* old-style
-	_, err = h.service.Doc.EhrsIndex.Get(userID)
-	if errors.Is(err, errors.ErrIsNotExist) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-	*/
 	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
@@ -389,6 +358,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 
 	groupAccessUUID, err := uuid.Parse(groupIDStr)
 	if err != nil {
+		log.Printf("uuid.Parse error: %v groupIDStr %s", err, groupIDStr)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -421,22 +391,26 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
-			return
 		}
 
+		log.Println("GetLastByBaseID error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
 	if compositionLast.UID.Value != precedingVersionUID {
 		h.addResponseHeaders(ehrID, compositionLast.UID.Value, c)
 		c.AbortWithStatus(http.StatusPreconditionFailed)
+
 		return
 	}
 
 	compositionUpdated, err := h.service.Update(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
 	if err != nil {
+		log.Println("Composition Update error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
@@ -460,4 +434,5 @@ func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Co
 func (h *CompositionHandler) addResponseHeaders(ehrID string, uid string, c *gin.Context) {
 	c.Header("Location", h.baseURL+"/v1/ehr/"+ehrID+"/composition/"+uid)
 	c.Header("ETag", uid)
+	c.Header("RequestId", c.GetString("reqId"))
 }

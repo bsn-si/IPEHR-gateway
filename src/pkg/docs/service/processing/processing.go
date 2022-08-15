@@ -10,49 +10,57 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/filecoin-project/go-fil-markets/storagemarket"
+	"github.com/ipfs/go-cid"
 	"gorm.io/gorm"
 
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/storage/filecoin"
 )
 
 type (
-	TxStatus    uint8
+	Status      uint8
 	TxKind      uint8
 	RequestKind uint8
 
 	Proc struct {
-		db        *gorm.DB
-		ethClient *ethclient.Client
-		lock      bool
-		done      chan bool
+		db             *gorm.DB
+		ethClient      *ethclient.Client
+		filecoinClient *filecoin.Client
+		lock           bool
+		done           chan bool
 	}
 
 	Request struct {
-		ReqID         string `gorm:"primaryKey"`
-		UserID        string
-		EhrUUID       string
-		Kind          RequestKind
-		CID           string
-		BaseUIDHash   string
-		Version       string
-		BlockchainTxs []BlockchainTx `gorm:"foreignKey:ReqID"`
+		ReqID        string      `gorm:"index:idx_request,unique"`
+		Kind         RequestKind `gorm:"index:idx_request,unique"`
+		Status       Status
+		UserID       string
+		EhrUUID      string
+		CID          string
+		DealCID      string
+		MinerAddress string
+		BaseUIDHash  string
+		Version      string
+		//Txs          []Tx `gorm:"foreignKey:ReqID"`
 	}
 
-	BlockchainTx struct {
+	Tx struct {
 		gorm.Model
 		Time    time.Time
-		ReqID   string `gorm:"index:idx_bcTx,unique"`
-		Kind    TxKind `gorm:"index:idx_bcTx,unique"`
+		ReqID   string
+		Kind    TxKind
 		Hash    string
-		Status  TxStatus
+		Status  Status
 		Comment string
 	}
 )
 
 const (
-	StatusFailed  TxStatus = 0
-	StatusSuccess TxStatus = 1
-	StatusPending TxStatus = 2
+	StatusFailed     Status = 0
+	StatusSuccess    Status = 1
+	StatusPending    Status = 2
+	StatusProcessing Status = 3
 
 	RequestEhrCreate RequestKind = iota
 	RequestEhrGetBySubject
@@ -66,18 +74,20 @@ const (
 	RequestCompositionGetByID
 	RequestCompositionDelete
 
-	TxSetEhrUser      TxKind = 0
-	TxSetEhrBySubject TxKind = 1
-	TxSetEhrDocs      TxKind = 2
-	TxSetDocAccess    TxKind = 3
-	TxDeleteDoc       TxKind = 4
+	TxSetEhrUser        TxKind = 0
+	TxSetEhrBySubject   TxKind = 1
+	TxSetEhrDocs        TxKind = 2
+	TxSetDocAccess      TxKind = 3
+	TxDeleteDoc         TxKind = 4
+	TxFilecoinStartDeal TxKind = 5
 )
 
-func New(db *gorm.DB, ethClient *ethclient.Client) *Proc {
+func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Client) *Proc {
 	return &Proc{
-		db:        db,
-		ethClient: ethClient,
-		done:      make(chan bool),
+		db:             db,
+		ethClient:      ethClient,
+		filecoinClient: filecoinClient,
+		done:           make(chan bool),
 	}
 }
 
@@ -89,8 +99,19 @@ func (p *Proc) AddRequest(req *Request) error {
 	return nil
 }
 
-func (p *Proc) AddBlockchainTx(reqID, txHash, comment string, kind TxKind, status TxStatus) error {
-	result := p.db.Create(&BlockchainTx{
+func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind, status Status) error {
+	if reqID == "" {
+		return fmt.Errorf("%w reqID %s", errors.ErrIncorrectRequest, reqID)
+	}
+
+	var req Request
+
+	result := p.db.Model(&req).First(&req, "req_id = ?", reqID)
+	if result.Error != nil {
+		return fmt.Errorf("db request get error: %w reqID %s", result.Error, reqID)
+	}
+
+	result = p.db.Create(&Tx{
 		Time:    time.Now(),
 		ReqID:   reqID,
 		Kind:    kind,
@@ -106,15 +127,18 @@ func (p *Proc) AddBlockchainTx(reqID, txHash, comment string, kind TxKind, statu
 }
 
 func (p *Proc) Start() {
-	ticker := time.NewTicker(5 * time.Second)
+	tickerBlockchain := time.NewTicker(5 * time.Second)
+	tickerFilecoin := time.NewTicker(5 * time.Minute)
 
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
+			case <-tickerBlockchain.C:
 				if !p.lock {
-					p.exec()
+					p.execBlockchain()
 				}
+			case <-tickerFilecoin.C:
+				p.execFilecoin()
 			case <-p.done:
 				return
 			}
@@ -126,38 +150,55 @@ func (p *Proc) Stop() {
 	p.done <- true
 }
 
-func (p *Proc) exec() {
+func (p *Proc) execBlockchain() {
 	p.lock = true
 	defer func() { p.lock = false }()
 
-	for {
-		tx := BlockchainTx{}
+	txKinds := []TxKind{
+		TxSetEhrUser,
+		TxSetEhrBySubject,
+		TxSetEhrDocs,
+		TxSetDocAccess,
+		TxDeleteDoc,
+	}
 
-		result := p.db.First(&tx)
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	statuses := []Status{
+		StatusPending,
+		StatusProcessing,
+	}
+
+	for {
+		tx := Tx{}
+
+		result := p.db.Model(&tx).Find(&tx, "kind IN ? AND status IN ?", txKinds, statuses).Limit(1)
+		if result.Error != nil || result.RowsAffected == 0 {
 			break
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
 		h := common.HexToHash(tx.Hash)
 
+		var status Status
+
 		receipt, err := p.ethClient.TransactionReceipt(ctx, h)
 		if err != nil {
 			if errors.Is(err, ethereum.NotFound) {
-				receipt.Status = uint64(StatusPending)
+				status = StatusPending
 			} else {
 				log.Printf("TransactionReceipt error: %v txHash %s", err, h.String())
 				break
 			}
+		} else {
+			status = Status(receipt.Status)
 		}
 
-		if receipt.Status != uint64(tx.Status) {
-			tx.Status = TxStatus(receipt.Status)
+		log.Println("Tx", tx.Hash, "status", status)
 
-			if result = p.db.Save(&tx); result.Error != nil {
-				log.Println("db.Save error:", result.Error)
+		if status != tx.Status {
+			if result = p.db.Model(&tx).Update("status", status); result.Error != nil {
+				log.Println("db.Update error:", result.Error)
 				break
 			}
 
@@ -168,20 +209,71 @@ func (p *Proc) exec() {
 			}
 
 			if done {
-				// delete transactions connected with reqID
-				result = p.db.Where("req_id = ?", tx.ReqID).Delete(&BlockchainTx{})
+				// update tx statuses
+				result = p.db.Exec("UPDATE txes SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
 				if result.Error != nil {
-					log.Printf("db txs delete error: %v reqID %s", result.Error, tx.ReqID)
+					//log.Printf("db txs update error: %v reqID %s", result.Error, tx.ReqID)
 					break
 				}
 
-				// delete request with reqID
-				result = p.db.Delete(&Request{}, tx.ReqID)
+				// update request status
+				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
 				if result.Error != nil {
-					log.Printf("db request delete error: %v reqID %s", result.Error, tx.ReqID)
+					//log.Printf("db request delete error: %v reqID %s", result.Error, tx.ReqID)
 					break
 				}
 			}
+
+			continue
+		}
+
+		break
+	}
+}
+
+func (p *Proc) execFilecoin() {
+	txKinds := []TxKind{
+		TxFilecoinStartDeal,
+	}
+
+	statuses := []Status{
+		StatusPending,
+		StatusProcessing,
+	}
+
+	for {
+		tx := Tx{}
+
+		result := p.db.Where("kind IN ? AND statuses IN ?", txKinds, statuses).First(&tx)
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			break
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		dealCID, err := cid.Parse(tx.Hash)
+		if err != nil {
+			log.Println("cid.Parse error:", err, "tx.Hash:", tx.Hash)
+			break
+		}
+
+		dealStatus, err := p.filecoinClient.GetDealStatus(ctx, &dealCID)
+		if err != nil {
+			log.Println("filecoinClient.GetDealStatus error:", err, "dealCID", dealCID.String())
+			break
+		}
+
+		switch tx.Status {
+		case StatusProcessing:
+			if dealStatus == storagemarket.StorageDealActive {
+				tx.Status = StatusSuccess
+				if result = p.db.Save(&tx); result.Error != nil {
+					log.Println("db.Save error:", result.Error)
+					return
+				}
+			}
+		case StatusPending, StatusSuccess:
 		}
 	}
 }
@@ -189,9 +281,9 @@ func (p *Proc) exec() {
 func (p *Proc) isRequestDone(reqID string) (bool, error) {
 	request := Request{}
 
-	result := p.db.First(&request, reqID)
+	result := p.db.Find(&request, "req_id = ?", reqID).Limit(1)
 	if result.Error != nil {
-		return false, fmt.Errorf("db.First error: %w", result.Error)
+		return false, fmt.Errorf("db.Find error: %w", result.Error)
 	}
 
 	var txsToCheck []TxKind
@@ -203,6 +295,7 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 			TxSetEhrBySubject,
 			TxSetEhrDocs,
 			TxSetDocAccess,
+			//TxFilecoinStartDeal,
 		}
 	case RequestEhrGetBySubject:
 	case RequestEhrGetByID:
@@ -211,7 +304,17 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 	case RequestEhrStatusGetByID:
 	case RequestEhrStatusGetByTime:
 	case RequestCompositionCreate:
+		txsToCheck = []TxKind{
+			TxSetEhrDocs,
+			TxSetDocAccess,
+			//TxFilecoinStartDeal,
+		}
 	case RequestCompositionUpdate:
+		txsToCheck = []TxKind{
+			TxSetEhrDocs,
+			TxSetDocAccess,
+			//TxFilecoinStartDeal,
+		}
 	case RequestCompositionGetByID:
 	case RequestCompositionDelete:
 	default:
@@ -219,16 +322,18 @@ func (p *Proc) isRequestDone(reqID string) (bool, error) {
 	}
 
 	for _, txKind := range txsToCheck {
-		tx := &BlockchainTx{}
+		var txs []Tx
 
-		result := p.db.Model(tx).Where("req_id = ? AND kind = ?", reqID, txKind).First(tx)
+		result := p.db.Model(&Tx{}).Where("req_id = ? AND kind = ?", reqID, txKind).Find(&txs)
 		if result.Error != nil {
 			return false, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)
 		}
 
 		// а он не может быть failed? что тогда реквест вообще не закроется?
-		if tx.Status != StatusSuccess {
-			return false, nil
+		for _, tx := range txs {
+			if tx.Status != StatusSuccess {
+				return false, nil
+			}
 		}
 	}
 
@@ -241,7 +346,7 @@ func (p *Proc) GetRequestByID(reqID string, userID string) ([]byte, error) {
 	result := p.db.Model(&Request{}).
 		Where(Request{UserID: userID}).
 		Where(Request{ReqID: reqID}).
-		Preload("BlockchainTxs").
+		//Preload("BlockchainTxs").
 		Find(&requestData)
 	if result.Error != nil {
 		return nil, fmt.Errorf("GetRequestByID error: %w reqID %s userID %s", result.Error, reqID, userID)
@@ -266,7 +371,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 		Where(Request{UserID: userID}).
 		Limit(limit).
 		Offset(offset).
-		Preload("BlockchainTxs").
+		//Preload("Txs").
 		Find(&requestData).
 		Error
 	if err != nil {
@@ -279,4 +384,15 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	}
 
 	return resultBytes, nil
+}
+
+func (p *Proc) RequestStatus(reqID string) (Status, error) {
+	var req Request
+
+	result := p.db.Model(&req).Where("req_id = ?", reqID).First(&req)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return req.Status, nil
 }

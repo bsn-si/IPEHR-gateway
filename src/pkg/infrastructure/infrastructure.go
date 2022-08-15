@@ -14,6 +14,7 @@ import (
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/localDB"
 	"hms/gateway/pkg/storage"
+	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"
 )
 
@@ -23,6 +24,7 @@ type Infra struct {
 	HTTPClient         *http.Client
 	EthClient          *ethclient.Client
 	IpfsClient         *ipfs.Client
+	FilecoinClient     *filecoin.Client
 	Index              *indexer.Index
 	LocalStorage       storage.Storager
 	Compressor         compressor.Interface
@@ -30,7 +32,7 @@ type Infra struct {
 }
 
 func New(cfg *config.Config) *Infra {
-	sc := storage.NewConfig(cfg.StoragePath)
+	sc := storage.NewConfig(cfg.Storage.Localfile.Path)
 	storage.Init(sc)
 
 	db, err := localDB.New(cfg.DB.FilePath)
@@ -42,7 +44,7 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	if err = db.AutoMigrate(&processing.BlockchainTx{}); err != nil {
+	if err = db.AutoMigrate(&processing.Tx{}); err != nil {
 		log.Fatal(err)
 	}
 
@@ -58,12 +60,20 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
+	filecoinCfg := (filecoin.Config)(cfg.Storage.Filecoin)
+
+	filecoinClient, err := filecoin.NewClient(&filecoinCfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &Infra{
 		LocalDB:            db,
 		Keystore:           ks,
 		HTTPClient:         http.DefaultClient,
 		EthClient:          ehtClient,
 		IpfsClient:         ipfsClient,
+		FilecoinClient:     filecoinClient,
 		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient),
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
