@@ -2,7 +2,6 @@ package ehr_test
 
 import (
 	"encoding/json"
-	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -37,9 +36,7 @@ func prepare(t *testing.T) {
 		return
 	}
 
-	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
-
-	cfg, err := config.New(cfgPath)
+	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)
 	}

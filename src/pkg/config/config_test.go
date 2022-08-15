@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"os"
 	"testing"
 
 	"hms/gateway/pkg/config"
@@ -10,9 +9,7 @@ import (
 func Test_Config(t *testing.T) {
 	t.Run("GetConfig fallback to example config file", func(t *testing.T) {
 
-		cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
-
-		cfg, err := config.New(cfgPath)
+		cfg, err := config.New()
 		if err != nil {
 			t.Fatal(err)
 		}

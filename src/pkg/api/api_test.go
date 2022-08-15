@@ -93,11 +93,9 @@ func Test_API(t *testing.T) {
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
 	t.Helper()
 
-	cfgPath := os.Getenv("IPEHR_CONFIG_PATH")
-
-	cfg, err := config.New(cfgPath)
+	cfg, err := config.New()
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal("config.New error:", err)
 	}
 
 	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)

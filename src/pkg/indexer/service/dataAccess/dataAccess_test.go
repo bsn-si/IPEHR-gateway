@@ -15,6 +15,8 @@ import (
 )
 
 func TestDataAccessIndex(t *testing.T) {
+	t.Skip()
+
 	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
 	storage.Init(sc)
 
