@@ -26,6 +26,8 @@ import (
 	"hms/gateway/pkg/storage"
 )
 
+const ExecutionRevertedNFD = "execution reverted: NFD"
+
 type Index struct {
 	sync.RWMutex
 	id           *[32]byte
@@ -144,11 +146,10 @@ func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docTyp
 
 	docMeta, err := i.ehrIndex.GetLastEhrDocByType(callOpts, eID, uint8(docType))
 	if err != nil {
-		if err.Error() == "execution reverted: NFD" {
+		if err.Error() == ExecutionRevertedNFD {
 			return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w", errors.ErrNotFound)
-		} else {
-			return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 		}
+		return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
 
 	return (*model.DocumentMeta)(&docMeta), nil
@@ -164,11 +165,10 @@ func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docT
 
 	docMeta, err := i.ehrIndex.GetDocLastByBaseID(callOpts, eID, uint8(docType), *docBaseUIDHash)
 	if err != nil {
-		if err.Error() == "execution reverted: NFD" {
+		if err.Error() == ExecutionRevertedNFD {
 			return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w", errors.ErrNotFound)
-		} else {
-			return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w ehrUUID %s docType %s docBaseUIDHash %x", err, ehrUUID.String(), docType.String(), docBaseUIDHash)
 		}
+		return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w ehrUUID %s docType %s docBaseUIDHash %x", err, ehrUUID.String(), docType.String(), docBaseUIDHash)
 	}
 
 	return (*model.DocumentMeta)(&docMeta), nil
@@ -184,11 +184,10 @@ func (i *Index) GetDocByTime(ctx context.Context, ehrUUID *uuid.UUID, docType ty
 
 	docMeta, err := i.ehrIndex.GetDocByTime(callOpts, eID, uint8(docType), timestamp)
 	if err != nil {
-		if err.Error() == "execution reverted: NFD" {
+		if err.Error() == ExecutionRevertedNFD {
 			return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w", errors.ErrNotFound)
-		} else {
-			return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w ehrUUID %s docType %s timestamp %d", err, ehrUUID.String(), docType.String(), timestamp)
 		}
+		return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w ehrUUID %s docType %s timestamp %d", err, ehrUUID.String(), docType.String(), timestamp)
 	}
 
 	return (*model.DocumentMeta)(&docMeta), nil
@@ -204,11 +203,10 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 
 	docMeta, err := i.ehrIndex.GetDocByVersion(callOpts, eID, uint8(docType), *docBaseUIDHash, *version)
 	if err != nil {
-		if err.Error() == "execution reverted: NFD" {
+		if err.Error() == ExecutionRevertedNFD {
 			return nil, errors.ErrNotFound
-		} else {
-			return nil, fmt.Errorf("ehrIndex.GetDocByVersion error: %w ehrUUID %s docType %s docBaseUIDHash %x version %s", err, ehrUUID.String(), docType.String(), docBaseUIDHash, version)
 		}
+		return nil, fmt.Errorf("ehrIndex.GetDocByVersion error: %w ehrUUID %s docType %s docBaseUIDHash %x version %s", err, ehrUUID.String(), docType.String(), docBaseUIDHash, version)
 	}
 
 	return (*model.DocumentMeta)(&docMeta), nil
@@ -314,13 +312,12 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version)
 	if err != nil {
-		if err.Error() == "execution reverted: NFD" {
+		if err.Error() == ExecutionRevertedNFD {
 			return "", errors.ErrNotFound
 		} else if err.Error() == "execution reverted: ADL" {
 			return "", errors.ErrAlreadyDeleted
-		} else {
-			return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 		}
+		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
 
 	log.Printf("DeleteDoc tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())

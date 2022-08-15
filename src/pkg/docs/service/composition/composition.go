@@ -334,9 +334,8 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err
-		} else {
-			return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 		}
+		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
 	err = s.Proc.AddTx(reqID, docDeleteTx, "", processing.TxDeleteDoc, processing.StatusPending)
