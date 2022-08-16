@@ -202,7 +202,7 @@ func (p *Proc) Start() {
 					p.execBlockchain()
 				}
 			case <-tickerFilecoin.C:
-				p.execFilecoin()
+				//p.execFilecoin()
 			case <-p.done:
 				return
 			}
@@ -308,7 +308,7 @@ func (p *Proc) execFilecoin() {
 	for {
 		tx := Tx{}
 
-		result := p.db.Where("kind IN ? AND statuses IN ?", txKinds, statuses).First(&tx)
+		result := p.db.Where("kind IN ? AND status IN ?", txKinds, statuses).First(&tx)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			break
 		}
