@@ -93,6 +93,7 @@ func (s Status) String() string {
 	case StatusProcessing:
 		return "Processing"
 	default:
+		// nolint
 		return "Unknown"
 	}
 }
@@ -460,7 +461,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	defer rows.Close()
 
 	var (
-		reqId     string
+		reqID     string
 		reqStatus uint8
 		reqKind   uint8
 		reqCID    string
@@ -468,18 +469,22 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 		txKind    uint8
 		txHash    string
 	)
-	for rows.Next() {
-		rows.Scan(&reqId, &reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
 
-		req, ok := result[reqId]
+	for rows.Next() {
+		err = rows.Scan(&reqID, &reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+		if err != nil {
+			return nil, fmt.Errorf("db.Scan error: %w", err)
+		}
+
+		req, ok := result[reqID]
 		if !ok {
 			req = &resultReq{
 				Status: Status(reqStatus).String(),
 				Docs:   []*resultDoc{},
 				Txs:    []*resultTx{},
 			}
-			result[reqId] = req
 
+			result[reqID] = req
 		}
 
 		exists := false
@@ -504,6 +509,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 		}
 
 		exists = false
+
 		for _, doc := range req.Docs {
 			if doc.CID == reqCID {
 				exists = true
@@ -550,8 +556,12 @@ func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 		txKind    uint8
 		txHash    string
 	)
+
 	for rows.Next() {
-		rows.Scan(&reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+		err = rows.Scan(&reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+		if err != nil {
+			return nil, fmt.Errorf("db.Scan error: %w", err)
+		}
 
 		result.Status = Status(reqStatus).String()
 
@@ -577,6 +587,7 @@ func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 		}
 
 		exists = false
+
 		for _, doc := range result.Docs {
 			if doc.CID == reqCID {
 				exists = true
