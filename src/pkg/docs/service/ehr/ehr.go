@@ -353,6 +353,8 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		procReq := &processing.Request{
 			ReqID:        reqID,
 			Kind:         processing.RequestEhrStatusCreate,
+			UserID:       userID,
+			EhrUUID:      ehrUUID.String(),
 			Status:       processing.StatusProcessing,
 			CID:          CID.String(),
 			DealCID:      dealCID.String(),

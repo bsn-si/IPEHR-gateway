@@ -82,6 +82,69 @@ const (
 	TxFilecoinStartDeal TxKind = 5
 )
 
+func (s Status) String() string {
+	switch s {
+	case StatusFailed:
+		return "Failed"
+	case StatusSuccess:
+		return "Success"
+	case StatusPending:
+		return "Pending"
+	case StatusProcessing:
+		return "Processing"
+	default:
+		return "Unknown"
+	}
+}
+
+func (k TxKind) String() string {
+	switch k {
+	case TxSetEhrUser:
+		return "SetEhrUser"
+	case TxSetEhrBySubject:
+		return "SetEhrBySubject"
+	case TxSetEhrDocs:
+		return "SetEhrDocs"
+	case TxSetDocAccess:
+		return "SetDocAccess"
+	case TxDeleteDoc:
+		return "DeleteDoc"
+	case TxFilecoinStartDeal:
+		return "FilecoinStartDeal"
+	default:
+		return "Unknown"
+	}
+}
+
+func (k RequestKind) String() string {
+	switch k {
+	case RequestEhrCreate:
+		return "EhrCreate"
+	case RequestEhrGetBySubject:
+		return "EhrGetBySubject"
+	case RequestEhrGetByID:
+		return "EhrGetByID"
+	case RequestEhrStatusCreate:
+		return "EhrStatusCreate"
+	case RequestEhrStatusUpdate:
+		return "EhrStatusUpdate"
+	case RequestEhrStatusGetByID:
+		return "EhrStatusGetByID"
+	case RequestEhrStatusGetByTime:
+		return "EhrStatusGetByTime"
+	case RequestCompositionCreate:
+		return "CompositionCreate"
+	case RequestCompositionUpdate:
+		return "CompositionUpdate"
+	case RequestCompositionGetByID:
+		return "CompositionGetByID"
+	case RequestCompositionDelete:
+		return "CompositionDelete"
+	default:
+		return "Unknown"
+	}
+}
+
 func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Client) *Proc {
 	return &Proc{
 		db:             db,
@@ -364,21 +427,99 @@ func (p *Proc) GetRequestByID(reqID string, userID string) ([]byte, error) {
 	return resultBytes, nil
 }
 
-func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
-	var requestData Request
+type resultTx struct {
+	Kind   string `json:"kind"`
+	Status string `json:"status"`
+	Hash   string `json:"hash"`
+}
 
-	err := p.db.Model(&Request{}).
-		Where(Request{UserID: userID}).
-		Limit(limit).
-		Offset(offset).
-		//Preload("Txs").
-		Find(&requestData).
-		Error
+type resultDoc struct {
+	Kind string `json:"kind"`
+	CID  string `json:"cid"`
+}
+
+type resultReq struct {
+	Status string       `json:"status"`
+	Docs   []*resultDoc `json:"docs"`
+	Txs    []*resultTx  `json:"txs"`
+}
+
+func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
+	result := make(map[string]*resultReq)
+
+	query := `SELECT r.req_id, r.status, r.kind, r.c_id, t.kind, t.hash, t.status
+			FROM requests r, txes t
+			WHERE 
+				r.user_id = ? AND
+				r.req_id = t.req_id`
+
+	rows, err := p.db.Raw(query, userID).Rows()
 	if err != nil {
 		return nil, fmt.Errorf("GetRequests error: %w, userID %s", err, userID)
 	}
+	defer rows.Close()
 
-	resultBytes, err := json.Marshal(requestData)
+	var (
+		reqId     string
+		reqStatus uint8
+		reqKind   uint8
+		reqCID    string
+		txStatus  uint8
+		txKind    uint8
+		txHash    string
+	)
+	for rows.Next() {
+		rows.Scan(&reqId, &reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+
+		req, ok := result[reqId]
+		if !ok {
+			req = &resultReq{
+				Status: Status(reqStatus).String(),
+				Docs:   []*resultDoc{},
+				Txs:    []*resultTx{},
+			}
+			result[reqId] = req
+
+		}
+
+		exists := false
+
+		for _, tx := range req.Txs {
+			if tx.Hash == txHash {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			req.Txs = append(req.Txs, &resultTx{
+				Kind:   TxKind(txKind).String(),
+				Status: Status(txStatus).String(),
+				Hash:   txHash,
+			})
+		}
+
+		if reqCID == "" {
+			continue
+		}
+
+		exists = false
+		for _, doc := range req.Docs {
+			if doc.CID == reqCID {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			req.Docs = append(req.Docs, &resultDoc{
+				Kind: RequestKind(reqKind).String(),
+				CID:  reqCID,
+			})
+		}
+	}
+
+	resultBytes, err := json.Marshal(result)
 	if err != nil {
 		return nil, fmt.Errorf("GetRequestByID marshal error: %w", err)
 	}
@@ -386,13 +527,75 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	return resultBytes, nil
 }
 
-func (p *Proc) RequestStatus(reqID string) (Status, error) {
-	var req Request
+func (p *Proc) GetRequest(reqID string) ([]byte, error) {
+	var result resultReq
 
-	result := p.db.Model(&req).Where("req_id = ?", reqID).First(&req)
-	if result.Error != nil {
-		return 0, result.Error
+	query := `SELECT r.status, r.kind, r.c_id, t.kind, t.hash, t.status
+			FROM requests r, txes t
+			WHERE 
+				r.req_id = ? AND
+				r.req_id = t.req_id`
+
+	rows, err := p.db.Raw(query, reqID).Rows()
+	if err != nil {
+		return nil, fmt.Errorf("GetRequest error: %w, userID %s", err, reqID)
+	}
+	defer rows.Close()
+
+	var (
+		reqStatus uint8
+		reqKind   uint8
+		reqCID    string
+		txStatus  uint8
+		txKind    uint8
+		txHash    string
+	)
+	for rows.Next() {
+		rows.Scan(&reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+
+		result.Status = Status(reqStatus).String()
+
+		exists := false
+
+		for _, tx := range result.Txs {
+			if tx.Hash == txHash {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			result.Txs = append(result.Txs, &resultTx{
+				Kind:   TxKind(txKind).String(),
+				Status: Status(txStatus).String(),
+				Hash:   txHash,
+			})
+		}
+
+		if reqCID == "" {
+			continue
+		}
+
+		exists = false
+		for _, doc := range result.Docs {
+			if doc.CID == reqCID {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			result.Docs = append(result.Docs, &resultDoc{
+				Kind: RequestKind(reqKind).String(),
+				CID:  reqCID,
+			})
+		}
 	}
 
-	return req.Status, nil
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("GetRequestByID marshal error: %w", err)
+	}
+
+	return resultBytes, nil
 }
