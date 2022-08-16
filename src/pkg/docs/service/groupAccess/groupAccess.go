@@ -43,9 +43,8 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 	_, err = docService.Infra.Index.GetGroupAccess(ctx, defaultUserID, &groupUUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
-			groupAccessUUID := uuid.New()
 			groupAccess := &model.GroupAccess{
-				GroupUUID:   &groupAccessUUID,
+				GroupUUID:   &groupUUID,
 				Description: "Default access group",
 				Key:         chachaPoly.GenerateKey(),
 				Nonce:       &[12]byte{},

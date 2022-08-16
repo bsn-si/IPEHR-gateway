@@ -296,6 +296,39 @@ definitions:
         items: {}
         type: array
     type: object
+  processing.DocResult:
+    properties:
+      cid:
+        type: string
+      kind:
+        type: string
+    type: object
+  processing.RequestResult:
+    properties:
+      docs:
+        items:
+          $ref: '#/definitions/processing.DocResult'
+        type: array
+      status:
+        type: string
+      txs:
+        items:
+          $ref: '#/definitions/processing.TxResult'
+        type: array
+    type: object
+  processing.RequestsResult:
+    additionalProperties:
+      $ref: '#/definitions/processing.RequestResult'
+    type: object
+  processing.TxResult:
+    properties:
+      hash:
+        type: string
+      kind:
+        type: string
+      status:
+        type: string
+    type: object
 host: gateway.ipehr.org
 info:
   contact:
@@ -976,6 +1009,79 @@ paths:
       summary: Execute ad-hoc (non-stored) AQL query
       tags:
       - QUERY
+  /requests/:
+    get:
+      consumes:
+      - application/json
+      description: |
+        It is returning only transactions which in progress
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: 'default: 10'
+        in: query
+        name: limit
+        required: true
+        type: string
+      - description: 'id namespace. Example: examples'
+        in: query
+        name: offset
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/processing.RequestsResult'
+        "400":
+          description: Is returned when userId is empty
+        "404":
+          description: Is returned when requests not exist
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get list of transactions requests by authorized user
+      tags:
+      - REQUEST
+  /requests/{request_id}:
+    get:
+      consumes:
+      - application/json
+      description: |
+        It's returning only transactions which in progress
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: Unique id of request
+        in: path
+        name: request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/processing.RequestResult'
+        "400":
+          description: Is returned when userId or request_id is empty
+        "404":
+          description: Is returned when requests not exist
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get list of transactions by certain request id for authorized user
+      tags:
+      - REQUEST
   /v1/access/group:
     post:
       consumes:

@@ -28,14 +28,13 @@ func NewRequestHandler(docService *service.DefaultDocumentService) *RequestHandl
 // @Tags     REQUEST
 // @Accept   json
 // @Produce  json
-// @Param    AuthUserId  header    string              true  "UserId UUID"
+// @Param    AuthUserId  header    string  true  "UserId UUID"
 // @Param    limit       query     string  true  "default: 10"
 // @Param    offset      query     string  true  "id namespace. Example: examples"
-// @Param    Request     body      processing.Request  true  "Processing requests"
-// @Success      200     {object}  processing.Request
-// @Failure      400     "Is returned when userId is empty"
-// @Failure      404     "Is returned when requests not exist"
-// @Failure      500     "Is returned when an unexpected error occurs while processing a request"
+// @Success  200         {object}  processing.RequestsResult
+// @Failure  400         "Is returned when userId is empty"
+// @Failure  404         "Is returned when requests not exist"
+// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
 // @Router   /requests/ [get]
 func (h RequestHandler) GetAll(c *gin.Context) {
 	reqLimit := c.Query("limit")
@@ -78,13 +77,12 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 // @Tags     REQUEST
 // @Accept   json
 // @Produce  json
-// @Param    AuthUserId  header    string              true  "UserId UUID"
+// @Param    AuthUserId  header    string  true  "UserId UUID"
 // @Param    request_id  path      string  true  "Unique id of request"
-// @Param    Request     body      processing.Request  true  "Processing requests"
-// @Success      200     {object}  processing.Request
-// @Failure      400     "Is returned when userId or request_id is empty"
-// @Failure      404     "Is returned when requests not exist"
-// @Failure      500     "Is returned when an unexpected error occurs while processing a request"
+// @Success  200         {object}  processing.RequestResult
+// @Failure  400         "Is returned when userId or request_id is empty"
+// @Failure  404         "Is returned when requests not exist"
+// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
 // @Router   /requests/{request_id} [get]
 func (h RequestHandler) GetByID(c *gin.Context) {
 	userID := c.GetString("userId")

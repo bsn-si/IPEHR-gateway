@@ -37,21 +37,21 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Tags         EHR_STATUS
 // @Accept       json
 // @Produce      json
-// @Param        ehr_id      path      string                 true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        AuthUserId  header    string                 true  "UserId UUID"
-// @Param        EhrSystemId header    string                 true  "The identifier of the system, typically a reverse domain identifier"
-// @Param        If-Match    header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`) must be specified."
-// @Param        Prefer      header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        Request     body      model.EhrStatusUpdate  true  "EHR_STATUS"
-// @Success      200         {object}  model.EhrStatusUpdate
-// @Header       200         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Header       200         {string}  ETag      "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Success      204         "Is returned when `Prefer` header is missing or is set to `return=minimal`"
-// @Header       204         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Header       204         {string}  ETag      "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Failure      400         "Is returned when the request has invalid content."
-// @Failure      404         "Is returned when an EHR with ehr_id does not exist."
-// @Failure      412         "Is returned when `If-Match` request header doesn’t match the latest version on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers."
+// @Param        ehr_id       path      string                 true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        AuthUserId   header    string                 true  "UserId UUID"
+// @Param        EhrSystemId  header    string                 true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        If-Match     header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`) must be specified."
+// @Param        Prefer       header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        Request      body      model.EhrStatusUpdate  true  "EHR_STATUS"
+// @Success      200          {object}  model.EhrStatusUpdate
+// @Header       200          {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header       200          {string}  ETag      "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Success      204          "Is returned when `Prefer` header is missing or is set to `return=minimal`"
+// @Header       204          {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header       204          {string}  ETag      "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Failure      400          "Is returned when the request has invalid content."
+// @Failure      404          "Is returned when an EHR with ehr_id does not exist."
+// @Failure      412          "Is returned when `If-Match` request header doesn’t match the latest version on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers."
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h EhrStatusHandler) Update(c *gin.Context) {
@@ -221,7 +221,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Success      200              {object}  model.EhrStatusUpdate
 // @Failure      400          "Is returned when AuthUserId is not specified"
 // @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an EHR_STATUS with `version_uid` does not exist."
-// @Failure      500         "Is returned when an unexpected error occurs while processing a request"
+// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")

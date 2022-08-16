@@ -455,6 +455,8 @@ type RequestResult struct {
 	Txs    []*TxResult  `json:"txs"`
 }
 
+type RequestsResult map[string]*RequestResult
+
 func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	result := make(map[string]*RequestResult)
 

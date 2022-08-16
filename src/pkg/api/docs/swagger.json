@@ -869,6 +869,109 @@
                 }
             }
         },
+        "/requests/": {
+            "get": {
+                "description": "It is returning only transactions which in progress\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "REQUEST"
+                ],
+                "summary": "Get list of transactions requests by authorized user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "default: 10",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "id namespace. Example: examples",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/processing.RequestsResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when userId is empty"
+                    },
+                    "404": {
+                        "description": "Is returned when requests not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/requests/{request_id}": {
+            "get": {
+                "description": "It's returning only transactions which in progress\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "REQUEST"
+                ],
+                "summary": "Get list of transactions by certain request id for authorized user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique id of request",
+                        "name": "request_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/processing.RequestResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when userId or request_id is empty"
+                    },
+                    "404": {
+                        "description": "Is returned when requests not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/v1/access/group": {
             "post": {
                 "description": "Creates new access group for use with part of users data and return this group",
@@ -1423,6 +1526,57 @@
                 "rows": {
                     "type": "array",
                     "items": {}
+                }
+            }
+        },
+        "processing.DocResult": {
+            "type": "object",
+            "properties": {
+                "cid": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                }
+            }
+        },
+        "processing.RequestResult": {
+            "type": "object",
+            "properties": {
+                "docs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/processing.DocResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "txs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/processing.TxResult"
+                    }
+                }
+            }
+        },
+        "processing.RequestsResult": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/processing.RequestResult"
+            }
+        },
+        "processing.TxResult": {
+            "type": "object",
+            "properties": {
+                "hash": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }

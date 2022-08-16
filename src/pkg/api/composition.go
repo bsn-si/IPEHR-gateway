@@ -214,19 +214,19 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 // @Summary      Deletes the COMPOSITION by version id
 // @Description  Deletes the COMPOSITION identified by `preceding_version_uid` and associated with the EHR identified by `ehr_id`.
 // @Description
-// @Tags         COMPOSITION
-// @Accept       json
-// @Produce      json
-// @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        preceding_version_uid  path      string  true  "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent) version. Example: `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
-// @Param        AuthUserId   header    string  true  "UserId UUID"
-// @Param        EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Failure      204          "`No Content` is returned when COMPOSITION was deleted."
-// @Failure      400          "`Bad Request` is returned when the composition with `preceding_version_uid` is already deleted."
-// @Failure      404          "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with preceding_version_uid does not exist."
-// @Failure      409          "`Conflict` is returned when supplied `preceding_version_uid` doesn’t match the latest version. Returns latest version in the Location and ETag headers."
-// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
-// @Router       /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
+// @Tags     COMPOSITION
+// @Accept   json
+// @Produce  json
+// @Param    ehr_id                 path    string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param    preceding_version_uid  path    string  true  "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent) version. Example: `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
+// @Param    AuthUserId             header  string  true  "UserId UUID"
+// @Param    EhrSystemId            header  string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Failure  204                    "`No Content` is returned when COMPOSITION was deleted."
+// @Failure  400                    "`Bad Request` is returned when the composition with `preceding_version_uid` is already deleted."
+// @Failure  404                    "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with preceding_version_uid does not exist."
+// @Failure  409                    "`Conflict` is returned when supplied `preceding_version_uid` doesn’t match the latest version. Returns latest version in the Location and ETag headers."
+// @Failure  500                    "Is returned when an unexpected error occurs while processing a request"
+// @Router   /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
 func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
@@ -290,25 +290,25 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Description  it must match the `versioned_object_uid` in the URL. The existing latest `version_uid`
 // @Description  of COMPOSITION resource (i.e the `preceding_version_uid`) must be specified in the `If-Match` header.
 // @Description
-// @Tags         COMPOSITION
-// @Accept       json
-// @Produce      json
-// @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        versioned_object_uid  path      string  true  "identifier of the COMPOSITION to be updated. Example: `8849182c-82ad-4088-a07f-48ead4180515`"
-// @Param        AuthUserId  header    string  true  "UserId UUID"
-// @Param        EhrSystemId header    string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Param        Prefer      header    string                 true  "The updated COMPOSITION resource is returned to the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        If-Match    header    string                 true  "The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid). Example: `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
-// @Param        Request     body      model.SwagComposition  true  "List of changes in COMPOSITION"
-// @Success      200         {object}  model.SwagComposition  true  "Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is `return=representation.`"
-// @Header       200         {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Header       200         {string}  ETag      "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Failure      422          "`Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
-// @Failure      400          "`Bad Request` is returned when the request has invalid `ehr_id` or invalid content (e.g. either the body of the request could not be read, or converted to a valid COMPOSITION object)"
-// @Failure      404          "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist."
-// @Failure      412          "`Version conflict` is returned when `If-Match` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers."
-// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
-// @Router       /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
+// @Tags     COMPOSITION
+// @Accept   json
+// @Produce  json
+// @Param    ehr_id                path      string                 true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param    versioned_object_uid  path      string                 true  "identifier of the COMPOSITION to be updated. Example: `8849182c-82ad-4088-a07f-48ead4180515`"
+// @Param    AuthUserId            header    string                 true  "UserId UUID"
+// @Param    EhrSystemId           header    string                 true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    Prefer                header    string                 true  "The updated COMPOSITION resource is returned to the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param    If-Match              header    string                 true  "The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid). Example: `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
+// @Param    Request               body      model.SwagComposition  true  "List of changes in COMPOSITION"
+// @Success  200                   {object}  model.SwagComposition  true  "Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is `return=representation.`"
+// @Header   200                   {string}  Location               "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header   200                   {string}  ETag                   "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Failure  422                   "`Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
+// @Failure  400                   "`Bad Request` is returned when the request has invalid `ehr_id` or invalid content (e.g. either the body of the request could not be read, or converted to a valid COMPOSITION object)"
+// @Failure  404                   "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist."
+// @Failure  412                   "`Version conflict` is returned when `If-Match` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers."
+// @Failure  500                   "Is returned when an unexpected error occurs while processing a request"
+// @Router   /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
