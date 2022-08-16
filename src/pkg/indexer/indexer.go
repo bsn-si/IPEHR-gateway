@@ -82,6 +82,9 @@ func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (string, error) {
 	copy(uID[:], []byte(userID))
 	copy(eID[:], ehrUUID[:])
 
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetEhrUser(i.transactOpts, uID, eID)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
@@ -121,6 +124,9 @@ func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (stri
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
+
+	i.Lock()
+	defer i.Unlock()
 
 	tx, err := i.ehrIndex.AddEhrDoc(
 		i.transactOpts,
@@ -213,6 +219,9 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 }
 
 func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (string, error) {
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetDocAccess(i.transactOpts, *key, value)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
@@ -239,6 +248,9 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.
 }
 
 func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte) (string, error) {
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetGroupAccess(i.transactOpts, *key, value)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetGroupAccess error: %w", err)
@@ -272,6 +284,9 @@ func (i *Index) SetSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, s
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
+
+	i.Lock()
+	defer i.Unlock()
 
 	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
 
@@ -310,6 +325,9 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	copy(eID[:], ehrUUID[:])
 
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version)
 	if err != nil {
 		if err.Error() == ExecutionRevertedNFD {
@@ -326,6 +344,9 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 }
 
 func (i *Index) SetAllowed(address string) (string, error) {
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetAllowed(i.transactOpts, common.HexToAddress(address), true)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetAllowed error: %w", err)
