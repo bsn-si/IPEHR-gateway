@@ -266,24 +266,16 @@ func (p *Proc) execBlockchain() {
 				break
 			}
 
-			done, err := p.isRequestDone(tx.ReqID)
+			reqStatus, err := p.checkRequestStatus(tx.ReqID)
 			if err != nil {
 				log.Println("checkRequestDone error:", err, "reqID", tx.ReqID)
 				break
 			}
 
-			if done {
-				// update tx statuses
-				result = p.db.Exec("UPDATE txes SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
-				if result.Error != nil {
-					//log.Printf("db txs update error: %v reqID %s", result.Error, tx.ReqID)
-					break
-				}
-
+			if reqStatus == StatusSuccess || reqStatus == StatusFailed {
 				// update request status
-				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
+				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", reqStatus, tx.ReqID)
 				if result.Error != nil {
-					//log.Printf("db request delete error: %v reqID %s", result.Error, tx.ReqID)
 					break
 				}
 			}
@@ -291,6 +283,7 @@ func (p *Proc) execBlockchain() {
 			continue
 		}
 
+		// tx pending yet
 		break
 	}
 }
@@ -343,66 +336,82 @@ func (p *Proc) execFilecoin() {
 	}
 }
 
-func (p *Proc) isRequestDone(reqID string) (bool, error) {
-	request := Request{}
+func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
+	requests := []Request{}
 
-	result := p.db.Find(&request, "req_id = ?", reqID).Limit(1)
+	result := p.db.Where("req_id = ?", reqID).Find(&requests)
 	if result.Error != nil {
-		return false, fmt.Errorf("db.Find error: %w", result.Error)
+		return 0, fmt.Errorf("db.Find error: %w", result.Error)
 	}
 
 	var txsToCheck []TxKind
 
-	switch request.Kind {
-	case RequestEhrCreate:
-		txsToCheck = []TxKind{
-			TxSetEhrUser,
-			TxSetEhrBySubject,
-			TxSetEhrDocs,
-			TxSetDocAccess,
-			//TxFilecoinStartDeal,
+	for _, request := range requests {
+		switch request.Kind {
+		case RequestEhrCreate:
+			txsToCheck = []TxKind{
+				TxSetEhrUser,
+				TxSetEhrDocs,
+				TxSetDocAccess,
+				//TxFilecoinStartDeal,
+			}
+		case RequestEhrGetBySubject:
+		case RequestEhrGetByID:
+		case RequestEhrStatusCreate:
+			txsToCheck = []TxKind{
+				TxSetEhrBySubject,
+				TxSetEhrDocs,
+				TxSetDocAccess,
+				//TxFilecoinStartDeal,
+			}
+		case RequestEhrStatusUpdate:
+			txsToCheck = []TxKind{
+				TxSetEhrBySubject,
+				TxSetEhrDocs,
+				TxSetDocAccess,
+				//TxFilecoinStartDeal,
+			}
+		case RequestEhrStatusGetByID:
+		case RequestEhrStatusGetByTime:
+		case RequestCompositionCreate:
+			txsToCheck = []TxKind{
+				TxSetEhrDocs,
+				TxSetDocAccess,
+				//TxFilecoinStartDeal,
+			}
+		case RequestCompositionUpdate:
+			txsToCheck = []TxKind{
+				TxSetEhrDocs,
+				TxSetDocAccess,
+				//TxFilecoinStartDeal,
+			}
+		case RequestCompositionGetByID:
+		case RequestCompositionDelete:
+			txsToCheck = []TxKind{
+				TxDeleteDoc,
+			}
+		default:
+			return 0, fmt.Errorf("%w Unknown request.Kind %d", errors.ErrCustom, request.Kind)
 		}
-	case RequestEhrGetBySubject:
-	case RequestEhrGetByID:
-	case RequestEhrStatusCreate:
-	case RequestEhrStatusUpdate:
-	case RequestEhrStatusGetByID:
-	case RequestEhrStatusGetByTime:
-	case RequestCompositionCreate:
-		txsToCheck = []TxKind{
-			TxSetEhrDocs,
-			TxSetDocAccess,
-			//TxFilecoinStartDeal,
-		}
-	case RequestCompositionUpdate:
-		txsToCheck = []TxKind{
-			TxSetEhrDocs,
-			TxSetDocAccess,
-			//TxFilecoinStartDeal,
-		}
-	case RequestCompositionGetByID:
-	case RequestCompositionDelete:
-	default:
-		return false, fmt.Errorf("%w Unknown request.Kind %d", errors.ErrCustom, request.Kind)
-	}
 
-	for _, txKind := range txsToCheck {
-		var txs []Tx
+		for _, txKind := range txsToCheck {
+			var txs []Tx
 
-		result := p.db.Model(&Tx{}).Where("req_id = ? AND kind = ?", reqID, txKind).Find(&txs)
-		if result.Error != nil {
-			return false, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)
-		}
+			result := p.db.Model(&Tx{}).Where("req_id = ? AND kind = ?", reqID, txKind).Find(&txs)
+			if result.Error != nil {
+				return 0, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)
+			}
 
-		// а он не может быть failed? что тогда реквест вообще не закроется?
-		for _, tx := range txs {
-			if tx.Status != StatusSuccess {
-				return false, nil
+			// а он не может быть failed? что тогда реквест вообще не закроется?
+			for _, tx := range txs {
+				if tx.Status != StatusSuccess {
+					return tx.Status, nil
+				}
 			}
 		}
 	}
 
-	return true, nil
+	return StatusSuccess, nil
 }
 
 func (p *Proc) GetRequestByID(reqID string, userID string) ([]byte, error) {

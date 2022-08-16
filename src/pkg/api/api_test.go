@@ -878,15 +878,6 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 		if response.StatusCode != http.StatusBadRequest {
 			t.Fatalf("Expected status: %v, received %v", http.StatusBadRequest, response.StatusCode)
 		}
-
-		testData.requestID = response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", testData.requestID)
-
-		err = requestWait(testData.testUserID, testData.requestID, testWrap)
-		if err != nil {
-			t.Fatal(err)
-		}
 	}
 }
 
@@ -1106,6 +1097,8 @@ func requestWait(userID, requestID string, tw *testWrap) error {
 
 		if request.Status == processing.StatusSuccess.String() {
 			return nil
+		} else if request.Status == processing.StatusFailed.String() {
+			return errors.New("Request failed")
 		}
 	}
 }

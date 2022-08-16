@@ -5,8 +5,9 @@ import (
 )
 
 var (
-	Is = errors.Is
-	As = errors.As
+	New = errors.New
+	Is  = errors.Is
+	As  = errors.As
 
 	ErrAuthorization    = errors.New("Authorization error")
 	ErrIsNotExist       = errors.New("Object is not exist")
