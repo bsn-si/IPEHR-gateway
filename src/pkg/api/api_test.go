@@ -1099,13 +1099,13 @@ func requestWait(userID, requestID string, tw *testWrap) error {
 			return fmt.Errorf("%w: request %s getting error: %v", errors.ErrCustom, requestID, response.Status)
 		}
 
-		var request processing.Request
+		var request processing.RequestResult
 
 		if err = json.NewDecoder(response.Body).Decode(&request); err != nil {
 			return err
 		}
 
-		if request.Status == processing.StatusSuccess {
+		if request.Status == processing.StatusSuccess.String() {
 			return nil
 		}
 	}

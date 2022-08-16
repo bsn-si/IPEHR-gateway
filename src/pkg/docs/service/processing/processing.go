@@ -428,25 +428,25 @@ func (p *Proc) GetRequestByID(reqID string, userID string) ([]byte, error) {
 	return resultBytes, nil
 }
 
-type resultTx struct {
+type TxResult struct {
 	Kind   string `json:"kind"`
 	Status string `json:"status"`
 	Hash   string `json:"hash"`
 }
 
-type resultDoc struct {
+type DocResult struct {
 	Kind string `json:"kind"`
 	CID  string `json:"cid"`
 }
 
-type resultReq struct {
+type RequestResult struct {
 	Status string       `json:"status"`
-	Docs   []*resultDoc `json:"docs"`
-	Txs    []*resultTx  `json:"txs"`
+	Docs   []*DocResult `json:"docs"`
+	Txs    []*TxResult  `json:"txs"`
 }
 
 func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
-	result := make(map[string]*resultReq)
+	result := make(map[string]*RequestResult)
 
 	query := `SELECT r.req_id, r.status, r.kind, r.c_id, t.kind, t.hash, t.status
 			FROM requests r, txes t
@@ -478,10 +478,10 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 
 		req, ok := result[reqID]
 		if !ok {
-			req = &resultReq{
+			req = &RequestResult{
 				Status: Status(reqStatus).String(),
-				Docs:   []*resultDoc{},
-				Txs:    []*resultTx{},
+				Docs:   []*DocResult{},
+				Txs:    []*TxResult{},
 			}
 
 			result[reqID] = req
@@ -497,7 +497,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 		}
 
 		if !exists {
-			req.Txs = append(req.Txs, &resultTx{
+			req.Txs = append(req.Txs, &TxResult{
 				Kind:   TxKind(txKind).String(),
 				Status: Status(txStatus).String(),
 				Hash:   txHash,
@@ -518,7 +518,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 		}
 
 		if !exists {
-			req.Docs = append(req.Docs, &resultDoc{
+			req.Docs = append(req.Docs, &DocResult{
 				Kind: RequestKind(reqKind).String(),
 				CID:  reqCID,
 			})
@@ -534,7 +534,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 }
 
 func (p *Proc) GetRequest(reqID string) ([]byte, error) {
-	var result resultReq
+	var result RequestResult
 
 	query := `SELECT r.status, r.kind, r.c_id, t.kind, t.hash, t.status
 			FROM requests r, txes t
@@ -575,7 +575,7 @@ func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 		}
 
 		if !exists {
-			result.Txs = append(result.Txs, &resultTx{
+			result.Txs = append(result.Txs, &TxResult{
 				Kind:   TxKind(txKind).String(),
 				Status: Status(txStatus).String(),
 				Hash:   txHash,
@@ -596,7 +596,7 @@ func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 		}
 
 		if !exists {
-			result.Docs = append(result.Docs, &resultDoc{
+			result.Docs = append(result.Docs, &DocResult{
 				Kind: RequestKind(reqKind).String(),
 				CID:  reqCID,
 			})
