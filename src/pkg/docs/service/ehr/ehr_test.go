@@ -61,12 +61,18 @@ func requestWait(reqID string, timeout time.Duration) error {
 			return errors.ErrTimeout
 		}
 
-		status, err := docService.Proc.RequestStatus(reqID)
+		data, err := docService.Proc.GetRequest(reqID)
 		if err != nil {
 			return err
 		}
 
-		if status == processing.StatusSuccess {
+		var request processing.RequestResult
+
+		if err = json.Unmarshal(data, &request); err != nil {
+			return err
+		}
+
+		if request.Status == processing.StatusSuccess.String() {
 			return nil
 		}
 
