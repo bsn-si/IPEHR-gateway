@@ -231,6 +231,9 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
+	var newUID string
+	defer h.addResponseHeaders(ehrID, newUID, c)
+
 	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -264,7 +267,8 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	newUID, err := h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
+	// nolint
+	newUID, err = h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -274,11 +278,10 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 			log.Println("DeleteByID error:", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
-		h.addResponseHeaders(ehrID, newUID, c)
+
 		return
 	}
 
-	h.addResponseHeaders(ehrID, newUID, c)
 	c.AbortWithStatus(http.StatusNoContent)
 }
 
