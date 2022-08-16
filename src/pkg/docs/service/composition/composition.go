@@ -199,6 +199,9 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index DataSearch
@@ -237,6 +240,9 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	return nil
@@ -342,6 +348,9 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	if err != nil {
 		return "", fmt.Errorf("Proc.AddTx error: %w", err)
 	}
+
+	// Waiting for tx processed and pending nonce increased
+	time.Sleep(3 * time.Second)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

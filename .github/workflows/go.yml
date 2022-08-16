@@ -1,10 +1,10 @@
 name: Go
 
 on:
-#  push:
+  push:
 #    branches: [ "develop" ]
-  pull_request:
-    branches: [ "develop" ]
+#  pull_request:
+#    branches: [ "develop" ]
 
 defaults:
   run:

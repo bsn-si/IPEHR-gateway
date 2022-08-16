@@ -15,6 +15,7 @@ func Init(sc *Config) {
 		}
 
 		var err error
+
 		storage, err = localfile.Init(&cfg)
 		if err != nil {
 			log.Fatal(err)
