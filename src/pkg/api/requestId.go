@@ -21,5 +21,6 @@ func requestID(c *gin.Context) {
 	}
 
 	c.Set("reqId", reqID)
+	c.Header("RequestId", c.GetString("reqId"))
 	c.Next()
 }

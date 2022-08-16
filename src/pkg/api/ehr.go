@@ -305,7 +305,6 @@ func (h EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 func (h *EhrHandler) respondWithDocOrHeaders(doc *model.EHR, c *gin.Context) {
 	c.Header("Location", h.baseURL+"/v1/ehr/"+doc.EhrID.Value)
 	c.Header("ETag", doc.EhrID.Value)
-	c.Header("RequestId", c.GetString("reqId"))
 
 	prefer := c.Request.Header.Get("Prefer")
 	if prefer == "return=representation" {

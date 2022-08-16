@@ -160,7 +160,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -193,7 +193,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	// Index Access
@@ -221,7 +221,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	return nil
@@ -389,7 +389,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -423,7 +423,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	// Index Access
@@ -451,7 +451,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	return nil

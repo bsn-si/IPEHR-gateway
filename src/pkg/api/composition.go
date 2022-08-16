@@ -231,9 +231,6 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
-	var newUID string
-	defer h.addResponseHeaders(ehrID, newUID, c)
-
 	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -264,11 +261,11 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		} else {
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
+
 		return
 	}
 
-	// nolint
-	newUID, err = h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
+	newUID, err := h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -282,6 +279,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
+	h.addResponseHeaders(ehrID, newUID, c)
 	c.AbortWithStatus(http.StatusNoContent)
 }
 
@@ -438,5 +436,4 @@ func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Co
 func (h *CompositionHandler) addResponseHeaders(ehrID string, uid string, c *gin.Context) {
 	c.Header("Location", h.baseURL+"/v1/ehr/"+ehrID+"/composition/"+uid)
 	c.Header("ETag", uid)
-	c.Header("RequestId", c.GetString("reqId"))
 }

@@ -201,7 +201,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	// Index DataSearch
@@ -242,7 +242,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	return nil
@@ -350,7 +350,7 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	}
 
 	// Waiting for tx processed and pending nonce increased
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

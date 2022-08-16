@@ -282,5 +282,4 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrID string, ehrStatusID string, c *gin.Context) {
 	c.Header("Location", h.baseURL+"/ehr/"+ehrID+"/ehr_status/"+ehrStatusID)
 	c.Header("ETag", ehrStatusID)
-	c.Header("RequestId", c.GetString("reqId"))
 }
