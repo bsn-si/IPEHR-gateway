@@ -1,13 +1,15 @@
 name: golangci-lint
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - golangci-lint
-      - 'feature/**'
-      - 'hotfix/**'
+#  push:
+#    branches:
+#      - main
+#      - develop
+#      - golangci-lint
+#      - 'feature/**'
+#      - 'hotfix/**'
   pull_request:
+    branches:
+      - develop
 permissions:
   contents: read
   # Optional: allow read access to pull request. Use with `only-new-issues` option.
