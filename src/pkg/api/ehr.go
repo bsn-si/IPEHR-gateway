@@ -194,6 +194,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		}
 
+		log.Println("EhrCreateWithID error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
 
 		return

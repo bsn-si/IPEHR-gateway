@@ -385,6 +385,9 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
