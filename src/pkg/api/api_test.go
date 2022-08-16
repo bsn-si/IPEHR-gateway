@@ -833,13 +833,6 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *testData) func(t 
 		}
 
 		testData.requestID = response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", testData.requestID)
-
-		err = requestWait(testData.testUserID, testData.requestID, testWrap)
-		if err != nil {
-			t.Fatal(err)
-		}
 	}
 }
 

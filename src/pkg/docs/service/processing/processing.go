@@ -295,6 +295,7 @@ func (p *Proc) execBlockchain() {
 	}
 }
 
+// nolint
 func (p *Proc) execFilecoin() {
 	txKinds := []TxKind{
 		TxFilecoinStartDeal,

@@ -274,6 +274,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 			log.Println("DeleteByID error:", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
+		h.addResponseHeaders(ehrID, newUID, c)
 		return
 	}
 
