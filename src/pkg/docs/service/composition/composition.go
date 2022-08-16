@@ -98,16 +98,14 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
 	}
 
-	baseDocumentUID, _ := uuid.Parse(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID[:])
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
 	// Checking the existence of the Composition
 	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
-	if err != nil {
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		return fmt.Errorf("Index.GetDocByVersion error: %w", err)
-	}
-
-	if docMeta != nil {
+	} else if docMeta != nil {
 		return fmt.Errorf("%w objectVersionID %s", errors.ErrAlreadyExist, objectVersionID.String())
 	}
 
@@ -201,6 +199,9 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index DataSearch
@@ -239,6 +240,9 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	return nil
@@ -250,8 +254,8 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("GetLastByBaseID error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
 	}
 
-	baseDocumentUID, _ := uuid.Parse(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID[:])
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
 	docMeta, err := s.Infra.Index.GetDocLastByBaseID(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash)
 	if err != nil {
@@ -262,7 +266,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("GetLastByBaseID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), []byte(objectVersionID.String()), docMeta.DocUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s storageID %s", err, userID, docMeta.CID)
 	}
@@ -281,19 +285,21 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())
 	}
 
-	baseDocumentUID, _ := uuid.Parse(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID[:])
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
 	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
-	if err != nil {
-		return nil, fmt.Errorf("Index.GetDocByVersionerror: %w ehrUUID %s objectVersionID %s", err, ehrUUID.String(), objectVersionID.String())
+	if err != nil && errors.Is(err, errors.ErrNotFound) {
+		return nil, errors.ErrNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("Index.GetDocByVersion error: %w ehrUUID %s objectVersionID %s", err, ehrUUID.String(), objectVersionID.String())
 	}
 
 	if docMeta.Status == uint8(status.DELETED) {
 		return nil, fmt.Errorf("GetCompositionByID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), []byte(objectVersionID.String()), docMeta.DocUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s CID %x", err, userID, docMeta.Cid().String())
 	}
@@ -306,14 +312,14 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 	return &composition, nil
 }
 
-func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (newUID string, err error) {
+func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (string, error) {
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())
 	}
 
-	baseDocumentUID, _ := uuid.Parse(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID[:])
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
 	// Start processing request
 	reqID := ctx.(*gin.Context).GetString("reqId")
@@ -332,6 +338,9 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 
 	docDeleteTx, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
 	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return "", err
+		}
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
@@ -339,6 +348,9 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	if err != nil {
 		return "", fmt.Errorf("Proc.AddTx error: %w", err)
 	}
+
+	// Waiting for tx processed and pending nonce increased
+	time.Sleep(3 * time.Second)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

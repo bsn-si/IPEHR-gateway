@@ -10,11 +10,16 @@ import (
 
 func requestID(c *gin.Context) {
 	id := make([]byte, 8)
+	reqID := c.Request.Header.Get("reqId")
 
-	if _, err := rand.Read(id); err != nil {
-		log.Println("Make requestID error:", err)
+	if reqID == "" {
+		if _, err := rand.Read(id); err != nil {
+			log.Println("Make requestID error:", err)
+		}
+
+		reqID = hex.EncodeToString(id)
 	}
 
-	c.Set("reqId", hex.EncodeToString(id))
+	c.Set("reqId", reqID)
 	c.Next()
 }

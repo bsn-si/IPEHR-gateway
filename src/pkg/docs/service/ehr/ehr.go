@@ -56,19 +56,24 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 
 	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
 
-	err := s.SaveEhr(ctx, userID, &ehr)
-	if err != nil {
-		return nil, fmt.Errorf("ehr save error: %w", err)
-	}
-
 	// Creating EHR_STATUS
 	ehrStatusID := ehr.EhrStatus.ID.Value
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
-	_, err = s.CreateStatus(ctx, userID, ehrStatusID, subjectID, subjectNamespace, ehrUUID, ehrSystemID)
+	doc, err := s.CreateStatus(ctx, userID, ehrStatusID, subjectID, subjectNamespace, ehrUUID, ehrSystemID)
 	if err != nil {
 		return nil, fmt.Errorf("create status error: %w", err)
+	}
+
+	err = s.SaveStatus(ctx, userID, ehrUUID, ehrSystemID, doc, true)
+	if err != nil {
+		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
+	}
+
+	err = s.SaveEhr(ctx, userID, &ehr)
+	if err != nil {
+		return nil, fmt.Errorf("SaveEhr error: %w", err)
 	}
 
 	return &ehr, nil
@@ -96,7 +101,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	key := chachaPoly.GenerateKey()
 
 	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(doc.EhrID.Value))
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, ehrUUID[:])
 	if err != nil {
 		return fmt.Errorf("ehr encryption error: %w", err)
 	}
@@ -122,9 +127,10 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	{
 		procReq := &processing.Request{
 			ReqID:        reqID,
+			Kind:         processing.RequestEhrCreate,
+			Status:       processing.StatusProcessing,
 			UserID:       userID,
 			EhrUUID:      ehrUUID.String(),
-			Kind:         processing.RequestEhrCreate,
 			CID:          CID.String(),
 			DealCID:      dealCID.String(),
 			MinerAddress: hex.EncodeToString(minerAddr),
@@ -152,18 +158,28 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
 	{
+		ehrIDEncrypted, err := key.EncryptWithAuthData(ehrUUID[:], ehrUUID[:])
+		if err != nil {
+			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s", err, ehrUUID.String())
+		}
+
 		docMeta := &model.DocumentMeta{
-			DocType:      uint8(types.Ehr),
-			Status:       uint8(docStatus.ACTIVE),
-			CID:          CID.Bytes(),
-			DealCID:      dealCID.Bytes(),
-			MinerAddress: minerAddr,
-			IsLast:       true,
-			Timestamp:    uint32(time.Now().Unix()),
+			DocType:         uint8(types.Ehr),
+			Status:          uint8(docStatus.ACTIVE),
+			CID:             CID.Bytes(),
+			DealCID:         dealCID.Bytes(),
+			MinerAddress:    minerAddr,
+			DocUIDEncrypted: ehrIDEncrypted,
+			DocBaseUIDHash:  [32]byte{},
+			IsLast:          true,
+			Timestamp:       uint32(time.Now().Unix()),
 		}
 
 		docIndexTx, err := s.Infra.Index.AddEhrDoc(&ehrUUID, docMeta)
@@ -175,6 +191,9 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index Access
@@ -200,6 +219,9 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	return nil
@@ -250,11 +272,6 @@ func (s *Service) CreateStatus(ctx context.Context, userID, ehrStatusID, subject
 	doc.IsQueryable = true
 	doc.IsModifable = true
 
-	err = s.SaveStatus(ctx, userID, ehrUUID, ehrSystemID, doc)
-	if err != nil {
-		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
-	}
-
 	return doc, nil
 }
 
@@ -284,7 +301,7 @@ func (s *Service) UpdateEhr(ctx context.Context, userID string, ehrUUID *uuid.UU
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus, isNew bool) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
@@ -293,8 +310,8 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
 	}
 
-	baseDocumentUID := objectVersionID.BasedID()
-	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
 	statusBytes, err := json.Marshal(status)
 	if err != nil {
@@ -335,9 +352,8 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 	{
 		procReq := &processing.Request{
 			ReqID:        reqID,
-			UserID:       userID,
-			EhrUUID:      ehrUUID.String(),
-			Kind:         processing.RequestEhrStatusUpdate,
+			Kind:         processing.RequestEhrStatusCreate,
+			Status:       processing.StatusProcessing,
 			CID:          CID.String(),
 			DealCID:      dealCID.String(),
 			MinerAddress: hex.EncodeToString(minerAddr),
@@ -369,6 +385,9 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -400,6 +419,9 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
 
 	// Index Access
@@ -425,17 +447,10 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
+
+		// Waiting for tx processed and pending nonce increased
+		time.Sleep(3 * time.Second)
 	}
-
-	/*
-		TODO требуется изменени логики
-		Не нужно сохранять новый EHR,
-		а нужно при запросах EHR доставать старый и приделывать ему актуальный статус.
-
-		if err = s.UpdateEhr(ctx, userID, ehrUUID, status); err != nil {
-			return fmt.Errorf("UpdateStatus error: %w userID: %s ehrID: %s", err, userID, ehrUUID.String())
-		}
-	*/
 
 	return nil
 }

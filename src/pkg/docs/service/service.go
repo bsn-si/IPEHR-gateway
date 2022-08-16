@@ -188,7 +188,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 		}
 	}
 
-	// Get EHR_STATUS encrypted
+	// Get doc encrypted
 	var docEncrypted []byte
 	{
 		reader, err := d.Infra.IpfsClient.Get(CID)

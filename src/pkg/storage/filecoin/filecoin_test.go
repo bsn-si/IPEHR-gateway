@@ -12,6 +12,8 @@ import (
 )
 
 func TestStartDeal(t *testing.T) {
+	t.Skip()
+
 	filecoinClient, err := prepare(t)
 	if err != nil {
 		t.Fatal(err)

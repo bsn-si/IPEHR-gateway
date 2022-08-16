@@ -5,6 +5,9 @@ import (
 )
 
 var (
+	Is = errors.Is
+	As = errors.As
+
 	ErrAuthorization    = errors.New("Authorization error")
 	ErrIsNotExist       = errors.New("Object is not exist")
 	ErrAlreadyExist     = errors.New("Object already exist")
@@ -21,5 +24,3 @@ var (
 	ErrNotFound         = errors.New("Not found")
 	ErrObjectNotInit    = errors.New(`Object is not initialized`)
 )
-
-var Is = errors.Is

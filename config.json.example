@@ -22,7 +22,7 @@
         }
     },
     "contract": {
-        "address": "0x8b436367bd884A939420F855f961E31D346D14bB",
+        "address": "0x90346f14E3D22bff62415707928486A42282B19F",
         "endpoint": "https://goerli.infura.io/v3/<API-KEY>",
         "privKeyPath": "../.blockchain.key"
     },

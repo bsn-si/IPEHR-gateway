@@ -78,9 +78,10 @@ func resolveConfigFile(userConfigFile string) (configFile string, err error) {
 		return
 	}
 
-	possibleConfigFiles := [3]string{
+	possibleConfigFiles := [4]string{
 		userConfigFile,
 		projectRootDir + "/" + mainConfigFile,
+		os.Getenv("IPEHR_CONFIG_PATH"),
 		projectRootDir + "/" + fallbackConfigFile,
 	}
 

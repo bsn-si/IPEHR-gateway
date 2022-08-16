@@ -3,10 +3,10 @@ package types
 type DocumentType uint8
 
 const (
-	Ehr         DocumentType = 1
-	EhrAccess   DocumentType = 2
-	EhrStatus   DocumentType = 3
-	Composition DocumentType = 4
+	Ehr DocumentType = iota
+	EhrAccess
+	EhrStatus
+	Composition
 )
 
 var typeNames = map[DocumentType]string{

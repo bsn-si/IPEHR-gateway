@@ -26,6 +26,8 @@ import (
 	"hms/gateway/pkg/storage"
 )
 
+const ExecutionRevertedNFD = "execution reverted: NFD"
+
 type Index struct {
 	sync.RWMutex
 	id           *[32]byte
@@ -80,6 +82,9 @@ func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (string, error) {
 	copy(uID[:], []byte(userID))
 	copy(eID[:], ehrUUID[:])
 
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetEhrUser(i.transactOpts, uID, eID)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
@@ -120,6 +125,9 @@ func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (stri
 
 	copy(eID[:], ehrUUID[:])
 
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.AddEhrDoc(
 		i.transactOpts,
 		eID,
@@ -144,6 +152,9 @@ func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docTyp
 
 	docMeta, err := i.ehrIndex.GetLastEhrDocByType(callOpts, eID, uint8(docType))
 	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w", errors.ErrNotFound)
+		}
 		return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
 
@@ -160,6 +171,9 @@ func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docT
 
 	docMeta, err := i.ehrIndex.GetDocLastByBaseID(callOpts, eID, uint8(docType), *docBaseUIDHash)
 	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w", errors.ErrNotFound)
+		}
 		return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w ehrUUID %s docType %s docBaseUIDHash %x", err, ehrUUID.String(), docType.String(), docBaseUIDHash)
 	}
 
@@ -176,6 +190,9 @@ func (i *Index) GetDocByTime(ctx context.Context, ehrUUID *uuid.UUID, docType ty
 
 	docMeta, err := i.ehrIndex.GetDocByTime(callOpts, eID, uint8(docType), timestamp)
 	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w", errors.ErrNotFound)
+		}
 		return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w ehrUUID %s docType %s timestamp %d", err, ehrUUID.String(), docType.String(), timestamp)
 	}
 
@@ -192,6 +209,9 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 
 	docMeta, err := i.ehrIndex.GetDocByVersion(callOpts, eID, uint8(docType), *docBaseUIDHash, *version)
 	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return nil, errors.ErrNotFound
+		}
 		return nil, fmt.Errorf("ehrIndex.GetDocByVersion error: %w ehrUUID %s docType %s docBaseUIDHash %x version %s", err, ehrUUID.String(), docType.String(), docBaseUIDHash, version)
 	}
 
@@ -199,6 +219,9 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 }
 
 func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (string, error) {
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetDocAccess(i.transactOpts, *key, value)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
@@ -225,6 +248,9 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.
 }
 
 func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte) (string, error) {
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetGroupAccess(i.transactOpts, *key, value)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetGroupAccess error: %w", err)
@@ -247,8 +273,6 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 		return nil, fmt.Errorf("ehrIndex.GroupAccess error: %w", err)
 	}
 
-	log.Printf("groupAccessValue: %x", groupAccessValue)
-
 	if len(groupAccessValue) == 0 {
 		return nil, errors.ErrIsNotExist
 	}
@@ -260,6 +284,9 @@ func (i *Index) SetSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, s
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
+
+	i.Lock()
+	defer i.Unlock()
 
 	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
 
@@ -294,11 +321,32 @@ func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNames
 }
 
 func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (string, error) {
-	// TODO
-	return "", nil
+	var eID [32]byte
+
+	copy(eID[:], ehrUUID[:])
+
+	i.Lock()
+	defer i.Unlock()
+
+	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version)
+	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return "", errors.ErrNotFound
+		} else if err.Error() == "execution reverted: ADL" {
+			return "", errors.ErrAlreadyDeleted
+		}
+		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
+	}
+
+	log.Printf("DeleteDoc tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+
+	return tx.Hash().Hex(), nil
 }
 
 func (i *Index) SetAllowed(address string) (string, error) {
+	i.Lock()
+	defer i.Unlock()
+
 	tx, err := i.ehrIndex.SetAllowed(i.transactOpts, common.HexToAddress(address), true)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetAllowed error: %w", err)
@@ -312,7 +360,7 @@ func (i *Index) SetAllowed(address string) (string, error) {
 func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {
 	h := common.HexToHash(hash)
 
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 
 	for {
 		select {

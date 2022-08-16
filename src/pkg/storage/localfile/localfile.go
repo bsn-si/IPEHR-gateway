@@ -8,7 +8,6 @@ import (
 
 	"golang.org/x/crypto/sha3"
 
-	config2 "hms/gateway/pkg/config"
 	"hms/gateway/pkg/errors"
 )
 
@@ -22,7 +21,7 @@ type Storage struct {
 	depth    uint8
 }
 
-func Init(config *Config, globalConfig *config2.Config) (*Storage, error) {
+func Init(config *Config) (*Storage, error) {
 	if len(config.BasePath) == 0 {
 		return nil, fmt.Errorf("%w: BasePath", errors.ErrIsEmpty)
 	}
