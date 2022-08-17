@@ -16,7 +16,7 @@
             "endpointUrl": "http://lotus.dev.bsn.si:5001/api/v0"
         },
         "filecoin": {
-            "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v0",
+            "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v1",
             "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.IXRD51_C2V8RcgkAjFg3ZKl6eKGV_5Moda535yuolX4",
             "dealsMaxPrice": 1000000000
         }

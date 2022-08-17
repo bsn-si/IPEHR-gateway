@@ -42,7 +42,6 @@ type (
 		MinerAddress string
 		BaseUIDHash  string
 		Version      string
-		//Txs          []Tx `gorm:"foreignKey:ReqID"`
 	}
 
 	Tx struct {
@@ -251,24 +250,24 @@ func (p *Proc) execBlockchain() {
 			if errors.Is(err, ethereum.NotFound) {
 				status = StatusPending
 			} else {
-				log.Printf("TransactionReceipt error: %v txHash %s", err, h.String())
+				log.Printf(tx.ReqID, "TransactionReceipt error: %v txHash %s", err, h.String())
 				break
 			}
 		} else {
 			status = Status(receipt.Status)
 		}
 
-		log.Println("Tx", tx.Hash, "status", status)
+		log.Println(tx.ReqID, "Tx", tx.Hash, "status", status)
 
 		if status != tx.Status {
 			if result = p.db.Model(&tx).Update("status", status); result.Error != nil {
-				log.Println("db.Update error:", result.Error)
+				log.Println(tx.ReqID, "db.Update error:", result.Error)
 				break
 			}
 
 			reqStatus, err := p.checkRequestStatus(tx.ReqID)
 			if err != nil {
-				log.Println("checkRequestDone error:", err, "reqID", tx.ReqID)
+				log.Println(tx.ReqID, "checkRequestDone error:", err, "reqID", tx.ReqID)
 				break
 			}
 
@@ -312,13 +311,13 @@ func (p *Proc) execFilecoin() {
 
 		dealCID, err := cid.Parse(tx.Hash)
 		if err != nil {
-			log.Println("cid.Parse error:", err, "tx.Hash:", tx.Hash)
+			log.Println(tx.ReqID, "cid.Parse error:", err, "tx.Hash:", tx.Hash)
 			break
 		}
 
 		dealStatus, err := p.filecoinClient.GetDealStatus(ctx, &dealCID)
 		if err != nil {
-			log.Println("filecoinClient.GetDealStatus error:", err, "dealCID", dealCID.String())
+			log.Println(tx.ReqID, "filecoinClient.GetDealStatus error:", err, "dealCID", dealCID.String())
 			break
 		}
 
@@ -327,7 +326,7 @@ func (p *Proc) execFilecoin() {
 			if dealStatus == storagemarket.StorageDealActive {
 				tx.Status = StatusSuccess
 				if result = p.db.Save(&tx); result.Error != nil {
-					log.Println("db.Save error:", result.Error)
+					log.Println(tx.ReqID, "db.Save error:", result.Error)
 					return
 				}
 			}
@@ -414,30 +413,6 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 	return StatusSuccess, nil
 }
 
-func (p *Proc) GetRequestByID(reqID string, userID string) ([]byte, error) {
-	var requestData Request
-
-	result := p.db.Model(&Request{}).
-		Where(Request{UserID: userID}).
-		Where(Request{ReqID: reqID}).
-		//Preload("BlockchainTxs").
-		Find(&requestData)
-	if result.Error != nil {
-		return nil, fmt.Errorf("GetRequestByID error: %w reqID %s userID %s", result.Error, reqID, userID)
-	}
-
-	if result.RowsAffected == 0 {
-		return nil, nil
-	}
-
-	resultBytes, err := json.Marshal(requestData)
-	if err != nil {
-		return nil, fmt.Errorf("GetRequestByID marshal error: %w", err)
-	}
-
-	return resultBytes, nil
-}
-
 type TxResult struct {
 	Kind   string `json:"kind"`
 	Status string `json:"status"`
@@ -445,8 +420,10 @@ type TxResult struct {
 }
 
 type DocResult struct {
-	Kind string `json:"kind"`
-	CID  string `json:"cid"`
+	Kind         string `json:"kind"`
+	CID          string `json:"cid"`
+	DealCID      string `json:"dealCid"`
+	MinerAddress string `json:"minerAddress"`
 }
 
 type RequestResult struct {
@@ -460,7 +437,7 @@ type RequestsResult map[string]*RequestResult
 func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	result := make(map[string]*RequestResult)
 
-	query := `SELECT r.req_id, r.status, r.kind, r.c_id, t.kind, t.hash, t.status
+	query := `SELECT r.req_id, r.status, r.kind, r.c_id, r.deal_c_id, r.miner_address, t.kind, t.hash, t.status
 			FROM requests r, txes t
 			WHERE 
 				r.user_id = ? AND
@@ -473,17 +450,19 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	defer rows.Close()
 
 	var (
-		reqID     string
-		reqStatus uint8
-		reqKind   uint8
-		reqCID    string
-		txStatus  uint8
-		txKind    uint8
-		txHash    string
+		reqID        string
+		reqStatus    uint8
+		reqKind      uint8
+		reqCID       string
+		reqDealCID   string
+		reqMinerAddr string
+		txStatus     uint8
+		txKind       uint8
+		txHash       string
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&reqID, &reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+		err = rows.Scan(&reqID, &reqStatus, &reqKind, &reqCID, &reqDealCID, &reqMinerAddr, &txKind, &txHash, &txStatus)
 		if err != nil {
 			return nil, fmt.Errorf("db.Scan error: %w", err)
 		}
@@ -531,8 +510,10 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 
 		if !exists {
 			req.Docs = append(req.Docs, &DocResult{
-				Kind: RequestKind(reqKind).String(),
-				CID:  reqCID,
+				Kind:         RequestKind(reqKind).String(),
+				CID:          reqCID,
+				DealCID:      reqDealCID,
+				MinerAddress: reqMinerAddr,
 			})
 		}
 	}
@@ -548,7 +529,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 	var result RequestResult
 
-	query := `SELECT r.status, r.kind, r.c_id, t.kind, t.hash, t.status
+	query := `SELECT r.status, r.kind, r.c_id, r.deal_c_id, r.miner_address, t.kind, t.hash, t.status
 			FROM requests r, txes t
 			WHERE 
 				r.req_id = ? AND
@@ -561,16 +542,18 @@ func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 	defer rows.Close()
 
 	var (
-		reqStatus uint8
-		reqKind   uint8
-		reqCID    string
-		txStatus  uint8
-		txKind    uint8
-		txHash    string
+		reqStatus    uint8
+		reqKind      uint8
+		reqCID       string
+		reqDealCID   string
+		reqMinerAddr string
+		txStatus     uint8
+		txKind       uint8
+		txHash       string
 	)
 
 	for rows.Next() {
-		err = rows.Scan(&reqStatus, &reqKind, &reqCID, &txKind, &txHash, &txStatus)
+		err = rows.Scan(&reqStatus, &reqKind, &reqCID, &reqDealCID, &reqMinerAddr, &txKind, &txHash, &txStatus)
 		if err != nil {
 			return nil, fmt.Errorf("db.Scan error: %w", err)
 		}
@@ -609,8 +592,10 @@ func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 
 		if !exists {
 			result.Docs = append(result.Docs, &DocResult{
-				Kind: RequestKind(reqKind).String(),
-				CID:  reqCID,
+				Kind:         RequestKind(reqKind).String(),
+				CID:          reqCID,
+				DealCID:      reqDealCID,
+				MinerAddress: reqMinerAddr,
 			})
 		}
 	}

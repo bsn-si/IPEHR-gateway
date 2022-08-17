@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
@@ -76,7 +77,7 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 	}
 }
 
-func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (string, error) {
+func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUID) (string, error) {
 	var uID, eID [32]byte
 
 	copy(uID[:], []byte(userID))
@@ -90,7 +91,7 @@ func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (string, error) {
 		return "", fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
 	}
 
-	log.Printf("SetEhrUser tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s SetEhrUser tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
@@ -120,7 +121,7 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	return &ehrUUID, nil
 }
 
-func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (string, error) {
+func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (string, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -137,7 +138,7 @@ func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (stri
 		return "", fmt.Errorf("ehrIndex.SetEhrDoc error: %w", err)
 	}
 
-	log.Printf("SetEhrDoc tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s SetEhrDoc tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
@@ -218,7 +219,7 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (string, error) {
+func (i *Index) SetDocKeyEncrypted(ctx context.Context, key *[32]byte, value []byte) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -227,7 +228,7 @@ func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (string, error) 
 		return "", fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
 	}
 
-	log.Printf("SetDocAccess tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s SetDocAccess tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
@@ -256,7 +257,7 @@ func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte)
 		return "", fmt.Errorf("ehrIndex.SetGroupAccess error: %w", err)
 	}
 
-	log.Printf("SetGroupAccess tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s SetGroupAccess tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
@@ -295,7 +296,7 @@ func (i *Index) SetSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, s
 		return "", fmt.Errorf("ehrIndex.SetSubject error: %w", err)
 	}
 
-	log.Printf("SetSubject tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s SetSubject tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
@@ -338,12 +339,12 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
 
-	log.Printf("DeleteDoc tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s DeleteDoc tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
 
-func (i *Index) SetAllowed(address string) (string, error) {
+func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -352,7 +353,7 @@ func (i *Index) SetAllowed(address string) (string, error) {
 		return "", fmt.Errorf("ehrIndex.SetAllowed error: %w", err)
 	}
 
-	log.Printf("SetAllowed tx %s nonce %d", tx.Hash().Hex(), tx.Nonce())
+	log.Printf("%s SetAllowed tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }
