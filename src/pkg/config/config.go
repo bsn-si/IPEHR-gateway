@@ -2,16 +2,45 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
-	"hms/gateway/pkg/common/utils"
+	"fmt"
+	"log"
 	"os"
+
+	"hms/gateway/pkg/common/utils"
+	"hms/gateway/pkg/errors"
 )
 
 type Config struct {
-	BaseUrl     string `json:"baseUrl"`
-	DataPath    string `json:"dataPath"`
-	Host        string `json:"host"`
-	KeystoreKey string `json:"keystoreKey"`
+	BaseURL              string `json:"baseUrl"`
+	DataPath             string `json:"dataPath"`
+	Host                 string `json:"host"`
+	KeystoreKey          string `json:"keystoreKey"`
+	CreatingSystemID     string `json:"creatingSystemId"`
+	CompressionEnabled   bool   `json:"compressionEnabled"`
+	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
+	DefaultUserID        string `json:"defaultUserId"`
+	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
+	Storage              struct {
+		Localfile struct {
+			Path string
+		}
+		Ipfs struct {
+			EndpointURL string `json:"endpointUrl"`
+		}
+		Filecoin struct {
+			LotusRPCEndpoint string
+			AuthToken        string
+			DealsMaxPrice    uint64
+		}
+	}
+	Contract struct {
+		Address     string
+		Endpoint    string
+		PrivKeyPath string
+	}
+	DB struct {
+		FilePath string `json:"filePath"`
+	} `json:"db"`
 
 	path string
 }
@@ -24,6 +53,7 @@ func New(params ...string) (cfg *Config, err error) {
 	if len(params) == 1 {
 		configFilePath = params[0]
 	}
+
 	path, err := resolveConfigFile(configFilePath)
 	if err != nil {
 		return
@@ -33,6 +63,10 @@ func New(params ...string) (cfg *Config, err error) {
 		path: path,
 	}
 	err = cfg.load()
+
+	cfgJSON, _ := json.MarshalIndent(cfg, "", "    ")
+
+	log.Println("IPEHR Config:", string(cfgJSON))
 
 	return
 }
@@ -44,22 +78,20 @@ func resolveConfigFile(userConfigFile string) (configFile string, err error) {
 		return
 	}
 
-	possibleConfigFiles := [3]string{
+	possibleConfigFiles := [4]string{
 		userConfigFile,
 		projectRootDir + "/" + mainConfigFile,
+		os.Getenv("IPEHR_CONFIG_PATH"),
 		projectRootDir + "/" + fallbackConfigFile,
 	}
 
 	for _, configFile = range possibleConfigFiles {
-		_, err = os.Stat(configFile)
-		if err == nil {
-			return
+		if _, err = os.Stat(configFile); err == nil {
+			return configFile, nil
 		}
 	}
 
-	err = errors.New("not found any configuration file")
-
-	return
+	return "", fmt.Errorf("Not found any configuration file: %w", errors.ErrIsNotExist)
 }
 
 // Loads content of source configuration file into configuration structure

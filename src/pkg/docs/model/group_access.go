@@ -1,9 +1,14 @@
 package model
 
-import "hms/gateway/pkg/crypto/chacha_poly"
+import (
+	"github.com/google/uuid"
+
+	"hms/gateway/pkg/crypto/chachaPoly"
+)
 
 type GroupAccess struct {
-	GroupId     string           `json:"group_id"`
-	Description string           `json:"description"`
-	Key         *chacha_poly.Key `json:"-"`
+	GroupUUID   *uuid.UUID      `json:"group_id"`
+	Description string          `json:"description"`
+	Key         *chachaPoly.Key `json:"-"`
+	Nonce       *[12]byte       `json:"-"`
 }

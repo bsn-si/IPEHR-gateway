@@ -7,21 +7,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"hms/gateway/pkg/common/fake_data"
-	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/query"
 )
 
 type QueryHandler struct {
-	cfg     *config.Config
-	service *query.QueryService
+	service *query.Service
 }
 
-func NewQueryHandler(docService *service.DefaultDocumentService, cfg *config.Config) *QueryHandler {
+func NewQueryHandler(docService *service.DefaultDocumentService) *QueryHandler {
 	return &QueryHandler{
-		cfg:     cfg,
 		service: query.NewQueryService(docService),
 	}
 }
@@ -62,12 +59,12 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 		return
 	}
 
-	userId := c.GetString("userId")
-	if userId == "" {
+	userID := c.GetString("userId")
+	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
 	//TODO make real job
-	c.Data(http.StatusOK, "application/json", fake_data.QueryExecResponse(queryRequest.Query))
+	c.Data(http.StatusOK, "application/json", fakeData.QueryExecResponse(queryRequest.Query))
 }

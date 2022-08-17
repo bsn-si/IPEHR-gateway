@@ -2,5 +2,31 @@
     "baseUrl": "http://localhost:8080",
     "dataPath": "../data",
     "host": "localhost:8080",
-    "keystoreKey": "fb5b72b901e8419969057bc7f73f8731bf3e3599ee3d8fac26b2c4bc6c7b6627"
+    "keystoreKey": "fb5b72b901e8419969057bc7f73f8731bf3e3599ee3d8fac26b2c4bc6c7b6627",
+    "creatingSystemId": "openEHRSys.example.com",
+    "compressionEnabled": true,
+    "compressionLevel": 5,
+    "defaultUserId": "8dc598d2-a3fa-462b-a513-a69a32c5ab4f",
+    "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b"
+    "storage": {
+        "localfile": {
+            "path": "../data/storage"
+        },
+        "ipfs": {
+            "endpointUrl": "http://lotus.dev.bsn.si:5001/api/v0"
+        },
+        "filecoin": {
+            "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v1",
+            "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.IXRD51_C2V8RcgkAjFg3ZKl6eKGV_5Moda535yuolX4",
+            "dealsMaxPrice": 1000000000
+        }
+    },
+    "contract": {
+        "address": "0x90346f14E3D22bff62415707928486A42282B19F",
+        "endpoint": "https://goerli.infura.io/v3/<API-KEY>",
+        "privKeyPath": "../.blockchain.key"
+    },
+    "db": {
+        "filePath": "../data/local.db"
+    }
 }

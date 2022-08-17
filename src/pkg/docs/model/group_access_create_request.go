@@ -4,8 +4,7 @@ type GroupAccessCreateRequest struct {
 	Description string `json:"description"`
 }
 
+// TODO
 func (e *GroupAccessCreateRequest) Validate() bool {
-	//TODO
-
 	return true
 }

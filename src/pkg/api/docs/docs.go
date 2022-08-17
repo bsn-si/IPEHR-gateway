@@ -97,6 +97,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "The new EHR resource is returned in the body when the request’s ` + "`" + `Prefer` + "`" + ` header value is ` + "`" + `return=representation` + "`" + `, otherwise only headers are returned.",
                         "name": "Prefer",
                         "in": "header",
@@ -168,6 +175,13 @@ const docTemplate = `{
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -205,6 +219,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     },
@@ -284,10 +305,23 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId - UUID",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "GroupAccessId - UUID. If not specified, the default access group will be used.",
+                        "name": "GroupAccessId",
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -338,6 +372,234 @@ const docTemplate = `{
                 }
             }
         },
+        "/ehr/{ehr_id}/composition/{preceding_version_uid}": {
+            "delete": {
+                "description": "Deletes the COMPOSITION identified by ` + "`" + `preceding_version_uid` + "`" + ` and associated with the EHR identified by ` + "`" + `ehr_id` + "`" + `.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "COMPOSITION"
+                ],
+                "summary": "Deletes the COMPOSITION by version id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "ehr_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent) version. Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1` + "`" + `",
+                        "name": "preceding_version_uid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "` + "`" + `No Content` + "`" + ` is returned when COMPOSITION was deleted."
+                    },
+                    "400": {
+                        "description": "` + "`" + `Bad Request` + "`" + ` is returned when the composition with ` + "`" + `preceding_version_uid` + "`" + ` is already deleted."
+                    },
+                    "404": {
+                        "description": "` + "`" + `Not Found` + "`" + ` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with preceding_version_uid does not exist."
+                    },
+                    "409": {
+                        "description": "` + "`" + `Conflict` + "`" + ` is returned when supplied ` + "`" + `preceding_version_uid` + "`" + ` doesn’t match the latest version. Returns latest version in the Location and ETag headers."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/ehr/{ehr_id}/composition/{version_uid}": {
+            "get": {
+                "description": "Retrieves a particular version of the COMPOSITION identified by ` + "`" + `version_uid` + "`" + ` and associated with the EHR identified by ` + "`" + `ehr_id` + "`" + `.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "COMPOSITION"
+                ],
+                "summary": "Get COMPOSITION by version id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "ehr_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1",
+                        "name": "version_uid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Composition"
+                        }
+                    },
+                    "204": {
+                        "description": "Is returned when the COMPOSITION is deleted (logically)."
+                    },
+                    "400": {
+                        "description": "Is returned when AuthUserId is not specified"
+                    },
+                    "404": {
+                        "description": "is returned when an EHR with ` + "`" + `ehr_id` + "`" + ` does not exist or when an COMPOSITION with ` + "`" + `version_uid` + "`" + ` does not exist."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/ehr/{ehr_id}/composition/{versioned_object_uid}": {
+            "put": {
+                "description": "Updates COMPOSITION identified by ` + "`" + `versioned_object_uid` + "`" + ` and associated with the EHR\nidentified by ` + "`" + `ehr_id` + "`" + `. If the request body already contains a COMPOSITION.uid.value,\nit must match the ` + "`" + `versioned_object_uid` + "`" + ` in the URL. The existing latest ` + "`" + `version_uid` + "`" + `\nof COMPOSITION resource (i.e the ` + "`" + `preceding_version_uid` + "`" + `) must be specified in the ` + "`" + `If-Match` + "`" + ` header.\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "COMPOSITION"
+                ],
+                "summary": "Updates the COMPOSITION by version id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "ehr_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "identifier of the COMPOSITION to be updated. Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515` + "`" + `",
+                        "name": "versioned_object_uid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The updated COMPOSITION resource is returned to the body when the request’s ` + "`" + `Prefer` + "`" + ` header value is ` + "`" + `return=representation` + "`" + `, otherwise only headers are returned.",
+                        "name": "Prefer",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid). Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1` + "`" + `",
+                        "name": "If-Match",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "List of changes in COMPOSITION",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Composition"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is ` + "`" + `return=representation.` + "`" + `",
+                        "schema": {
+                            "$ref": "#/definitions/Composition"
+                        },
+                        "headers": {
+                            "ETag": {
+                                "type": "string",
+                                "description": "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+                            },
+                            "Location": {
+                                "type": "string",
+                                "description": "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "` + "`" + `Bad Request` + "`" + ` is returned when the request has invalid ` + "`" + `ehr_id` + "`" + ` or invalid content (e.g. either the body of the request could not be read, or converted to a valid COMPOSITION object)"
+                    },
+                    "404": {
+                        "description": "` + "`" + `Not Found` + "`" + ` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist."
+                    },
+                    "412": {
+                        "description": "` + "`" + `Version conflict` + "`" + ` is returned when ` + "`" + `If-Match` + "`" + ` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest ` + "`" + `version_uid` + "`" + ` in the ` + "`" + `Location` + "`" + ` and ` + "`" + `ETag` + "`" + ` headers."
+                    },
+                    "422": {
+                        "description": "` + "`" + `Unprocessable Entity` + "`" + ` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/ehr/{ehr_id}/ehr_status": {
             "get": {
                 "description": "Retrieves a version of the EHR_STATUS associated with the EHR identified by ` + "`" + `ehr_id` + "`" + `. If ` + "`" + `version_at_time` + "`" + ` is supplied, retrieves the version extant at specified time, otherwise retrieves the latest EHR_STATUS version.",
@@ -370,6 +632,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     }
@@ -416,6 +685,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     },
@@ -522,6 +798,13 @@ const docTemplate = `{
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -586,6 +869,201 @@ const docTemplate = `{
                     },
                     "408": {
                         "description": "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/requests/": {
+            "get": {
+                "description": "It is returning only transactions which in progress\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "REQUEST"
+                ],
+                "summary": "Get list of transactions requests by authorized user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "default: 10",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "id namespace. Example: examples",
+                        "name": "offset",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/processing.RequestsResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when userId is empty"
+                    },
+                    "404": {
+                        "description": "Is returned when requests not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/requests/{request_id}": {
+            "get": {
+                "description": "It's returning only transactions which in progress\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "REQUEST"
+                ],
+                "summary": "Get list of transactions by certain request id for authorized user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique id of request",
+                        "name": "request_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/processing.RequestResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when userId or request_id is empty"
+                    },
+                    "404": {
+                        "description": "Is returned when requests not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/v1/access/group": {
+            "post": {
+                "description": "Creates new access group for use with part of users data and return this group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GROUP_ACCESS"
+                ],
+                "summary": "Create new access group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "DTO with data to create group access",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccessCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/v1/access/group/{group_id}": {
+            "get": {
+                "description": "Return access group object",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GROUP_ACCESS"
+                ],
+                "summary": "Get access group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -969,6 +1447,25 @@ const docTemplate = `{
                 }
             }
         },
+        "model.GroupAccess": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "group_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.GroupAccessCreateRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
         "model.QueryRequest": {
             "type": "object",
             "properties": {
@@ -1036,6 +1533,63 @@ const docTemplate = `{
                 "rows": {
                     "type": "array",
                     "items": {}
+                }
+            }
+        },
+        "processing.DocResult": {
+            "type": "object",
+            "properties": {
+                "cid": {
+                    "type": "string"
+                },
+                "dealCid": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "minerAddress": {
+                    "type": "string"
+                }
+            }
+        },
+        "processing.RequestResult": {
+            "type": "object",
+            "properties": {
+                "docs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/processing.DocResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "txs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/processing.TxResult"
+                    }
+                }
+            }
+        },
+        "processing.RequestsResult": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/processing.RequestResult"
+            }
+        },
+        "processing.TxResult": {
+            "type": "object",
+            "properties": {
+                "hash": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }

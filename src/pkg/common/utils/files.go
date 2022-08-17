@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"errors"
 	"path/filepath"
 	"runtime"
+
+	"hms/gateway/pkg/errors"
 )
 
 // ProjectRootDir Get path to this project root
@@ -14,7 +15,7 @@ func ProjectRootDir() (string, error) {
 
 	_, file, _, ok := runtime.Caller(0)
 	if !ok {
-		return "", errors.New("can't get runtime.Caller")
+		return "", errors.ErrGetRuntimeCaller
 	}
 
 	return filepath.Dir(file + pathUp(currentDirDepth)), nil
@@ -26,5 +27,6 @@ func pathUp(depth int) string {
 	for i := 0; i < depth; i++ {
 		postfix += "../"
 	}
+
 	return postfix
 }

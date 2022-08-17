@@ -10,6 +10,8 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/groupAccess"
+	"hms/gateway/pkg/infrastructure"
 )
 
 // @title        IPEHR Gateway API
@@ -24,6 +26,7 @@ import (
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host      gateway.ipehr.org
+// host      localhost:8080
 // @BasePath  /v1
 
 type API struct {
@@ -32,16 +35,20 @@ type API struct {
 	Composition *CompositionHandler
 	Query       *QueryHandler
 	GroupAccess *GroupAccessHandler
+	Request     *RequestHandler
 }
 
-func New(cfg *config.Config) *API {
-	docService := service.NewDefaultDocumentService(cfg)
+func New(cfg *config.Config, infra *infrastructure.Infra) *API {
+	docService := service.NewDefaultDocumentService(cfg, infra)
+	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
+
 	return &API{
-		Ehr:         NewEhrHandler(docService, cfg),
-		EhrStatus:   NewEhrStatusHandler(docService, cfg),
-		Composition: NewCompositionHandler(docService, cfg),
-		Query:       NewQueryHandler(docService, cfg),
-		GroupAccess: NewGroupAccessHandler(docService, cfg),
+		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
+		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
+		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL, cfg.DefaultGroupAccessID),
+		Query:       NewQueryHandler(docService),
+		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
+		Request:     NewRequestHandler(docService),
 	}
 }
 
@@ -56,11 +63,13 @@ func (a *API) Build() *gin.Engine {
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
 	query := v1.Group("query")
+	requests := v1.Group("requests")
 
 	a.setRedirections(r).
 		buildEhrAPI(ehr).
 		buildGroupAccessAPI(access).
-		buildQueryAPI(query)
+		buildQueryAPI(query).
+		buildRequestsAPI(requests)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -72,29 +81,44 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	//r.Use(Recovery, app_errors.ErrHandler)
 
 	// Other methods should be authorized
-	r.Use(a.Auth)
+	r.Use(auth)
+	r.Use(requestID)
+	r.Use(ehrSystemID)
 	r.POST("", a.Ehr.Create)
-	r.GET("", a.Ehr.GetBySubjectIdAndNamespace)
-	r.PUT("/:ehrid", a.Ehr.CreateWithId)
-	r.GET("/:ehrid", a.Ehr.GetById)
+	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
+	r.PUT("/:ehrid", a.Ehr.CreateWithID)
+	r.GET("/:ehrid", a.Ehr.GetByID)
 	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
-	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetById)
+	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
 	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
 	r.POST("/:ehrid/composition", a.Composition.Create)
+	r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
+	r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
+	r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
 
 	return a
 }
 
 func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
-	r.Use(a.Auth)
+	r.Use(auth)
 	r.GET("/group/:group_id", a.GroupAccess.Get)
 	r.POST("/group", a.GroupAccess.Create)
+
 	return a
 }
 
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
-	r.Use(a.Auth)
+	r.Use(auth)
 	r.POST("/aql", a.Query.ExecPost)
+
+	return a
+}
+
+func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
+	r.Use(auth)
+	r.GET("/", a.Request.GetAll)
+	r.GET("/:reqId", a.Request.GetByID)
+
 	return a
 }
 
@@ -105,5 +129,6 @@ func (a *API) setRedirections(r *gin.Engine) *API {
 
 	r.GET("/", redirect)
 	r.HEAD("/", redirect)
+
 	return a
 }

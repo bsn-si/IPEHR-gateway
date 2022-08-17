@@ -2,7 +2,7 @@ package model
 
 type EhrCreateRequest struct {
 	Type            string `json:"_type"`
-	ArchetypeNodeId string `json:"archetype_node_id"`
+	ArchetypeNodeID string `json:"archetype_node_id"`
 	Name            struct {
 		Value string `json:"value"`
 	} `json:"name"`
@@ -13,8 +13,7 @@ type EhrCreateRequest struct {
 	IsQueryable  bool `json:"isQueryable"`
 }
 
+// TODO
 func (e *EhrCreateRequest) Validate() bool {
-	//TODO
-
 	return true
 }

@@ -8,7 +8,7 @@ package base
 type DvText struct {
 	Type       string         `json:"_type"`
 	Value      string         `json:"value"`
-	Hyperlink  *DvUri         `json:"hyperlink,omitempty"`
+	Hyperlink  *DvURI         `json:"hyperlink,omitempty"`
 	Formatting string         `json:"formatting,omitempty"`
 	Mappings   *[]TermMapping `json:"mappings,omitempty"`
 	Language   *CodePhrase    `json:"language,omitempty"`

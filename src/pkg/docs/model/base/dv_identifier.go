@@ -7,6 +7,6 @@ package base
 type DvIdentifier struct {
 	Issuer   string `json:"issuer,omitempty"`
 	Assigner string `json:"assigner,omitempty"`
-	Id       string `json:"id"`
+	ID       string `json:"id"`
 	Type     string `json:"type,omitempty"`
 }

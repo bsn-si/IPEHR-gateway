@@ -1,6 +1,8 @@
 # IPEHR
 
-## Disclamer
+[![golangci-lint](https://github.com/bsn-si/IPEHR-gateway/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/bsn-si/IPEHR-gateway/actions/workflows/golangci-lint.yml)
+
+## Disclaimer
 
 The project is under active development and will gradually be supplemented.
 
@@ -10,7 +12,7 @@ Today common HMS applications store patients’ data in a local or a cloud DB wh
 
 -	Administrative overheard due to the rights provisioning on per patients/per record level.
 -	Patients lack control and visibility over who has access to their data which goes against natural data subject rights announced in GDPR (General Data Protection Regulation, chapter 3).
--	Super user access for DB and LDAP (access rights catalogue) create additional security risks.
+-	Superuser access for DB and LDAP (access rights catalogue) create additional security risks.
 -	In case of a data breach full registry will be compromised.
 
 The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of storing the data registry. Patients’ data will be stored in Filecoin network and will be accessed directly by stakeholders in case they have proper rights. Access rights and documents’ indexes will be stored on a blockchain in a smart-contract. Every data subject will have full unalienable control over his data and manage access rights on a personal level.
@@ -19,11 +21,15 @@ The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of 
   <img width="75%" src="https://user-images.githubusercontent.com/8058268/174096015-89aad056-d507-4ea5-8d00-bfef29c4a548.svg">
 </p>
 
+### Whatch video introduction:
+
+[![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://media.bsn.si/ipehr/introduction.mp4)
+
 ### Key features of the IPEHR solution:
 
 - all data is stored in a decentralized storage;
 - data encryption;
-- self management of user’s access rights;
+- self-management of user’s access rights;
 - data integrity and authenticity is guaranteed by a smart contract.
 
 ## Development roadmap
@@ -96,52 +102,17 @@ The following methods are based on the [standard specification of OpenEHR](https
 
 ## Workflow example
 
-The following workflow is showing how to create, update and find EHR information using swagger
+You can use [this](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project#workflow-example) instruction and try to create, update or get EHR
+For now we have the following methods:
 
-Precondition: go to [Swagger](http://gateway.ipehr.org/swagger/index.html)
-
-### Create an EHR
-1. Click `POST /ehr Create EHR` method
-1. Click `Try it out`
-1. Put necessary information (e.g ...)
-1. Click `Execute`
-Result: in the response, you see a created EHR with structured data in JSON format. Also here is data (e.g fields like id, summary by id, that help you work with EHR in the future. 
-
-### Getting info on created summary EHR by subject id
-1. Click `/GET ehr`
-1. Click `Try it out`
-1. Put `subject id` from previously created EHR
-1. Click `Execute`
-Result: in the response, you see created before EHR with only requested id
-
-### Getting info on created EHR summary by id
-1. Click `/GET ehr/{ehr_id}`
-1. Click `Try it out`
-1. Put `id` from previously created EHR
-1. Click `Execute`
-Result: in the response, you see created before EHR with requested ID
-
-### Getting info on EHR status version by time
-1. Click `/GET ehr/{ehr_id}/ehr_status`
-1. Click `Try it out`
-1. Put `id` from previously created EHR
-1. Click `Execute`
-Result: in the response, you see created before EHR status version by time
-
-### Update EHR status with id
-1. Click `/PUT ehr/{ehr_id}/ehr_status`
-1. Click `Try it out`
-1. Put `id` from previously created EHR
-1. Put a new status
-1. Click `Execute`
-Result: in the response, you see an updated EHR
-
-### Update EHR with id
-1. Click `/PUT ehr/{ehr_id}`
-1. Click `Try it out`
-1. Put a new ID
-1. Click `Execute`
-Result: in the response, you see updated EHR
+- Create an EHR (also with exact id or different parameters)
+- Getting info on created summary EHR by subject id 
+- Getting info on created summary EHR by summary id 
+- Getting info on created EHR status
+- Getting info on EHR status version by time
+- Update EHR status with id
+- Create composition
+- Execute AQL request
 
 ## Docker
 You can start a project in Docker

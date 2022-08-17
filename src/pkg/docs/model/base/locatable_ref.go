@@ -6,6 +6,6 @@ package base
 // https://specifications.openehr.org/releases/RM/Release-1.0.2/support.html#_locatable_ref_class
 type LocatableRef struct {
 	Path string     `json:"path,omitempty"`
-	Id   UidBasedId `json:"id"`
+	ID   UIDBasedID `json:"id"`
 	ObjectRef
 }
