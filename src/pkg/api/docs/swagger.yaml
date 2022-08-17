@@ -300,7 +300,11 @@ definitions:
     properties:
       cid:
         type: string
+      dealCid:
+        type: string
       kind:
+        type: string
+      minerAddress:
         type: string
     type: object
   processing.RequestResult:

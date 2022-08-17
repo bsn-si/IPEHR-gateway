@@ -67,20 +67,35 @@ func Test_API(t *testing.T) {
 		testUserID2: uuid.New().String(),
 	}
 
-	t.Run("EHR creating", testWrap.ehrCreate(testData))
+	if !t.Run("EHR creating", testWrap.ehrCreate(testData)) {
+		t.Fatal()
+	}
+
 	t.Run("Get transaction requests", testWrap.requests(testData))
-	t.Run("EHR creating with id", testWrap.ehrCreateWithID(testData))
+
+	if !t.Run("EHR creating with id", testWrap.ehrCreateWithID(testData)) {
+		t.Fatal()
+	}
+
 	t.Run("EHR creating with id for the same user", testWrap.ehrCreateWithIDForSameUser(testData))
 	t.Run("EHR getting", testWrap.ehrGetByID(testData))
 	t.Run("EHR get by subject", testWrap.ehrGetBySubject(testData))
 	t.Run("EHR_STATUS getting", testWrap.ehrStatusGet(testData))
 	t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData))
-	t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData))
+
+	if !t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData)) {
+		t.Fatal()
+	}
+
 	t.Run("Access group create", testWrap.accessGroupCreate(testData))
 	t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData))
 	t.Run("Access group getting", testWrap.accessGroupGetting(testData))
 	t.Run("COMPOSITION create Expected fail with wrong EhrId", testWrap.compositionCreateFail(testData))
-	t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData))
+
+	if !t.Run("COMPOSITION create Expected success with correct EhrId", testWrap.compositionCreateSuccess(testData)) {
+		t.Fatal()
+	}
+
 	t.Run("COMPOSITION getting with correct EhrId", testWrap.compositionGetByID(testData))
 	t.Run("COMPOSITION getting with wrong EhrId", testWrap.compositionGetByWrongID(testData))
 	t.Run("COMPOSITION update", testWrap.compositionUpdate(testData))
@@ -172,8 +187,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr", ehrCreateBodyRequest())
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
@@ -183,14 +197,12 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
-			t.Errorf("Expected nil, received %s", err.Error())
-			return
+			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
 		data, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			t.Errorf("Response body read error: %v", err)
-			return
+			t.Fatalf("Response body read error: %v", err)
 		}
 
 		err = response.Body.Close()
@@ -204,16 +216,14 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 
 		var ehr model.EHR
 		if err = json.Unmarshal(data, &ehr); err != nil {
-			t.Error(err)
-			return
+			t.Fatal(err)
 		}
 
 		testData.requestID = response.Header.Get("RequestId")
 
 		testData.ehrID = response.Header.Get("ETag")
 		if testData.ehrID == "" {
-			t.Error("EhrID missing")
-			return
+			t.Fatal("EhrID missing")
 		}
 	}
 }

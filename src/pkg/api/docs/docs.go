@@ -1542,7 +1542,13 @@ const docTemplate = `{
                 "cid": {
                     "type": "string"
                 },
+                "dealCid": {
+                    "type": "string"
+                },
                 "kind": {
+                    "type": "string"
+                },
+                "minerAddress": {
                     "type": "string"
                 }
             }
