@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -137,14 +136,12 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 	}
 
 	// Filecoin saving
-	/*
-		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
-		if err != nil {
-			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
-		}
-	*/
-	dealCID := fakeData.Cid()
-	minerAddr := []byte("123")
+	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+	if err != nil {
+		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+	}
+	//dealCID := fakeData.Cid()
+	//minerAddr := []byte("123")
 
 	docIDEncrypted, err := key.EncryptWithAuthData([]byte(objectVersionID.String()), ehrUUID[:])
 	if err != nil {
@@ -162,7 +159,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 			Kind:         processing.RequestCompositionCreate,
 			CID:          CID.String(),
 			DealCID:      dealCID.String(),
-			MinerAddress: hex.EncodeToString(minerAddr),
+			MinerAddress: minerAddr,
 		}
 		if err = s.Proc.AddRequest(procReq); err != nil {
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
@@ -183,7 +180,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 			Status:          uint8(status.ACTIVE),
 			CID:             CID.Bytes(),
 			DealCID:         dealCID.Bytes(),
-			MinerAddress:    minerAddr,
+			MinerAddress:    []byte(minerAddr),
 			DocUIDEncrypted: docIDEncrypted,
 			DocBaseUIDHash:  baseDocumentUIDHash,
 			Version:         *objectVersionID.VersionBytes(),
@@ -191,7 +188,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		docIndexTx, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
+		docIndexTx, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta)
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -202,7 +199,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	// Index DataSearch
@@ -232,7 +229,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 
 		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
+		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(ctx, &docAccessKey, docAccessValue)
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
@@ -243,7 +240,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
@@ -352,7 +349,7 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	}
 
 	// Waiting for tx processed and pending nonce increased
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

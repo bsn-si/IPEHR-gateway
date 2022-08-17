@@ -46,9 +46,11 @@ func TestFindMiner(t *testing.T) {
 
 	defer clean(t, filecoinClient)
 
-	dataSize := uint64(1000000)
+	dataSize := uint64(300)
 
-	minerAddress, err := filecoinClient.FindMiner(dataSize)
+	ctx := context.Background()
+
+	minerAddress, err := filecoinClient.FindMiner(ctx, dataSize)
 	if err != nil {
 		t.Fatal(err)
 	}

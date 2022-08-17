@@ -85,7 +85,7 @@ func TestEhrByUserIndex(t *testing.T) {
 
 	t.Logf("userID %s ehrUUID %s", userID, ehrUUID.String())
 
-	h, err := index.SetEhrUser(userID, &ehrUUID)
+	h, err := index.SetEhrUser(context.Background(), userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}

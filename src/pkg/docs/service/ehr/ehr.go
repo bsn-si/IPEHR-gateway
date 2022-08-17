@@ -2,7 +2,6 @@ package ehr
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -113,14 +111,12 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 	}
 
 	// Filecoin saving
-	/*
-		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
-		if err != nil {
-			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
-		}
-	*/
-	dealCID := fakeData.Cid()
-	minerAddr := []byte("123")
+	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+	if err != nil {
+		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+	}
+	//dealCID := fakeData.Cid()
+	//minerAddr := []byte("123")
 
 	// Start processing request
 	reqID := ctx.(*gin.Context).GetString("reqId")
@@ -133,23 +129,21 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			EhrUUID:      ehrUUID.String(),
 			CID:          CID.String(),
 			DealCID:      dealCID.String(),
-			MinerAddress: hex.EncodeToString(minerAddr),
+			MinerAddress: minerAddr,
 		}
 		if err = s.Proc.AddRequest(procReq); err != nil {
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
 		}
 
-		/*
-			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
-			if err != nil {
-				return fmt.Errorf("Proc.AddTx error: %w", err)
-			}
-		*/
+		err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+		if err != nil {
+			return fmt.Errorf("Proc.AddTx error: %w", err)
+		}
 	}
 
 	// Index EHR userID -> docStorageID
 	{
-		ehrIndexTx, err := s.Infra.Index.SetEhrUser(userID, &ehrUUID)
+		ehrIndexTx, err := s.Infra.Index.SetEhrUser(ctx, userID, &ehrUUID)
 		if err != nil {
 			return fmt.Errorf("Index.SetEhrUser error: %w", err)
 		}
@@ -160,7 +154,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -175,14 +169,14 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 			Status:          uint8(docStatus.ACTIVE),
 			CID:             CID.Bytes(),
 			DealCID:         dealCID.Bytes(),
-			MinerAddress:    minerAddr,
+			MinerAddress:    []byte(minerAddr),
 			DocUIDEncrypted: ehrIDEncrypted,
 			DocBaseUIDHash:  [32]byte{},
 			IsLast:          true,
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		docIndexTx, err := s.Infra.Index.AddEhrDoc(&ehrUUID, docMeta)
+		docIndexTx, err := s.Infra.Index.AddEhrDoc(ctx, &ehrUUID, docMeta)
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -193,7 +187,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	// Index Access
@@ -210,7 +204,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 
 		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
+		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(ctx, &docAccessKey, docAccessValue)
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
@@ -221,7 +215,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
@@ -338,14 +332,12 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 	}
 
 	// Filecoin saving
-	/*
-		dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))
-		if err != nil {
-			return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
-		}
-	*/
-	dealCID := fakeData.Cid()
-	minerAddr := []byte("123")
+	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))
+	if err != nil {
+		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+	}
+	//dealCID := fakeData.Cid()
+	//minerAddr := []byte("123")
 
 	// Start processing request
 	reqID := ctx.(*gin.Context).GetString("reqId")
@@ -358,19 +350,17 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			Status:       processing.StatusProcessing,
 			CID:          CID.String(),
 			DealCID:      dealCID.String(),
-			MinerAddress: hex.EncodeToString(minerAddr),
+			MinerAddress: minerAddr,
 		}
 		err = s.Proc.AddRequest(procReq)
 		if err != nil {
 			return fmt.Errorf("Proc.AddRequest error: %w", err)
 		}
 
-		/*
-			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
-			if err != nil {
-				return fmt.Errorf("Proc.AddTx error: %w", err)
-			}
-		*/
+		err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+		if err != nil {
+			return fmt.Errorf("Proc.AddTx error: %w", err)
+		}
 	}
 
 	// Index subject and namespace
@@ -389,7 +379,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -404,7 +394,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			Status:          uint8(docStatus.ACTIVE),
 			CID:             CID.Bytes(),
 			DealCID:         dealCID.Bytes(),
-			MinerAddress:    minerAddr,
+			MinerAddress:    []byte(minerAddr),
 			DocUIDEncrypted: statusIDEncrypted,
 			DocBaseUIDHash:  baseDocumentUIDHash,
 			Version:         *objectVersionID.VersionBytes(),
@@ -412,7 +402,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		docIndexTx, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
+		docIndexTx, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta)
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -423,7 +413,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	// Index Access
@@ -440,7 +430,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 
 		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
+		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(ctx, &docAccessKey, docAccessValue)
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
@@ -451,7 +441,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 
 	return nil
