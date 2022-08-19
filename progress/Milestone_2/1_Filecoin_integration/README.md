@@ -8,8 +8,8 @@
 - validation
 - compression and encryption
 - saving to IPFS
-- saving in a smart contract on the blockchain the meta-information about the document 
-- saving meaningful information from a document into a smart contract on the blockchain using homomorphic encryption for search and filtering purposes
+- saving in a [smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) on the blockchain the meta-information about the document 
+- saving meaningful information from a document into a [smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) on the blockchain using homomorphic encryption for search and filtering purposes
 - saving the document to Filecoin:
 	- searching for a suitable miner to conclude a transaction using the [FilRep ](https://filrep.io) service, taking into account the criteria: overall rating, minimum/maximum data size, statistics on previous transactions, price, etc.
 	- signing a deal with the miner in the Filecoin network
