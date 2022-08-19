@@ -355,7 +355,7 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 				TxSetEhrUser,
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				TxFilecoinStartDeal,
+				//TxFilecoinStartDeal,
 			}
 		case RequestEhrGetBySubject:
 		case RequestEhrGetByID:
@@ -364,14 +364,14 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 				TxSetEhrBySubject,
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				TxFilecoinStartDeal,
+				//TxFilecoinStartDeal,
 			}
 		case RequestEhrStatusUpdate:
 			txsToCheck = []TxKind{
 				TxSetEhrBySubject,
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				TxFilecoinStartDeal,
+				//TxFilecoinStartDeal,
 			}
 		case RequestEhrStatusGetByID:
 		case RequestEhrStatusGetByTime:
@@ -379,13 +379,13 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 			txsToCheck = []TxKind{
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				TxFilecoinStartDeal,
+				//TxFilecoinStartDeal,
 			}
 		case RequestCompositionUpdate:
 			txsToCheck = []TxKind{
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				TxFilecoinStartDeal,
+				//TxFilecoinStartDeal,
 			}
 		case RequestCompositionGetByID:
 		case RequestCompositionDelete:
