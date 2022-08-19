@@ -9,7 +9,7 @@ import (
 )
 
 func requestID(c *gin.Context) {
-	id := make([]byte, 8)
+	id := make([]byte, 6)
 	reqID := c.Request.Header.Get("reqId")
 
 	if reqID == "" {
@@ -21,6 +21,6 @@ func requestID(c *gin.Context) {
 	}
 
 	c.Set("reqId", reqID)
-	c.Header("RequestId", c.GetString("reqId"))
+	c.Header("RequestId", reqID)
 	c.Next()
 }

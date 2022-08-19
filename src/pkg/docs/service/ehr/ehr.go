@@ -154,7 +154,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -187,7 +187,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	// Index Access
@@ -215,7 +215,7 @@ func (s *Service) SaveEhr(ctx context.Context, userID string, doc *model.EHR) er
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	return nil
@@ -379,7 +379,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -413,7 +413,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	// Index Access
@@ -441,7 +441,7 @@ func (s *Service) SaveStatus(ctx context.Context, userID string, ehrUUID *uuid.U
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	return nil

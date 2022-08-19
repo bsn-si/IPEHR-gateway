@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -199,7 +200,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	// Index DataSearch
@@ -240,7 +241,7 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 		}
 
 		// Waiting for tx processed and pending nonce increased
-		time.Sleep(1 * time.Second)
+		time.Sleep(common.BlockchainTxProcAwaitTime)
 	}
 
 	return nil
@@ -349,7 +350,7 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	}
 
 	// Waiting for tx processed and pending nonce increased
-	time.Sleep(1 * time.Second)
+	time.Sleep(common.BlockchainTxProcAwaitTime)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

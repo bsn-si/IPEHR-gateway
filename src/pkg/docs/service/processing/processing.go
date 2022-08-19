@@ -201,7 +201,7 @@ func (p *Proc) Start() {
 					p.execBlockchain()
 				}
 			case <-tickerFilecoin.C:
-				//p.execFilecoin()
+				p.execFilecoin()
 			case <-p.done:
 				return
 			}
@@ -298,12 +298,15 @@ func (p *Proc) execFilecoin() {
 		StatusProcessing,
 	}
 
-	for {
-		tx := Tx{}
+	txs := []Tx{}
 
-		result := p.db.Where("kind IN ? AND status IN ?", txKinds, statuses).First(&tx)
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			break
+	for _, tx := range txs {
+		result := p.db.Where("kind IN ? AND status IN ?", txKinds, statuses).Find(&txs)
+		if result.Error != nil {
+			if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				log.Println("DB get filecoin transactions error:", result.Error)
+			}
+			return
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -322,15 +325,15 @@ func (p *Proc) execFilecoin() {
 		}
 
 		switch tx.Status {
-		case StatusProcessing:
+		case StatusPending, StatusProcessing:
 			if dealStatus == storagemarket.StorageDealActive {
-				tx.Status = StatusSuccess
-				if result = p.db.Save(&tx); result.Error != nil {
+				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
+				if result.Error != nil {
 					log.Println(tx.ReqID, "db.Save error:", result.Error)
 					return
 				}
 			}
-		case StatusPending, StatusSuccess:
+		case StatusSuccess:
 		}
 	}
 }
@@ -352,7 +355,7 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 				TxSetEhrUser,
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				//TxFilecoinStartDeal,
+				TxFilecoinStartDeal,
 			}
 		case RequestEhrGetBySubject:
 		case RequestEhrGetByID:
@@ -361,14 +364,14 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 				TxSetEhrBySubject,
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				//TxFilecoinStartDeal,
+				TxFilecoinStartDeal,
 			}
 		case RequestEhrStatusUpdate:
 			txsToCheck = []TxKind{
 				TxSetEhrBySubject,
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				//TxFilecoinStartDeal,
+				TxFilecoinStartDeal,
 			}
 		case RequestEhrStatusGetByID:
 		case RequestEhrStatusGetByTime:
@@ -376,13 +379,13 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 			txsToCheck = []TxKind{
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				//TxFilecoinStartDeal,
+				TxFilecoinStartDeal,
 			}
 		case RequestCompositionUpdate:
 			txsToCheck = []TxKind{
 				TxSetEhrDocs,
 				TxSetDocAccess,
-				//TxFilecoinStartDeal,
+				TxFilecoinStartDeal,
 			}
 		case RequestCompositionGetByID:
 		case RequestCompositionDelete:

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -15,7 +16,7 @@ import (
 )
 
 // @title        IPEHR Gateway API
-// @version      0.1
+// @version      0.2
 // @description  The IPEHR Gateway is an openEHR compliant EHR server implementation that stores encrypted medical data in a Filecoin distributed file storage.
 
 // @contact.name   API Support
@@ -59,6 +60,22 @@ func (a *API) Build() *gin.Engine {
 		c.AbortWithStatus(404)
 	})
 
+	r.Use(requestID)
+
+	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+		// your custom format
+		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
+			param.TimeStamp.Format("2006-01-02 15:04:05"),
+			param.Keys["reqId"],
+			param.StatusCode,
+			param.Latency,
+			param.ClientIP,
+			param.Method,
+			param.Path,
+			param.ErrorMessage,
+		)
+	}))
+
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
@@ -82,7 +99,6 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 
 	// Other methods should be authorized
 	r.Use(auth)
-	r.Use(requestID)
 	r.Use(ehrSystemID)
 	r.POST("", a.Ehr.Create)
 	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
