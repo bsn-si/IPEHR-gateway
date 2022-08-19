@@ -6,6 +6,7 @@ The smart contract is written in Solidity language and can be deployed in any [E
 - CID for retrieving a document in IPFS. Is the hash sum of the document and allows to check the integrity.
 - dealCid and minerAddress for getting the document in Filecoin
 - `document_uid` (encrypted)
+- document status
 - version
 - creation time
 
