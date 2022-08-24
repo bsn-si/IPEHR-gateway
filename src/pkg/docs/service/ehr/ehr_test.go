@@ -165,7 +165,9 @@ func TestStatus(t *testing.T) {
 
 	subjectID2 := uuid.New().String()
 
-	_, err = ehrService.CreateStatus(statusIDNew, subjectID2, subjectNamespace)
+	subject := ehrService.CreateSubject(subjectID2, subjectNamespace, "PERSON")
+
+	_, err = ehrService.CreateStatus(statusIDNew, subject)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,7 +224,9 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	reqID = "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
 	ctx.Set("reqId", reqID)
 
-	doc, err := ehrService.CreateStatus(statusIDNew, subjectID2, subjectNamespace)
+	subject := ehrService.CreateSubject(subjectID2, subjectNamespace, "PERSON")
+
+	doc, err := ehrService.CreateStatus(statusIDNew, subject)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -251,6 +255,7 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	// Test: docIndex is not exist yet
+
 	if _, err := ehrService.GetStatusByNearestTime(ctx, userID, &ehrUUID, time.Now(), types.EhrStatus); err != nil {
 		t.Fatal("Should return status", err)
 	}
