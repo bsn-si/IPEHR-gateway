@@ -41,6 +41,15 @@ type testWrap struct {
 	storage    *storage.Storager
 }
 
+type ehrContainer struct {
+	ehr       *model.EHR
+	requestID string
+}
+
+var ehrs = make(map[string]ehrContainer)
+var usersGroupAccess = make(map[string]*model.GroupAccess)
+var ehrsCompositions = make(map[string]*model.Composition)
+
 func Test_API(t *testing.T) {
 	var httpClient http.Client
 
@@ -219,6 +228,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 }
 
 func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T) {
+	testUserID := uuid.New().String()
 	return func(t *testing.T) {
 		ehrID2 := uuid.New().String()
 
@@ -234,7 +244,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 		}
 
 		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("AuthUserId", testUserID)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
@@ -270,7 +280,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 
 		t.Logf("Waiting for request %s done", requestID)
 
-		err = requestWait(testData.testUserID, requestID, testWrap)
+		err = requestWait(testUserID, requestID, testWrap)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -278,7 +288,9 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 }
 
 func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *testData) func(t *testing.T) {
-	testEhr, _, err := testWrap.createEhr(testData.testUserID, testData.ehrSystemID)
+	testUserID := uuid.New().String()
+	testEhr, _, err := testWrap.createEhr(testUserID, testData.ehrSystemID)
+
 	if err != nil {
 		log.Fatalf("Expected model.EHR, received %s", err.Error())
 	}
@@ -290,7 +302,7 @@ func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *testData) func(t 
 		}
 
 		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("AuthUserId", testUserID)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -500,6 +512,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 		// replace substring in ehrStatusID
 		ehrSystemID, _ := base.NewEhrSystemID(testData.ehrSystemID)
 		objectVersionID, err := base.NewObjectVersionID(testEhr.EhrStatus.ID.Value, ehrSystemID)
+
 		if err != nil {
 			log.Fatalf("Expected model.EHR, received %s", err.Error())
 		}
@@ -662,12 +675,14 @@ func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *test
 }
 
 func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *testing.T) {
-	testEhr, _, err := testWrap.createEhr(testData.testUserID, testData.ehrSystemID)
+	testUserID := uuid.New().String()
+
+	testEhr, _, err := testWrap.createEhr(testUserID, testData.ehrSystemID)
 	if err != nil {
 		log.Fatalf("Expected model.EHR, received %s", err.Error())
 	}
 
-	testGroupAccess, err := testWrap.createGroupAccess(testData.testUserID)
+	testGroupAccess, err := testWrap.createGroupAccess(testUserID)
 	if err != nil {
 		log.Fatalf("Expected model.GroupAccess, received %s", err.Error())
 	}
@@ -688,7 +703,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 		}
 
 		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", testData.testUserID)
+		request.Header.Set("AuthUserId", testUserID)
 		request.Header.Set("GroupAccessId", testGroupAccessID)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
@@ -717,7 +732,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 
 		t.Logf("Waiting for request %s done", requestID)
 
-		err = requestWait(testData.testUserID, requestID, testWrap)
+		err = requestWait(testUserID, requestID, testWrap)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -731,9 +746,11 @@ func (testWrap *testWrap) compositionGetByID(testData *testData) func(t *testing
 	}
 
 	testGroupAccess, err := testWrap.createGroupAccess(testData.testUserID)
+
 	if err != nil {
 		log.Fatalf("Expected model.GroupAccess, received %s", err.Error())
 	}
+
 	testGroupAccessID := testGroupAccess.GroupUUID.String()
 
 	testCreateComposition, err := testWrap.createComposition(testEhr, testGroupAccess, testData.testUserID, testData.ehrSystemID)
@@ -818,9 +835,11 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 	}
 
 	testGroupAccess, err := testWrap.createGroupAccess(testData.testUserID)
+
 	if err != nil {
 		log.Fatalf("Expected model.GroupAccess, received %s", err.Error())
 	}
+
 	testGroupAccessID := testGroupAccess.GroupUUID.String()
 
 	testCreateComposition, err := testWrap.createComposition(testEhr, testGroupAccess, testData.testUserID, testData.ehrSystemID)
@@ -1131,9 +1150,11 @@ func (testWrap *testWrap) wrongAccessGroupGetting(testData *testData) func(t *te
 
 func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing.T) {
 	testGroupAccess, err := testWrap.createGroupAccess(testData.testUserID)
+
 	if err != nil {
 		log.Fatalf("Expected model.GroupAccess, received %s", err.Error())
 	}
+
 	testGroupAccessID := testGroupAccess.GroupUUID.String()
 
 	return func(t *testing.T) {
@@ -1218,6 +1239,10 @@ func queryExecPostCreateBodyRequest(ehrID string) *bytes.Reader {
 }
 
 func (testWrap *testWrap) createEhr(userID, ehrSystemID string) (ehr *model.EHR, requestID string, err error) {
+	key := userID + ehrSystemID
+	if ehrCol, found := ehrs[key]; found {
+		return ehrCol.ehr, ehrCol.requestID, nil
+	}
 
 	request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr", ehrCreateBodyRequest())
 	if err != nil {
@@ -1242,7 +1267,7 @@ func (testWrap *testWrap) createEhr(userID, ehrSystemID string) (ehr *model.EHR,
 	}
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, "", err
+		return nil, "", errors.New(response.Status)
 	}
 
 	if err = json.Unmarshal(data, &ehr); err != nil {
@@ -1252,11 +1277,17 @@ func (testWrap *testWrap) createEhr(userID, ehrSystemID string) (ehr *model.EHR,
 	requestID = response.Header.Get("RequestId")
 	err = requestWait(userID, requestID, testWrap)
 
+	if err == nil {
+		ehrs[key] = ehrContainer{
+			ehr:       ehr,
+			requestID: requestID,
+		}
+	}
+
 	return ehr, requestID, err
 }
 
 func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID string) (*model.EhrStatus, error) {
-
 	url := testWrap.server.URL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", ehrID, statusID)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
@@ -1294,6 +1325,11 @@ func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID stri
 }
 
 func (testWrap *testWrap) createGroupAccess(userID string) (*model.GroupAccess, error) {
+	key := userID
+	if userGroupAccess, found := usersGroupAccess[key]; found {
+		return userGroupAccess, nil
+	}
+
 	description := fakeData.GetRandomStringWithLength(50)
 
 	req := []byte(`{
@@ -1309,18 +1345,20 @@ func (testWrap *testWrap) createGroupAccess(userID string) (*model.GroupAccess, 
 	request.Header.Set("AuthUserId", userID)
 
 	response, err := testWrap.httpClient.Do(request)
+
 	if err != nil {
 		return nil, err
 	}
 
 	data, err := ioutil.ReadAll(response.Body)
 	defer response.Body.Close()
+
 	if err != nil {
 		return nil, err
 	}
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, err
+		return nil, errors.New(response.Status)
 	}
 
 	var groupAccess model.GroupAccess
@@ -1328,12 +1366,20 @@ func (testWrap *testWrap) createGroupAccess(userID string) (*model.GroupAccess, 
 		return nil, err
 	}
 
+	if err == nil {
+		usersGroupAccess[key] = &groupAccess
+	}
+
 	return &groupAccess, nil
 }
 
 func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess *model.GroupAccess, userID, ehrSystemID string) (*model.Composition, error) {
-
 	testGroupAccessID := testGroupAccess.GroupUUID.String()
+
+	key := testEhr.EhrID.Value + userID + ehrSystemID
+	if composition, found := ehrsCompositions[key]; found {
+		return composition, nil
+	}
 
 	body, err := compositionCreateBodyRequest()
 	if err != nil {
@@ -1360,7 +1406,7 @@ func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess 
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, err
+		return nil, errors.New(response.Status)
 	}
 
 	data, err := ioutil.ReadAll(response.Body)
@@ -1378,6 +1424,10 @@ func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess 
 	err = requestWait(userID, requestID, testWrap)
 	if err != nil {
 		return nil, err
+	}
+
+	if err == nil {
+		ehrsCompositions[key] = &c
 	}
 
 	return &c, nil
