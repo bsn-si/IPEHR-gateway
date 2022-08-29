@@ -557,8 +557,9 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 	}
 
 	for _, tx := range txs {
-		if tx.Status != StatusSuccess {
-			return tx.Status, nil
+				if tx.Status != StatusSuccess {
+					return tx.Status, nil
+
 		}
 	}
 
