@@ -13,12 +13,18 @@
             "path": "../data/storage"
         },
         "ipfs": {
-            "endpointUrl": "http://lotus.dev.bsn.si:5001/api/v0"
+            "endpointURLs": [
+                "http://lotus.dev.bsn.si:5001/api/v0",
+                "http://lotus2.dev.bsn.si:5001/api/v0",
+                "http://lotus3.dev.bsn.si:5001/api/v0"
+            ]
         },
         "filecoin": {
             "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v1",
+            "baseURL": "http://lotus.dev.bsn.si",
             "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.IXRD51_C2V8RcgkAjFg3ZKl6eKGV_5Moda535yuolX4",
-            "dealsMaxPrice": 1000000000
+            "dealsMaxPrice": 1000000000,
+            "miners": ["f01412953", "f01545009", "f01443744"]
         }
     },
     "contract": {

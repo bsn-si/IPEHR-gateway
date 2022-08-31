@@ -23,5 +23,6 @@ var (
 	ErrIsUnsupported    = errors.New("Unsupported")
 	ErrTimeout          = errors.New("Timeout")
 	ErrNotFound         = errors.New("Not found")
-	ErrObjectNotInit    = errors.New(`Object is not initialized`)
+	ErrObjectNotInit    = errors.New("Object is not initialized")
+	ErrIsInProcessing   = errors.New("Request is in processing")
 )

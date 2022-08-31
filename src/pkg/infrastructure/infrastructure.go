@@ -48,6 +48,10 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
+	if err = db.AutoMigrate(&processing.Retrieve{}); err != nil {
+		log.Fatal(err)
+	}
+
 	ks := keystore.New(cfg.KeystoreKey)
 
 	ehtClient, err := ethclient.Dial(cfg.Contract.Endpoint)
@@ -55,7 +59,7 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	ipfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURL)
+	ipfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURLs)
 	if err != nil {
 		log.Fatal(err)
 	}

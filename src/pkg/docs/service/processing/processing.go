@@ -4,18 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/ipfs/go-cid"
 	"gorm.io/gorm"
 
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/storage/filecoin"
+	"hms/gateway/pkg/storage/ipfs"
 )
 
 type (
@@ -24,11 +28,14 @@ type (
 	RequestKind uint8
 
 	Proc struct {
-		db             *gorm.DB
-		ethClient      *ethclient.Client
-		filecoinClient *filecoin.Client
-		lock           bool
-		done           chan bool
+		db               *gorm.DB
+		ethClient        *ethclient.Client
+		filecoinClient   *filecoin.Client
+		ipfsClient       *ipfs.Client
+		httpClient       *http.Client
+		lock             bool
+		localStoragePath string
+		done             chan bool
 	}
 
 	Request struct {
@@ -53,6 +60,13 @@ type (
 		Status  Status
 		Comment string
 	}
+
+	Retrieve struct {
+		CID     string `gorm:"primaryKey"`
+		DealID  retrievalmarket.DealID
+		Status  Status
+		Comment string
+	}
 )
 
 const (
@@ -60,18 +74,20 @@ const (
 	StatusSuccess    Status = 1
 	StatusPending    Status = 2
 	StatusProcessing Status = 3
+	StatusUnknown    Status = 255
 
-	RequestEhrCreate RequestKind = iota
-	RequestEhrGetBySubject
-	RequestEhrGetByID
-	RequestEhrStatusCreate
-	RequestEhrStatusUpdate
-	RequestEhrStatusGetByID
-	RequestEhrStatusGetByTime
-	RequestCompositionCreate
-	RequestCompositionUpdate
-	RequestCompositionGetByID
-	RequestCompositionDelete
+	RequestEhrCreate          RequestKind = 0
+	RequestEhrGetBySubject    RequestKind = 1
+	RequestEhrGetByID         RequestKind = 2
+	RequestEhrStatusCreate    RequestKind = 3
+	RequestEhrStatusUpdate    RequestKind = 4
+	RequestEhrStatusGetByID   RequestKind = 5
+	RequestEhrStatusGetByTime RequestKind = 6
+	RequestCompositionCreate  RequestKind = 7
+	RequestCompositionUpdate  RequestKind = 8
+	RequestCompositionGetByID RequestKind = 9
+	RequestCompositionDelete  RequestKind = 10
+	RequestUnknown            RequestKind = 255
 
 	TxSetEhrUser        TxKind = 0
 	TxSetEhrBySubject   TxKind = 1
@@ -79,78 +95,83 @@ const (
 	TxSetDocAccess      TxKind = 3
 	TxDeleteDoc         TxKind = 4
 	TxFilecoinStartDeal TxKind = 5
+	TxUnknown           TxKind = 255
+)
+
+var (
+	statuses = map[Status]string{
+		StatusFailed:     "Failed",
+		StatusSuccess:    "Success",
+		StatusPending:    "Pending",
+		StatusProcessing: "Processing",
+		StatusUnknown:    "Unknown",
+	}
+
+	txKinds = map[TxKind]string{
+		TxSetEhrUser:        "SetEhrUser",
+		TxSetEhrBySubject:   "SetEhrBySubject",
+		TxSetEhrDocs:        "SetEhrDocs",
+		TxSetDocAccess:      "SetDocAccess",
+		TxDeleteDoc:         "DeleteDoc",
+		TxFilecoinStartDeal: "FilecoinStartDeal",
+		TxUnknown:           "Unknown",
+	}
+
+	reqKinds = map[RequestKind]string{
+		RequestEhrCreate:          "EhrCreate",
+		RequestEhrGetBySubject:    "EhrGetBySubject",
+		RequestEhrGetByID:         "EhrGetByID",
+		RequestEhrStatusCreate:    "EhrStatusCreate",
+		RequestEhrStatusUpdate:    "EhrStatusUpdate",
+		RequestEhrStatusGetByID:   "EhrStatusGetByID",
+		RequestEhrStatusGetByTime: "EhrStatusGetByTime",
+		RequestCompositionCreate:  "CompositionCreate",
+		RequestCompositionUpdate:  "CompositionUpdate",
+		RequestCompositionGetByID: "CompositionGetByID",
+		RequestCompositionDelete:  "CompositionDelete",
+	}
 )
 
 func (s Status) String() string {
-	switch s {
-	case StatusFailed:
-		return "Failed"
-	case StatusSuccess:
-		return "Success"
-	case StatusPending:
-		return "Pending"
-	case StatusProcessing:
-		return "Processing"
-	default:
-		// nolint
-		return "Unknown"
+	if status, ok := statuses[s]; ok {
+		return status
 	}
+
+	return statuses[StatusUnknown]
 }
 
 func (k TxKind) String() string {
-	switch k {
-	case TxSetEhrUser:
-		return "SetEhrUser"
-	case TxSetEhrBySubject:
-		return "SetEhrBySubject"
-	case TxSetEhrDocs:
-		return "SetEhrDocs"
-	case TxSetDocAccess:
-		return "SetDocAccess"
-	case TxDeleteDoc:
-		return "DeleteDoc"
-	case TxFilecoinStartDeal:
-		return "FilecoinStartDeal"
-	default:
-		return "Unknown"
+	if tk, ok := txKinds[k]; ok {
+		return tk
 	}
+
+	return txKinds[TxUnknown]
 }
 
 func (k RequestKind) String() string {
-	switch k {
-	case RequestEhrCreate:
-		return "EhrCreate"
-	case RequestEhrGetBySubject:
-		return "EhrGetBySubject"
-	case RequestEhrGetByID:
-		return "EhrGetByID"
-	case RequestEhrStatusCreate:
-		return "EhrStatusCreate"
-	case RequestEhrStatusUpdate:
-		return "EhrStatusUpdate"
-	case RequestEhrStatusGetByID:
-		return "EhrStatusGetByID"
-	case RequestEhrStatusGetByTime:
-		return "EhrStatusGetByTime"
-	case RequestCompositionCreate:
-		return "CompositionCreate"
-	case RequestCompositionUpdate:
-		return "CompositionUpdate"
-	case RequestCompositionGetByID:
-		return "CompositionGetByID"
-	case RequestCompositionDelete:
-		return "CompositionDelete"
-	default:
-		return "Unknown"
+	if rk, ok := reqKinds[k]; ok {
+		return rk
 	}
+
+	return reqKinds[RequestUnknown]
 }
 
-func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Client) *Proc {
+func logf(format string, a ...interface{}) {
+	fmt.Printf("[PROC] %19s | %s\n",
+		time.Now().Format("2006-01-02 15:04:05"),
+		fmt.Sprintf(format, a...),
+	)
+}
+
+func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Client, ipfsClient *ipfs.Client, storagePath string) *Proc {
 	return &Proc{
-		db:             db,
-		ethClient:      ethClient,
-		filecoinClient: filecoinClient,
-		done:           make(chan bool),
+		db:               db,
+		ethClient:        ethClient,
+		filecoinClient:   filecoinClient,
+		ipfsClient:       ipfsClient,
+		httpClient:       http.DefaultClient,
+		done:             make(chan bool),
+		localStoragePath: storagePath,
 	}
 }
 
@@ -189,20 +210,54 @@ func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind, status Status) 
 	return nil
 }
 
+func (p *Proc) AddRetrieve(CID string) error {
+	result := p.db.Create(&Retrieve{
+		CID:     CID,
+		Status:  StatusPending,
+		Comment: "",
+	})
+	if result.Error != nil {
+		return fmt.Errorf("db.Create error: %w", result.Error)
+	}
+
+	return nil
+}
+
+func (p *Proc) GetRetrieveStatus(CID *cid.Cid) (Status, error) {
+	var ret Retrieve
+
+	result := p.db.Model(&ret).Find(&ret, "c_id = ?", CID.String())
+	if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return StatusUnknown, nil
+	} else if result.RowsAffected == 0 {
+		return StatusUnknown, nil
+	} else if result.Error != nil {
+		return 0, fmt.Errorf("Retrieve get error: %w CID: %s", result.Error, CID)
+	}
+
+	return ret.Status, nil
+}
+
 func (p *Proc) Start() {
 	tickerBlockchain := time.NewTicker(5 * time.Second)
-	tickerFilecoin := time.NewTicker(5 * time.Minute)
+	tickerFilecoinStartDeal := time.NewTicker(5 * time.Minute)
+	tickerFilecoinRetrieve := time.NewTicker(1 * time.Minute)
 
 	go func() {
+		logf("Started")
+
 		for {
 			select {
 			case <-tickerBlockchain.C:
 				if !p.lock {
 					p.execBlockchain()
 				}
-			case <-tickerFilecoin.C:
-				p.execFilecoin()
+			case <-tickerFilecoinStartDeal.C:
+				p.execFilecoinStartDealStatus()
+			case <-tickerFilecoinRetrieve.C:
+				p.execFilecoinRetrieve()
 			case <-p.done:
+				logf("Stopped")
 				return
 			}
 		}
@@ -288,7 +343,10 @@ func (p *Proc) execBlockchain() {
 }
 
 // nolint
-func (p *Proc) execFilecoin() {
+func (p *Proc) execFilecoinStartDealStatus() {
+	logf("Filecoin StartDeal statuses started")
+	defer logf("Filecoin StartDeal statuses finished")
+
 	txKinds := []TxKind{
 		TxFilecoinStartDeal,
 	}
@@ -336,6 +394,144 @@ func (p *Proc) execFilecoin() {
 		case StatusSuccess:
 		}
 	}
+}
+
+func (p *Proc) execFilecoinRetrieve() {
+	logf("Filecoin retrieve started")
+	defer logf("Filecoin retrieve finished")
+
+	var rets []Retrieve
+
+	statuses := []Status{
+		StatusPending,
+		StatusProcessing,
+	}
+
+	result := p.db.Model(&Retrieve{}).Find(&rets, "status IN ?", statuses)
+	if result.Error != nil && result.RowsAffected == 0 {
+		return
+	} else if result.Error != nil {
+		logf("Filecoin retrieve error: %v", result.Error)
+	}
+
+	for i, ret := range rets {
+		var (
+			nextStatus  Status
+			comment     string
+			ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
+		)
+
+		switch ret.Status {
+		case StatusPending:
+			nextStatus = StatusProcessing
+
+			CID, err := cid.Decode(ret.CID)
+			if err != nil {
+				comment = fmt.Sprintf("Filecoin retrieve CID parse error: %v", err)
+				logf(comment)
+
+				nextStatus = StatusFailed
+			}
+
+			dealID, err := p.filecoinClient.StartRetrieve(ctx, &CID)
+			if err != nil {
+				comment = fmt.Sprintf("Filecoin retrieve StartRetrieve error: %v CID: %s", err, CID)
+				logf(comment)
+
+				nextStatus = StatusFailed
+			}
+
+			if err = p.db.Model(&rets[i]).Updates(Retrieve{
+				Status:  nextStatus,
+				Comment: comment,
+				DealID:  dealID,
+			}).Error; err != nil {
+				logf("Filecoin retrieve DB update error: %v CID: %s", err, ret.CID)
+			}
+		case StatusProcessing:
+			nextStatus = StatusSuccess
+
+			dealStatus, err := p.filecoinClient.GetRetrieveStatus(ctx, ret.DealID)
+			switch {
+			case err != nil && !errors.Is(err, errors.ErrNotFound):
+				logf("Filecoin retrieve error: %v, dealID: %d", err, ret.DealID)
+
+				cancel()
+
+				continue
+			case err != nil && errors.Is(err, errors.ErrNotFound): // OK
+			case dealStatus == retrievalmarket.DealStatusCompleted: // OK
+			default:
+				cancel()
+				continue
+			}
+
+			CID, err := cid.Decode(ret.CID)
+			if err != nil {
+				comment = fmt.Sprintf("Filecoin retrieve CID parse error: %v CID: %s", err, ret.CID)
+				logf(comment)
+			}
+
+			// Save retrieved file on lotus client host
+			err = p.filecoinClient.SaveFile(ctx, &CID, ret.DealID)
+			if err != nil {
+				comment = fmt.Sprintf("Filecoin retrieve SaveFile error: %v", err)
+				logf(comment)
+
+				nextStatus = StatusFailed
+			}
+
+			// Download file
+			file, err := p.downloadFile(&CID)
+			if err != nil {
+				comment = fmt.Sprintf("Filecoin retrieve download file error: %v", err)
+				logf(comment)
+
+				nextStatus = StatusFailed
+			}
+
+			// Add to IPFS
+			_, err = p.ipfsClient.Add(ctx, file)
+			if err != nil {
+				comment = fmt.Sprintf("IpfsClient.Add error: %v", err)
+				logf(comment)
+
+				nextStatus = StatusFailed
+			}
+
+			if err = p.db.Model(&rets[i]).Updates(Retrieve{
+				Status:  nextStatus,
+				Comment: comment,
+			}).Error; err != nil {
+				logf("Filecoin retrieve DB update error: %v CID: %s", err, ret.CID)
+			}
+
+			logf("Filecoin file recovery complete CID %s", ret.CID)
+		}
+
+		cancel()
+	}
+}
+
+func (p *Proc) downloadFile(CID *cid.Cid) ([]byte, error) {
+	url := p.filecoinClient.BaseURL() + "/files/" + CID.String()
+
+	resp, err := p.httpClient.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("request error: %w URL: %s", err, url)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w Download file response status error: %s", errors.ErrCustom, resp.Status)
+	}
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("downloadFile ReadAll error: %w", err)
+	}
+
+	return data, nil
 }
 
 func (p *Proc) checkRequestStatus(reqID string) (Status, error) {

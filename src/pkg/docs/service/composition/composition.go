@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -131,18 +132,18 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 	}
 
 	// IPFS saving
-	CID, err := s.Infra.IpfsClient.Add(docEncrypted)
+	CID, err := s.Infra.IpfsClient.Add(ctx, docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
 	// Filecoin saving
-	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
-	if err != nil {
-		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
-	}
-	//dealCID := fakeData.Cid()
-	//minerAddr := []byte("123")
+	//dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+	//if err != nil {
+	//	return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+	//}
+	dealCID := fakeData.Cid()
+	minerAddr := "123"
 
 	docIDEncrypted, err := key.EncryptWithAuthData([]byte(objectVersionID.String()), ehrUUID[:])
 	if err != nil {
@@ -266,7 +267,9 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 	}
 
 	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
-	if err != nil {
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		return nil, err
+	} else if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s storageID %s", err, userID, docMeta.CID)
 	}
 
@@ -299,7 +302,9 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 	}
 
 	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
-	if err != nil {
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		return nil, err
+	} else if err != nil {
 		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s CID %x", err, userID, docMeta.Cid().String())
 	}
 

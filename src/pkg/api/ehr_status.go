@@ -17,6 +17,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 )
 
 type EhrStatusHandler struct {
@@ -44,8 +45,9 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Param        Prefer       header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request      body      model.EhrStatusUpdate  true  "EHR_STATUS"
 // @Success      200          {object}  model.EhrStatusUpdate
-// @Header       200          {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Header       200          {string}  ETag      "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header       200          {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header       200          {string}  ETag       "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header       200          {string}  RequestID  "Request identifier"
 // @Success      204          "Is returned when `Prefer` header is missing or is set to `return=minimal`"
 // @Header       204          {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 // @Header       204          {string}  ETag      "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
@@ -125,7 +127,11 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if err = h.service.UpdateEhr(c, userID, &ehrUUID, &status); err != nil {
+	err = h.service.UpdateEhr(c, userID, &ehrUUID, &status)
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		c.AbortWithStatus(http.StatusAccepted)
+		return
+	} else if err != nil {
 		log.Println("UpdateEhr error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR updating error"})
 		return
@@ -154,6 +160,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Param        AuthUserId   header    string  true  "UserId UUID"
 // @Param        EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200          {object}  model.EhrStatusUpdate
+// @Success      202              "Is returned when the request is still being processed"
 // @Failure      400              "Is returned when the request has invalid content such as an invalid `version_at_time` format."
 // @Failure      404              "Is returned when EHR with `ehr_id` does not exist or a version of an EHR_STATUS resource does not exist at the specified `version_at_time`"
 // @Failure      500              "Is returned when an unexpected error occurs while processing a request"
@@ -198,7 +205,10 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	}
 
 	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
-	if err != nil {
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		c.AbortWithStatus(http.StatusAccepted)
+		return
+	} else if err != nil {
 		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s error: %v", userID, ehrID, err)
 		c.AbortWithStatus(http.StatusNotFound)
 
@@ -219,6 +229,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Param        AuthUserId       header    string  true  "UserId UUID"
 // @Param        EhrSystemId      header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200              {object}  model.EhrStatusUpdate
+// @Success      202          "Is returned when the request is still being processed"
 // @Failure      400          "Is returned when AuthUserId is not specified"
 // @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an EHR_STATUS with `version_uid` does not exist."
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
@@ -269,7 +280,10 @@ func (h EhrStatusHandler) GetByID(c *gin.Context) {
 	}
 
 	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
-	if err != nil {
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		c.AbortWithStatus(http.StatusAccepted)
+		return
+	} else if err != nil {
 		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
 		c.AbortWithStatus(http.StatusNotFound)
 
