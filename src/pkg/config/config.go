@@ -25,12 +25,14 @@ type Config struct {
 			Path string
 		}
 		Ipfs struct {
-			EndpointURL string `json:"endpointUrl"`
+			EndpointURLs []string `json:"endpointURLs"`
 		}
 		Filecoin struct {
 			LotusRPCEndpoint string
+			BaseURL          string
 			AuthToken        string
 			DealsMaxPrice    uint64
+			Miners           []string
 		}
 	}
 	Contract struct {

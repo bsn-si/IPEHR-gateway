@@ -67,6 +67,9 @@ const docTemplate = `{
                             "$ref": "#/definitions/model.EhrSummary"
                         }
                     },
+                    "202": {
+                        "description": "Is returned when the request is still being processed"
+                    },
                     "400": {
                         "description": "Is returned when userId is empty"
                     },
@@ -133,6 +136,10 @@ const docTemplate = `{
                             "Location": {
                                 "type": "string",
                                 "description": "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+                            },
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
                             }
                         }
                     },
@@ -190,6 +197,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.EhrSummary"
                         }
+                    },
+                    "202": {
+                        "description": "Is returned when the request is still being processed"
                     },
                     "400": {
                         "description": "Is returned when userId is empty"
@@ -267,6 +277,10 @@ const docTemplate = `{
                             "Location": {
                                 "type": "string",
                                 "description": "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+                            },
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
                             }
                         }
                     },
@@ -354,6 +368,10 @@ const docTemplate = `{
                             "Location": {
                                 "type": "string",
                                 "description": "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+                            },
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
                             }
                         }
                     },
@@ -417,7 +435,13 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "` + "`" + `No Content` + "`" + ` is returned when COMPOSITION was deleted."
+                        "description": "` + "`" + `No Content` + "`" + ` is returned when COMPOSITION was deleted.",
+                        "headers": {
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
+                            }
+                        }
                     },
                     "400": {
                         "description": "` + "`" + `Bad Request` + "`" + ` is returned when the composition with ` + "`" + `preceding_version_uid` + "`" + ` is already deleted."
@@ -483,6 +507,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/Composition"
                         }
+                    },
+                    "202": {
+                        "description": "Is returned when the request is still being processed"
                     },
                     "204": {
                         "description": "Is returned when the COMPOSITION is deleted (logically)."
@@ -579,6 +606,10 @@ const docTemplate = `{
                             "Location": {
                                 "type": "string",
                                 "description": "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+                            },
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
                             }
                         }
                     },
@@ -649,6 +680,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.EhrStatusUpdate"
                         }
+                    },
+                    "202": {
+                        "description": "Is returned when the request is still being processed"
                     },
                     "400": {
                         "description": "Is returned when the request has invalid content such as an invalid ` + "`" + `version_at_time` + "`" + ` format."
@@ -733,6 +767,10 @@ const docTemplate = `{
                             "Location": {
                                 "type": "string",
                                 "description": "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+                            },
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
                             }
                         }
                     },
@@ -813,6 +851,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.EhrStatusUpdate"
                         }
+                    },
+                    "202": {
+                        "description": "Is returned when the request is still being processed"
                     },
                     "400": {
                         "description": "Is returned when AuthUserId is not specified"

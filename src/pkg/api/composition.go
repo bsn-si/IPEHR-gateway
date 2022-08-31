@@ -48,8 +48,9 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, groupAcce
 // @Param    Prefer         header    string                 true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param    Request        body      model.SwagComposition  true   "COMPOSITION"
 // @Success  201            {object}  model.SwagComposition
-// @Header   201            {string}  Location  "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
-// @Header   201            {string}  ETag      "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+// @Header   201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+// @Header   201            {string}  ETag       "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+// @Header   201            {string}  RequestID  "Request identifier"
 // @Failure  400            "Is returned when the request has invalid ehr_id or invalid content (e.g. content could not be converted to a valid COMPOSITION object)"
 // @Failure  404            "Is returned when an EHR with ehr_id does not exist."
 // @Failure  422            "Is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
@@ -149,6 +150,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 // @Param    AuthUserId   header    string  true  "UserId UUID"
 // @Param    EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success  200          {object}  model.SwagComposition
+// @Success  202          "Is returned when the request is still being processed"
 // @Failure  204          "Is returned when the COMPOSITION is deleted (logically)."
 // @Failure  400          "Is returned when AuthUserId is not specified"
 // @Failure  404          "is returned when an EHR with `ehr_id` does not exist or when an COMPOSITION with `version_uid` does not exist."
@@ -200,6 +202,8 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 			c.AbortWithStatus(http.StatusNotFound)
 		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
 			c.AbortWithStatus(http.StatusNoContent)
+		} else if errors.Is(err, errors.ErrIsInProcessing) {
+			c.AbortWithStatus(http.StatusAccepted)
 		} else {
 			log.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
@@ -222,6 +226,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 // @Param    AuthUserId             header  string  true  "UserId UUID"
 // @Param    EhrSystemId            header  string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Failure  204                    "`No Content` is returned when COMPOSITION was deleted."
+// @Header   204                    {string}  RequestID  "Request identifier"
 // @Failure  400                    "`Bad Request` is returned when the composition with `preceding_version_uid` is already deleted."
 // @Failure  404                    "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with preceding_version_uid does not exist."
 // @Failure  409                    "`Conflict` is returned when supplied `preceding_version_uid` doesn’t match the latest version. Returns latest version in the Location and ETag headers."
@@ -303,6 +308,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Success  200                   {object}  model.SwagComposition  true  "Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is `return=representation.`"
 // @Header   200                   {string}  Location               "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 // @Header   200                   {string}  ETag                   "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Header   200                   {string}  RequestID              "Request identifier"
 // @Failure  422                   "`Unprocessable Entity` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
 // @Failure  400                   "`Bad Request` is returned when the request has invalid `ehr_id` or invalid content (e.g. either the body of the request could not be read, or converted to a valid COMPOSITION object)"
 // @Failure  404                   "`Not Found` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist."
@@ -393,6 +399,10 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else if errors.Is(err, errors.ErrIsInProcessing) {
+			c.AbortWithStatus(http.StatusAccepted)
+			return
 		}
 
 		log.Println("GetLastByBaseID error:", err)

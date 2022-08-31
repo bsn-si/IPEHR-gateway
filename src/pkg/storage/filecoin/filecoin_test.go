@@ -46,16 +46,44 @@ func TestFindMiner(t *testing.T) {
 
 	defer clean(t, filecoinClient)
 
-	dataSize := uint64(300)
-
-	ctx := context.Background()
-
-	minerAddress, err := filecoinClient.FindMiner(ctx, dataSize)
+	minerAddress, err := filecoinClient.FindMiner(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	t.Log("Miner address:", minerAddress)
+}
+
+func TestRetrieve(t *testing.T) {
+	t.Skip()
+
+	filecoinClient, err := prepare(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer clean(t, filecoinClient)
+
+	ctx := context.Background()
+
+	CID, err := cid.Decode("QmRYm3NtD5uDH1msh9YAXCYeuPQKFFJkr4cXtgWDfiuczM")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dealID, err := filecoinClient.StartRetrieve(ctx, &CID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("Retrieval dealID:", dealID)
+
+	retrieveStatus, err := filecoinClient.GetRetrieveStatus(ctx, dealID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("retrieveStatus:", retrieveStatus)
 }
 
 func prepare(t *testing.T) (*filecoin.Client, error) {

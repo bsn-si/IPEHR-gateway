@@ -14,7 +14,9 @@ import (
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service/processing"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
+	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 )
 
@@ -29,141 +31,37 @@ type DefaultDocumentService struct {
 }
 
 func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
-	proc := processing.New(infra.LocalDB, infra.EthClient, infra.FilecoinClient)
+	proc := processing.New(
+		infra.LocalDB, infra.EthClient,
+		infra.FilecoinClient,
+		infra.IpfsClient,
+		cfg.Storage.Localfile.Path,
+	)
 	proc.Start()
 
 	return &DefaultDocumentService{
 		Infra: infra,
 		Proc:  proc,
-		//EhrsIndex:          ehrs.New(),
-		//DocsIndex:        docs.New(),
-		//DocAccessIndex:   docAccess.New(infra.Keystore),
-		//SubjectIndex:     subject.New(),
-		//GroupAccessIndex: groupAccess.New(infra.Keystore),
 	}
 }
-
-/* TODO брать из блокчейна
-func (d *DefaultDocumentService) GetDocIndexByObjectVersionID(userID string, ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID) (doc *model.DocumentMeta, err error) {
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Infra.Keystore.Get(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	docIndexes, err := d.DocsIndex.Get(ehrUUID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	objVersionIDString := objectVersionID.String()
-
-	for _, docIndex := range docIndexes {
-		// Getting access key
-		indexKey := sha3.Sum256(append(docIndex.CID[:], []byte(userID)...))
-		indexKeyStr := hex.EncodeToString(indexKey[:])
-
-		keyEncrypted, err := d.DocAccessIndex.Get(indexKeyStr)
-		if err != nil {
-			return nil, err
-		}
-
-		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(keyDecrypted) != 32 {
-			return nil, fmt.Errorf("%w: document key length mismatch", errors.ErrEncryption)
-		}
-
-		key, err := chachaPoly.NewKeyFromBytes(keyDecrypted)
-		if err != nil {
-			return nil, err
-		}
-
-		docIDDecrypted, err := key.DecryptWithAuthData(docIndex.DocIDEncrypted, ehrUUID[:])
-		if err != nil {
-			continue
-		}
-
-		if objVersionIDString == string(docIDDecrypted) {
-			return docIndex, nil
-		}
-	}
-
-	return nil, errors.ErrIsNotExist
-}
-*/
-
-/* TODO брать из блокчейна
-func (d *DefaultDocumentService) GetDocIndexesByBaseID(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) ([]*model.DocumentMeta, error) {
-	docIndexes, err := d.DocsIndex.Get(ehrUUID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	var (
-		docsMeta            []*model.DocumentMeta
-		basedID             = objectVersionID.BasedID()
-		baseDocumentUIDHash = sha3.Sum256([]byte(basedID))
-	)
-
-	for _, docIndex := range docIndexes {
-		if docType > 0 && docIndex.TypeCode != docType {
-			continue
-		}
-
-		if docIndex.BaseDocumentUIDHash == nil {
-			continue
-		}
-
-		if *docIndex.BaseDocumentUIDHash != baseDocumentUIDHash {
-			continue
-		}
-
-		docsMeta = append(docsMeta, docIndex)
-	}
-
-	return docsMeta, nil
-}
-*/
-
-/* TODO брать из блокчейна
-func (d *DefaultDocumentService) GetDocIndexByBaseIDAndVersion(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) (*model.DocumentMeta, error) {
-	docIndexes, err := d.GetDocIndexesByBaseID(ehrUUID, objectVersionID, docType)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, docIndex := range docIndexes {
-		if docIndex.Version == objectVersionID.VersionTreeID() {
-			return docIndex, nil
-		}
-	}
-
-	return nil, errors.ErrIsNotExist
-}
-*/
-
-/* TODO брать из блокчейна
-func (d *DefaultDocumentService) GetLastVersionDocIndexByBaseID(ehrUUID *uuid.UUID, objectVersionID *base.ObjectVersionID, docType types.DocumentType) (*model.DocumentMeta, error) {
-	docIndexes, err := d.GetDocIndexesByBaseID(ehrUUID, objectVersionID, docType)
-	if err != nil {
-		return nil, fmt.Errorf("GetDocIndexesByBaseID error: %w", err)
-	}
-
-	for _, docIndex := range docIndexes {
-		if docIndex.IsLastVersion {
-			return docIndex, nil
-		}
-	}
-
-	return nil, errors.ErrIsNotExist
-}
-*/
 
 func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error) {
+	// Checking that the same request is not in processing
+	{
+		status, err := d.Proc.GetRetrieveStatus(CID)
+		if err != nil {
+			return nil, fmt.Errorf("Proc.GetRetrieveStatus error: %w CID: %s", err, CID.String())
+		}
+
+		switch status {
+		case proc.StatusPending, proc.StatusProcessing:
+			return nil, errors.ErrIsInProcessing
+		case proc.StatusFailed:
+			return nil, fmt.Errorf("%w Document retrieve failed CID: %s", errors.ErrCustom, CID.String())
+		case proc.StatusSuccess, proc.StatusUnknown:
+		}
+	}
+
 	// Get doc key
 	var docKey *chachaPoly.Key
 	{
@@ -191,8 +89,14 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 	// Get doc encrypted
 	var docEncrypted []byte
 	{
-		reader, err := d.Infra.IpfsClient.Get(CID)
-		if err != nil {
+		reader, err := d.Infra.IpfsClient.Get(ctx, CID)
+		if err != nil && errors.Is(err, errors.ErrNotFound) {
+			// Request to recovery file from Filecoin
+			if err = d.Proc.AddRetrieve(CID.String()); err != nil {
+				return nil, fmt.Errorf("Proc.AddRetrieve error: %w CID %s", err, CID.String())
+			}
+			return nil, errors.ErrIsInProcessing
+		} else if err != nil {
 			return nil, fmt.Errorf("IpfsClient.Get error: %w CID %s", err, CID.String())
 		}
 		defer reader.Close()
