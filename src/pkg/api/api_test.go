@@ -1080,7 +1080,7 @@ func requestWait(userID, requestID string, tw *testWrap) error {
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("AuthUserId", userID)
 
-	timeout := time.Now().Add(1 * time.Minute)
+	timeout := time.Now().Add(2 * time.Minute)
 
 	for {
 		time.Sleep(3 * time.Second)
