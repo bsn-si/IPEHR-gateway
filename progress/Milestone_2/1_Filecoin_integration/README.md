@@ -1,3 +1,5 @@
+![storage_diagram](https://user-images.githubusercontent.com/8058268/187934087-d8f72346-d11b-4502-9615-5c0253bc7be8.svg)
+
 ### At IPEHR we use a two-tiered document storage system.
 
 1. The IPFS distributed file system is used for quick access to documents.
