@@ -1,10 +1,12 @@
 package model
 
-import "hms/gateway/pkg/docs/model/base"
-
 type ExternalRef struct {
-	Id        base.ObjectId `json:"id"`
-	Namespace string        `json:"namespace"`
-	Type      string        `json:"type"`
-	Scheme    string        `json:"scheme,omitempty"`
+	ID struct {
+		Value  string `json:"value"`
+		Type   string `json:"_type,omitempty"`
+		Scheme string `json:"scheme,omitempty"`
+	} `json:"id"`
+	Namespace string `json:"namespace"`
+	Type      string `json:"type"`
+	Scheme    string `json:"scheme,omitempty"`
 }

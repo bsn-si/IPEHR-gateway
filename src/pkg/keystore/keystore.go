@@ -3,51 +3,73 @@ package keystore
 
 import (
 	cryptoRand "crypto/rand"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage"
+	"encoding/hex"
 
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
+
+	"hms/gateway/pkg/crypto/chachaPoly"
+	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/storage"
 )
 
 type KeyStore struct {
-	storage storage.Storager
+	storage     storage.Storager
+	keystoreKey []byte
 }
 
-func New() *KeyStore {
+func New(key string) *KeyStore {
+	if key == "" {
+		panic("Keystore key is empty. Check the config.")
+	}
+
+	keyByte, err := hex.DecodeString(key)
+	if err != nil {
+		return nil
+	}
+
 	return &KeyStore{
-		storage: storage.Init(),
+		storage:     storage.Storage(),
+		keystoreKey: keyByte,
 	}
 }
 
 // Get user key pair
-func (k *KeyStore) Get(userId string) (publicKey, privateKey *[32]byte, err error) {
-	storeId := k.storeId(userId)
+func (k *KeyStore) Get(userID string) (publicKey, privateKey *[32]byte, err error) {
+	storeID := k.storeID(userID)
 
-	keys, err := k.storage.Get(storeId)
+	keysEncrypted, err := k.storage.Get(storeID)
 	if err != nil {
-		if errors.Is(err, errors.IsNotExist) {
-			publicKey, privateKey, err = k.generateAndStoreKeys(userId)
+		if errors.Is(err, errors.ErrIsNotExist) {
+			publicKey, privateKey, err = k.generateAndStoreKeys(userID)
 		}
+
+		return
+	}
+
+	keysDecrypted, err := k.decryptUserKeys(keysEncrypted)
+	if err != nil {
 		return
 	}
 
 	publicKey = new([32]byte)
 	privateKey = new([32]byte)
 
-	copy(publicKey[:], keys[0:32])
-	copy(privateKey[:], keys[32:64])
+	copy(publicKey[:], keysDecrypted[0:32])
+	copy(privateKey[:], keysDecrypted[32:64])
 
 	return
 }
 
 // Generate and store new user key pair
-func (k *KeyStore) generateAndStoreKeys(userId string) (publicKey, privateKey *[32]byte, err error) {
+func (k *KeyStore) generateAndStoreKeys(userID string) (publicKey, privateKey *[32]byte, err error) {
 	publicKey, privateKey, err = k.generateKeys()
 	if err != nil {
 		return
 	}
-	err = k.storeKeys(userId, publicKey, privateKey)
+
+	err = k.storeKeys(userID, publicKey, privateKey)
+
 	return
 }
 
@@ -58,14 +80,43 @@ func (k *KeyStore) generateKeys() (publicKey, privateKey *[32]byte, err error) {
 }
 
 // Store user key pair
-func (k *KeyStore) storeKeys(userId string, publicKey, privateKey *[32]byte) error {
-	storeId := k.storeId(userId)
-	keys := append(publicKey[:], privateKey[:]...)
-	return k.storage.AddWithId(storeId, keys)
+func (k *KeyStore) storeKeys(userID string, publicKey, privateKey *[32]byte) error {
+	storeID := k.storeID(userID)
+
+	keysDecrypted := append(publicKey[:], privateKey[:]...)
+
+	keysEncrypted, err := k.encryptUserKeys(keysDecrypted)
+	if err != nil {
+		return err
+	}
+
+	return k.storage.AddWithID(storeID, keysEncrypted)
 }
 
 // Get store file ID where the user keys is
-func (k *KeyStore) storeId(userId string) *[32]byte {
-	id := sha3.Sum256([]byte(userId + "keys"))
+func (k *KeyStore) storeID(userID string) *[32]byte {
+	id := sha3.Sum256([]byte(userID + "keys"))
 	return &id
+}
+
+func (k *KeyStore) encryptUserKeys(keysDecrypted []byte) (keysEncrypted []byte, err error) {
+	key, err := chachaPoly.NewKeyFromBytes(k.keystoreKey)
+	if err != nil {
+		return
+	}
+
+	keysEncrypted, err = key.Encrypt(keysDecrypted)
+
+	return
+}
+
+func (k *KeyStore) decryptUserKeys(keysEncrypted []byte) (keysDecrypted []byte, err error) {
+	key, err := chachaPoly.NewKeyFromBytes(k.keystoreKey)
+	if err != nil {
+		return
+	}
+
+	keysDecrypted, err = key.Decrypt(keysEncrypted)
+
+	return
 }

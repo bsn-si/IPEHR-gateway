@@ -4,11 +4,12 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 )
 
+// EHR model info
 // The EHR object is the root object and access point of an EHR for a subject of care
 // https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_class
 type EHR struct {
-	SystemId      base.ObjectId     `json:"system_id"`
-	EhrId         base.ObjectId     `json:"ehr_id"`
+	SystemID      base.ObjectID     `json:"system_id"`
+	EhrID         base.ObjectID     `json:"ehr_id"`
 	Contributions *[]base.ObjectRef `json:"contributions,omitempty"`
 	EhrStatus     base.ObjectRef    `json:"ehr_status"`
 	EhrAccess     base.ObjectRef    `json:"ehr_access"`

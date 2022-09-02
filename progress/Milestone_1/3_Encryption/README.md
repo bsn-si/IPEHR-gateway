@@ -40,5 +40,5 @@ The packages that implement the encryption functionality are located in the `pkg
 Running tests to demonstrate the work of the packages:
 
 ```
-go test -v pkg/crypto/...
+go test -v ./pkg/crypto/...
 ```

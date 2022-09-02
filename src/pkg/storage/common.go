@@ -3,32 +3,30 @@ package storage
 import (
 	"hms/gateway/pkg/storage/localfile"
 	"log"
-	"os"
-	"path/filepath"
 )
 
-var Storage Storager
+var storage Storager
 
-func Init() Storager {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	path := filepath.Dir(ex)
-
-	//TODO getting basepath from general config
-
-	if Storage == nil {
+func Init(sc *Config) {
+	if storage == nil {
 		cfg := localfile.Config{
-			BasePath: path,
+			BasePath: sc.Path(),
 			Depth:    3,
 		}
+
 		var err error
-		Storage, err = localfile.Init(&cfg)
+
+		storage, err = localfile.Init(&cfg)
 		if err != nil {
 			log.Fatal(err)
-			return nil
 		}
 	}
-	return Storage
+}
+
+func Storage() Storager {
+	if storage == nil {
+		log.Fatal("Storage is not initialized")
+	}
+
+	return storage
 }

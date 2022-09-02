@@ -1,39 +1,60 @@
-package localfile
+package localfile_test
 
 import (
-	"hms/gateway/pkg/common"
+	"bytes"
 	"os"
 	"testing"
+
+	"hms/gateway/pkg/common/utils"
+	"hms/gateway/pkg/storage/localfile"
 )
 
-func TestAdd(t *testing.T) {
-	cfg := Config{
-		BasePath: "/tmp/localfiletest",
-		Depth:    3,
-	}
+func TestLocalfileStorage(t *testing.T) {
+	cfg := config()
 
-	fs, err := Init(&cfg)
+	fs, err := localfile.Init(cfg)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	data := []byte("Hello! This is the test data for BSN HMS Gateway")
+	data, err := testData()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	id, err := fs.Add(data)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	data2, err := fs.Get(id)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	if !common.SliceEqualBytes(data, data2) {
-		t.Errorf("Data mismatch")
+	if !bytes.Equal(data, data2) {
+		t.Fatal("Data mismatch")
 	}
 
 	if err = os.RemoveAll(cfg.BasePath); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
+}
+
+func config() *localfile.Config {
+	return &localfile.Config{
+		BasePath: "/tmp/localfiletest",
+		Depth:    3,
+	}
+}
+
+func testData() (data []byte, err error) {
+	rootDir, err := utils.ProjectRootDir()
+	if err != nil {
+		return
+	}
+
+	filePath := rootDir + "/data/mock/ehr/composition.json"
+
+	return os.ReadFile(filePath)
 }

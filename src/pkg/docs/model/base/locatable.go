@@ -6,12 +6,11 @@ package base
 // archetyped structure. LOCATABLE defines a runtime name and an archetype_node_id.
 // https://specifications.openehr.org/releases/RM/latest/common.html#_locatable_class
 type Locatable struct {
-	Type             string      `json:"_type"`
-	Name             DvText      `json:"name"`
-	ArchetypeNodeId  string      `json:"archetype_node_id"`
-	Uid              *ObjectId   `json:"uid,omitempty"`
+	Type            string `json:"_type"`
+	Name            DvText `json:"name"`
+	ArchetypeNodeID string `json:"archetype_node_id"`
+	ObjectVersionID
 	Links            *[]Link     `json:"links,omitempty"`
 	ArchetypeDetails *Archetyped `json:"archetype_details,omitempty"`
-	// TODO: Recursion :( need to fix somewhat
-	//FeederAudit      FeederAudit `json:"feeder_audit,omitempty"`
+	Pathable         `json:"-"`
 }

@@ -1,10 +1,18 @@
 package model
 
-import "hms/gateway/pkg/docs/types"
+import (
+	"hms/gateway/pkg/indexer/ehrIndexer"
 
-type DocumentMeta struct {
-	TypeCode       types.DocumentType
-	StorageId      *[32]byte
-	DocIdEncrypted []byte
-	Timestamp      uint32
+	"github.com/ipfs/go-cid"
+)
+
+type DocumentMeta ehrIndexer.EhrIndexerDocumentMeta
+
+func (m *DocumentMeta) Cid() *cid.Cid {
+	CID, err := cid.Parse(m.CID)
+	if err != nil {
+		panic(err)
+	}
+
+	return &CID
 }

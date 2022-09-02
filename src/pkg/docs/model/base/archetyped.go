@@ -5,7 +5,8 @@ package base
 // reference model.
 // https://specifications.openehr.org/releases/RM/latest/common.html#_archetyped_class
 type Archetyped struct {
-	ArchetypeId ObjectId  `json:"archetype_id"`
-	TemplateId  *ObjectId `json:"template_id,omitempty"`
+	Type        string    `json:"_type"`
+	ArchetypeID ObjectID  `json:"archetype_id"`
+	TemplateID  *ObjectID `json:"template_id,omitempty"`
 	RmVersion   string    `json:"rm_version"`
 }

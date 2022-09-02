@@ -1,8 +1,14 @@
-package keystore
+package keystore_test
 
 import (
 	"os"
+	"strconv"
 	"testing"
+	"time"
+
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/keystore"
+	"hms/gateway/pkg/storage"
 )
 
 const testStorePath string = "/tmp/localfiletest"
@@ -15,17 +21,25 @@ func TestKeystore(t *testing.T) {
 		}
 	}()
 
-	ks := New()
+	sc := storage.NewConfig("./test_" + strconv.FormatInt(time.Now().UnixNano(), 10))
+	storage.Init(sc)
 
-	userIdOne := "111-222-333"
-	userIdTwo := "111-222-333-444"
-
-	publicKeyOne, privateKeyOne, err := ks.Get(userIdOne)
+	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	publicKeyOne2, privateKeyOne2, err := ks.Get(userIdOne)
+	ks := keystore.New(cfg.KeystoreKey)
+
+	userIDOne := "111-222-333"
+	userIDTwo := "111-222-333-444"
+
+	publicKeyOne, privateKeyOne, err := ks.Get(userIDOne)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	publicKeyOne2, privateKeyOne2, err := ks.Get(userIDOne)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +48,7 @@ func TestKeystore(t *testing.T) {
 		t.Fatal("Got different keys for same user")
 	}
 
-	publicKeyTwo, privateKeyTwo, err := ks.Get(userIdTwo)
+	publicKeyTwo, privateKeyTwo, err := ks.Get(userIDTwo)
 	if err != nil {
 		t.Fatal(err)
 	}

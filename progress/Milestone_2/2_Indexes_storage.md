@@ -6,6 +6,7 @@ The smart contract is written in Solidity language and can be deployed in any [E
 - CID for retrieving a document in IPFS. Is the hash sum of the document and allows to check the integrity.
 - dealCid and minerAddress for getting the document in Filecoin
 - `document_uid` (encrypted)
+- document status
 - version
 - creation time
 
@@ -23,3 +24,5 @@ User and EHR document data in the contract is stored encrypted and prevents unau
 The contract code is located in the repository: [https://github.com/bsn-si/IPEHR-blockchain-indexes](https://github.com/bsn-si/IPEHR-blockchain-indexes)
 
 For development and testing purposes, [Goerli Testnet](https://goerli.net/) is used
+
+Address of the current version of the deployed contract: [https://goerli.etherscan.io/address/0x90346f14e3d22bff62415707928486a42282b19f](https://goerli.etherscan.io/address/0x90346f14e3d22bff62415707928486a42282b19f)

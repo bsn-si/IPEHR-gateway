@@ -1,220 +1,173 @@
 package service
 
 import (
-	"encoding/hex"
+	"context"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/sha3"
+	"github.com/ipfs/go-cid"
 
-	"hms/gateway/pkg/crypto/chacha_poly"
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer"
-	"hms/gateway/pkg/keystore"
-	"hms/gateway/pkg/storage"
+	"hms/gateway/pkg/infrastructure"
 )
 
 type DefaultDocumentService struct {
-	EhrsIndex   indexer.Indexer
-	DocsIndex   indexer.Indexer
-	AccessIndex indexer.Indexer
-	Storage     storage.Storager
-	Keystore    *keystore.KeyStore
+	Infra *infrastructure.Infra
+	Proc  *processing.Proc
+	//EhrsIndex          *ehrs.Index
+	//DocsIndex        *docs.Index
+	//DocAccessIndex   *docAccess.Index
+	//SubjectIndex     *subject.Index
+	//GroupAccessIndex *groupAccess.Index
 }
 
-func NewDefaultDocumentService() *DefaultDocumentService {
+func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
+	proc := processing.New(
+		infra.LocalDB, infra.EthClient,
+		infra.FilecoinClient,
+		infra.IpfsClient,
+		cfg.Storage.Localfile.Path,
+	)
+	proc.Start()
+
 	return &DefaultDocumentService{
-		EhrsIndex:   indexer.Init("ehrs"),
-		DocsIndex:   indexer.Init("docs"),
-		AccessIndex: indexer.Init("access"),
-		Storage:     storage.Init(),
-		Keystore:    keystore.New(),
+		Infra: infra,
+		Proc:  proc,
 	}
 }
 
-func (d *DefaultDocumentService) GetEhrDocIndexes(ehrId string) ([]*model.DocumentMeta, error) {
-	var docIndexes []*model.DocumentMeta
-	if err := d.DocsIndex.GetById(ehrId, &docIndexes); err != nil {
-		return nil, err
-	}
-	return docIndexes, nil
-}
+func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error) {
+	// Checking that the same request is not in processing
+	{
+		status, err := d.Proc.GetRetrieveStatus(CID)
+		if err != nil {
+			return nil, fmt.Errorf("Proc.GetRetrieveStatus error: %w CID: %s", err, CID.String())
+		}
 
-func (d *DefaultDocumentService) GetLastDocIndexByType(ehrId string, docTypeCode types.DocumentType) (doc *model.DocumentMeta, err error) {
-	var docIndexes []*model.DocumentMeta
-	if err = d.DocsIndex.GetById(ehrId, &docIndexes); err != nil {
-		return nil, err
+		switch status {
+		case proc.StatusPending, proc.StatusProcessing:
+			return nil, errors.ErrIsInProcessing
+		case proc.StatusFailed:
+			return nil, fmt.Errorf("%w Document retrieve failed CID: %s", errors.ErrCustom, CID.String())
+		case proc.StatusSuccess, proc.StatusUnknown:
+		}
 	}
 
-	for _, docIndex := range docIndexes {
-		if docIndex.TypeCode == docTypeCode {
-			if doc == nil || docIndex.Timestamp > doc.Timestamp {
-				doc = docIndex
+	// Get doc key
+	var docKey *chachaPoly.Key
+	{
+		docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID)
+		if err != nil {
+			return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
+		}
+
+		userPubKey, userPrivateKey, err := d.Infra.Keystore.Get(userID)
+		if err != nil {
+			return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
+		}
+
+		docKeyBytes, err := keybox.OpenAnonymous(docKeyEncr, userPubKey, userPrivateKey)
+		if err != nil {
+			return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
+		}
+
+		docKey, err = chachaPoly.NewKeyFromBytes(docKeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+		}
+	}
+
+	// Get doc encrypted
+	var docEncrypted []byte
+	{
+		reader, err := d.Infra.IpfsClient.Get(ctx, CID)
+		if err != nil && errors.Is(err, errors.ErrNotFound) {
+			// Request to recovery file from Filecoin
+			if err = d.Proc.AddRetrieve(CID.String()); err != nil {
+				return nil, fmt.Errorf("Proc.AddRetrieve error: %w CID %s", err, CID.String())
+			}
+			return nil, errors.ErrIsInProcessing
+		} else if err != nil {
+			return nil, fmt.Errorf("IpfsClient.Get error: %w CID %s", err, CID.String())
+		}
+		defer reader.Close()
+
+		docEncrypted, err = ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, fmt.Errorf("ipfs read error: %w", err)
+		}
+	}
+
+	// Decrypt and decompress
+	var docDecrypted []byte
+	{
+		docID, err := docKey.DecryptWithAuthData(docIDEncrypted, authData)
+		if err != nil {
+			return nil, fmt.Errorf("DocIDEncrypted DecryptWithAuthData error: %w", err)
+		}
+
+		docDecrypted, err = docKey.DecryptWithAuthData(docEncrypted, docID)
+		if err != nil {
+			return nil, fmt.Errorf("docEncrypted DecryptWithAuthData error: %w", err)
+		}
+
+		if d.Infra.CompressionEnabled {
+			docDecrypted, err = d.Infra.Compressor.Decompress(docDecrypted)
+			if err != nil {
+				return nil, fmt.Errorf("Decompress error: %w", err)
 			}
 		}
 	}
-	if doc == nil {
-		return nil, errors.IsNotExist
-	}
-	return doc, nil
-}
 
-func (d *DefaultDocumentService) GetDocIndexByDocId(userId, ehrId, docId string, docType types.DocumentType) (doc *model.DocumentMeta, err error) {
-	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	ehrUUID, err := uuid.Parse(ehrId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	var docIndexes []*model.DocumentMeta
-	if err = d.DocsIndex.GetById(ehrId, &docIndexes); err != nil {
-		return nil, err
-	}
-
-	for _, docIndex := range docIndexes {
-		if docType > 0 && docIndex.TypeCode != docType {
-			continue
-		}
-
-		// Getting access key
-		var keyEncrypted []byte
-		indexKey := sha3.Sum256(append(docIndex.StorageId[:], userUUID[:]...))
-		indexKeyStr := hex.EncodeToString(indexKey[:])
-		err = d.AccessIndex.GetById(indexKeyStr, &keyEncrypted)
-		if err != nil {
-			return nil, err
-		}
-
-		keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-		if err != nil {
-			return nil, err
-		}
-		if len(keyDecrypted) != 32 {
-			return nil, fmt.Errorf("document key length mismatch")
-		}
-
-		key, err := chacha_poly.NewKeyFromBytes(keyDecrypted)
-		if err != nil {
-			return nil, err
-		}
-
-		docIdDecrypted, err := key.DecryptWithAuthData(docIndex.DocIdEncrypted, ehrUUID[:])
-		if err != nil {
-			continue
-		}
-
-		if docId == string(docIdDecrypted) {
-			return docIndex, nil
-		}
-	}
-	return nil, errors.IsNotExist
-}
-
-func (d *DefaultDocumentService) AddEhrDocIndex(ehrId string, docIndex *model.DocumentMeta) error {
-	docIndexes, err := d.GetEhrDocIndexes(ehrId)
-	if err != nil {
-		return err
-	}
-	docIndexes = append(docIndexes, docIndex)
-	if err = d.DocsIndex.Replace(ehrId, docIndexes); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *DefaultDocumentService) GetDocFromStorageById(userId string, storageId *[32]byte, authData []byte) (docBytes []byte, err error) {
-	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Getting access key
-	var keyEncrypted []byte
-	indexKey := sha3.Sum256(append(storageId[:], userUUID[:]...))
-	indexKeyStr := hex.EncodeToString(indexKey[:])
-	err = d.AccessIndex.GetById(indexKeyStr, &keyEncrypted)
-	if err != nil {
-		return nil, err
-	}
-
-	// Getting user privateKey
-	userPubKey, userPrivKey, err := d.Keystore.Get(userId)
-	if err != nil {
-		return nil, err
-	}
-
-	keyDecrypted, err := keybox.OpenAnonymous(keyEncrypted, userPubKey, userPrivKey)
-	if err != nil {
-		return nil, err
-	}
-	if len(keyDecrypted) != 32 {
-		return nil, fmt.Errorf("document key length mismatch")
-	}
-
-	var docKey chacha_poly.Key
-	copy(docKey[:], keyDecrypted)
-
-	docEncrypted, err := d.Storage.Get(storageId)
-	if err != nil {
-		return nil, err
-	}
-
-	// Doc decryption
-	docDecrypted, err := docKey.DecryptWithAuthData(docEncrypted, authData)
-	if err != nil {
-		return nil, err
-	}
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) AddAccessIndex(userId string, docStorageId *[32]byte, docKey []byte) error {
-	userUUID, err := uuid.Parse(userId)
-	if err != nil {
-		return err
+/* TODO будет на блокчейне
+func (d *DefaultDocumentService) UpdateCollection(ehrUUID *uuid.UUID, docIndexes, toUpdate []*model.DocumentMeta, action func(*model.DocumentMeta) error) (err error) {
+	changed := false
+
+	for _, docIndex := range toUpdate {
+		err := action(docIndex)
+		if err != nil {
+			return err
+		}
+
+		changed = true
 	}
 
-	// Getting user privateKey
-	userPubKey, _, err := d.Keystore.Get(userId)
-	if err != nil {
-		return err
+	if changed {
+		if err = d.DocsIndex.Replace(ehrUUID.String(), docIndexes); err != nil {
+			return err
+		}
 	}
 
-	// Document key encryption
-	keyEncrypted, err := keybox.SealAnonymous(docKey, userPubKey)
-	if err != nil {
-		return err
-	}
+	return
+}
+*/
 
-	// Index doc_id -> encrypted_doc_key
-	indexKey := sha3.Sum256(append(docStorageId[:], userUUID[:]...))
-	indexKeyStr := hex.EncodeToString(indexKey[:])
-
-	if err = d.AccessIndex.Add(indexKeyStr, keyEncrypted); err != nil {
-		return err
-	}
-
-	return nil
+func (d *DefaultDocumentService) GenerateID() string {
+	return uuid.New().String()
 }
 
-func (d *DefaultDocumentService) GetSystemId() string {
-	return ""
+func (d *DefaultDocumentService) GetSystemID() base.EhrSystemID {
+	ehrSystemID, _ := base.NewEhrSystemID(common.EhrSystemID)
+	return ehrSystemID
 }
 
-func (d *DefaultDocumentService) ValidateId(id string, docType types.DocumentType) bool {
-	//TODO
+func (d *DefaultDocumentService) ValidateID(id string, systemID base.EhrSystemID, docType types.DocumentType) bool {
+	if docType == types.Composition {
+		_, err := base.NewObjectVersionID(id, systemID)
+		return err == nil
+	}
 
 	return true
 }

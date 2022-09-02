@@ -5,7 +5,7 @@ package base
 // (as distinct from a particular terminology).
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_code_phrase_class
 type CodePhrase struct {
-	TerminologyId ObjectId `json:"terminology_id"`
+	TerminologyID ObjectID `json:"terminology_id"`
 	CodeString    string   `json:"code_string,omitempty"`
 	PreferredTerm string   `json:"preferred_term,omitempty"`
 }
