@@ -62,39 +62,79 @@ On Milestone 1 we develop the IPEHR-gateway to provide benefits of decentralized
 - sends decrypted documents back to HMS;
 - supports AQL queries without decrypting data.
 
-### How to
+## How to
 
-## Install Prerequisites
+### Install Prerequisites
 
+### Go 
 Please follow installation instructions provided [here](https://go.dev/doc/install).
 
-## Clone this repo
+### IPFS
+The ipEHR gateway requires a connection to the IPFS network. You can use a third-party service or install your own node. Installation instructions can be found [here](https://github.com/ipfs/kubo#install).
+
+### Filecoin
+The ipEHR gateway requires a connection to the Filecoin network. It is necessary to install your own Lotus instance. You can run it in either full node mode or [light](https://lotus.filecoin.io/tutorials/lotus/store-and-retrieve/set-up/#install-a-lite-node) mode. Installation instructions can be found [here](https://lotus.filecoin.io/lotus/install/prerequisites/).
+
+Enable support for fetching data from IPFS before launching in the config `~/.lotus/config.toml`
+```
+[Client]
+UseIpfs = true
+```
+
+Creating a directory to retrieve files and then transfer them to the IPEHR-gateway
+```
+mkdir -p $LOTUS_DIR/files
+```
+
+Install Nginx to retrieve files on the IPEHR-gateway.
+
+/etc/nginx/conf.d/lotus.conf:
+```
+server {
+        server_name <HOSTNAME>;
+
+        location /files {
+                alias <LOTUS_DIR/files;
+                add_header Content-disposition "attachment; filename=$1";
+                default_type application/octet-stream;
+        }
+
+        location / {
+                proxy_pass      http://127.0.0.1:1234;
+        }
+}
+```
+
+Replace \<HOSTNAME\> and <LOTUS_DIR> with your values.
+
+
+### Clone this repo
 
 ```
 git clone https://github.com/bsn-si/IPEHR-gateway
 ```
 
-## Run Tests
+### Run Tests
 
 ```
 cd ./src
 go test -v ./...
 ```
 
-## Build IPEHR-gateway
+### Build IPEHR-gateway
 
 ```
 cd ./src
 go build -o ../bin/ipehr-gateway cmd/ipehrgw/main.go
 ```
 
-## Run IPEHR-gateway
+### Run IPEHR-gateway
 
 ```
 ./bin/ipehr-gateway -config=./config.json
 ```
 
-## Get swagger UI API documentation
+### Get swagger UI API documentation
 
 [Swagger UI API docs](http://gateway.ipehr.org/swagger/index.html)
 
