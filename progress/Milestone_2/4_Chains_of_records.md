@@ -1,6 +1,6 @@
 ## Design of the chains of records within the storage to ensure the data integrity and authenticity.
 
-When you add a new document to the EHR, the digital signature of the user creating the document is sent along with the document. The signature is stored with the document. This allows you to authorize a request to create a document.
+When a new EHR document is added, the digital signature of the user creating the document is sent along with the document. The signature is stored with the document. This allows you to authorize a request to create a document.
 
 Before saving, the EHR document is encrypted with [ChaCha20-Poly1305](https://en.wikipedia.org/wiki/ChaCha20-Poly1305), which includes a message authentication code (MAC). This mechanism ensures the integrity of the document when it is decrypted.
 
