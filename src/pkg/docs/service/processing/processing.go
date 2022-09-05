@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"hms/gateway/pkg/indexer"
 	"log"
 	"net/http"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"gorm.io/gorm"
 
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"
 )

@@ -116,7 +116,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *processing.MultiCal
 	}
 
 	// IPFS saving
-	CID, err := s.Infra.IpfsClient.Add(docEncrypted)
+	CID, err := s.Infra.IpfsClient.Add(ctx, docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
@@ -323,7 +323,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *processing.MultiC
 	}
 
 	// IPFS saving
-	CID, err := s.Infra.IpfsClient.Add(statusEncrypted)
+	CID, err := s.Infra.IpfsClient.Add(ctx, statusEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
