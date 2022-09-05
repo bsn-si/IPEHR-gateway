@@ -165,7 +165,7 @@ func TestStatus(t *testing.T) {
 
 	subjectID2 := uuid.New().String()
 
-	_, err = ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
+	_, err = ehrService.CreateStatus(statusIDNew, subjectID2, subjectNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,8 +186,6 @@ func TestStatus(t *testing.T) {
 }
 
 func TestGetStatusByNearestTime(t *testing.T) {
-	t.Skip()
-
 	prepare(t)
 
 	var (
@@ -224,12 +222,21 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	reqID = "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
 	ctx.Set("reqId", reqID)
 
-	doc, err := ehrService.CreateStatus(ctx, userID, statusIDNew, subjectID2, subjectNamespace, &ehrUUID, ehrSystemID)
+	doc, err := ehrService.CreateStatus(statusIDNew, subjectID2, subjectNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = ehrService.SaveStatus(ctx, userID, &ehrUUID, ehrSystemID, doc, true)
+	var (
+		transactions = ehrService.MultiCallTx.New(infra.Index, docService.Proc, processing.TxSetEhrUser, "", reqID)
+	)
+
+	err = ehrService.SaveStatus(ctx, &transactions, userID, &ehrUUID, ehrSystemID, doc, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = transactions.Commit()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +246,6 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	// Test: docIndex is not exist yet
-
 	if _, err := ehrService.GetStatusByNearestTime(ctx, userID, &ehrUUID, time.Now(), types.EhrStatus); err != nil {
 		t.Fatal("Should return status", err)
 	}

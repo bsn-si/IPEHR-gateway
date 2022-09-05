@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"hms/gateway/pkg/indexer"
 	"log"
 	"net/http"
 	"time"
@@ -24,7 +25,7 @@ import (
 
 type (
 	Status      uint8
-	TxKind      uint8
+	TxKind      uint8 // TODO useless type because we already have RequestKind, require refactoring
 	RequestKind uint8
 
 	Proc struct {
@@ -61,6 +62,15 @@ type (
 		Comment string
 	}
 
+	MultiCallTx struct {
+		index   *indexer.Index
+		proc    *Proc
+		list    [][]byte
+		txKind  TxKind
+		comment string
+		reqID   string
+	}
+
 	Retrieve struct {
 		CID     string `gorm:"primaryKey"`
 		DealID  retrievalmarket.DealID
@@ -95,6 +105,7 @@ const (
 	TxSetDocAccess      TxKind = 3
 	TxDeleteDoc         TxKind = 4
 	TxFilecoinStartDeal TxKind = 5
+	TxMultiCall         TxKind = 6
 	TxUnknown           TxKind = 255
 )
 
@@ -131,6 +142,36 @@ var (
 		RequestCompositionDelete:  "CompositionDelete",
 	}
 )
+
+func (m *MultiCallTx) New(i *indexer.Index, proc *Proc, txKind TxKind, comment string, reqID string) MultiCallTx {
+	return MultiCallTx{index: i, proc: proc, txKind: txKind, comment: comment, reqID: reqID}
+}
+
+func (m *MultiCallTx) Add(packed []byte) {
+	m.list = append(m.list, packed)
+}
+
+func (m *MultiCallTx) Get() [][]byte {
+	return m.list
+}
+
+func (m *MultiCallTx) Commit() error {
+	if len(m.list) == 0 {
+		return nil
+	}
+
+	var txHash, err = m.index.MultiCall(&m.list)
+	if err != nil {
+		return fmt.Errorf("processing MulticallTx invoke multiCall: %w", err)
+	}
+
+	err = m.proc.AddTx(m.reqID, txHash, m.comment, m.txKind, StatusPending)
+	if err != nil {
+		return fmt.Errorf("processing MulticallTx add tx: %w", err)
+	}
+
+	return nil
+}
 
 func (s Status) String() string {
 	if status, ok := statuses[s]; ok {
@@ -551,6 +592,7 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 				TxSetEhrUser,
 				TxSetEhrDocs,
 				TxSetDocAccess,
+				TxMultiCall,
 				//TxFilecoinStartDeal,
 			}
 		case RequestEhrGetBySubject:
@@ -560,6 +602,7 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 				TxSetEhrBySubject,
 				TxSetEhrDocs,
 				TxSetDocAccess,
+				TxMultiCall,
 				//TxFilecoinStartDeal,
 			}
 		case RequestEhrStatusUpdate:
@@ -575,12 +618,14 @@ func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 			txsToCheck = []TxKind{
 				TxSetEhrDocs,
 				TxSetDocAccess,
+				TxMultiCall,
 				//TxFilecoinStartDeal,
 			}
 		case RequestCompositionUpdate:
 			txsToCheck = []TxKind{
 				TxSetEhrDocs,
 				TxSetDocAccess,
+				TxMultiCall,
 				//TxFilecoinStartDeal,
 			}
 		case RequestCompositionGetByID:
