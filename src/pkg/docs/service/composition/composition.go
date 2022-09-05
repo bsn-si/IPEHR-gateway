@@ -41,21 +41,30 @@ func NewCompositionService(docService *service.DefaultDocumentService, groupAcce
 }
 
 func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
-	groupAccess, err := s.groupAccessService.Get(ctx, userID, groupAccessUUID)
+	groupAccessModel, err := s.groupAccessService.Get(ctx, userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
 	}
 
-	err = s.save(ctx, userID, ehrUUID, groupAccess, ehrSystemID, composition)
+	var (
+		reqID        = ctx.(*gin.Context).GetString("reqId")
+		transactions = s.MultiCallTx.New(s.Infra.Index, s.Proc, processing.TxSetEhrUser, "", reqID)
+	)
+
+	err = s.save(ctx, &transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
+	}
+
+	if err := transactions.Commit(); err != nil {
+		return nil, fmt.Errorf("Create composition commit error: %w", err)
 	}
 
 	return composition, nil
 }
 
 func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
-	groupAccess, err := s.groupAccessService.Get(ctx, userID, groupAccessUUID)
+	groupAccessModel, err := s.groupAccessService.Get(ctx, userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("GroupAccessIndex.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
 	}
@@ -64,9 +73,18 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
 	}
 
-	err = s.save(ctx, userID, ehrUUID, groupAccess, ehrSystemID, composition)
+	var (
+		reqID        = ctx.(*gin.Context).GetString("reqId")
+		transactions = s.MultiCallTx.New(s.Infra.Index, s.Proc, processing.TxSetEhrUser, "", reqID)
+	)
+
+	err = s.save(ctx, &transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
+	}
+
+	if err := transactions.Commit(); err != nil {
+		return nil, fmt.Errorf("Update composition commit error: %w", err)
 	}
 
 	// TODO what we should do with prev composition?
@@ -92,7 +110,7 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID base.EhrSyst
 	return nil
 }
 
-func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
+func (s *Service) save(ctx context.Context, multiCallTx *processing.MultiCallTx, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
@@ -189,18 +207,11 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		docIndexTx, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta)
+		packed, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
-
-		err = s.Proc.AddTx(reqID, docIndexTx, "", processing.TxSetEhrDocs, processing.StatusPending)
-		if err != nil {
-			return fmt.Errorf("Proc.AddTx error: %w", err)
-		}
-
-		// Waiting for tx processed and pending nonce increased
-		time.Sleep(common.BlockchainTxProcAwaitTime)
+		multiCallTx.Add(packed)
 	}
 
 	// Index DataSearch
@@ -230,18 +241,12 @@ func (s *Service) save(ctx context.Context, userID string, ehrUUID *uuid.UUID, g
 
 		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		docAccessTx, err := s.Infra.Index.SetDocKeyEncrypted(ctx, &docAccessKey, docAccessValue)
+		packed, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		err = s.Proc.AddTx(reqID, docAccessTx, "", processing.TxSetDocAccess, processing.StatusPending)
-		if err != nil {
-			return fmt.Errorf("Proc.AddTx error: %w", err)
-		}
-
-		// Waiting for tx processed and pending nonce increased
-		time.Sleep(common.BlockchainTxProcAwaitTime)
+		multiCallTx.Add(packed)
 	}
 
 	return nil

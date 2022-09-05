@@ -74,7 +74,7 @@ func New(cfg *config.Config) *Infra {
 		EthClient:          ehtClient,
 		IpfsClient:         ipfsClient,
 		FilecoinClient:     filecoinClient,
-		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient),
+		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient), //
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,
