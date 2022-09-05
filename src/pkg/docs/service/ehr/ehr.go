@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hms/gateway/pkg/indexer"
 	"log"
 	"time"
 
@@ -68,15 +69,15 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 
 	var (
 		reqID        = ctx.(*gin.Context).GetString("reqId")
-		transactions = s.MultiCallTx.New(s.Infra.Index, s.Proc, processing.TxSetEhrUser, "", reqID)
+		transactions = s.Infra.Index.MultiCallTxNew(s.Proc, processing.TxSetEhrUser, "", reqID)
 	)
 
-	err = s.SaveStatus(ctx, &transactions, userID, ehrUUID, ehrSystemID, doc, true)
+	err = s.SaveStatus(ctx, transactions, userID, ehrUUID, ehrSystemID, doc, true)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
 	}
 
-	err = s.SaveEhr(ctx, &transactions, userID, &ehr)
+	err = s.SaveEhr(ctx, transactions, userID, &ehr)
 	if err != nil {
 		return nil, fmt.Errorf("SaveEhr error: %w", err)
 	}
@@ -88,7 +89,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	return &ehr, nil
 }
 
-func (s *Service) SaveEhr(ctx context.Context, transactions *processing.MultiCallTx, userID string, doc *model.EHR) error {
+func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx, userID string, doc *model.EHR) error {
 	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
 	if err != nil {
 		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
@@ -264,7 +265,7 @@ func (s *Service) CreateStatus(ehrStatusID, subjectID, subjectNamespace string) 
 	return doc, nil
 }
 
-func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *processing.MultiCallTx, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
+func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -292,7 +293,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *processing.MultiCa
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, multiCallTx *processing.MultiCallTx, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus, isNew bool) error {
+func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus, isNew bool) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
@@ -432,15 +433,15 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *processing.MultiC
 func (s *Service) UpdateStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
 	reqID := ctx.(*gin.Context).GetString("reqId")
 
-	var transactions = s.MultiCallTx.New(s.Infra.Index, s.Proc, processing.TxSetEhrUser, "UpdateEhrStatus", reqID)
+	var transactions = s.Infra.Index.MultiCallTxNew(s.Proc, processing.TxSetEhrUser, "UpdateEhrStatus", reqID)
 
-	if err := s.SaveStatus(ctx, &transactions, userID, ehrUUID, ehrSystemID, status, false); err != nil {
+	if err := s.SaveStatus(ctx, transactions, userID, ehrUUID, ehrSystemID, status, false); err != nil {
 		log.Println("SaveStatus error:", err)
 		return errors.New("EHR_STATUS saving error")
 	}
 
 	// TODO i dont like this logic, because in method GetByID we always grab whole data from filecoin, which contain last status id. It need fix it.
-	if err := s.UpdateEhr(ctx, &transactions, userID, ehrUUID, status); err != nil {
+	if err := s.UpdateEhr(ctx, transactions, userID, ehrUUID, status); err != nil {
 		log.Println("UpdateEhr error:", err)
 		return errors.New("EHR updating error")
 	}

@@ -21,9 +21,8 @@ import (
 )
 
 type DefaultDocumentService struct {
-	Infra       *infrastructure.Infra
-	Proc        *processing.Proc
-	MultiCallTx processing.MultiCallTx
+	Infra *infrastructure.Infra
+	Proc  *processing.Proc
 	//EhrsIndex          *ehrs.Index
 	//DocsIndex        *docs.Index
 	//DocAccessIndex   *docAccess.Index

@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"hms/gateway/pkg/docs/service/processing"
 	"log"
 	"os"
 	"strings"
@@ -40,6 +41,45 @@ type Index struct {
 	ehrIndex     *ehrIndexer.EhrIndexer
 	transactOpts *bind.TransactOpts
 	abi          *abi.ABI
+}
+
+type MultiCallTx struct {
+	index   *Index
+	proc    *processing.Proc
+	list    [][]byte
+	txKind  processing.TxKind
+	comment string
+	reqID   string
+}
+
+func (m *MultiCallTx) Add(packed []byte) {
+	m.list = append(m.list, packed)
+}
+
+func (m *MultiCallTx) Get() [][]byte {
+	return m.list
+}
+
+func (m *MultiCallTx) Commit() error {
+	if len(m.list) == 0 {
+		return nil
+	}
+
+	var txHash, err = m.index.MultiCall(&m.list)
+	if err != nil {
+		return fmt.Errorf("processing MulticallTx invoke multiCall: %w", err)
+	}
+
+	err = m.proc.AddTx(m.reqID, txHash, m.comment, m.txKind, processing.StatusPending)
+	if err != nil {
+		return fmt.Errorf("processing MulticallTx add tx: %w", err)
+	}
+
+	return nil
+}
+
+func (i *Index) MultiCallTxNew(proc *processing.Proc, txKind processing.TxKind, comment string, reqID string) *MultiCallTx {
+	return &MultiCallTx{index: i, proc: proc, txKind: txKind, comment: comment, reqID: reqID}
 }
 
 func New(contractAddr, keyPath string, client *ethclient.Client) *Index {

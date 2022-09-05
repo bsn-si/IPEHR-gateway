@@ -228,10 +228,10 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	}
 
 	var (
-		transactions = ehrService.MultiCallTx.New(infra.Index, docService.Proc, processing.TxSetEhrUser, "", reqID)
+		transactions = ehrService.Infra.Index.MultiCallTxNew(docService.Proc, processing.TxSetEhrUser, "", reqID)
 	)
 
-	err = ehrService.SaveStatus(ctx, &transactions, userID, &ehrUUID, ehrSystemID, doc, true)
+	err = ehrService.SaveStatus(ctx, transactions, userID, &ehrUUID, ehrSystemID, doc, true)
 	if err != nil {
 		t.Fatal(err)
 	}

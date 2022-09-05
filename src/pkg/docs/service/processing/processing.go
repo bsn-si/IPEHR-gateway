@@ -18,7 +18,6 @@ import (
 	"gorm.io/gorm"
 
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"
 )
@@ -60,15 +59,6 @@ type (
 		Hash    string
 		Status  Status
 		Comment string
-	}
-
-	MultiCallTx struct {
-		index   *indexer.Index
-		proc    *Proc
-		list    [][]byte
-		txKind  TxKind
-		comment string
-		reqID   string
 	}
 
 	Retrieve struct {
@@ -142,36 +132,6 @@ var (
 		RequestCompositionDelete:  "CompositionDelete",
 	}
 )
-
-func (m *MultiCallTx) New(i *indexer.Index, proc *Proc, txKind TxKind, comment string, reqID string) MultiCallTx {
-	return MultiCallTx{index: i, proc: proc, txKind: txKind, comment: comment, reqID: reqID}
-}
-
-func (m *MultiCallTx) Add(packed []byte) {
-	m.list = append(m.list, packed)
-}
-
-func (m *MultiCallTx) Get() [][]byte {
-	return m.list
-}
-
-func (m *MultiCallTx) Commit() error {
-	if len(m.list) == 0 {
-		return nil
-	}
-
-	var txHash, err = m.index.MultiCall(&m.list)
-	if err != nil {
-		return fmt.Errorf("processing MulticallTx invoke multiCall: %w", err)
-	}
-
-	err = m.proc.AddTx(m.reqID, txHash, m.comment, m.txKind, StatusPending)
-	if err != nil {
-		return fmt.Errorf("processing MulticallTx add tx: %w", err)
-	}
-
-	return nil
-}
 
 func (s Status) String() string {
 	if status, ok := statuses[s]; ok {

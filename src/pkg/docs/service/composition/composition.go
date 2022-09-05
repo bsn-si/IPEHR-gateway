@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hms/gateway/pkg/indexer"
 	"time"
 
 	"golang.org/x/crypto/sha3"
@@ -49,10 +50,10 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 
 	var (
 		reqID        = ctx.(*gin.Context).GetString("reqId")
-		transactions = s.MultiCallTx.New(s.Infra.Index, s.Proc, processing.TxSetEhrUser, "", reqID)
+		transactions = s.Infra.Index.MultiCallTxNew(s.Proc, processing.TxSetEhrUser, "", reqID)
 	)
 
-	err = s.save(ctx, &transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
+	err = s.save(ctx, transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
@@ -76,10 +77,10 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 
 	var (
 		reqID        = ctx.(*gin.Context).GetString("reqId")
-		transactions = s.MultiCallTx.New(s.Infra.Index, s.Proc, processing.TxSetEhrUser, "", reqID)
+		transactions = s.Infra.Index.MultiCallTxNew(s.Proc, processing.TxSetEhrUser, "", reqID)
 	)
 
-	err = s.save(ctx, &transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
+	err = s.save(ctx, transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
@@ -111,7 +112,7 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID base.EhrSyst
 	return nil
 }
 
-func (s *Service) save(ctx context.Context, multiCallTx *processing.MultiCallTx, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
+func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
