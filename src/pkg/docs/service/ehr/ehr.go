@@ -82,17 +82,12 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("SaveEhr error: %w", err)
 	}
 
-	txHash, err := transactions.Commit()
+	txHash, err := s.Infra.Index.MultiCallCommit(transactions)
 	if err != nil {
 		return nil, fmt.Errorf("EhrCreateWithID commit error: %w", err)
 	}
 
-	err = s.Proc.AddTx(reqID, txHash, "", processing.TxEhrCreateWithID)
-	if err != nil {
-		return nil, fmt.Errorf("MultiCall add tx: %w", err)
-	}
-
-	for txKind := range transactions.GetTxKinds() {
+	for _, txKind := range transactions.GetTxKinds() {
 		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
@@ -167,7 +162,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 		}
 	}
 
-	// Index EHR userID -> docStorageID
+	// Index EHR userID -> ehrUUID
 	{
 		packed, err := s.Infra.Index.SetEhrUser(userID, &ehrUUID)
 		if err != nil {
@@ -459,14 +454,9 @@ func (s *Service) UpdateStatus(ctx context.Context, userID string, ehrUUID *uuid
 		return errors.New("EHR updating error")
 	}
 
-	txHash, err := transactions.Commit()
+	txHash, err := s.Infra.Index.MultiCallCommit(transactions)
 	if err != nil {
 		return fmt.Errorf("UpdateStatus commit error: %w", err)
-	}
-
-	err = s.Proc.AddTx(reqID, txHash, "", processing.TxUpdateEhrStatus)
-	if err != nil {
-		return fmt.Errorf("MultiCall add tx: %w", err)
 	}
 
 	for txKind := range transactions.GetTxKinds() {

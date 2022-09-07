@@ -236,7 +236,7 @@ func TestGetStatusByNearestTime(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	txHash, err := transactions.Commit()
+	txHash, err := infra.Index.MultiCallCommit(transactions)
 	if err != nil {
 		t.Fatal(err)
 	}

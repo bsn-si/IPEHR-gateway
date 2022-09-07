@@ -42,51 +42,19 @@ type Index struct {
 	abi          *abi.ABI
 }
 
-type multiCallTxList struct {
-	kind uint8
-	data []byte
-}
-
 type MultiCallTx struct {
 	index *Index
-	list  []multiCallTxList
+	kinds []uint8
+	data  [][]byte
 }
 
 func (m *MultiCallTx) Add(kind uint8, packed []byte) {
-	m.list = append(m.list, multiCallTxList{kind: kind, data: packed})
-}
-
-func (m *MultiCallTx) txLists() []multiCallTxList {
-	return m.list
+	m.kinds = append(m.kinds, kind)
+	m.data = append(m.data, packed)
 }
 
 func (m *MultiCallTx) GetTxKinds() []uint8 {
-	txs := m.txLists()
-
-	var txList = []uint8{}
-	for _, txPackedData := range txs {
-		txList = append(txList, txPackedData.kind)
-	}
-	return txList
-}
-
-func (m *MultiCallTx) Commit() (string, error) {
-	txs := m.txLists()
-	if len(txs) == 0 {
-		return "", nil
-	}
-
-	var txList = [][]byte{}
-	for _, txPackedData := range txs {
-		txList = append(txList, txPackedData.data)
-	}
-
-	var txHash, err = m.index.MultiCall(&txList)
-	if err != nil {
-		return "", fmt.Errorf("processing MulticallTx invoke multiCall: %w", err)
-	}
-
-	return txHash, nil
+	return m.kinds
 }
 
 func (i *Index) MultiCallTxNew() *MultiCallTx {
@@ -329,8 +297,12 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 	return groupAccessValue, nil
 }
 
-func (i *Index) MultiCall(list *[][]byte) (string, error) {
-	tx, err := i.ehrIndex.Multicall(i.transactOpts, *list)
+func (i *Index) MultiCallCommit(multiCallTx *MultiCallTx) (string, error) {
+	if len(multiCallTx.data) == 0 {
+		return "", fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
+	}
+
+	tx, err := i.ehrIndex.Multicall(i.transactOpts, multiCallTx.data)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.Multicall error: %w", err)
 	}

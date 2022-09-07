@@ -58,14 +58,9 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
 
-	txHash, err := transactions.Commit()
+	txHash, err := s.Infra.Index.MultiCallCommit(transactions)
 	if err != nil {
 		return nil, fmt.Errorf("Create composition commit error: %w", err)
-	}
-
-	err = s.Proc.AddTx(reqID, txHash, "", processing.TxEhrCreateWithID)
-	if err != nil {
-		return nil, fmt.Errorf("MultiCall add tx: %w", err)
 	}
 
 	for txKind := range transactions.GetTxKinds() {
@@ -98,14 +93,9 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
 
-	txHash, err := transactions.Commit()
+	txHash, err := s.Infra.Index.MultiCallCommit(transactions)
 	if err != nil {
 		return nil, fmt.Errorf("Update composition commit error: %w", err)
-	}
-
-	err = s.Proc.AddTx(reqID, txHash, "", processing.TxEhrCreateWithID)
-	if err != nil {
-		return nil, fmt.Errorf("MultiCall add tx: %w", err)
 	}
 
 	for txKind := range transactions.GetTxKinds() {

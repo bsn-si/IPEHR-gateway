@@ -114,7 +114,7 @@ func TestEhrByUserIndex(t *testing.T) {
 
 	tx.Add(uint8(processing.TxSetEhrUser), packed)
 
-	txHash, err := tx.Commit()
+	txHash, err := index.MultiCallCommit(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
