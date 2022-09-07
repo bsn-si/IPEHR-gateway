@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -38,6 +39,26 @@ type Index struct {
 	client       *ethclient.Client
 	ehrIndex     *ehrIndexer.EhrIndexer
 	transactOpts *bind.TransactOpts
+	abi          *abi.ABI
+}
+
+type MultiCallTx struct {
+	index *Index
+	kinds []uint8
+	data  [][]byte
+}
+
+func (m *MultiCallTx) Add(kind uint8, packed []byte) {
+	m.kinds = append(m.kinds, kind)
+	m.data = append(m.data, packed)
+}
+
+func (m *MultiCallTx) GetTxKinds() []uint8 {
+	return m.kinds
+}
+
+func (i *Index) MultiCallTxNew() *MultiCallTx {
+	return &MultiCallTx{index: i}
 }
 
 func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
@@ -65,6 +86,8 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 		log.Fatal(err)
 	}
 
+	bcAbi, _ := ehrIndexer.EhrIndexerMetaData.GetAbi()
+
 	transactOpts, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
 		log.Fatal(err)
@@ -74,26 +97,30 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 		client:       client,
 		ehrIndex:     ehrIndex,
 		transactOpts: transactOpts,
+		abi:          bcAbi,
 	}
 }
 
-func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUID) (string, error) {
+func (i *Index) pack(name string, args ...interface{}) (result []byte, err error) {
+	result, err = i.abi.Pack(name, args...)
+	if err != nil {
+		return nil, fmt.Errorf("add setEhrUser error: %w", err)
+	}
+	return
+}
+
+func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (packed []byte, err error) {
 	var uID, eID [32]byte
 
 	copy(uID[:], []byte(userID))
 	copy(eID[:], ehrUUID[:])
 
-	i.Lock()
-	defer i.Unlock()
-
-	tx, err := i.ehrIndex.SetEhrUser(i.transactOpts, uID, eID)
+	packed, err = i.pack("setEhrUser", uID, eID)
 	if err != nil {
-		return "", fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
+		return nil, fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
 	}
 
-	log.Printf("%s SetEhrUser tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
-
-	return tx.Hash().Hex(), nil
+	return packed, err
 }
 
 func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UUID, error) {
@@ -121,26 +148,20 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	return &ehrUUID, nil
 }
 
-func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (string, error) {
+func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (packed []byte, err error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
 
-	i.Lock()
-	defer i.Unlock()
-
-	tx, err := i.ehrIndex.AddEhrDoc(
-		i.transactOpts,
+	packed, err = i.pack("addEhrDoc",
 		eID,
 		(ehrIndexer.EhrIndexerDocumentMeta)(*docMeta),
 	)
 	if err != nil {
-		return "", fmt.Errorf("ehrIndex.SetEhrDoc error: %w", err)
+		return nil, fmt.Errorf("ehrIndex.AddEhrDoc error: %w", err)
 	}
 
-	log.Printf("%s SetEhrDoc tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
-
-	return tx.Hash().Hex(), nil
+	return
 }
 
 func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType) (*model.DocumentMeta, error) {
@@ -219,18 +240,13 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-func (i *Index) SetDocKeyEncrypted(ctx context.Context, key *[32]byte, value []byte) (string, error) {
-	i.Lock()
-	defer i.Unlock()
-
-	tx, err := i.ehrIndex.SetDocAccess(i.transactOpts, *key, value)
+func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (packed []byte, err error) {
+	packed, err = i.pack("setDocAccess", *key, value)
 	if err != nil {
-		return "", fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
+		return nil, fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
 	}
 
-	log.Printf("%s SetDocAccess tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
-
-	return tx.Hash().Hex(), nil
+	return
 }
 
 func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.Cid) ([]byte, error) {
@@ -281,24 +297,32 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 	return groupAccessValue, nil
 }
 
-func (i *Index) SetSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (string, error) {
+func (i *Index) MultiCallCommit(multiCallTx *MultiCallTx) (string, error) {
+	if len(multiCallTx.data) == 0 {
+		return "", fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
+	}
+
+	tx, err := i.ehrIndex.Multicall(i.transactOpts, multiCallTx.data)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.Multicall error: %w", err)
+	}
+
+	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) SetSubject(ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (packed []byte, err error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
 
-	i.Lock()
-	defer i.Unlock()
-
 	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
 
-	tx, err := i.ehrIndex.SetEhrSubject(i.transactOpts, subjectKey, eID)
+	packed, err = i.pack("setEhrSubject", subjectKey, eID)
 	if err != nil {
-		return "", fmt.Errorf("ehrIndex.SetSubject error: %w", err)
+		return nil, fmt.Errorf("ehrIndex.SetSubject error: %w", err)
 	}
 
-	log.Printf("%s SetSubject tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
-
-	return tx.Hash().Hex(), nil
+	return
 }
 
 func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNamespace string) (*uuid.UUID, error) {

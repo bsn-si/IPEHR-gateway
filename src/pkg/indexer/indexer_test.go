@@ -1,11 +1,13 @@
 package indexer_test
 
 import (
-	"context"
+	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/processing"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common/fakeData"
@@ -69,8 +71,6 @@ func TestIndex(t *testing.T) {
 }
 
 func TestEhrByUserIndex(t *testing.T) {
-	t.Skip()
-
 	cfg, err := config.New()
 	if err != nil {
 		t.Fatal(err)
@@ -79,30 +79,52 @@ func TestEhrByUserIndex(t *testing.T) {
 	infra := infrastructure.New(cfg)
 
 	index := indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, infra.EthClient)
+	docService := service.NewDefaultDocumentService(cfg, infra)
 
 	userID := fakeData.GetRandomStringWithLength(16)
 	ehrUUID := uuid.New()
 
 	t.Logf("userID %s ehrUUID %s", userID, ehrUUID.String())
 
-	h, err := index.SetEhrUser(context.Background(), userID, &ehrUUID)
+	ctx := &gin.Context{}
+	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
+	ctx.Set("reqId", reqID)
+
+	var tx = index.MultiCallTxNew()
+
+	procReq := &processing.Request{
+		ReqID:        reqID,
+		Kind:         processing.RequestEhrCreate,
+		Status:       processing.StatusProcessing,
+		UserID:       userID,
+		EhrUUID:      ehrUUID.String(),
+		CID:          "",
+		DealCID:      "dealCID",
+		MinerAddress: "minerAddr",
+	}
+
+	if err = docService.Proc.AddRequest(procReq); err != nil {
+		t.Fatal("Proc.AddRequest error: %w", err)
+	}
+
+	packed, err := index.SetEhrUser(userID, &ehrUUID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+	tx.Add(uint8(processing.TxSetEhrUser), packed)
 
-	txStatus, err := index.TxWait(ctx, h)
+	txHash, err := index.MultiCallCommit(tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if txStatus == 1 {
-		t.Logf("tx %s Success", h)
-	} else {
-		t.Logf("tx %s Failed", h)
+	err = docService.Proc.AddTx(reqID, txHash, "", processing.TxSetEhrUser)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	time.Sleep(30 * time.Second)
 
 	ehrUUID2, err := index.GetEhrUUIDByUserID(ctx, userID)
 	if err != nil {

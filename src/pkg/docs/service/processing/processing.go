@@ -24,7 +24,7 @@ import (
 
 type (
 	Status      uint8
-	TxKind      uint8
+	TxKind      uint8 // TODO useless type because we already have RequestKind, require refactoring
 	RequestKind uint8
 
 	Proc struct {
@@ -89,13 +89,17 @@ const (
 	RequestCompositionDelete  RequestKind = 10
 	RequestUnknown            RequestKind = 255
 
-	TxSetEhrUser        TxKind = 0
-	TxSetEhrBySubject   TxKind = 1
-	TxSetEhrDocs        TxKind = 2
-	TxSetDocAccess      TxKind = 3
-	TxDeleteDoc         TxKind = 4
-	TxFilecoinStartDeal TxKind = 5
-	TxUnknown           TxKind = 255
+	TxSetEhrUser         TxKind = 0
+	TxSetEhrBySubject    TxKind = 1
+	TxSetEhrDocs         TxKind = 2
+	TxSetDocAccess       TxKind = 3
+	TxDeleteDoc          TxKind = 4
+	TxFilecoinStartDeal  TxKind = 5
+	TxEhrCreateWithID    TxKind = 6
+	TxUpdateEhrStatus    TxKind = 7
+	TxAddEhrDoc          TxKind = 8
+	TxSetDocKeyEncrypted TxKind = 9
+	TxUnknown            TxKind = 255
 )
 
 var (
@@ -108,13 +112,18 @@ var (
 	}
 
 	txKinds = map[TxKind]string{
-		TxSetEhrUser:        "SetEhrUser",
-		TxSetEhrBySubject:   "SetEhrBySubject",
-		TxSetEhrDocs:        "SetEhrDocs",
-		TxSetDocAccess:      "SetDocAccess",
-		TxDeleteDoc:         "DeleteDoc",
-		TxFilecoinStartDeal: "FilecoinStartDeal",
-		TxUnknown:           "Unknown",
+		TxSetEhrUser:         "SetEhrUser",
+		TxSetEhrBySubject:    "SetEhrBySubject",
+		TxSetEhrDocs:         "SetEhrDocs",
+		TxSetDocAccess:       "SetDocAccess",
+		TxDeleteDoc:          "DeleteDoc",
+		TxFilecoinStartDeal:  "FilecoinStartDeal",
+		TxEhrCreateWithID:    "EhrCreateWithID",
+		TxUpdateEhrStatus:    "UpdateEhrStatus",
+		TxAddEhrDoc:          "AddEhrDoc",
+		TxSetDocKeyEncrypted: "SetDocKeyEncrypted",
+
+		TxUnknown: "Unknown",
 	}
 
 	reqKinds = map[RequestKind]string{
@@ -183,7 +192,7 @@ func (p *Proc) AddRequest(req *Request) error {
 	return nil
 }
 
-func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind, status Status) error {
+func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind) error {
 	if reqID == "" {
 		return fmt.Errorf("%w reqID %s", errors.ErrIncorrectRequest, reqID)
 	}
@@ -200,7 +209,7 @@ func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind, status Status) 
 		ReqID:   reqID,
 		Kind:    kind,
 		Hash:    txHash,
-		Status:  status,
+		Status:  StatusPending,
 		Comment: comment,
 	})
 	if result.Error != nil {
@@ -272,12 +281,17 @@ func (p *Proc) execBlockchain() {
 	p.lock = true
 	defer func() { p.lock = false }()
 
+	// TODO we should separate different blockchain requests in different tables
 	txKinds := []TxKind{
 		TxSetEhrUser,
 		TxSetEhrBySubject,
 		TxSetEhrDocs,
 		TxSetDocAccess,
 		TxDeleteDoc,
+		TxEhrCreateWithID,
+		TxUpdateEhrStatus,
+		TxAddEhrDoc,
+		TxSetDocKeyEncrypted,
 	}
 
 	statuses := []Status{
@@ -288,7 +302,7 @@ func (p *Proc) execBlockchain() {
 	for {
 		tx := Tx{}
 
-		result := p.db.Model(&tx).Find(&tx, "kind IN ? AND status IN ?", txKinds, statuses).Limit(1)
+		result := p.db.Model(&tx).Select("req_id, hash, status").Where("kind IN ? AND status IN ?", txKinds, statuses).Group("hash").Find(&tx).Limit(1)
 		if result.Error != nil || result.RowsAffected == 0 {
 			break
 		}
@@ -315,7 +329,7 @@ func (p *Proc) execBlockchain() {
 		log.Println(tx.ReqID, "Tx", tx.Hash, "status", status)
 
 		if status != tx.Status {
-			if result = p.db.Model(&tx).Update("status", status); result.Error != nil {
+			if result = p.db.Model(Tx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
 				log.Println(tx.ReqID, "db.Update error:", result.Error)
 				break
 			}
@@ -535,77 +549,16 @@ func (p *Proc) downloadFile(CID *cid.Cid) ([]byte, error) {
 }
 
 func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
-	requests := []Request{}
+	var txs []Tx
+	result := p.db.Model(&Tx{}).Where("req_id = ? AND kind != ?", reqID, TxFilecoinStartDeal).Find(&txs)
 
-	result := p.db.Where("req_id = ?", reqID).Find(&requests)
 	if result.Error != nil {
-		return 0, fmt.Errorf("db.Find error: %w", result.Error)
+		return 0, fmt.Errorf("db Find tx error: %w", result.Error)
 	}
 
-	var txsToCheck []TxKind
-
-	for _, request := range requests {
-		switch request.Kind {
-		case RequestEhrCreate:
-			txsToCheck = []TxKind{
-				TxSetEhrUser,
-				TxSetEhrDocs,
-				TxSetDocAccess,
-				//TxFilecoinStartDeal,
-			}
-		case RequestEhrGetBySubject:
-		case RequestEhrGetByID:
-		case RequestEhrStatusCreate:
-			txsToCheck = []TxKind{
-				TxSetEhrBySubject,
-				TxSetEhrDocs,
-				TxSetDocAccess,
-				//TxFilecoinStartDeal,
-			}
-		case RequestEhrStatusUpdate:
-			txsToCheck = []TxKind{
-				TxSetEhrBySubject,
-				TxSetEhrDocs,
-				TxSetDocAccess,
-				//TxFilecoinStartDeal,
-			}
-		case RequestEhrStatusGetByID:
-		case RequestEhrStatusGetByTime:
-		case RequestCompositionCreate:
-			txsToCheck = []TxKind{
-				TxSetEhrDocs,
-				TxSetDocAccess,
-				//TxFilecoinStartDeal,
-			}
-		case RequestCompositionUpdate:
-			txsToCheck = []TxKind{
-				TxSetEhrDocs,
-				TxSetDocAccess,
-				//TxFilecoinStartDeal,
-			}
-		case RequestCompositionGetByID:
-		case RequestCompositionDelete:
-			txsToCheck = []TxKind{
-				TxDeleteDoc,
-			}
-		default:
-			return 0, fmt.Errorf("%w Unknown request.Kind %d", errors.ErrCustom, request.Kind)
-		}
-
-		for _, txKind := range txsToCheck {
-			var txs []Tx
-
-			result := p.db.Model(&Tx{}).Where("req_id = ? AND kind = ?", reqID, txKind).Find(&txs)
-			if result.Error != nil {
-				return 0, fmt.Errorf("db Find tx error: %w reqID %s txKind %d", result.Error, reqID, txKind)
-			}
-
-			// а он не может быть failed? что тогда реквест вообще не закроется?
-			for _, tx := range txs {
-				if tx.Status != StatusSuccess {
-					return tx.Status, nil
-				}
-			}
+	for _, tx := range txs {
+		if tx.Status != StatusSuccess {
+			return tx.Status, nil
 		}
 	}
 
