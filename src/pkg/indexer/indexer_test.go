@@ -90,7 +90,7 @@ func TestEhrByUserIndex(t *testing.T) {
 	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
 	ctx.Set("reqId", reqID)
 
-	var tx = index.MultiCallTxNew(docService.Proc, processing.TxSetEhrUser, "indexer_test", reqID)
+	var tx = index.MultiCallTxNew()
 
 	procReq := &processing.Request{
 		ReqID:        reqID,
@@ -112,9 +112,15 @@ func TestEhrByUserIndex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tx.Add(packed)
+	tx.Add(uint8(processing.TxSetEhrUser), packed)
 
-	if err = tx.Commit(); err != nil {
+	txHash, err := tx.Commit()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = docService.Proc.AddTx(reqID, txHash, "", processing.TxSetEhrUser)
+	if err != nil {
 		t.Fatal(err)
 	}
 

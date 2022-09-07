@@ -3,7 +3,6 @@ package indexer
 import (
 	"context"
 	"fmt"
-	"hms/gateway/pkg/docs/service/processing"
 	"log"
 	"os"
 	"strings"
@@ -43,43 +42,55 @@ type Index struct {
 	abi          *abi.ABI
 }
 
+type multiCallTxList struct {
+	kind uint8
+	data []byte
+}
+
 type MultiCallTx struct {
-	index   *Index
-	proc    *processing.Proc
-	list    [][]byte
-	txKind  processing.TxKind
-	comment string
-	reqID   string
+	index *Index
+	list  []multiCallTxList
 }
 
-func (m *MultiCallTx) Add(packed []byte) {
-	m.list = append(m.list, packed)
+func (m *MultiCallTx) Add(kind uint8, packed []byte) {
+	m.list = append(m.list, multiCallTxList{kind: kind, data: packed})
 }
 
-func (m *MultiCallTx) Get() [][]byte {
+func (m *MultiCallTx) txLists() []multiCallTxList {
 	return m.list
 }
 
-func (m *MultiCallTx) Commit() error {
-	if len(m.list) == 0 {
-		return nil
-	}
+func (m *MultiCallTx) GetTxKinds() []uint8 {
+	txs := m.txLists()
 
-	var txHash, err = m.index.MultiCall(&m.list)
-	if err != nil {
-		return fmt.Errorf("processing MulticallTx invoke multiCall: %w", err)
+	var txList = []uint8{}
+	for _, txPackedData := range txs {
+		txList = append(txList, txPackedData.kind)
 	}
-
-	err = m.proc.AddTx(m.reqID, txHash, m.comment, m.txKind, processing.StatusPending)
-	if err != nil {
-		return fmt.Errorf("processing MulticallTx add tx: %w", err)
-	}
-
-	return nil
+	return txList
 }
 
-func (i *Index) MultiCallTxNew(proc *processing.Proc, txKind processing.TxKind, comment string, reqID string) *MultiCallTx {
-	return &MultiCallTx{index: i, proc: proc, txKind: txKind, comment: comment, reqID: reqID}
+func (m *MultiCallTx) Commit() (string, error) {
+	txs := m.txLists()
+	if len(txs) == 0 {
+		return "", nil
+	}
+
+	var txList = [][]byte{}
+	for _, txPackedData := range txs {
+		txList = append(txList, txPackedData.data)
+	}
+
+	var txHash, err = m.index.MultiCall(&txList)
+	if err != nil {
+		return "", fmt.Errorf("processing MulticallTx invoke multiCall: %w", err)
+	}
+
+	return txHash, nil
+}
+
+func (i *Index) MultiCallTxNew() *MultiCallTx {
+	return &MultiCallTx{index: i}
 }
 
 func New(contractAddr, keyPath string, client *ethclient.Client) *Index {

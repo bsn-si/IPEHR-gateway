@@ -50,7 +50,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 
 	var (
 		reqID        = ctx.(*gin.Context).GetString("reqId")
-		transactions = s.Infra.Index.MultiCallTxNew(s.Proc, processing.TxSetEhrUser, "", reqID)
+		transactions = s.Infra.Index.MultiCallTxNew()
 	)
 
 	err = s.save(ctx, transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
@@ -58,8 +58,21 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
 
-	if err := transactions.Commit(); err != nil {
+	txHash, err := transactions.Commit()
+	if err != nil {
 		return nil, fmt.Errorf("Create composition commit error: %w", err)
+	}
+
+	err = s.Proc.AddTx(reqID, txHash, "", processing.TxEhrCreateWithID)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCall add tx: %w", err)
+	}
+
+	for txKind := range transactions.GetTxKinds() {
+		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
+		if err != nil {
+			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
+		}
 	}
 
 	return composition, nil
@@ -77,7 +90,7 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 
 	var (
 		reqID        = ctx.(*gin.Context).GetString("reqId")
-		transactions = s.Infra.Index.MultiCallTxNew(s.Proc, processing.TxSetEhrUser, "", reqID)
+		transactions = s.Infra.Index.MultiCallTxNew()
 	)
 
 	err = s.save(ctx, transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
@@ -85,8 +98,21 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
 
-	if err := transactions.Commit(); err != nil {
+	txHash, err := transactions.Commit()
+	if err != nil {
 		return nil, fmt.Errorf("Update composition commit error: %w", err)
+	}
+
+	err = s.Proc.AddTx(reqID, txHash, "", processing.TxEhrCreateWithID)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCall add tx: %w", err)
+	}
+
+	for txKind := range transactions.GetTxKinds() {
+		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
+		if err != nil {
+			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
+		}
 	}
 
 	// TODO what we should do with prev composition?
@@ -213,7 +239,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, us
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
-		multiCallTx.Add(packed)
+		multiCallTx.Add(uint8(processing.TxAddEhrDoc), packed)
 	}
 
 	// Index DataSearch
@@ -248,7 +274,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, us
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		multiCallTx.Add(packed)
+		multiCallTx.Add(uint8(processing.TxSetDocKeyEncrypted), packed)
 	}
 
 	return nil
@@ -355,7 +381,7 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	err = s.Proc.AddTx(reqID, docDeleteTx, "", processing.TxDeleteDoc, processing.StatusPending)
+	err = s.Proc.AddTx(reqID, docDeleteTx, "", processing.TxDeleteDoc)
 	if err != nil {
 		return "", fmt.Errorf("Proc.AddTx error: %w", err)
 	}
