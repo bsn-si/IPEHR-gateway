@@ -357,7 +357,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	}
 
 	// Start processing request
-	reqID := ctx.(*gin.Context).GetString("reqId") + string(processing.RequestEhrStatusCreate)
+	reqID := ctx.(*gin.Context).GetString("reqId")
 	{
 		procReq := &processing.Request{
 			ReqID:        reqID,
