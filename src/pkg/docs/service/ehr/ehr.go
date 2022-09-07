@@ -45,11 +45,6 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	ehr.SystemID.Value = ehrSystemID.String()
 	ehr.EhrID.Value = ehrUUID.String()
 
-	ehr.EhrStatus.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrStatus.ID.Value = uuid.New().String() + "::" + ehrSystemID.String() + "::1"
-	ehr.EhrStatus.Namespace = "local"
-	ehr.EhrStatus.Type = "EHR_STATUS"
-
 	ehr.EhrAccess.ID.Type = "OBJECT_VERSION_ID"
 	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	ehr.EhrAccess.Namespace = "local"
@@ -58,11 +53,13 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
 
 	// Creating EHR_STATUS
-	ehrStatusID := ehr.EhrStatus.ID.Value
+	ehrStatusID := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
-	doc, err := s.CreateStatus(ehrStatusID, subjectID, subjectNamespace)
+	subject := s.CreateSubject(subjectID, subjectNamespace, "PERSON")
+
+	doc, err := s.CreateStatus(ehrStatusID, subject)
 	if err != nil {
 		return nil, fmt.Errorf("create status error: %w", err)
 	}
@@ -76,6 +73,9 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
 	}
+
+	ehr.EhrStatus.ID = doc.UID.ObjectID
+	ehr.EhrStatus.Type = "EHR_STATUS"
 
 	err = s.SaveEhr(ctx, transactions, userID, &ehr)
 	if err != nil {
@@ -247,7 +247,20 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 	return docDecrypted, nil
 }
 
-func (s *Service) CreateStatus(ehrStatusID, subjectID, subjectNamespace string) (doc *model.EhrStatus, err error) {
+func (s *Service) CreateSubject(subjectID, subjectNamespace, subType string) (subject base.PartySelf) {
+	subject.ExternalRef = base.ObjectRef{
+		ID: base.ObjectID{
+			Type:  "HIER_OBJECT_ID", // TODO is it always eq with "HIER_OBJECT_ID"?
+			Value: subjectID,
+		},
+		Namespace: subjectNamespace,
+		Type:      subType,
+	}
+
+	return
+}
+
+func (s *Service) CreateStatus(ehrStatusID string, subject base.PartySelf) (doc *model.EhrStatus, err error) {
 	doc = &model.EhrStatus{}
 	doc.Type = types.EhrStatus.String()
 	doc.ArchetypeNodeID = "openEHR-EHR-EHR_STATUS.generic.v1"
@@ -259,14 +272,7 @@ func (s *Service) CreateStatus(ehrStatusID, subjectID, subjectNamespace string) 
 		Value: ehrStatusID,
 	}}
 
-	doc.Subject.ExternalRef = base.ObjectRef{
-		ID: base.ObjectID{
-			Type:  "HIER_OBJECT_ID",
-			Value: subjectID,
-		},
-		Namespace: subjectNamespace,
-		Type:      "PERSON",
-	}
+	doc.Subject = subject
 	doc.IsQueryable = true
 	doc.IsModifable = true
 

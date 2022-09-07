@@ -81,7 +81,7 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 
 	address := common.HexToAddress(contractAddr)
 
-	ehrIndex, err := ehrIndexer.NewEhrIndexer(address, client)
+	ehrIndex, err := ehrIndexer.NewEhrIndexer(address, client) // shoulbe interface
 	if err != nil {
 		log.Fatal(err)
 	}
