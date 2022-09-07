@@ -63,7 +63,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Create composition commit error: %w", err)
 	}
 
-	for txKind := range transactions.GetTxKinds() {
+	for _, txKind := range transactions.GetTxKinds() {
 		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
@@ -98,7 +98,7 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Update composition commit error: %w", err)
 	}
 
-	for txKind := range transactions.GetTxKinds() {
+	for _, txKind := range transactions.GetTxKinds() {
 		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)

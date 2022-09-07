@@ -459,7 +459,7 @@ func (s *Service) UpdateStatus(ctx context.Context, userID string, ehrUUID *uuid
 		return fmt.Errorf("UpdateStatus commit error: %w", err)
 	}
 
-	for txKind := range transactions.GetTxKinds() {
+	for _, txKind := range transactions.GetTxKinds() {
 		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
 		if err != nil {
 			return fmt.Errorf("processing MulticallTx list of transactions: %w", err)
