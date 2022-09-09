@@ -1,4 +1,4 @@
-![storage_diagram](https://user-images.githubusercontent.com/8058268/187934825-7fcce4d9-a731-4945-842a-f16de5831672.svg)
+![1](https://user-images.githubusercontent.com/8058268/189339273-3e49a10f-f7b1-46ef-8fa3-514e0d4d9edf.svg)
 
 ### At IPEHR we use a two-tiered document storage system.
 
