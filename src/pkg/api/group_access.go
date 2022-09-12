@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +38,7 @@ func NewGroupAccessHandler(docService *service.DefaultDocumentService, groupAcce
 // @Failure      500         "Is returned when an unexpected error occurs while processing a request"
 // @Router       /v1/access/group [post]
 func (h *GroupAccessHandler) Create(c *gin.Context) {
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return

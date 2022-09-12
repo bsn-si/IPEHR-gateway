@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/service/processing"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -61,7 +61,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
@@ -178,7 +178,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return

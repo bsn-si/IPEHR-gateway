@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -201,7 +201,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -253,7 +253,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *testData) func(t *testing.T)
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -343,7 +343,7 @@ func (testWrap *testWrap) ehrGetByID(testData *testData) func(t *testing.T) {
 		}
 		defer response.Body.Close()
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Errorf("Response body read error: %v", err)
 			return
@@ -398,7 +398,7 @@ func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T)
 		}
 		defer response.Body.Close()
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -446,7 +446,7 @@ func (testWrap *testWrap) ehrStatusGet(testData *testData) func(t *testing.T) {
 			return
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Errorf("Response body read error: %v", err)
 			return
@@ -572,7 +572,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -618,7 +618,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
-		data, err = ioutil.ReadAll(response.Body)
+		data, err = io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -718,7 +718,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 			t.Fatalf("Expected success, received status: %d", response.StatusCode)
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -774,7 +774,7 @@ func (testWrap *testWrap) compositionGetByID(testData *testData) func(t *testing
 		}
 		defer response.Body.Close()
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -877,7 +877,7 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -1101,7 +1101,7 @@ func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.
 		}
 		defer response.Body.Close()
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -1137,7 +1137,7 @@ func (testWrap *testWrap) wrongAccessGroupGetting(testData *testData) func(t *te
 		}
 		defer response.Body.Close()
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -1171,7 +1171,7 @@ func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing
 		}
 		defer response.Body.Close()
 
-		data, err := ioutil.ReadAll(response.Body)
+		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			t.Fatalf("Response body read error: %v", err)
 		}
@@ -1261,7 +1261,7 @@ func (testWrap *testWrap) createEhr(userID, ehrSystemID string) (ehr *model.EHR,
 
 	defer response.Body.Close()
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, "", err
 	}
@@ -1307,7 +1307,7 @@ func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID stri
 
 	defer response.Body.Close()
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -1350,7 +1350,7 @@ func (testWrap *testWrap) createGroupAccess(userID string) (*model.GroupAccess, 
 		return nil, err
 	}
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	defer response.Body.Close()
 
 	if err != nil {
@@ -1409,7 +1409,7 @@ func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess 
 		return nil, errors.New(response.Status)
 	}
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,6 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service/processing"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -72,7 +71,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
 		return
@@ -420,7 +419,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
 		return

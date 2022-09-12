@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -521,7 +521,7 @@ func (p *Proc) downloadFile(CID *cid.Cid) ([]byte, error) {
 		return nil, fmt.Errorf("%w Download file response status error: %s", errors.ErrCustom, resp.Status)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("downloadFile ReadAll error: %w", err)
 	}

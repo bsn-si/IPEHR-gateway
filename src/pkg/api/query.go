@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +41,7 @@ func NewQueryHandler(docService *service.DefaultDocumentService) *QueryHandler {
 // @Failure  500         "Is returned when an unexpected error occurs while processing a request"
 // @Router   /query/aql [post]
 func (h QueryHandler) ExecPost(c *gin.Context) {
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
