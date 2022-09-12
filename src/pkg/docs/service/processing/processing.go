@@ -23,9 +23,9 @@ import (
 )
 
 type (
-	Status      uint8
-	TxKind      uint8 // TODO useless type because we already have RequestKind, require refactoring
-	RequestKind uint8
+	Status            uint8
+	TxKind            uint8 // TODO useless type because we already have RequestKind, require refactoring
+	BlockChainService uint8
 
 	Proc struct {
 		db               *gorm.DB
@@ -36,19 +36,6 @@ type (
 		lock             bool
 		localStoragePath string
 		done             chan bool
-	}
-
-	Request struct {
-		ReqID        string      `gorm:"index:idx_request,unique"`
-		Kind         RequestKind `gorm:"index:idx_request,unique"`
-		Status       Status
-		UserID       string
-		EhrUUID      string
-		CID          string
-		DealCID      string
-		MinerAddress string
-		BaseUIDHash  string
-		Version      string
 	}
 
 	Tx struct {
@@ -76,19 +63,6 @@ const (
 	StatusProcessing Status = 3
 	StatusUnknown    Status = 255
 
-	RequestEhrCreate          RequestKind = 0
-	RequestEhrGetBySubject    RequestKind = 1
-	RequestEhrGetByID         RequestKind = 2
-	RequestEhrStatusCreate    RequestKind = 3
-	RequestEhrStatusUpdate    RequestKind = 4
-	RequestEhrStatusGetByID   RequestKind = 5
-	RequestEhrStatusGetByTime RequestKind = 6
-	RequestCompositionCreate  RequestKind = 7
-	RequestCompositionUpdate  RequestKind = 8
-	RequestCompositionGetByID RequestKind = 9
-	RequestCompositionDelete  RequestKind = 10
-	RequestUnknown            RequestKind = 255
-
 	TxSetEhrUser         TxKind = 0
 	TxSetEhrBySubject    TxKind = 1
 	TxSetEhrDocs         TxKind = 2
@@ -100,6 +74,9 @@ const (
 	TxAddEhrDoc          TxKind = 8
 	TxSetDocKeyEncrypted TxKind = 9
 	TxUnknown            TxKind = 255
+
+	BcEthereum BlockChainService = 0
+	BcFileCoin BlockChainService = 1
 )
 
 var (
@@ -182,14 +159,6 @@ func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Clie
 		done:             make(chan bool),
 		localStoragePath: storagePath,
 	}
-}
-
-func (p *Proc) AddRequest(req *Request) error {
-	if result := p.db.Create(req); result.Error != nil {
-		return fmt.Errorf("db.Create error: %w", result.Error)
-	}
-
-	return nil
 }
 
 func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind) error {
@@ -275,6 +244,18 @@ func (p *Proc) Start() {
 
 func (p *Proc) Stop() {
 	p.done <- true
+}
+
+func (p *Proc) BeginDbTx() *gorm.DB {
+	return p.db.Begin()
+}
+
+func (p *Proc) CommitDbTx(tx *gorm.DB) error {
+	return tx.Commit().Error
+}
+
+func (p *Proc) RollbackDbTx(tx *gorm.DB) {
+	tx.Rollback()
 }
 
 func (p *Proc) execBlockchain() {
