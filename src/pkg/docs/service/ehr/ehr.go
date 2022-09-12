@@ -10,7 +10,6 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
@@ -105,7 +104,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	}
 
 	for _, txKind := range transactions.GetTxKinds() {
-		err = s.Proc.AddTx(dbRequest.ReqID(), txHash, "", processing.TxKind(txKind))
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -157,11 +156,13 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 
 	// Start processing request
 	{
-		if err := dbRequest.UpdateFileCoinData(CID.String(), dealCID.String(), minerAddr); err != nil {
-			return fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
+		requestFileCoinData, err := dbRequest.AddFileCoinData(CID.String(), dealCID.String(), minerAddr)
+
+		if err != nil {
+			return fmt.Errorf("Proc.AddFileCoinData error: %w", err)
 		}
 
-		err = s.Proc.AddTx(dbRequest.ReqID(), dealCID.String(), "", processing.TxFilecoinStartDeal)
+		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, requestFileCoinData.ID)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -358,11 +359,12 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 
 	// Start processing request
 	{
-		if err := dbRequest.UpdateFileCoinData(CID.String(), dealCID.String(), minerAddr); err != nil {
-			return fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
+		fileCoinData, err := dbRequest.AddFileCoinData(CID.String(), dealCID.String(), minerAddr)
+		if err != nil {
+			return fmt.Errorf("Proc.AddFileCoinData error: %w", err)
 		}
 
-		err = s.Proc.AddTx(dbRequest.ReqID(), dealCID.String(), "", processing.TxFilecoinStartDeal)
+		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, fileCoinData.ID)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -433,8 +435,6 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 }
 
 func (s *Service) UpdateStatus(ctx context.Context, dbRequest *processing.SuperRequest, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
-	reqID := ctx.(*gin.Context).GetString("reqId")
-
 	var transactions = s.Infra.Index.MultiCallTxNew()
 
 	if err := s.SaveStatus(ctx, transactions, dbRequest, userID, ehrUUID, ehrSystemID, status); err != nil {
@@ -454,7 +454,7 @@ func (s *Service) UpdateStatus(ctx context.Context, dbRequest *processing.SuperR
 	}
 
 	for _, txKind := range transactions.GetTxKinds() {
-		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
 		if err != nil {
 			return fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}

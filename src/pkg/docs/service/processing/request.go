@@ -83,6 +83,35 @@ func (s *SuperRequest) UpdateFileCoinData(cid, deaclCid, minerAddress string) er
 	}).Error
 }
 
+func (s *SuperRequest) AddEthData(baseUIDHash, version string) (*RequestDataEtherium, error) {
+	var dataEtherium = RequestDataEtherium{
+		BaseUIDHash: baseUIDHash,
+		Version:     version,
+	}
+
+	db := s.dbTx.Model(&s.request).Create(&dataEtherium)
+
+	return &dataEtherium, db.Error
+}
+
+func (s *SuperRequest) AddFileCoinData(cid, deaclCid, minerAddress string) (*RequestDataFileCoin, error) {
+	var dataFileCoin = RequestDataFileCoin{
+		CID:          cid,
+		DealCID:      deaclCid,
+		MinerAddress: minerAddress,
+	}
+
+	db := s.dbTx.Model(&s.request).Create(&dataFileCoin)
+
+	return &dataFileCoin, db.Error
+}
+
+func (s *SuperRequest) AddTx(tx *Tx) error {
+	db := s.dbTx.Model(&s.request).Create(&tx)
+
+	return db.Error
+}
+
 func (s *SuperRequest) ReqID() string {
 	return s.request.ReqID
 }

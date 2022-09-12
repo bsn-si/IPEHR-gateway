@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -40,12 +41,16 @@ type (
 
 	Tx struct {
 		gorm.Model
-		Time    time.Time
-		ReqID   string
-		Kind    TxKind
-		Hash    string
-		Status  Status
-		Comment string
+		Time time.Time // TODO we dont need this field because CreatedAt - need remove
+		//ReqID     string
+		RequestID uint
+		Request   Request
+		ServiceID uint
+		Service   BlockChainService
+		Kind      TxKind // TODO can be removed?
+		Hash      string
+		Status    Status
+		//Comment   string // TODO we dont need this field
 	}
 
 	Retrieve struct {
@@ -161,31 +166,22 @@ func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Clie
 	}
 }
 
-func (p *Proc) AddTx(reqID, txHash, comment string, kind TxKind) error {
-	if reqID == "" {
-		return fmt.Errorf("%w reqID %s", errors.ErrIncorrectRequest, reqID)
+func (p *Proc) AddTx(request *SuperRequest, txHash string, kind TxKind, service BlockChainService, serviceID uint) (*Tx, error) {
+	var dbTx = Tx{
+		//Time:   time.Now(),
+		Hash:   txHash,
+		Kind:   kind,
+		Status: StatusPending,
+		//Comment:   comment,
+		Service:   service,
+		ServiceID: serviceID,
 	}
 
-	var req Request
-
-	result := p.db.Model(&req).First(&req, "req_id = ?", reqID)
-	if result.Error != nil {
-		return fmt.Errorf("db request get error: %w reqID %s", result.Error, reqID)
+	if err := request.AddTx(&dbTx); err != nil {
+		return nil, fmt.Errorf("db.Create transaction error: %w", err)
 	}
 
-	result = p.db.Create(&Tx{
-		Time:    time.Now(),
-		ReqID:   reqID,
-		Kind:    kind,
-		Hash:    txHash,
-		Status:  StatusPending,
-		Comment: comment,
-	})
-	if result.Error != nil {
-		return fmt.Errorf("db.Create error: %w", result.Error)
-	}
-
-	return nil
+	return &dbTx, nil
 }
 
 func (p *Proc) AddRetrieve(CID string) error {
@@ -282,7 +278,7 @@ func (p *Proc) execBlockchain() {
 
 	for {
 		tx := Tx{}
-
+		//todo fix
 		result := p.db.Model(&tx).Select("req_id, hash, status").Where("kind IN ? AND status IN ?", txKinds, statuses).Group("hash").Find(&tx).Limit(1)
 		if result.Error != nil || result.RowsAffected == 0 {
 			break
@@ -292,6 +288,7 @@ func (p *Proc) execBlockchain() {
 		defer cancel()
 
 		h := common.HexToHash(tx.Hash)
+		txID := strconv.Itoa(int(tx.ID))
 
 		var status Status
 
@@ -300,30 +297,31 @@ func (p *Proc) execBlockchain() {
 			if errors.Is(err, ethereum.NotFound) {
 				status = StatusPending
 			} else {
-				log.Printf(tx.ReqID, "TransactionReceipt error: %v txHash %s", err, h.String())
+				log.Printf(txID, "TransactionReceipt error: %v txHash %s", err, h.String())
 				break
 			}
 		} else {
 			status = Status(receipt.Status)
 		}
 
-		log.Println(tx.ReqID, "Tx", tx.Hash, "status", status)
+		log.Println(txID, "Tx", tx.Hash, "status", status)
 
 		if status != tx.Status {
 			if result = p.db.Model(Tx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
-				log.Println(tx.ReqID, "db.Update error:", result.Error)
+				log.Println(txID, "db.Update error:", result.Error)
 				break
 			}
 
-			reqStatus, err := p.checkRequestStatus(tx.ReqID)
+			reqStatus, err := p.checkRequestStatus(txID) //
 			if err != nil {
-				log.Println(tx.ReqID, "checkRequestDone error:", err, "reqID", tx.ReqID)
+				log.Println(txID, "checkRequestDone error:", err, "reqID", txID)
 				break
 			}
 
 			if reqStatus == StatusSuccess || reqStatus == StatusFailed {
 				// update request status
-				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", reqStatus, tx.ReqID)
+				//todo fix
+				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", reqStatus, txID)
 				if result.Error != nil {
 					break
 				}
@@ -354,6 +352,7 @@ func (p *Proc) execFilecoinStartDealStatus() {
 	txs := []Tx{}
 
 	for _, tx := range txs {
+		//todo fix
 		result := p.db.Where("kind IN ? AND status IN ?", txKinds, statuses).Find(&txs)
 		if result.Error != nil {
 			if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -362,27 +361,30 @@ func (p *Proc) execFilecoinStartDealStatus() {
 			return
 		}
 
+		txID := strconv.Itoa(int(tx.ID))
+
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		dealCID, err := cid.Parse(tx.Hash)
 		if err != nil {
-			log.Println(tx.ReqID, "cid.Parse error:", err, "tx.Hash:", tx.Hash)
+			log.Println(txID, "cid.Parse error:", err, "tx.Hash:", tx.Hash)
 			break
 		}
 
 		dealStatus, err := p.filecoinClient.GetDealStatus(ctx, &dealCID)
 		if err != nil {
-			log.Println(tx.ReqID, "filecoinClient.GetDealStatus error:", err, "dealCID", dealCID.String())
+			log.Println(txID, "filecoinClient.GetDealStatus error:", err, "dealCID", dealCID.String())
 			break
 		}
 
 		switch tx.Status {
 		case StatusPending, StatusProcessing:
-			if dealStatus == storagemarket.StorageDealActive {
-				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", StatusSuccess, tx.ReqID)
+			//todo fix
+			if dealStatus == storagemarket.StorageDealActive { //
+				result = p.db.Exec("UPDATE requests SET status = ? WHERE req_id = ?", StatusSuccess, txID)
 				if result.Error != nil {
-					log.Println(tx.ReqID, "db.Save error:", result.Error)
+					log.Println(txID, "db.Save error:", result.Error)
 					return
 				}
 			}
@@ -531,6 +533,7 @@ func (p *Proc) downloadFile(CID *cid.Cid) ([]byte, error) {
 
 func (p *Proc) checkRequestStatus(reqID string) (Status, error) {
 	var txs []Tx
+	//todo fix
 	result := p.db.Model(&Tx{}).Where("req_id = ? AND kind != ?", reqID, TxFilecoinStartDeal).Find(&txs)
 
 	if result.Error != nil {
@@ -569,7 +572,7 @@ type RequestsResult map[string]*RequestResult
 
 func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 	result := make(map[string]*RequestResult)
-
+	//todo fix
 	query := `SELECT r.req_id, r.status, r.kind, r.c_id, r.deal_c_id, r.miner_address, t.kind, t.hash, t.status
 			FROM requests r, txes t
 			WHERE 
@@ -661,7 +664,7 @@ func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {
 
 func (p *Proc) GetRequest(reqID string) ([]byte, error) {
 	var result RequestResult
-
+	//todo fix
 	query := `SELECT r.status, r.kind, r.c_id, r.deal_c_id, r.miner_address, t.kind, t.hash, t.status
 			FROM requests r, txes t
 			WHERE 

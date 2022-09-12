@@ -80,7 +80,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range transactions.GetTxKinds() {
-		err = s.Proc.AddTx(dbRequest.ReqID(), txHash, "", processing.TxKind(txKind))
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -114,7 +114,7 @@ func (s *Service) Update(ctx context.Context, dbRequest *processing.SuperRequest
 	}
 
 	for _, txKind := range transactions.GetTxKinds() {
-		err = s.Proc.AddTx(dbRequest.ReqID(), txHash, "", processing.TxKind(txKind))
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -351,7 +351,8 @@ func (s *Service) DeleteByID(ctx context.Context, dbRequest *processing.SuperReq
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	if err := dbRequest.UpdateEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString()); err != nil {
+	ethdata, err := dbRequest.AddEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString())
+	if err != nil {
 		return "", fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
 	}
 
@@ -363,7 +364,7 @@ func (s *Service) DeleteByID(ctx context.Context, dbRequest *processing.SuperReq
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	err = s.Proc.AddTx(dbRequest.ReqID(), docDeleteTx, "", processing.TxDeleteDoc)
+	_, err = s.Proc.AddTx(dbRequest, docDeleteTx, processing.TxDeleteDoc, processing.BcEthereum, ethdata.ID)
 	if err != nil {
 		return "", fmt.Errorf("Proc.AddTx error: %w", err)
 	}
