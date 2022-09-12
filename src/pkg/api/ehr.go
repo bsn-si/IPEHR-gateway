@@ -80,7 +80,8 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Checking EHR does not exist
+	// Checking EHR does not exist?
+	// проверить чему будет равен ehrUUID
 	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err == nil && ehrUUID != nil:

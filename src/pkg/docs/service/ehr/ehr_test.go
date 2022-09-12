@@ -104,7 +104,23 @@ func TestSave(t *testing.T) {
 	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
 	ctx.Set("reqId", reqID)
 
-	ehrDoc, err := ehrService.EhrCreate(ctx, testUserID, ehrSystemID, &ehrReq)
+	dbTransaction := ehrService.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			ehrService.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	ehrUUID, _ := ehrService.Infra.Index.GetEhrUUIDByUserID(ctx, testUserID)
+
+	dbRequest, err := ehrService.NewDbRequest(dbTransaction, reqID, testUserID, ehrUUID, processing.RequestEhrCreate)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	ehrDoc, err := ehrService.EhrCreate(ctx, testUserID, ehrUUID, ehrSystemID, &ehrReq, dbRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,7 +130,7 @@ func TestSave(t *testing.T) {
 	}
 
 	// Check that subject index is added
-	ehrUUID, err := docService.Infra.Index.GetEhrUUIDBySubject(ctx, testSubjectID, testSubjectNamespace)
+	ehrUUID, err = docService.Infra.Index.GetEhrUUIDBySubject(ctx, testSubjectID, testSubjectNamespace)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,6 +138,8 @@ func TestSave(t *testing.T) {
 	if ehrUUID.String() != ehrDoc.EhrID.Value {
 		t.Fatalf("Expected %s, received %s", ehrDoc.EhrID.Value, ehrUUID.String())
 	}
+
+	dbTransaction.Commit()
 }
 
 func TestStatus(t *testing.T) {
@@ -147,7 +165,24 @@ func TestStatus(t *testing.T) {
 	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
 	ctx.Set("reqId", reqID)
 
-	newEhr, err := ehrService.EhrCreate(ctx, userID, ehrSystemID, &createRequest)
+	dbTransaction := ehrService.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			ehrService.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	newEhrUUID, _ := ehrService.Infra.Index.GetEhrUUIDByUserID(ctx, userID)
+
+	dbRequest, err := ehrService.NewDbRequest(dbTransaction, reqID, userID, newEhrUUID, processing.RequestEhrCreate)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	newEhr, err := ehrService.EhrCreate(ctx, userID, newEhrUUID, ehrSystemID, &createRequest, dbRequest)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,6 +220,8 @@ func TestStatus(t *testing.T) {
 	if statusGet.UID.Value != statusIDNew {
 		t.Fatalf("Expected %s, received %s", statusIDNew, statusGet.UID.Value)
 	}
+
+	dbTransaction.Commit()
 }
 
 func TestGetStatusByNearestTime(t *testing.T) {
@@ -209,7 +246,23 @@ func TestGetStatusByNearestTime(t *testing.T) {
 	reqID := "test_" + strconv.FormatInt(time.Now().UnixNano()/1e3, 10)
 	ctx.Set("reqId", reqID)
 
-	newEhr, err := ehrService.EhrCreate(ctx, userID, ehrSystemID, &createRequest)
+	dbTransaction := ehrService.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			ehrService.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	newEhrUUID, _ := ehrService.Infra.Index.GetEhrUUIDByUserID(ctx, userID)
+
+	dbRequest, err := ehrService.NewDbRequest(dbTransaction, reqID, userID, newEhrUUID, processing.RequestEhrCreate)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	newEhr, err := ehrService.EhrCreate(ctx, userID, newEhrUUID, ehrSystemID, &createRequest, dbRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +289,7 @@ func TestGetStatusByNearestTime(t *testing.T) {
 		transactions = ehrService.Infra.Index.MultiCallTxNew()
 	)
 
-	err = ehrService.SaveStatus(ctx, transactions, userID, &ehrUUID, ehrSystemID, doc, false)
+	err = ehrService.SaveStatus(ctx, transactions, dbRequest, userID, &ehrUUID, ehrSystemID, doc)
 	if err != nil {
 		t.Fatal(err)
 	}
