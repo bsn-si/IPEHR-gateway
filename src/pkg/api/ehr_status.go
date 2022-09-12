@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/docs/service/processing"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -59,6 +60,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+	reqID := c.MustGet("reqID").(string)
 
 	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)
@@ -121,8 +123,31 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	if err := h.service.UpdateStatus(c, userID, &ehrUUID, ehrSystemID, &status); err != nil {
+	dbTransaction := h.service.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			h.service.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
+	if err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if err := h.service.UpdateStatus(c, dbRequest, userID, &ehrUUID, ehrSystemID, &status); err != nil {
+		h.service.Proc.RollbackDbTx(dbTransaction)
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

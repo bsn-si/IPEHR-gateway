@@ -5,15 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm"
 	"hms/gateway/pkg/indexer"
 	"time"
 
 	"golang.org/x/crypto/sha3"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
@@ -42,18 +41,34 @@ func NewCompositionService(docService *service.DefaultDocumentService, groupAcce
 	}
 }
 
-func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) NewDbRequest(dbTx *gorm.DB, reqID string, userID string, ehrUUID *uuid.UUID, requestKind processing.RequestKind) (*processing.SuperRequest, error) {
+	procReq := &processing.Request{
+		ReqID:   reqID,
+		UserID:  userID,
+		EhrUUID: ehrUUID.String(),
+		Status:  processing.StatusProcessing,
+		Kind:    requestKind,
+	}
+	superRequest, err := s.Proc.AddRequest(dbTx, procReq)
+
+	if err != nil {
+		return nil, fmt.Errorf("Proc.AddRequest error: %w", err)
+	}
+
+	return superRequest, nil
+}
+
+func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition, dbRequest *processing.SuperRequest) (*model.Composition, error) {
 	groupAccessModel, err := s.groupAccessService.Get(ctx, userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
 	}
 
 	var (
-		reqID        = ctx.(*gin.Context).GetString("reqId")
 		transactions = s.Infra.Index.MultiCallTxNew()
 	)
 
-	err = s.save(ctx, transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
+	err = s.save(ctx, transactions, dbRequest, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
@@ -64,7 +79,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range transactions.GetTxKinds() {
-		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
+		err = s.Proc.AddTx(dbRequest.ReqID(), txHash, "", processing.TxKind(txKind))
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -73,7 +88,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	return composition, nil
 }
 
-func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Update(ctx context.Context, dbRequest *processing.SuperRequest, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID base.EhrSystemID, composition *model.Composition) (*model.Composition, error) {
 	groupAccessModel, err := s.groupAccessService.Get(ctx, userID, groupAccessUUID)
 	if err != nil {
 		return nil, fmt.Errorf("GroupAccessIndex.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
@@ -84,11 +99,10 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	var (
-		reqID        = ctx.(*gin.Context).GetString("reqId")
 		transactions = s.Infra.Index.MultiCallTxNew()
 	)
 
-	err = s.save(ctx, transactions, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
+	err = s.save(ctx, transactions, dbRequest, userID, ehrUUID, groupAccessModel, ehrSystemID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
@@ -99,7 +113,7 @@ func (s *Service) Update(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range transactions.GetTxKinds() {
-		err = s.Proc.AddTx(reqID, txHash, "", processing.TxKind(txKind))
+		err = s.Proc.AddTx(dbRequest.ReqID(), txHash, "", processing.TxKind(txKind))
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -128,7 +142,7 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID base.EhrSyst
 	return nil
 }
 
-func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
+func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, dbRequest *processing.SuperRequest, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID base.EhrSystemID, doc *model.Composition) error {
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
@@ -186,27 +200,16 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, us
 	}
 
 	// Start processing request
-	reqID := ctx.(*gin.Context).GetString("reqId")
 	{
-		procReq := &processing.Request{
-			ReqID:        reqID,
-			UserID:       userID,
-			EhrUUID:      ehrUUID.String(),
-			Status:       processing.StatusProcessing,
-			Kind:         processing.RequestCompositionCreate,
-			CID:          CID.String(),
-			DealCID:      dealCID.String(),
-			MinerAddress: minerAddr,
-		}
-		if err = s.Proc.AddRequest(procReq); err != nil {
-			return fmt.Errorf("Proc.AddRequest error: %w", err)
+		if err := dbRequest.UpdateFileCoinData(CID.String(), dealCID.String(), minerAddr); err != nil {
+			return fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
 		}
 
-		/*
-			err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
-			if err != nil {
-				return fmt.Errorf("Proc.AddTx error: %w", err)
-			}
+		/* TODO why commented?
+		err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
+		if err != nil {
+			return fmt.Errorf("Proc.AddTx error: %w", err)
+		}
 		*/
 	}
 
@@ -338,7 +341,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 	return &composition, nil
 }
 
-func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (string, error) {
+func (s *Service) DeleteByID(ctx context.Context, dbRequest *processing.SuperRequest, ehrUUID *uuid.UUID, versionUID string, ehrSystemID base.EhrSystemID) (string, error) {
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID.String())
@@ -347,20 +350,8 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	// Start processing request
-	reqID := ctx.(*gin.Context).GetString("reqId")
-
-	procReq := &processing.Request{
-		ReqID:       reqID,
-		UserID:      userID,
-		EhrUUID:     ehrUUID.String(),
-		Status:      processing.StatusProcessing,
-		Kind:        processing.RequestCompositionDelete,
-		BaseUIDHash: hex.EncodeToString(baseDocumentUIDHash[:]),
-		Version:     objectVersionID.VersionString(),
-	}
-	if err = s.Proc.AddRequest(procReq); err != nil {
-		return "", fmt.Errorf("Proc.AddRequest error: %w", err)
+	if err := dbRequest.UpdateEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString()); err != nil {
+		return "", fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
 	}
 
 	docDeleteTx, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
@@ -371,13 +362,13 @@ func (s *Service) DeleteByID(ctx context.Context, userID string, ehrUUID *uuid.U
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	err = s.Proc.AddTx(reqID, docDeleteTx, "", processing.TxDeleteDoc)
+	err = s.Proc.AddTx(dbRequest.ReqID(), docDeleteTx, "", processing.TxDeleteDoc)
 	if err != nil {
 		return "", fmt.Errorf("Proc.AddTx error: %w", err)
 	}
 
 	// Waiting for tx processed and pending nonce increased
-	time.Sleep(common.BlockchainTxProcAwaitTime)
+	//time.Sleep(common.BlockchainTxProcAwaitTime)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

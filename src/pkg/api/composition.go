@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
 	"io"
 	"io/ioutil"
 	"log"
@@ -127,11 +128,35 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Composition document creating
-	doc, err := h.service.Create(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request)
+	reqID := c.MustGet("reqID").(string)
+
+	dbTransaction := h.service.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			h.service.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
 	if err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	// Composition document creating
+	doc, err := h.service.Create(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request, dbRequest)
+	if err != nil {
+		h.service.Proc.RollbackDbTx(dbTransaction)
 		log.Println("Composition creating error:", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
+		return
+	}
+
+	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -270,17 +295,41 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	newUID, err := h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
+	reqID := c.MustGet("reqID").(string)
+
+	dbTransaction := h.service.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			h.service.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
+	if err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	newUID, err := h.service.DeleteByID(c, dbRequest, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
 		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
 			c.AbortWithStatus(http.StatusBadRequest)
 		} else {
+			dbTransaction.Rollback()
 			log.Println("DeleteByID error:", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 
+		return
+	}
+
+	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -418,11 +467,35 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
+	reqID := c.MustGet("reqID").(string)
+
+	dbTransaction := h.service.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			h.service.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
 	if err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	compositionUpdated, err := h.service.Update(c, dbRequest, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
+	if err != nil {
+		dbTransaction.Rollback()
 		log.Println("Composition Update error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 
+		return
+	}
+
+	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

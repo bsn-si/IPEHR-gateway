@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"hms/gateway/pkg/docs/service/processing"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -93,10 +94,29 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+	reqID := c.MustGet("reqID").(string)
+
+	dbTransaction := h.service.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			h.service.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, ehrUUID, processing.RequestEhrCreate)
+	if err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, ehrSystemID, &request)
+	doc, err := h.service.EhrCreate(c, userID, ehrUUID, ehrSystemID, &request, dbRequest)
+
 	if err != nil {
+		h.service.Proc.RollbackDbTx(dbTransaction)
+
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		} else {
@@ -104,6 +124,12 @@ func (h *EhrHandler) Create(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
 		}
 
+		return
+	}
+
+	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -189,9 +215,28 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, &ehrUUID, ehrSystemID, &request)
+	dbTransaction := h.service.Proc.BeginDbTx()
+
+	defer func() {
+		if r := recover(); r != nil {
+			h.service.Proc.RollbackDbTx(dbTransaction)
+		}
+	}()
+
+	reqID := c.MustGet("reqID").(string)
+
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
 	if err != nil {
+		log.Println("NewDbRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	// EHR document creating
+	newDoc, err := h.service.EhrCreateWithID(c, userID, &ehrUUID, ehrSystemID, &request, dbRequest)
+	if err != nil {
+		h.service.Proc.RollbackDbTx(dbTransaction)
+
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		}
@@ -199,6 +244,12 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		log.Println("EhrCreateWithID error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
 
+		return
+	}
+
+	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
