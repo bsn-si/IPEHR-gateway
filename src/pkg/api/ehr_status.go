@@ -60,7 +60,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 func (h EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-	reqID := c.MustGet("reqID").(string)
+	reqID := c.MustGet("reqId").(string)
 
 	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
 		c.AbortWithStatus(http.StatusNotFound)

@@ -127,7 +127,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	reqID := c.MustGet("reqID").(string)
+	reqID := c.MustGet("reqId").(string)
 
 	dbTransaction := h.service.Proc.BeginDbTx()
 
@@ -294,7 +294,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	reqID := c.MustGet("reqID").(string)
+	reqID := c.MustGet("reqId").(string)
 
 	dbTransaction := h.service.Proc.BeginDbTx()
 
@@ -466,7 +466,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	reqID := c.MustGet("reqID").(string)
+	reqID := c.MustGet("reqId").(string)
 
 	dbTransaction := h.service.Proc.BeginDbTx()
 

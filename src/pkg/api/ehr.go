@@ -96,7 +96,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 
 	ehrUUIDnew := uuid.New()
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-	reqID := c.MustGet("reqID").(string)
+	reqID := c.MustGet("reqId").(string)
 
 	dbTransaction := h.service.Proc.BeginDbTx()
 
@@ -225,7 +225,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		}
 	}()
 
-	reqID := c.MustGet("reqID").(string)
+	reqID := c.MustGet("reqId").(string)
 
 	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
 	if err != nil {
