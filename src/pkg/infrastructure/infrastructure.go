@@ -52,6 +52,14 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
+	if err = db.AutoMigrate(&processing.RequestDataEtherium{}); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = db.AutoMigrate(&processing.RequestDataFileCoin{}); err != nil {
+		log.Fatal(err)
+	}
+
 	ks := keystore.New(cfg.KeystoreKey)
 
 	ehtClient, err := ethclient.Dial(cfg.Contract.Endpoint)
