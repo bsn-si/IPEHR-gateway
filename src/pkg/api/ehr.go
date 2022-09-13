@@ -94,6 +94,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
+	ehrUUIDnew := uuid.New()
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 	reqID := c.MustGet("reqID").(string)
 
@@ -105,7 +106,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		}
 	}()
 
-	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, ehrUUID, processing.RequestEhrCreate)
+	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUIDnew, processing.RequestEhrCreate)
 	if err != nil {
 		log.Println("NewDbRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -113,7 +114,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, ehrUUID, ehrSystemID, &request, dbRequest)
+	doc, err := h.service.EhrCreate(c, userID, &ehrUUIDnew, ehrSystemID, &request, dbRequest)
 
 	if err != nil {
 		h.service.Proc.RollbackDbTx(dbTransaction)
