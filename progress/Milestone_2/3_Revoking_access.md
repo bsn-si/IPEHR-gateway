@@ -14,4 +14,6 @@ Thus, a user with a private key can decrypt the access key to the document and t
 
 To revoke access to a document, a user with the rights of the document owner deletes a record in the table. At this point, the user for whom access was restricted will no longer be able to obtain the document's access key.
 
+## Implementation
+
 The described functionality for document access rights management will be implemented as part of the 3rd milestone.
