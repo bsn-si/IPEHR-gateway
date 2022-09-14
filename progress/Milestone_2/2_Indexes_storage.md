@@ -1,3 +1,5 @@
+![smart-contract](https://user-images.githubusercontent.com/8058268/190085702-6edf9437-1273-4db3-a7c9-414f66afe823.svg)
+
 A smart contract has been developed to store EHR document indexes.
 
 The smart contract is written in Solidity language and can be deployed in any [EVM](https://ethereum.org/en/developers/docs/evm/) compatible blockchain.
@@ -21,8 +23,16 @@ The smart contract is written in Solidity language and can be deployed in any [E
 
 User and EHR document data in the contract is stored encrypted and prevents unauthorized persons from accessing private information.
 
+For development and testing purposes, [Goerli Testnet](https://goerli.net/) is used
+
+## Implementation
+
 The contract code is located in the repository: [https://github.com/bsn-si/IPEHR-blockchain-indexes](https://github.com/bsn-si/IPEHR-blockchain-indexes)
 
-For development and testing purposes, [Goerli Testnet](https://goerli.net/) is used
+Running tests:
+
+```
+npx hardhat test
+```
 
 Address of the current version of the deployed contract: [https://goerli.etherscan.io/address/0x90346f14e3d22bff62415707928486a42282b19f](https://goerli.etherscan.io/address/0x90346f14e3d22bff62415707928486a42282b19f)
