@@ -14,5 +14,10 @@ func New(filepath string) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	db.Exec("pragma journal_mode=wal;")
+	if db.Error != nil {
+		return nil, err
+	}
+
 	return db, nil
 }
