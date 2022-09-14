@@ -22,8 +22,6 @@ As the deadline approaches, the deal must be extended. This functionality will b
 
 To interact with the Filecoin network, a connection to [Lotus](https://lotus.filecoin.io), which provides JSON-RPC API, is used.
 
-Client code for connecting to Lotus: [https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/storage/filecoin](https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/storage/filecoin)
-
 ### Stages of EHR document request processing:
 
 - checking access rights to the document
@@ -33,3 +31,13 @@ Client code for connecting to Lotus: [https://github.com/bsn-si/IPEHR-gateway/tr
 	- loading the document by DealCID and minerAddress
 	- saving to IPFS
 - the document is decrypted and transmitted to the user 
+
+## Implementation
+
+Client code for connecting to Lotus: [https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/storage/filecoin](https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/storage/filecoin)
+
+Running tests to demonstrate the work of the packages:
+
+```
+go test pkg/storage/filecoin/*
+```
