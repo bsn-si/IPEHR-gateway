@@ -1,3 +1,5 @@
+![versions](https://user-images.githubusercontent.com/8058268/190381195-7c48fe96-8f75-4d2d-a9a2-3737838ae42c.svg)
+
 ## Design of the chains of records within the storage to ensure the data integrity and authenticity.
 
 When a new EHR document is added, the digital signature of the user creating the document is sent along with the document. The signature is stored with the document. This allows you to authorize a request to create a document.
@@ -8,6 +10,6 @@ When the document is saved in the IPFS network, the [CID](https://docs.ipfs.tech
 
 The Filecoin decentralized file storage stores the document using the CID from IPFS.
 
-The [IPEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol) records meta-information of the EHR document containing the CID and an encrypted identifier. This allows us to record the fact and time of creation of a particular document.
+The [IPEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol) records meta-information of the EHR document containing the CID, dealCID, minerAddress and an encrypted document UID. This allows to fix the fact and time of creation of a particular document.
 
-The smart contract also implements document versioning logic, allowing to trace the chain from creation to the final version of the document.
+A smart contract contains a repository of information about the versions of documents, which is a stack where new entries are added without the possibility of deleting the previous ones.
