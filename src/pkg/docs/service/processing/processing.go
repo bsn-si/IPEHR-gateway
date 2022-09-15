@@ -397,11 +397,12 @@ func (p *Proc) execDealFinisher(m *sync.Mutex) {
 			  WHERE (requests.status IN (@status_pending, @status_processing) AND requests.deleted_at IS NULL)
 				AND txes.deleted_at IS NULL
 				AND txes.parent_tx_id = 0
+			    AND txes.service = @service
 			 )
 		where id is not null and txs_left = 0`
 
 	requests := []int{}
-	result := p.db.Raw(query, map[string]interface{}{"status_success": StatusSuccess, "status_pending": StatusPending, "status_processing": StatusProcessing}).Find(&requests)
+	result := p.db.Raw(query, map[string]interface{}{"status_success": StatusSuccess, "status_pending": StatusPending, "status_processing": StatusProcessing, "service": BcEthereum}).Find(&requests)
 
 	if result.Error != nil {
 		log.Println("DB get list of success transactions error:", result.Error)

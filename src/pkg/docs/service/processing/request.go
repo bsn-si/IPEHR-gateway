@@ -158,7 +158,7 @@ func (p *Proc) requests(userID, requireID string, limit, offset int) (RequestsRe
 			ORDER BY r.id desc, t.id;`
 
 	query = strings.Replace(query, "@criteria", criteria, 1)
-	rows, err := p.db.Raw(query, map[string]interface{}{"user_id": userID, "limit": limit, "offset": offset, "criteria": criteria}).Rows()
+	rows, err := p.db.Raw(query, map[string]interface{}{"user_id": userID, "limit": limit, "offset": offset}).Rows()
 
 	if err != nil {
 		return nil, fmt.Errorf("GetRequests error: %w, userID %s", err, userID)
@@ -237,7 +237,7 @@ func (p *Proc) GetRequest(userID, reqID string) ([]byte, error) {
 		return nil, fmt.Errorf("GetRequestById error: %w", err)
 	}
 
-	resultBytes, err := json.Marshal(result)
+	resultBytes, err := json.Marshal(result[reqID])
 	if err != nil {
 		return nil, fmt.Errorf("GetRequestById marshal error: %w", err)
 	}
