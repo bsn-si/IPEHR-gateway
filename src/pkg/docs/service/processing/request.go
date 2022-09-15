@@ -137,12 +137,11 @@ type RequestResult struct {
 
 type RequestsResult map[string]*RequestResult
 
-func (p *Proc) requests(userID, reqId string, limit, offset int) (RequestsResult, error) {
-
+func (p *Proc) requests(userID, requireID string, limit, offset int) (RequestsResult, error) {
 	criteria := ""
-	if reqId != "" {
+	if requireID != "" {
 		criteria = `AND requests.req_id = "@req_id"`
-		criteria = strings.Replace(criteria, "@req_id", reqId, 1)
+		criteria = strings.Replace(criteria, "@req_id", requireID, 1)
 	}
 
 	query := `SELECT
@@ -180,6 +179,7 @@ func (p *Proc) requests(userID, reqId string, limit, offset int) (RequestsResult
 	)
 
 	result := make(RequestsResult)
+
 	for rows.Next() {
 		err = rows.Scan(&reqID, &reqStatus, &reqKind, &reqCID, &reqDealCID, &reqMinerAddr, &txKind, &txHash, &txParentHash, &txStatus)
 		if err != nil {
@@ -215,7 +215,6 @@ func (p *Proc) requests(userID, reqId string, limit, offset int) (RequestsResult
 	}
 
 	return result, nil
-
 }
 
 func (p *Proc) GetRequests(userID string, limit, offset int) ([]byte, error) {

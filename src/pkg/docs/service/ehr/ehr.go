@@ -213,7 +213,6 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 		if _, err = dbRequest.AddEthData(hex.EncodeToString(docMeta.DocBaseUIDHash[:]), "1"); err != nil {
 			return fmt.Errorf("Service ehr AddEthData error: %w", err)
 		}
-
 	}
 
 	// Index Access
@@ -425,7 +424,6 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		if _, err = dbRequest.AddEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString()); err != nil {
 			return fmt.Errorf("Service ehr AddEthData error: %w", err)
 		}
-
 	}
 
 	// Index Access

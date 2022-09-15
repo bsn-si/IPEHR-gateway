@@ -251,7 +251,6 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, db
 		if err != nil {
 			return fmt.Errorf("AddEthData error: %w", err)
 		}
-
 	}
 
 	// Index DataSearch
