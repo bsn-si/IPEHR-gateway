@@ -2,6 +2,7 @@ package ehr
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"hms/gateway/pkg/indexer"
@@ -103,8 +104,13 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("EhrCreateWithID commit error: %w", err)
 	}
 
+	multiCallTx, err := s.Proc.AddTx(dbRequest, txHash, processing.TxMultiCall, processing.BcEthereum, 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
+	}
+
 	for _, txKind := range transactions.GetTxKinds() {
-		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0, multiCallTx.ID)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -162,7 +168,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 			return fmt.Errorf("Proc.AddFileCoinData error: %w", err)
 		}
 
-		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, requestFileCoinData.ID)
+		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, requestFileCoinData.ID, 0)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -191,7 +197,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 			DealCID:         dealCID.Bytes(),
 			MinerAddress:    []byte(minerAddr),
 			DocUIDEncrypted: ehrIDEncrypted,
-			DocBaseUIDHash:  [32]byte{},
+			DocBaseUIDHash:  [32]byte{}, // TODO is it correct??? where is version id?
 			IsLast:          true,
 			Timestamp:       uint32(time.Now().Unix()),
 		}
@@ -202,6 +208,12 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 		}
 
 		transactions.Add(uint8(processing.TxAddEhrDoc), packed)
+
+		// TODO is it need?
+		if _, err = dbRequest.AddEthData(hex.EncodeToString(docMeta.DocBaseUIDHash[:]), "1"); err != nil {
+			return fmt.Errorf("Service ehr AddEthData error: %w", err)
+		}
+
 	}
 
 	// Index Access
@@ -364,7 +376,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			return fmt.Errorf("Proc.AddFileCoinData error: %w", err)
 		}
 
-		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, fileCoinData.ID)
+		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, fileCoinData.ID, 0)
 		if err != nil {
 			return fmt.Errorf("Proc.AddTx error: %w", err)
 		}
@@ -408,6 +420,12 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 		multiCallTx.Add(uint8(processing.TxAddEhrDoc), packed)
+
+		// TODO is it need?
+		if _, err = dbRequest.AddEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString()); err != nil {
+			return fmt.Errorf("Service ehr AddEthData error: %w", err)
+		}
+
 	}
 
 	// Index Access
@@ -453,8 +471,13 @@ func (s *Service) UpdateStatus(ctx context.Context, dbRequest *processing.SuperR
 		return fmt.Errorf("UpdateStatus commit error: %w", err)
 	}
 
+	multiCallTx, err := s.Proc.AddTx(dbRequest, txHash, processing.TxMultiCall, processing.BcEthereum, 0, 0)
+	if err != nil {
+		return fmt.Errorf("processing MulticallTx: %w", err)
+	}
+
 	for _, txKind := range transactions.GetTxKinds() {
-		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0, multiCallTx.ID)
 		if err != nil {
 			return fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}

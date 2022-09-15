@@ -79,8 +79,13 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("Create composition commit error: %w", err)
 	}
 
+	multiCallTx, err := s.Proc.AddTx(dbRequest, txHash, processing.TxMultiCall, processing.BcEthereum, 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("processing MulticallTx: %w", err)
+	}
+
 	for _, txKind := range transactions.GetTxKinds() {
-		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0, multiCallTx.ID)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -113,8 +118,13 @@ func (s *Service) Update(ctx context.Context, dbRequest *processing.SuperRequest
 		return nil, fmt.Errorf("Update composition commit error: %w", err)
 	}
 
+	multiCallTx, err := s.Proc.AddTx(dbRequest, txHash, processing.TxMultiCall, processing.BcEthereum, 0, 0)
+	if err != nil {
+		return nil, fmt.Errorf("processing MulticallTx: %w", err)
+	}
+
 	for _, txKind := range transactions.GetTxKinds() {
-		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0)
+		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0, multiCallTx.ID)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -202,9 +212,10 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, db
 
 	// Start processing request
 	{
-		if err := dbRequest.UpdateFileCoinData(CID.String(), dealCID.String(), minerAddr); err != nil {
-			return fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
-		}
+		// TODO checked it, maybe use AddFileCoinData
+		//if err := dbRequest.UpdateFileCoinData(CID.String(), dealCID.String(), minerAddr); err != nil {
+		//	return fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
+		//}
 
 		/* TODO why commented?
 		err = s.Proc.AddTx(reqID, dealCID.String(), "", processing.TxFilecoinStartDeal, processing.StatusPending)
@@ -234,6 +245,13 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, db
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 		multiCallTx.Add(uint8(processing.TxAddEhrDoc), packed)
+
+		// TODO is is need?
+		_, err = dbRequest.AddEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString())
+		if err != nil {
+			return fmt.Errorf("AddEthData error: %w", err)
+		}
+
 	}
 
 	// Index DataSearch
@@ -353,7 +371,7 @@ func (s *Service) DeleteByID(ctx context.Context, dbRequest *processing.SuperReq
 
 	ethdata, err := dbRequest.AddEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString())
 	if err != nil {
-		return "", fmt.Errorf("Proc.UpdateFileCoinData error: %w", err)
+		return "", fmt.Errorf("AddEthData error: %w", err)
 	}
 
 	docDeleteTx, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
@@ -364,7 +382,7 @@ func (s *Service) DeleteByID(ctx context.Context, dbRequest *processing.SuperReq
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	_, err = s.Proc.AddTx(dbRequest, docDeleteTx, processing.TxDeleteDoc, processing.BcEthereum, ethdata.ID)
+	_, err = s.Proc.AddTx(dbRequest, docDeleteTx, processing.TxDeleteDoc, processing.BcEthereum, ethdata.ID, 0)
 	if err != nil {
 		return "", fmt.Errorf("Proc.AddTx error: %w", err)
 	}

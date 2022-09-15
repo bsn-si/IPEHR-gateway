@@ -156,7 +156,7 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
-			t.Fatalf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+			t.Fatalf("GetRequestById expected %d, received %d", http.StatusOK, response.StatusCode)
 		}
 
 		t.Log("Requests: GetAll")
@@ -179,7 +179,7 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
-			t.Fatalf("Expected %d, received %d", http.StatusOK, response.StatusCode)
+			t.Fatalf("GetAllRequests expected %d, received %d", http.StatusOK, response.StatusCode)
 		}
 	}
 }

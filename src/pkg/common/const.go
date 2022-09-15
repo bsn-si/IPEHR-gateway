@@ -7,4 +7,5 @@ const (
 	EhrSystemID               = "openEHRSys.example.com"
 	PageLimit                 = 10
 	BlockchainTxProcAwaitTime = time.Millisecond * 500
+	FilecoinTxProcAwaitTime   = time.Millisecond * 3000
 )
