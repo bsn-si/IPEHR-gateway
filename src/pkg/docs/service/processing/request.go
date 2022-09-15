@@ -146,7 +146,7 @@ func (p *Proc) requests(userID, requireID string, limit, offset int) (RequestsRe
 
 	query := `SELECT
 				r.req_id, r.status, r.kind,
-				fc.c_id, fc.deal_c_id, fc.miner_address,
+				coalesce(fc.c_id, ''),coalesce(fc.deal_c_id, ''),coalesce(fc.miner_address, ''),
 				t.kind, t.hash, coalesce(t_parent.hash, '') AS t_parent_hash, t.status
 			FROM (select * from requests 
 			               WHERE requests.user_id = @user_id @criteria
