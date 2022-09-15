@@ -13,3 +13,10 @@ The Filecoin decentralized file storage stores the document using the CID from I
 The [IPEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol) records meta-information of the EHR document containing the CID, dealCID, minerAddress and an encrypted document UID. This allows to fix the fact and time of creation of a particular document.
 
 A smart contract contains a repository of information about the versions of documents, which is a stack where new entries are added without the possibility of deleting the previous ones.
+
+## Implementation
+
+Running tests to demonstrate the work of the packages:
+```
+go test -v pkg/api/api_test.go -run Test_API/EHR_STATUS_update
+```
