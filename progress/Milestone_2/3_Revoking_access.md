@@ -1,4 +1,4 @@
-![doc_access](https://user-images.githubusercontent.com/8058268/190081743-c2beb7e8-24d2-4fb4-8c7b-31506c2f62b9.svg)
+![doc_access](https://user-images.githubusercontent.com/8058268/190620811-fd433f0b-44b7-4e04-a425-d77f62b55835.svg)
 
 ## Algorithm of changing document access rights
 
