@@ -97,7 +97,7 @@ func (h RequestHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	data, err := h.service.Doc.Proc.GetRequest(reqID)
+	data, err := h.service.Doc.Proc.GetRequest(userID, reqID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request error"})
 		return

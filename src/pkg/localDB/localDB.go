@@ -8,7 +8,8 @@ import (
 
 func New(filepath string) (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(filepath), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
+		//Logger: logger.Default.LogMode(logger.Error),
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return nil, err

@@ -4,6 +4,8 @@ package keystore
 import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"log"
 
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
@@ -41,15 +43,21 @@ func (k *KeyStore) Get(userID string) (publicKey, privateKey *[32]byte, err erro
 	keysEncrypted, err := k.storage.Get(storeID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
-			publicKey, privateKey, err = k.generateAndStoreKeys(userID)
-		}
+			log.Println("Generete new keys for userID", userID)
 
-		return
+			publicKey, privateKey, err = k.generateAndStoreKeys(userID)
+			if err != nil {
+				return nil, nil, fmt.Errorf("generateAndStoreKeys error: %w", err)
+			}
+
+			return publicKey, privateKey, nil
+		}
+		return nil, nil, fmt.Errorf("storage.Get error: %w", err)
 	}
 
 	keysDecrypted, err := k.decryptUserKeys(keysEncrypted)
 	if err != nil {
-		return
+		return nil, nil, fmt.Errorf("decryptUserKeys error: %w", err)
 	}
 
 	publicKey = new([32]byte)
@@ -62,15 +70,18 @@ func (k *KeyStore) Get(userID string) (publicKey, privateKey *[32]byte, err erro
 }
 
 // Generate and store new user key pair
-func (k *KeyStore) generateAndStoreKeys(userID string) (publicKey, privateKey *[32]byte, err error) {
-	publicKey, privateKey, err = k.generateKeys()
+func (k *KeyStore) generateAndStoreKeys(userID string) (*[32]byte, *[32]byte, error) {
+	publicKey, privateKey, err := k.generateKeys()
 	if err != nil {
-		return
+		return nil, nil, fmt.Errorf("generateKeys error: %w", err)
 	}
 
 	err = k.storeKeys(userID, publicKey, privateKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("storeKeys error: %w", err)
+	}
 
-	return
+	return publicKey, privateKey, nil
 }
 
 // Generate new user key pair
@@ -87,10 +98,14 @@ func (k *KeyStore) storeKeys(userID string, publicKey, privateKey *[32]byte) err
 
 	keysEncrypted, err := k.encryptUserKeys(keysDecrypted)
 	if err != nil {
-		return err
+		return fmt.Errorf("encryptUserKeys error: %w", err)
 	}
 
-	return k.storage.AddWithID(storeID, keysEncrypted)
+	if err = k.storage.AddWithID(storeID, keysEncrypted); err != nil {
+		return fmt.Errorf("storage.AddWithID error: %w", err)
+	}
+
+	return nil
 }
 
 // Get store file ID where the user keys is

@@ -3,7 +3,7 @@ package compressor
 import (
 	"bytes"
 	"compress/gzip"
-	"io/ioutil"
+	"io"
 )
 
 type Compressor struct {
@@ -45,7 +45,7 @@ func (c *Compressor) Decompress(data []byte) (decompressedData []byte, err error
 	}
 	defer zr.Close()
 
-	decompressed, err := ioutil.ReadAll(zr)
+	decompressed, err := io.ReadAll(zr)
 	if err != nil {
 		return
 	}

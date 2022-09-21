@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -100,7 +99,7 @@ func (i *Client) getVersion(url string) (string, error) {
 		return "", fmt.Errorf("IPFS get version error: %w URL %s", err, url)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		resp.Body.Close()
 		return "", fmt.Errorf("IPFS get version response error: %w url: %s", err, url)

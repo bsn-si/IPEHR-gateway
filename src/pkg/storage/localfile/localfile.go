@@ -79,7 +79,7 @@ func (s *Storage) Get(id *[32]byte) (data []byte, err error) {
 
 	data, err = os.ReadFile(path)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("os.ReadFile error: %w", err)
 	}
 
 	return

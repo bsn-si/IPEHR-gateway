@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,9 +36,9 @@ func NewGroupAccessHandler(docService *service.DefaultDocumentService, groupAcce
 // @Success      200         {object}  model.GroupAccess
 // @Failure      400         "Is returned when the request has invalid content."
 // @Failure      500         "Is returned when an unexpected error occurs while processing a request"
-// @Router       /v1/access/group [post]
+// @Router       /access/group [post]
 func (h *GroupAccessHandler) Create(c *gin.Context) {
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
@@ -83,7 +83,7 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 // @Success      200         {object}  model.GroupAccess
 // @Failure      400         "Is returned when the request has invalid content."
 // @Failure      500         "Is returned when an unexpected error occurs while processing a request"
-// @Router       /v1/access/group/{group_id} [get]
+// @Router       /access/group/{group_id} [get]
 func (h *GroupAccessHandler) Get(c *gin.Context) {
 	groupID := c.Param("group_id")
 

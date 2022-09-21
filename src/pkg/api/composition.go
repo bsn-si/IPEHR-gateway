@@ -2,9 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/model/base"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -12,24 +10,24 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
 	"hms/gateway/pkg/docs/service/groupAccess"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
 type CompositionHandler struct {
-	service              *composition.Service
-	baseURL              string
-	defaultGroupAccessID string
+	service *composition.Service
+	baseURL string
 }
 
-func NewCompositionHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL, defaultGroupAccessID string) *CompositionHandler {
+func NewCompositionHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL string) *CompositionHandler {
 	return &CompositionHandler{
-		service:              composition.NewCompositionService(docService, groupAccessService),
-		baseURL:              baseURL,
-		defaultGroupAccessID: defaultGroupAccessID,
+		service: composition.NewCompositionService(docService, groupAccessService),
+		baseURL: baseURL,
 	}
 }
 
@@ -71,29 +69,23 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
 		return
 	}
+	defer c.Request.Body.Close()
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Panic("Cant close body request")
-		}
-	}(c.Request.Body)
+	var composition model.Composition
 
-	var request model.Composition
-
-	if err = json.Unmarshal(data, &request); err != nil {
+	if err = json.Unmarshal(data, &composition); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 
 		return
 	}
 
-	if !request.Validate() {
+	if !composition.Validate() {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
 	}
@@ -115,23 +107,41 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	groupIDStr := c.GetHeader("GroupAccessId")
-	if groupIDStr == "" {
-		groupIDStr = h.defaultGroupAccessID
+	var (
+		groupAccessUUID *uuid.UUID
+		groupIDStr      = c.GetHeader("GroupAccessId")
+		reqID           = c.MustGet("reqId").(string)
+	)
+
+	if groupIDStr != "" {
+		UUID, err := uuid.Parse(groupIDStr)
+		if err != nil {
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		groupAccessUUID = &UUID
 	}
 
-	groupAccessUUID, err := uuid.Parse(groupIDStr)
+	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionCreate)
 	if err != nil {
-		log.Println(err)
+		log.Println("Composition create NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &request)
+	doc, err := h.service.Create(c, userID, &ehrUUID, groupAccessUUID, ehrSystemID, &composition, procRequest)
 	if err != nil {
 		log.Println("Composition creating error:", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
+		return
+	}
+
+	if err := procRequest.Commit(); err != nil {
+		log.Println("Composition procRequest commit error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -270,7 +280,16 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	newUID, err := h.service.DeleteByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
+	reqID := c.MustGet("reqId").(string)
+
+	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionDelete)
+	if err != nil {
+		log.Println("Composition delete NewRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	newUID, err := h.service.DeleteByID(c, procRequest, &ehrUUID, versionUID, ehrSystemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -281,6 +300,12 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 
+		return
+	}
+
+	if err := procRequest.Commit(); err != nil {
+		log.Println("Composition delete procRequest commit error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -359,19 +384,24 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	groupIDStr := c.GetHeader("GroupAccessId")
-	if groupIDStr == "" {
-		groupIDStr = h.defaultGroupAccessID
+	var (
+		groupAccessUUID *uuid.UUID
+		groupIDStr      = c.GetHeader("GroupAccessId")
+		reqID           = c.MustGet("reqId").(string)
+	)
+
+	if groupIDStr != "" {
+		UUID, err := uuid.Parse(groupIDStr)
+		if err != nil {
+			log.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		groupAccessUUID = &UUID
 	}
 
-	groupAccessUUID, err := uuid.Parse(groupIDStr)
-	if err != nil {
-		log.Printf("uuid.Parse error: %v groupIDStr %s", err, groupIDStr)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	data, err := ioutil.ReadAll(c.Request.Body)
+	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
 		return
@@ -418,11 +448,24 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(c, userID, &ehrUUID, &groupAccessUUID, ehrSystemID, &compositionUpdate)
+	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionUpdate)
+	if err != nil {
+		log.Println("Compocition update NewRequest error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	compositionUpdated, err := h.service.Update(c, procRequest, userID, &ehrUUID, groupAccessUUID, ehrSystemID, &compositionUpdate)
 	if err != nil {
 		log.Println("Composition Update error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 
+		return
+	}
+
+	if err := procRequest.Commit(); err != nil {
+		log.Println("Composition update procRequest commit error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

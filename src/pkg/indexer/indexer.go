@@ -48,6 +48,10 @@ type MultiCallTx struct {
 	data  [][]byte
 }
 
+func (i *Index) MultiCallTxNew() *MultiCallTx {
+	return &MultiCallTx{index: i}
+}
+
 func (m *MultiCallTx) Add(kind uint8, packed []byte) {
 	m.kinds = append(m.kinds, kind)
 	m.data = append(m.data, packed)
@@ -57,8 +61,17 @@ func (m *MultiCallTx) GetTxKinds() []uint8 {
 	return m.kinds
 }
 
-func (i *Index) MultiCallTxNew() *MultiCallTx {
-	return &MultiCallTx{index: i}
+func (m *MultiCallTx) Commit() (string, error) {
+	if len(m.data) == 0 {
+		return "", fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
+	}
+
+	tx, err := m.index.ehrIndex.Multicall(m.index.transactOpts, m.data)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.Multicall error: %w", err)
+	}
+
+	return tx.Hash().Hex(), nil
 }
 
 func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
@@ -273,8 +286,6 @@ func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte)
 		return "", fmt.Errorf("ehrIndex.SetGroupAccess error: %w", err)
 	}
 
-	log.Printf("%s SetGroupAccess tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
-
 	return tx.Hash().Hex(), nil
 }
 
@@ -295,19 +306,6 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 	}
 
 	return groupAccessValue, nil
-}
-
-func (i *Index) MultiCallCommit(multiCallTx *MultiCallTx) (string, error) {
-	if len(multiCallTx.data) == 0 {
-		return "", fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
-	}
-
-	tx, err := i.ehrIndex.Multicall(i.transactOpts, multiCallTx.data)
-	if err != nil {
-		return "", fmt.Errorf("ehrIndex.Multicall error: %w", err)
-	}
-
-	return tx.Hash().Hex(), nil
 }
 
 func (i *Index) SetSubject(ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (packed []byte, err error) {

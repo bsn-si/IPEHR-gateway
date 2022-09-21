@@ -296,42 +296,52 @@ definitions:
         items: {}
         type: array
     type: object
-  processing.DocResult:
+  processing.EthereumTx:
     properties:
+      Kind:
+        type: string
+      Status:
+        type: string
+      comment:
+        type: string
+      hash:
+        type: string
+    type: object
+  processing.FileCoinTx:
+    properties:
+      Kind:
+        type: string
+      Status:
+        type: string
       cid:
         type: string
-      dealCid:
+      comment:
         type: string
-      kind:
+      dealCID:
         type: string
+      dealID:
+        type: integer
       minerAddress:
         type: string
     type: object
   processing.RequestResult:
     properties:
-      docs:
+      ethereum:
         items:
-          $ref: '#/definitions/processing.DocResult'
+          $ref: '#/definitions/processing.EthereumTx'
         type: array
-      status:
-        type: string
-      txs:
+      filecoin:
         items:
-          $ref: '#/definitions/processing.TxResult'
+          $ref: '#/definitions/processing.FileCoinTx'
         type: array
-    type: object
-  processing.RequestsResult:
-    additionalProperties:
-      $ref: '#/definitions/processing.RequestResult'
-    type: object
-  processing.TxResult:
-    properties:
-      hash:
-        type: string
       kind:
         type: string
       status:
         type: string
+    type: object
+  processing.RequestsResult:
+    additionalProperties:
+      $ref: '#/definitions/processing.RequestResult'
     type: object
 host: gateway.ipehr.org
 info:
@@ -347,6 +357,70 @@ info:
   title: IPEHR Gateway API
   version: "0.2"
 paths:
+  /access/group:
+    post:
+      consumes:
+      - application/json
+      description: Creates new access group for use with part of users data and return
+        this group
+      parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: DTO with data to create group access
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.GroupAccessCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GroupAccess'
+        "400":
+          description: Is returned when the request has invalid content.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Create new access group
+      tags:
+      - GROUP_ACCESS
+  /access/group/{group_id}:
+    get:
+      consumes:
+      - application/json
+      description: Return access group object
+      parameters:
+      - description: 'access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
+        in: path
+        name: group_id
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.GroupAccess'
+        "400":
+          description: Is returned when the request has invalid content.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get access group
+      tags:
+      - GROUP_ACCESS
   /ehr:
     get:
       consumes:
@@ -369,6 +443,11 @@ paths:
       - description: UserId UUID
         in: header
         name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
         required: true
         type: string
       produces:
@@ -1115,68 +1194,4 @@ paths:
       summary: Get list of transactions by certain request id for authorized user
       tags:
       - REQUEST
-  /v1/access/group:
-    post:
-      consumes:
-      - application/json
-      description: Creates new access group for use with part of users data and return
-        this group
-      parameters:
-      - description: UserId UUID
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      - description: DTO with data to create group access
-        in: body
-        name: Request
-        required: true
-        schema:
-          $ref: '#/definitions/model.GroupAccessCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.GroupAccess'
-        "400":
-          description: Is returned when the request has invalid content.
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Create new access group
-      tags:
-      - GROUP_ACCESS
-  /v1/access/group/{group_id}:
-    get:
-      consumes:
-      - application/json
-      description: Return access group object
-      parameters:
-      - description: 'access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398'
-        in: path
-        name: group_id
-        required: true
-        type: string
-      - description: UserId UUID
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.GroupAccess'
-        "400":
-          description: Is returned when the request has invalid content.
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Get access group
-      tags:
-      - GROUP_ACCESS
 swagger: "2.0"

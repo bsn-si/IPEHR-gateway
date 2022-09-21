@@ -44,11 +44,15 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	if err = db.AutoMigrate(&processing.Tx{}); err != nil {
+	if err = db.AutoMigrate(&processing.Retrieve{}); err != nil {
 		log.Fatal(err)
 	}
 
-	if err = db.AutoMigrate(&processing.Retrieve{}); err != nil {
+	if err = db.AutoMigrate(&processing.EthereumTx{}); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = db.AutoMigrate(&processing.FileCoinTx{}); err != nil {
 		log.Fatal(err)
 	}
 

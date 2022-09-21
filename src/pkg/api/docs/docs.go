@@ -24,6 +24,98 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/access/group": {
+            "post": {
+                "description": "Creates new access group for use with part of users data and return this group",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GROUP_ACCESS"
+                ],
+                "summary": "Create new access group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "DTO with data to create group access",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccessCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/access/group/{group_id}": {
+            "get": {
+                "description": "Return access group object",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GROUP_ACCESS"
+                ],
+                "summary": "Get access group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.GroupAccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/ehr": {
             "get": {
                 "description": "Retrieve the EHR with the specified subject_id and subject_namespace.\nThese subject parameters will be matched against EHR’s\nEHR_STATUS.subject.external_ref.id.value and EHR_STATUS.subject.external_ref.namespace values.",
@@ -56,6 +148,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     }
@@ -1019,98 +1118,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/v1/access/group": {
-            "post": {
-                "description": "Creates new access group for use with part of users data and return this group",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "GROUP_ACCESS"
-                ],
-                "summary": "Create new access group",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "UserId UUID",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "description": "DTO with data to create group access",
-                        "name": "Request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.GroupAccessCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.GroupAccess"
-                        }
-                    },
-                    "400": {
-                        "description": "Is returned when the request has invalid content."
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
-        "/v1/access/group/{group_id}": {
-            "get": {
-                "description": "Return access group object",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "GROUP_ACCESS"
-                ],
-                "summary": "Get access group",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
-                        "name": "group_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "UserId UUID",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.GroupAccess"
-                        }
-                    },
-                    "400": {
-                        "description": "Is returned when the request has invalid content."
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -1577,17 +1584,43 @@ const docTemplate = `{
                 }
             }
         },
-        "processing.DocResult": {
+        "processing.EthereumTx": {
             "type": "object",
             "properties": {
+                "Kind": {
+                    "type": "string"
+                },
+                "Status": {
+                    "type": "string"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "hash": {
+                    "type": "string"
+                }
+            }
+        },
+        "processing.FileCoinTx": {
+            "type": "object",
+            "properties": {
+                "Kind": {
+                    "type": "string"
+                },
+                "Status": {
+                    "type": "string"
+                },
                 "cid": {
                     "type": "string"
                 },
-                "dealCid": {
+                "comment": {
                     "type": "string"
                 },
-                "kind": {
+                "dealCID": {
                     "type": "string"
+                },
+                "dealID": {
+                    "type": "integer"
                 },
                 "minerAddress": {
                     "type": "string"
@@ -1597,34 +1630,17 @@ const docTemplate = `{
         "processing.RequestResult": {
             "type": "object",
             "properties": {
-                "docs": {
+                "ethereum": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/processing.DocResult"
+                        "$ref": "#/definitions/processing.EthereumTx"
                     }
                 },
-                "status": {
-                    "type": "string"
-                },
-                "txs": {
+                "filecoin": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/processing.TxResult"
+                        "$ref": "#/definitions/processing.FileCoinTx"
                     }
-                }
-            }
-        },
-        "processing.RequestsResult": {
-            "type": "object",
-            "additionalProperties": {
-                "$ref": "#/definitions/processing.RequestResult"
-            }
-        },
-        "processing.TxResult": {
-            "type": "object",
-            "properties": {
-                "hash": {
-                    "type": "string"
                 },
                 "kind": {
                     "type": "string"
@@ -1632,6 +1648,12 @@ const docTemplate = `{
                 "status": {
                     "type": "string"
                 }
+            }
+        },
+        "processing.RequestsResult": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/processing.RequestResult"
             }
         }
     }

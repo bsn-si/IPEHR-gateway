@@ -20,6 +20,7 @@ import (
 type Service struct {
 	*service.DefaultDocumentService
 	defaultGroupAccessUUID *uuid.UUID
+	defaultGroupAccess     *model.GroupAccess
 }
 
 func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID, defaultUserID string) *Service {
@@ -40,10 +41,10 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 
 	ctx := context.Background()
 
-	_, err = docService.Infra.Index.GetGroupAccess(ctx, defaultUserID, &groupUUID)
+	groupAccess, err := service.Get(ctx, defaultUserID, &groupUUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
-			groupAccess := &model.GroupAccess{
+			groupAccess = &model.GroupAccess{
 				GroupUUID:   &groupUUID,
 				Description: "Default access group",
 				Key:         chachaPoly.GenerateKey(),
@@ -57,12 +58,20 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 			if err = service.save(ctx, defaultUserID, groupAccess); err != nil {
 				log.Fatal(err)
 			}
+
+			log.Println("defaultUserID:", defaultUserID)
 		} else {
 			log.Fatal(err)
 		}
 	}
 
+	service.defaultGroupAccess = groupAccess
+
 	return service
+}
+
+func (s *Service) Default() *model.GroupAccess {
+	return s.defaultGroupAccess
 }
 
 func (s *Service) Create(ctx context.Context, userID string, c *model.GroupAccessCreateRequest) (*model.GroupAccess, error) {
@@ -86,7 +95,7 @@ func (s *Service) Create(ctx context.Context, userID string, c *model.GroupAcces
 }
 
 func (s *Service) save(ctx context.Context, userID string, groupAccess *model.GroupAccess) error {
-	userPubKey, _, err := s.Infra.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
@@ -96,7 +105,7 @@ func (s *Service) save(ctx context.Context, userID string, groupAccess *model.Gr
 		return fmt.Errorf("msgpack.Marshal error: %w", err)
 	}
 
-	groupAccessEncrypted, err := keybox.SealAnonymous(groupAccessByte, userPubKey)
+	groupAccessEncrypted, err := keybox.Seal(groupAccessByte, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 	}
@@ -131,7 +140,7 @@ func (s *Service) Get(ctx context.Context, userID string, groupAccessUUID *uuid.
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	groupAccessBytes, err = keybox.OpenAnonymous(groupAccessBytes, userPubKey, userPrivKey)
+	groupAccessBytes, err = keybox.Open(groupAccessBytes, userPubKey, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
 	}

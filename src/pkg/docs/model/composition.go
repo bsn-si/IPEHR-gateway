@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/types"
-	"io/ioutil"
+	"io"
 )
 
 // Composition Content of one version in a VERSIONED_COMPOSITION. A Composition is considered the unit
@@ -33,7 +33,7 @@ func (c *Composition) Validate() bool {
 }
 
 func (c *Composition) FromJSON(reader *bytes.Reader) (err error) {
-	data, err := ioutil.ReadAll(reader)
+	data, err := io.ReadAll(reader)
 	if err == nil {
 		err = json.Unmarshal(data, &c)
 	}

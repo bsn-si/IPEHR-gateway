@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
@@ -23,11 +23,6 @@ import (
 type DefaultDocumentService struct {
 	Infra *infrastructure.Infra
 	Proc  *processing.Proc
-	//EhrsIndex          *ehrs.Index
-	//DocsIndex        *docs.Index
-	//DocAccessIndex   *docAccess.Index
-	//SubjectIndex     *subject.Index
-	//GroupAccessIndex *groupAccess.Index
 }
 
 func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
@@ -101,7 +96,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 		}
 		defer reader.Close()
 
-		docEncrypted, err = ioutil.ReadAll(reader)
+		docEncrypted, err = io.ReadAll(reader)
 		if err != nil {
 			return nil, fmt.Errorf("ipfs read error: %w", err)
 		}

@@ -2,7 +2,7 @@ package ipfs_test
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
@@ -37,7 +37,7 @@ func TestAddFile(t *testing.T) {
 	}
 	defer fileCloser.Close()
 
-	fileContent2, err := ioutil.ReadAll(fileCloser)
+	fileContent2, err := io.ReadAll(fileCloser)
 	if err != nil {
 		t.Fatal(err)
 	}
