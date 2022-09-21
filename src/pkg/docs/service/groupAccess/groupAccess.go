@@ -60,7 +60,6 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 			}
 
 			log.Println("defaultUserID:", defaultUserID)
-
 		} else {
 			log.Fatal(err)
 		}
@@ -118,13 +117,6 @@ func (s *Service) save(ctx context.Context, userID string, groupAccess *model.Gr
 		return fmt.Errorf("Index.SetGroupAccess error: %w", err)
 	}
 
-	/* DEBUG
-	log.Printf("SetGroupAccess txHash: %s", txHash)
-	log.Printf("groupAccessEncrypted: %x", groupAccessEncrypted)
-	log.Printf("userPubKey: %x", userPubKey)
-	log.Printf("userPrivKey: %x", userPrivKey)
-	*/
-
 	txStatus, err := s.Infra.Index.TxWait(ctx, txHash)
 	if err != nil {
 		return fmt.Errorf("index.TxWait error: %w txHash %s", err, txHash)
@@ -147,13 +139,6 @@ func (s *Service) Get(ctx context.Context, userID string, groupAccessUUID *uuid.
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
-
-	/* DEBUG
-	log.Printf("userID: %s", userID)
-	log.Printf("groupAccessBytes: %x", groupAccessBytes)
-	log.Printf("userPubKey: %x", *userPubKey)
-	log.Printf("userPrivKey: %x", *userPrivKey)
-	*/
 
 	groupAccessBytes, err = keybox.Open(groupAccessBytes, userPubKey, userPrivKey)
 	if err != nil {

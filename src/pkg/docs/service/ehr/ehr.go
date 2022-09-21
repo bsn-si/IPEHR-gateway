@@ -84,9 +84,6 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
 		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
-		if err != nil {
-			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
-		}
 	}
 
 	return &ehr, nil

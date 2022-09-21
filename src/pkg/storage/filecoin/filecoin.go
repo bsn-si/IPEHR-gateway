@@ -386,6 +386,7 @@ func (c *Client) FindMiner(ctx context.Context) (*address.Address, error) {
 		if err != nil {
 			cancel()
 			log.Println("Lotus api.ClientQueryAsk error:", err)
+
 			continue
 		}
 

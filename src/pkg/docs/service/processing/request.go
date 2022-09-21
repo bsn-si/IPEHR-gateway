@@ -79,6 +79,7 @@ func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Req
 
 func (r *Request) Commit() error {
 	dbTx := r.db.Begin()
+
 	defer func() {
 		if r := recover(); r != nil {
 			dbTx.Rollback()

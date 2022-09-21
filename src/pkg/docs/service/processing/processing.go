@@ -226,8 +226,8 @@ func (p *Proc) execEthereum() {
 	//logf("Ethereum transactions started")
 
 	defer func() {
-		p.lockEthereum = false
 		//logf("Ethereum transactions finished")
+		p.lockEthereum = false
 	}()
 
 	statuses := []Status{
@@ -279,7 +279,7 @@ func (p *Proc) execEthereum() {
 			continue
 		}
 
-		if result = p.db.Model(&tx).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
+		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
 			logf("db.Update error: %v", result.Error)
 		}
 	}
@@ -287,10 +287,12 @@ func (p *Proc) execEthereum() {
 
 func (p *Proc) execFilecoin() {
 	p.lockFilecoin = true
+
 	logf("Filecoin deals started")
 
 	defer func() {
 		p.lockFilecoin = false
+
 		logf("Filecoin deals finished")
 	}()
 
@@ -326,6 +328,7 @@ func (p *Proc) execFilecoin() {
 		if err != nil {
 			logf("filecoinClient.GetDealStatus error: %v dealCID: %s", err, tx.DealCID)
 			cancel()
+
 			continue
 		}
 
@@ -352,7 +355,7 @@ func (p *Proc) execFilecoin() {
 			continue
 		}
 
-		err = p.db.Model(&tx).Where("deal_c_id", tx.DealCID).Updates(map[string]interface{}{"status": status, "deal_id": dealID}).Error
+		err = p.db.Model(&FileCoinTx{}).Where("deal_c_id", tx.DealCID).Updates(map[string]interface{}{"status": status, "deal_id": dealID}).Error
 		if err != nil {
 			logf("db.Update error: %v", err)
 		}
@@ -362,11 +365,13 @@ func (p *Proc) execFilecoin() {
 func (p *Proc) execDealFinisher() {
 	p.lockFilecoin = true
 	p.lockEthereum = true
+
 	logf("DealFinisher started")
 
 	defer func() {
 		p.lockEthereum = false
 		p.lockFilecoin = false
+
 		logf("DealFinisher finished")
 	}()
 
@@ -395,10 +400,12 @@ func (p *Proc) execDealFinisher() {
 
 func (p *Proc) execFilecoinRetrieve() {
 	p.lockFilecoin = true
+
 	logf("Filecoin retrieve started")
 
 	defer func() {
 		p.lockFilecoin = false
+
 		logf("Filecoin retrieve finished")
 	}()
 

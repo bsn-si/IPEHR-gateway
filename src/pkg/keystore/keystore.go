@@ -44,15 +44,15 @@ func (k *KeyStore) Get(userID string) (publicKey, privateKey *[32]byte, err erro
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			log.Println("Generete new keys for userID", userID)
+
 			publicKey, privateKey, err = k.generateAndStoreKeys(userID)
 			if err != nil {
 				return nil, nil, fmt.Errorf("generateAndStoreKeys error: %w", err)
 			}
 
 			return publicKey, privateKey, nil
-		} else {
-			return nil, nil, fmt.Errorf("storage.Get error: %w", err)
 		}
+		return nil, nil, fmt.Errorf("storage.Get error: %w", err)
 	}
 
 	keysDecrypted, err := k.decryptUserKeys(keysEncrypted)
