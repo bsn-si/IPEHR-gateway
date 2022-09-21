@@ -23,11 +23,6 @@ import (
 type DefaultDocumentService struct {
 	Infra *infrastructure.Infra
 	Proc  *processing.Proc
-	//EhrsIndex          *ehrs.Index
-	//DocsIndex        *docs.Index
-	//DocAccessIndex   *docAccess.Index
-	//SubjectIndex     *subject.Index
-	//GroupAccessIndex *groupAccess.Index
 }
 
 func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {

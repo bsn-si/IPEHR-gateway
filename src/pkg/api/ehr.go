@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/service/processing"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +13,8 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
+	"hms/gateway/pkg/docs/service/processing"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
@@ -98,27 +99,16 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 	reqID := c.MustGet("reqId").(string)
 
-	dbTransaction := h.service.Proc.BeginDbTx()
-
-	defer func() {
-		if r := recover(); r != nil {
-			h.service.Proc.RollbackDbTx(dbTransaction)
-		}
-	}()
-
-	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUIDnew, processing.RequestEhrCreate)
+	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
-		log.Println("NewDbRequest error:", err)
+		log.Println("EHR create NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, &ehrUUIDnew, ehrSystemID, &request, dbRequest)
-
+	doc, err := h.service.EhrCreate(c, userID, &ehrUUIDnew, ehrSystemID, &request, procRequest)
 	if err != nil {
-		h.service.Proc.RollbackDbTx(dbTransaction)
-
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		} else {
@@ -129,8 +119,8 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
-		log.Println(err)
+	if err := procRequest.Commit(); err != nil {
+		log.Println("EHR create procRequest commit error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -214,31 +204,23 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	case err != nil && !errors.Is(err, errors.ErrIsNotExist):
 		log.Println("GetEhrIDByUser error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
-	dbTransaction := h.service.Proc.BeginDbTx()
-
-	defer func() {
-		if r := recover(); r != nil {
-			h.service.Proc.RollbackDbTx(dbTransaction)
-		}
-	}()
-
 	reqID := c.MustGet("reqId").(string)
 
-	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
+	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
-		log.Println("NewDbRequest error:", err)
+		log.Println("Ehr createWithID NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+
 		return
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, &ehrUUID, ehrSystemID, &request, dbRequest)
+	newDoc, err := h.service.EhrCreateWithID(c, userID, &ehrUUID, ehrSystemID, &request, procRequest)
 	if err != nil {
-		h.service.Proc.RollbackDbTx(dbTransaction)
-
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		}
@@ -249,8 +231,8 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
-		log.Println(err)
+	if err := procRequest.Commit(); err != nil {
+		log.Println("EHR createWithID procRequest commit error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -266,7 +248,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 // @Produce      json
 // @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        AuthUserId   header    string  true  "UserId UUID"
-// @Param        EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200          {object}  model.EhrSummary
 // @Success      202                "Is returned when the request is still being processed"
 // @Failure      400          "Is returned when userId is empty"
@@ -329,6 +311,7 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 // @Param        subject_id         query     string  true  "subject id. Example: ins01"
 // @Param        subject_namespace  query     string  true  "id namespace. Example: examples"
 // @Param        AuthUserId         header    string  true  "UserId UUID"
+// @Param        EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary
 // @Success      202          "Is returned when the request is still being processed"
 // @Failure      400                "Is returned when userId is empty"

@@ -3,7 +3,6 @@ package processing
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"gorm.io/gorm"
 )
@@ -11,108 +10,133 @@ import (
 type (
 	RequestKind uint8
 
-	SuperRequest struct {
-		dbTx    *gorm.DB
-		request *Request
-	}
-
 	Request struct {
 		gorm.Model
-		ReqID   string `gorm:"index:idx_request,unique"`
-		Kind    RequestKind
-		Status  Status
-		UserID  string
-		EhrUUID string
+		ReqID     string      `gorm:"index:idx_request,unique"`
+		Kind      RequestKind `gorm:"kind" json:"-"`
+		KindStr   string      `gorm:"-" json:"Kind"`
+		Status    Status      `gorm:"status" json:"-"`
+		StatusStr string      `gorm:"-" json:"Status"`
+		UserID    string
+		EhrUUID   string
+
+		db     *gorm.DB      `gorm:"-"`
+		ethTxs []*EthereumTx `gorm:"-"`
+		fcTxs  []*FileCoinTx `gorm:"-"`
 	}
 
-	RequestDataEtherium struct {
-		gorm.Model
-		RequestID   uint
-		Request     Request
-		BaseUIDHash string
-		Version     string
+	Tx struct {
+		ReqID     string `gorm:"req_id" json:"-"`
+		Kind      TxKind `gorm:"kind" json:"-"`
+		KindStr   string `gorm:"-" json:"Kind"`
+		Status    Status `gorm:"status" json:"-"`
+		StatusStr string `gorm:"-" json:"Status"`
+		Comment   string
 	}
 
-	RequestDataFileCoin struct {
-		gorm.Model
-		RequestID    uint
-		Request      Request
+	EthereumTx struct {
+		Tx
+		Hash string
+	}
+
+	FileCoinTx struct {
+		Tx
 		CID          string
 		DealCID      string
 		MinerAddress string
+		DealID       uint
 	}
 )
 
 const (
-	RequestUnknown            RequestKind = 0
-	RequestEhrCreate          RequestKind = 1
-	RequestEhrGetBySubject    RequestKind = 2
-	RequestEhrGetByID         RequestKind = 3
-	RequestEhrStatusCreate    RequestKind = 4
-	RequestEhrStatusUpdate    RequestKind = 5
-	RequestEhrStatusGetByID   RequestKind = 6
-	RequestEhrStatusGetByTime RequestKind = 7
-	RequestCompositionCreate  RequestKind = 8
-	RequestCompositionUpdate  RequestKind = 9
-	RequestCompositionGetByID RequestKind = 10
-	RequestCompositionDelete  RequestKind = 11
+	RequestUnknown RequestKind = iota
+	RequestEhrCreate
+	RequestEhrCreateWithID
+	RequestEhrGetBySubject
+	RequestEhrGetByID
+	RequestEhrStatusCreate
+	RequestEhrStatusUpdate
+	RequestEhrStatusGetByID
+	RequestEhrStatusGetByTime
+	RequestCompositionCreate
+	RequestCompositionUpdate
+	RequestCompositionGetByID
+	RequestCompositionDelete
 )
 
-func (p *Proc) AddRequest(dbTx *gorm.DB, req *Request) (*SuperRequest, error) {
-	if result := dbTx.Create(req); result.Error != nil {
-		return nil, fmt.Errorf("db.Create error: %w", result.Error)
+func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
+	req := &Request{
+		ReqID:   reqID,
+		Kind:    kind,
+		Status:  StatusProcessing,
+		UserID:  userID,
+		EhrUUID: ehrUUID,
+		db:      p.db,
 	}
 
-	return &SuperRequest{dbTx: dbTx, request: req}, nil
+	return req, nil
 }
 
-func (s *SuperRequest) SetRequestKind(kind RequestKind) error {
-	return s.dbTx.Model(&s.request).Update("kind", kind).Error
+func (r *Request) Commit() error {
+	dbTx := r.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			dbTx.Rollback()
+		}
+	}()
+
+	if result := dbTx.Create(r); result.Error != nil {
+		return fmt.Errorf("NewRequest db.Create error: %w", result.Error)
+	}
+
+	for _, tx := range r.ethTxs {
+		if result := dbTx.Create(tx); result.Error != nil {
+			dbTx.Rollback()
+			return fmt.Errorf("db.Create ethereum transaction error: %w", result.Error)
+		}
+	}
+
+	for _, tx := range r.fcTxs {
+		if result := dbTx.Create(tx); result.Error != nil {
+			dbTx.Rollback()
+			return fmt.Errorf("db.Create filecoin transaction error: %w", result.Error)
+		}
+	}
+
+	if err := dbTx.Commit().Error; err != nil {
+		dbTx.Rollback()
+		return fmt.Errorf("Request commit error: %w reqID %s", err, r.ReqID)
+	}
+
+	return nil
 }
 
-func (s *SuperRequest) UpdateFileCoinData(cid, deaclCid, minerAddress string) error {
-	return s.dbTx.Model(&s.request).Updates(RequestDataFileCoin{
-		CID:          cid,
-		DealCID:      deaclCid,
+func (r *Request) AddEthereumTx(kind TxKind, hash string) {
+	tx := &EthereumTx{
+		Tx: Tx{
+			ReqID:  r.ReqID,
+			Kind:   kind,
+			Status: StatusPending,
+		},
+		Hash: hash,
+	}
+
+	r.ethTxs = append(r.ethTxs, tx)
+}
+
+func (r *Request) AddFilecoinTx(kind TxKind, CID, dealCID, minerAddress string) {
+	tx := &FileCoinTx{
+		Tx: Tx{
+			ReqID:  r.ReqID,
+			Kind:   kind,
+			Status: StatusProcessing,
+		},
+		CID:          CID,
+		DealCID:      dealCID,
 		MinerAddress: minerAddress,
-	}).Error
-}
-
-func (s *SuperRequest) AddEthData(baseUIDHash, version string) (*RequestDataEtherium, error) {
-	var dataEtherium = RequestDataEtherium{
-		BaseUIDHash: baseUIDHash,
-		Version:     version,
-		Request:     *s.request,
-		RequestID:   s.request.ID,
 	}
 
-	db := s.dbTx.Create(&dataEtherium)
-
-	return &dataEtherium, db.Error
-}
-
-func (s *SuperRequest) AddFileCoinData(cid, deaclCid, minerAddress string) (*RequestDataFileCoin, error) {
-	var dataFileCoin = RequestDataFileCoin{
-		CID:          cid,
-		DealCID:      deaclCid,
-		MinerAddress: minerAddress,
-		Request:      *s.request,
-		RequestID:    s.request.ID,
-	}
-
-	db := s.dbTx.Create(&dataFileCoin)
-
-	return &dataFileCoin, db.Error
-}
-
-func (s *SuperRequest) AddTx(tx *Tx) error {
-	db := s.dbTx.Create(&tx)
-
-	return db.Error
-}
-
-func (s *SuperRequest) ReqID() string {
-	return s.request.ReqID
+	r.fcTxs = append(r.fcTxs, tx)
 }
 
 type TxResult struct {
@@ -130,88 +154,74 @@ type DocResult struct {
 }
 
 type RequestResult struct {
-	Status string       `json:"status"`
-	Docs   []*DocResult `json:"docs"`
-	Txs    []*TxResult  `json:"txs"`
+	Status   string        `json:"status"`
+	Kind     string        `json:"kind"`
+	Ethereum []*EthereumTx `json:"ethereum"`
+	Filecoin []*FileCoinTx `json:"filecoin"`
 }
 
 type RequestsResult map[string]*RequestResult
 
-func (p *Proc) requests(userID, requireID string, limit, offset int) (RequestsResult, error) {
-	criteria := ""
-	if requireID != "" {
-		criteria = `AND requests.req_id = "@req_id"`
-		criteria = strings.Replace(criteria, "@req_id", requireID, 1)
-	}
-
-	query := `SELECT
-				r.req_id, r.status, r.kind,
-				coalesce(fc.c_id, ''),coalesce(fc.deal_c_id, ''),coalesce(fc.miner_address, ''),
-				t.kind, t.hash, coalesce(t_parent.hash, '') AS t_parent_hash, t.status
-			FROM (select * from requests 
-			               WHERE requests.user_id = @user_id @criteria
-			               ORDER BY requests.id desc LIMIT @limit OFFSET @offset 
-			     ) r
-					 left join request_data_file_coins fc on fc.request_id = r.id
-					 left join txes t on t.request_id = r.id
-			         left join txes t_parent on t_parent.id = t.parent_tx_id
-			ORDER BY r.id desc, t.id;`
-
-	query = strings.Replace(query, "@criteria", criteria, 1)
-	rows, err := p.db.Raw(query, map[string]interface{}{"user_id": userID, "limit": limit, "offset": offset}).Rows()
-
-	if err != nil {
-		return nil, fmt.Errorf("GetRequests error: %w, userID %s", err, userID)
-	}
-	defer rows.Close()
-
+func (p *Proc) requests(userID, reqID string, limit, offset int) (RequestsResult, error) {
 	var (
-		reqID        string
-		reqStatus    uint8
-		reqKind      uint8
-		reqCID       string
-		reqDealCID   string
-		reqMinerAddr string
-		txKind       uint8
-		txHash       string
-		txParentHash string
-		txStatus     uint8
+		requests    []*Request
+		reqIds      []string
+		ethTxs      []*EthereumTx
+		filecoinTxs []*FileCoinTx
+		result      = make(RequestsResult)
 	)
 
-	result := make(RequestsResult)
+	// requests
+	queryReq := p.db.Model(&Request{}).Where("user_id = ?", userID)
 
-	for rows.Next() {
-		err = rows.Scan(&reqID, &reqStatus, &reqKind, &reqCID, &reqDealCID, &reqMinerAddr, &txKind, &txHash, &txParentHash, &txStatus)
-		if err != nil {
-			return nil, fmt.Errorf("db.Scan error: %w", err)
+	if reqID != "" {
+		queryReq = queryReq.Where("req_id = ?", reqID)
+	}
+
+	err := queryReq.Limit(limit).Offset(offset).Find(&requests).Error
+	if err != nil {
+		return nil, fmt.Errorf("Requests select error: %w userID: %s reqID: %s limit: %d offset: %d", err, userID, reqID, limit, offset)
+	}
+
+	for _, r := range requests {
+		reqIds = append(reqIds, r.ReqID)
+	}
+
+	// ethereum transactions
+	err = p.db.Model(&EthereumTx{}).Where("req_id IN ?", reqIds).Find(&ethTxs).Error
+	if err != nil {
+		return nil, fmt.Errorf("Ethereum transactions select error: %w userID: %s reqID: %s limit: %d offset: %d", err, userID, reqID, limit, offset)
+	}
+
+	// filecoin transactions
+	err = p.db.Model(&FileCoinTx{}).Where("req_id IN ?", reqIds).Find(&filecoinTxs).Error
+	if err != nil {
+		return nil, fmt.Errorf("Ethereum transactions select error: %w userID: %s reqID: %s limit: %d offset: %d", err, userID, reqID, limit, offset)
+	}
+
+	for _, r := range requests {
+		reqResult := &RequestResult{
+			Status: r.Status.String(),
+			Kind:   r.Kind.String(),
 		}
 
-		req, ok := result[reqID]
-		if !ok {
-			req = &RequestResult{
-				Status: Status(reqStatus).String(),
-				Docs:   []*DocResult{},
-				Txs:    []*TxResult{},
+		for _, ethTx := range ethTxs {
+			if ethTx.ReqID == r.ReqID {
+				ethTx.KindStr = ethTx.Kind.String()
+				ethTx.StatusStr = ethTx.Status.String()
+				reqResult.Ethereum = append(reqResult.Ethereum, ethTx)
 			}
-
-			result[reqID] = req
 		}
 
-		req.Txs = append(req.Txs, &TxResult{
-			Kind:       TxKind(txKind).String(),
-			Status:     Status(txStatus).String(),
-			Hash:       txHash,
-			ParentHash: txParentHash,
-		})
-
-		if reqCID != "" {
-			req.Docs = append(req.Docs, &DocResult{
-				Kind:         RequestKind(reqKind).String(),
-				CID:          reqCID,
-				DealCID:      reqDealCID,
-				MinerAddress: reqMinerAddr,
-			})
+		for _, fcTx := range filecoinTxs {
+			if fcTx.ReqID == r.ReqID {
+				fcTx.KindStr = fcTx.Kind.String()
+				fcTx.StatusStr = fcTx.Status.String()
+				reqResult.Filecoin = append(reqResult.Filecoin, fcTx)
+			}
 		}
+
+		result[r.ReqID] = reqResult
 	}
 
 	return result, nil

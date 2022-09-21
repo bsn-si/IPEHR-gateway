@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/service/processing"
 	"io"
 	"log"
 	"net/http"
@@ -17,6 +16,7 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
@@ -57,7 +57,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Failure      412          "Is returned when `If-Match` request header doesn’t match the latest version on the service side. Returns also latest `version_uid` in the `Location` and `ETag` headers."
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status [put]
-func (h EhrStatusHandler) Update(c *gin.Context) {
+func (h *EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 	reqID := c.MustGet("reqId").(string)
@@ -123,30 +123,20 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	dbTransaction := h.service.Proc.BeginDbTx()
-
-	defer func() {
-		if r := recover(); r != nil {
-			h.service.Proc.RollbackDbTx(dbTransaction)
-		}
-	}()
-
-	dbRequest, err := h.service.NewDbRequest(dbTransaction, reqID, userID, &ehrUUID, processing.RequestEhrCreate)
+	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrStatusUpdate)
 	if err != nil {
-		log.Println("NewDbRequest error:", err)
+		log.Println("EhrStatus update NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	if err := h.service.UpdateStatus(c, dbRequest, userID, &ehrUUID, ehrSystemID, &status); err != nil {
-		h.service.Proc.RollbackDbTx(dbTransaction)
-
+	if err := h.service.UpdateStatus(c, procRequest, userID, &ehrUUID, ehrSystemID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
 
-	if err := h.service.Proc.CommitDbTx(dbTransaction); err != nil {
-		log.Println("NewDbRequest error:", err)
+	if err := procRequest.Commit(); err != nil {
+		log.Println("EhrStatus update procRequest commit error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -179,7 +169,7 @@ func (h EhrStatusHandler) Update(c *gin.Context) {
 // @Failure      404              "Is returned when EHR with `ehr_id` does not exist or a version of an EHR_STATUS resource does not exist at the specified `version_at_time`"
 // @Failure      500              "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status [get]
-func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
+func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 
@@ -248,7 +238,7 @@ func (h EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Failure      404          "is returned when an EHR with `ehr_id` does not exist or when an EHR_STATUS with `version_uid` does not exist."
 // @Failure      500          "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
-func (h EhrStatusHandler) GetByID(c *gin.Context) {
+func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
 

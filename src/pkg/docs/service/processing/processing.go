@@ -4,21 +4,18 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
-	"strconv"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
+	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/ipfs/go-cid"
 	"gorm.io/gorm"
 
-	project_common "hms/gateway/pkg/common"
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"
@@ -35,21 +32,10 @@ type (
 		filecoinClient   *filecoin.Client
 		ipfsClient       *ipfs.Client
 		httpClient       *http.Client
-		lock             bool
+		lockEthereum     bool
+		lockFilecoin     bool
 		localStoragePath string
 		done             chan bool
-	}
-
-	Tx struct {
-		gorm.Model
-		ParentTxID uint
-		RequestID  uint
-		Request    Request
-		ServiceID  uint
-		Service    BlockChainService
-		Kind       TxKind
-		Hash       string // TODO should be normalized for space saving
-		Status     Status
 	}
 
 	Retrieve struct {
@@ -79,9 +65,9 @@ const (
 	TxUpdateEhrStatus
 	TxAddEhrDoc
 	TxSetDocKeyEncrypted
-
-	BcEthereum BlockChainService = 0
-	BcFileCoin BlockChainService = 1
+	TxSaveEhr
+	TxSaveEhrStatus
+	TxSaveComposition
 )
 
 var (
@@ -105,6 +91,9 @@ var (
 		TxUpdateEhrStatus:    "UpdateEhrStatus",
 		TxAddEhrDoc:          "AddEhrDoc",
 		TxSetDocKeyEncrypted: "SetDocKeyEncrypted",
+		TxSaveEhr:            "TxSaveEhr",
+		TxSaveEhrStatus:      "TxSaveEhrStatus",
+		TxSaveComposition:    "TxSaveComposition",
 
 		TxUnknown: "Unknown",
 	}
@@ -167,25 +156,6 @@ func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Clie
 	}
 }
 
-func (p *Proc) AddTx(request *SuperRequest, txHash string, kind TxKind, service BlockChainService, serviceID uint, parentTxID uint) (*Tx, error) {
-	var dbTx = Tx{
-		ParentTxID: parentTxID,
-		Hash:       txHash,
-		Kind:       kind,
-		Status:     StatusPending,
-		Service:    service,
-		ServiceID:  serviceID,
-		Request:    *request.request,
-		RequestID:  request.request.ID,
-	}
-
-	if err := request.AddTx(&dbTx); err != nil {
-		return nil, fmt.Errorf("db.Create transaction error: %w", err)
-	}
-
-	return &dbTx, nil
-}
-
 func (p *Proc) AddRetrieve(CID string) error {
 	result := p.db.Create(&Retrieve{
 		CID:     CID,
@@ -215,28 +185,30 @@ func (p *Proc) GetRetrieveStatus(CID *cid.Cid) (Status, error) {
 }
 
 func (p *Proc) Start() {
-	tickerBlockchain := time.NewTicker(5 * time.Second)
-	tickerFilecoinStartDeal := time.NewTicker(5 * time.Second)
-	tickerDealFinisher := time.NewTicker(5 * time.Second)
+	tickerEthereum := time.NewTicker(5 * time.Second)
+	tickerFilecoin := time.NewTicker(5 * time.Minute)
+	tickerDealFinisher := time.NewTicker(1 * time.Minute)
 	tickerFilecoinRetrieve := time.NewTicker(1 * time.Minute)
-
-	var mFinisher sync.Mutex
 
 	go func() {
 		logf("Started")
 
 		for {
 			select {
-			case <-tickerBlockchain.C:
-				if !p.lock {
-					p.ExecBlockchain()
+			case <-tickerEthereum.C:
+				if !p.lockEthereum {
+					p.execEthereum()
 				}
-			case <-tickerFilecoinStartDeal.C:
-				p.execFilecoinStartDealStatus()
+			case <-tickerFilecoin.C:
+				if !p.lockFilecoin {
+					p.execFilecoin()
+				}
 			case <-tickerFilecoinRetrieve.C:
 				p.execFilecoinRetrieve()
 			case <-tickerDealFinisher.C:
-				p.execDealFinisher(&mFinisher)
+				if !p.lockEthereum && !p.lockFilecoin {
+					p.execDealFinisher()
+				}
 			case <-p.done:
 				logf("Stopped")
 				return
@@ -249,41 +221,40 @@ func (p *Proc) Stop() {
 	p.done <- true
 }
 
-func (p *Proc) BeginDbTx() *gorm.DB {
-	return p.db.Begin()
-}
+func (p *Proc) execEthereum() {
+	p.lockEthereum = true
+	//logf("Ethereum transactions started")
 
-func (p *Proc) CommitDbTx(tx *gorm.DB) error {
-	return tx.Commit().Error
-}
-
-func (p *Proc) RollbackDbTx(tx *gorm.DB) {
-	tx.Rollback()
-}
-
-func (p *Proc) ExecBlockchain() {
-	p.lock = true
-	defer func() { p.lock = false }()
+	defer func() {
+		p.lockEthereum = false
+		//logf("Ethereum transactions finished")
+	}()
 
 	statuses := []Status{
 		StatusPending,
 		StatusProcessing,
 	}
 
-	var txs []Tx
+	var txs []EthereumTx
 
-	result := p.db.Model(&Tx{}).Select("txes.id, txes.hash, txes.status, txes.request_id").Joins("LEFT JOIN requests ON requests.id = txes.request_id").Where("txes.parent_tx_id = 0 AND txes.service = ?", BcEthereum).Where("requests.status IN ? AND requests.deleted_at IS NULL", statuses).Find(&txs)
+	result := p.db.Model(&EthereumTx{}).
+		Select("req_id, hash, status").
+		Where("status IN ?", statuses).
+		Group("hash").
+		Find(&txs)
+	if result.Error != nil {
+		logf("execEthereum get transactions error: %v", result.Error)
+		return
+	}
 
-	if result.Error != nil || result.RowsAffected == 0 {
+	if result.RowsAffected == 0 {
 		return
 	}
 
 	for _, tx := range txs {
-		ctx, cancel := context.WithTimeout(context.Background(), project_common.BlockchainTxProcAwaitTime*time.Second)
-		defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), common.BlockchainTxProcAwaitTime)
 
-		h := common.HexToHash(tx.Hash)
-		txID := strconv.Itoa(int(tx.ID))
+		h := eth_common.HexToHash(tx.Hash)
 
 		var status Status
 
@@ -292,40 +263,50 @@ func (p *Proc) ExecBlockchain() {
 			if errors.Is(err, ethereum.NotFound) {
 				status = StatusPending
 			} else {
-				log.Printf(txID, "TransactionReceipt error: %v txHash %s", err, h.String())
-				continue
+				cancel()
+				logf("TransactionReceipt error: %v txHash %s", err, h.String())
+				return
 			}
 		} else {
 			status = Status(receipt.Status)
 		}
 
+		cancel()
+
+		logf("Tx: %s status: %s", tx.Hash, status)
+
 		if status == tx.Status {
 			continue
 		}
 
-		log.Println(txID, "Tx", tx.Hash, "status", status)
-
-		if result = p.db.Model(Tx{}).Where("id = ? OR parent_tx_id = ?", tx.ID, tx.ID).Update("status", status); result.Error != nil {
-			log.Println(txID, "db.Update error:", result.Error)
+		if result = p.db.Model(&tx).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
+			logf("db.Update error: %v", result.Error)
 		}
 	}
 }
 
-func (p *Proc) execFilecoinStartDealStatus() {
-	logf("Filecoin StartDeal statuses started")
-	defer logf("Filecoin StartDeal statuses finished")
+func (p *Proc) execFilecoin() {
+	p.lockFilecoin = true
+	logf("Filecoin deals started")
+
+	defer func() {
+		p.lockFilecoin = false
+		logf("Filecoin deals finished")
+	}()
 
 	statuses := []Status{
 		StatusPending,
 		StatusProcessing,
 	}
 
-	txs := []Tx{}
+	txs := []FileCoinTx{}
 
-	result := p.db.Model(&Tx{}).Select("txes.id, txes.hash, txes.status, txes.request_id").Joins("LEFT JOIN requests ON requests.id = txes.request_id").Where("txes.parent_tx_id = 0 AND txes.service = ?", BcFileCoin).Where("requests.status IN ? AND requests.deleted_at IS NULL", statuses).Find(&txs)
-
+	result := p.db.Model(&FileCoinTx{}).
+		Select("req_id, c_id, deal_c_id, miner_address, status").
+		Where("status IN ?", statuses).
+		Find(&txs)
 	if result.Error != nil {
-		log.Println("DB get filecoin transactions error:", result.Error)
+		logf("DB get filecoin transactions error: %v", result.Error)
 	}
 
 	if result.RowsAffected == 0 {
@@ -333,22 +314,22 @@ func (p *Proc) execFilecoinStartDealStatus() {
 	}
 
 	for _, tx := range txs {
-		ctx, cancel := context.WithTimeout(context.Background(), project_common.FilecoinTxProcAwaitTime*time.Second)
-		defer cancel()
-
-		txID := strconv.Itoa(int(tx.ID))
-
-		dealCID, err := cid.Parse(tx.Hash)
+		dealCID, err := cid.Parse(tx.DealCID)
 		if err != nil {
-			log.Println(txID, "cid.Parse error:", err, "tx.Hash:", tx.Hash)
-			break
+			logf("cid.Parse error: %v dealCID: %s", err, tx.DealCID)
+			continue
 		}
 
-		dealStatus, err := p.filecoinClient.GetDealStatus(ctx, &dealCID)
+		ctx, cancel := context.WithTimeout(context.Background(), common.FilecoinTxProcAwaitTime)
+
+		dealStatus, dealID, err := p.filecoinClient.GetDealStatus(ctx, &dealCID)
 		if err != nil {
-			log.Println(txID, "filecoinClient.GetDealStatus error:", err, "dealCID", dealCID.String())
-			break
+			logf("filecoinClient.GetDealStatus error: %v dealCID: %s", err, tx.DealCID)
+			cancel()
+			continue
 		}
+
+		cancel()
 
 		var status Status
 
@@ -371,57 +352,55 @@ func (p *Proc) execFilecoinStartDealStatus() {
 			continue
 		}
 
-		if result = p.db.Model(Tx{}).Where("id = ? OR parent_tx_id = ?", tx.ID, tx.ID).Update("status", status); result.Error != nil {
-			log.Println(txID, "db.Update error:", result.Error)
-			break
+		err = p.db.Model(&tx).Where("deal_c_id", tx.DealCID).Updates(map[string]interface{}{"status": status, "deal_id": dealID}).Error
+		if err != nil {
+			logf("db.Update error: %v", err)
 		}
 	}
 }
 
-func (p *Proc) execDealFinisher(m *sync.Mutex) {
-	m.Lock()
-
-	logf("execDealFinisher started")
+func (p *Proc) execDealFinisher() {
+	p.lockFilecoin = true
+	p.lockEthereum = true
+	logf("DealFinisher started")
 
 	defer func() {
-		logf("execDealFinisher finished")
-		m.Unlock()
+		p.lockEthereum = false
+		p.lockFilecoin = false
+		logf("DealFinisher finished")
 	}()
 
-	query := `select id
-		from (SELECT requests.id,
-					 (count(txes.status)) - (count(txes_succeeds.status)) as txs_left
-			  FROM requests
-					   LEFT JOIN txes ON requests.id = txes.request_id
-					   LEFT JOIN txes txes_succeeds ON txes.id = txes_succeeds.id and txes_succeeds.status = @status_success
-			  WHERE (requests.status IN (@status_pending, @status_processing) AND requests.deleted_at IS NULL)
-				AND txes.deleted_at IS NULL
-				AND txes.parent_tx_id = 0
-			    AND txes.service = @service
-			 )
-		where id is not null and txs_left = 0`
+	query := `UPDATE requests SET status = @success 
+				WHERE req_id NOT IN (
+					SELECT req_id 
+						FROM ethereum_txes 
+						WHERE status IN (@failed,@pending,@processing) 
+						GROUP BY req_id
+					UNION
+					SELECT req_id 
+						FROM file_coin_txes
+						WHERE status IN (@failed,@pending,@processing)
+						GROUP BY req_id
+				)`
 
-	requests := []int{}
-	result := p.db.Raw(query, map[string]interface{}{"status_success": StatusSuccess, "status_pending": StatusPending, "status_processing": StatusProcessing, "service": BcEthereum}).Find(&requests)
-
-	if result.Error != nil {
-		log.Println("DB get list of success transactions error:", result.Error)
-	}
-
-	if result.RowsAffected == 0 {
-		return
-	}
-
-	p.db.Model(Request{}).Where("id IN ?", requests).Updates(Retrieve{Status: StatusSuccess})
-
-	if p.db.Error != nil {
-		log.Println("DB update error:", result.Error)
+	if err := p.db.Exec(query, map[string]interface{}{
+		"failed":     StatusFailed,
+		"success":    StatusSuccess,
+		"pending":    StatusPending,
+		"processing": StatusProcessing,
+	}).Error; err != nil {
+		logf("DB get list of success transactions error: %v", err)
 	}
 }
 
 func (p *Proc) execFilecoinRetrieve() {
+	p.lockFilecoin = true
 	logf("Filecoin retrieve started")
-	defer logf("Filecoin retrieve finished")
+
+	defer func() {
+		p.lockFilecoin = false
+		logf("Filecoin retrieve finished")
+	}()
 
 	var rets []Retrieve
 

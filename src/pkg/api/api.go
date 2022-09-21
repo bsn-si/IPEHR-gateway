@@ -46,7 +46,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
-		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL, cfg.DefaultGroupAccessID),
+		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
 		Query:       NewQueryHandler(docService),
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),

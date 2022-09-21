@@ -41,7 +41,7 @@ func NewObjectVersionID(UID string, creatingSystemID EhrSystemID) (*ObjectVersio
 	}
 
 	if err := o.parseUID(UID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parseUID error: %w", err)
 	}
 
 	o.UID = &UIDBasedID{ObjectID{Value: o.String()}}
@@ -90,19 +90,19 @@ func (o *ObjectVersionID) setVersionTreeID(ver string) {
 	copy(o.versionBytes[:], []byte(o.versionTreeID))
 }
 
-func (o *ObjectVersionID) parseUID(UID string) (err error) {
+func (o *ObjectVersionID) parseUID(UID string) error {
 	re := regexp.MustCompile(uidDelimiter)
 	parts := re.Split(UID, -1)
 
 	if length := len(parts); length == 0 {
-		return
+		return nil
 	} else if length == 1 {
 		o.setVersionTreeID("")
 	} else if length == 2 {
 		ver := strings.Join(parts[1:2], "")
 		if !o.isVersion(ver) {
 			if !o.creatingSystemID.Equal(ver) {
-				return errors.ErrIncorrectFormat
+				return fmt.Errorf("%w creatingSystemID mismatch", errors.ErrIncorrectFormat)
 			}
 
 			ver = ""
@@ -112,7 +112,7 @@ func (o *ObjectVersionID) parseUID(UID string) (err error) {
 		creatingSystemID := strings.Join(parts[1:2], "")
 
 		if !o.creatingSystemID.Equal(creatingSystemID) {
-			return errors.ErrIncorrectFormat
+			return fmt.Errorf("%w creatingSystemID mismatch", errors.ErrIncorrectFormat)
 		}
 
 		o.setVersionTreeID(strings.Join(parts[2:3], ""))
@@ -122,7 +122,7 @@ func (o *ObjectVersionID) parseUID(UID string) (err error) {
 
 	objectUUID, err := uuid.Parse(objectID)
 	if err != nil {
-		return errors.ErrIncorrectFormat
+		return fmt.Errorf("uuid.Parse error: %w objectID: %s", err, objectID)
 	}
 
 	o.objectID = objectUUID

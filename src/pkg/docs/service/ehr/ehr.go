@@ -2,14 +2,10 @@ package ehr
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/indexer"
 	"log"
 	"time"
-
-	"gorm.io/gorm"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
@@ -20,10 +16,11 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/processing"
+	proc "hms/gateway/pkg/docs/service/processing"
 	docStatus "hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer"
 )
 
 type Service struct {
@@ -36,28 +33,11 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) NewDbRequest(dbTx *gorm.DB, reqID string, userID string, ehrUUID *uuid.UUID, requestKind processing.RequestKind) (*processing.SuperRequest, error) {
-	procReq := &processing.Request{
-		ReqID:   reqID,
-		UserID:  userID,
-		EhrUUID: ehrUUID.String(),
-		Status:  processing.StatusProcessing,
-		Kind:    requestKind,
-	}
-	superRequest, err := s.Proc.AddRequest(dbTx, procReq)
-
-	if err != nil {
-		return nil, fmt.Errorf("Proc.AddRequest error: %w", err)
-	}
-
-	return superRequest, nil
+func (s *Service) EhrCreate(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
+	return s.EhrCreateWithID(ctx, userID, ehrUUID, ehrSystemID, request, procRequest)
 }
 
-func (s *Service) EhrCreate(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest, dbRequest *processing.SuperRequest) (*model.EHR, error) {
-	return s.EhrCreateWithID(ctx, userID, ehrUUID, ehrSystemID, request, dbRequest)
-}
-
-func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest, dbRequest *processing.SuperRequest) (*model.EHR, error) {
+func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
 	var ehr model.EHR
 
 	ehr.SystemID.Value = ehrSystemID.String()
@@ -82,11 +62,9 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("create status error: %w", err)
 	}
 
-	var (
-		transactions = s.Infra.Index.MultiCallTxNew()
-	)
+	var multiCallTx = s.Infra.Index.MultiCallTxNew()
 
-	err = s.SaveStatus(ctx, transactions, dbRequest, userID, ehrUUID, ehrSystemID, doc)
+	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, doc)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
 	}
@@ -94,23 +72,18 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	ehr.EhrStatus.ID = doc.UID.ObjectID
 	ehr.EhrStatus.Type = "EHR_STATUS"
 
-	err = s.SaveEhr(ctx, transactions, dbRequest, userID, &ehr)
+	err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr)
 	if err != nil {
 		return nil, fmt.Errorf("SaveEhr error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.MultiCallCommit(transactions)
+	txHash, err := multiCallTx.Commit()
 	if err != nil {
 		return nil, fmt.Errorf("EhrCreateWithID commit error: %w", err)
 	}
 
-	multiCallTx, err := s.Proc.AddTx(dbRequest, txHash, processing.TxMultiCall, processing.BcEthereum, 0, 0)
-	if err != nil {
-		return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
-	}
-
-	for _, txKind := range transactions.GetTxKinds() {
-		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0, multiCallTx.ID)
+	for _, txKind := range multiCallTx.GetTxKinds() {
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 		if err != nil {
 			return nil, fmt.Errorf("processing MulticallTx list of transactions: %w", err)
 		}
@@ -119,7 +92,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	return &ehr, nil
 }
 
-func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx, dbRequest *processing.SuperRequest, userID string, doc *model.EHR) error {
+func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, doc *model.EHR) error {
 	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
 	if err != nil {
 		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
@@ -160,19 +133,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 	//dealCID := fakeData.Cid()
 	//minerAddr := []byte("123")
 
-	// Start processing request
-	{
-		requestFileCoinData, err := dbRequest.AddFileCoinData(CID.String(), dealCID.String(), minerAddr)
-
-		if err != nil {
-			return fmt.Errorf("Proc.AddFileCoinData error: %w", err)
-		}
-
-		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, requestFileCoinData.ID, 0)
-		if err != nil {
-			return fmt.Errorf("Proc.AddTx error: %w", err)
-		}
-	}
+	procRequest.AddFilecoinTx(proc.TxSaveEhr, CID.String(), dealCID.String(), minerAddr)
 
 	// Index EHR userID -> ehrUUID
 	{
@@ -180,7 +141,8 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 		if err != nil {
 			return fmt.Errorf("Index.SetEhrUser error: %w", err)
 		}
-		transactions.Add(uint8(processing.TxSetEhrUser), packed)
+
+		multiCallTx.Add(uint8(proc.TxSetEhrUser), packed)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -207,12 +169,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
 
-		transactions.Add(uint8(processing.TxAddEhrDoc), packed)
-
-		// TODO is it need?
-		if _, err = dbRequest.AddEthData(hex.EncodeToString(docMeta.DocBaseUIDHash[:]), "1"); err != nil {
-			return fmt.Errorf("Service ehr AddEthData error: %w", err)
-		}
+		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 	}
 
 	// Index Access
@@ -234,7 +191,7 @@ func (s *Service) SaveEhr(ctx context.Context, transactions *indexer.MultiCallTx
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
 
-		transactions.Add(uint8(processing.TxSetDocKeyEncrypted), packed)
+		multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
 	}
 
 	return nil
@@ -296,7 +253,7 @@ func (s *Service) CreateStatus(ehrStatusID string, subject base.PartySelf) (doc 
 	return doc, nil
 }
 
-func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, dbRequest *processing.SuperRequest, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
+func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -316,7 +273,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 
 	if status.UID.Value != ehr.EhrStatus.ID.Value {
 		ehr.EhrStatus.ID.Value = status.UID.Value
-		if err = s.SaveEhr(ctx, multiCallTx, dbRequest, userID, &ehr); err != nil {
+		if err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr); err != nil {
 			return fmt.Errorf("ehr save error: %w", err)
 		}
 	}
@@ -324,7 +281,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, dbRequest *processing.SuperRequest, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
@@ -368,18 +325,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	//dealCID := fakeData.Cid()
 	//minerAddr := []byte("123")
 
-	// Start processing request
-	{
-		fileCoinData, err := dbRequest.AddFileCoinData(CID.String(), dealCID.String(), minerAddr)
-		if err != nil {
-			return fmt.Errorf("Proc.AddFileCoinData error: %w", err)
-		}
-
-		_, err = s.Proc.AddTx(dbRequest, dealCID.String(), processing.TxFilecoinStartDeal, processing.BcFileCoin, fileCoinData.ID, 0)
-		if err != nil {
-			return fmt.Errorf("Proc.AddTx error: %w", err)
-		}
-	}
+	procRequest.AddFilecoinTx(proc.TxSaveEhrStatus, CID.String(), dealCID.String(), minerAddr)
 
 	// Index subject and namespace
 	{
@@ -391,7 +337,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			return fmt.Errorf("Index.SetSubject error: %w ehrID: %s subjectID: %s subjectNamespace: %s", err, ehrUUID.String(), subjectID, subjectNamespace)
 		}
 
-		multiCallTx.Add(uint8(processing.TxSetEhrBySubject), setSubjectPacked)
+		multiCallTx.Add(uint8(proc.TxSetEhrBySubject), setSubjectPacked)
 	}
 
 	// Index Docs ehr_id -> doc_meta
@@ -418,12 +364,8 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
-		multiCallTx.Add(uint8(processing.TxAddEhrDoc), packed)
 
-		// TODO is it need?
-		if _, err = dbRequest.AddEthData(hex.EncodeToString(baseDocumentUIDHash[:]), objectVersionID.VersionString()); err != nil {
-			return fmt.Errorf("Service ehr AddEthData error: %w", err)
-		}
+		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 	}
 
 	// Index Access
@@ -444,41 +386,34 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
-		multiCallTx.Add(uint8(processing.TxSetDocKeyEncrypted), packed)
+
+		multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
 	}
 
 	return nil
 }
 
-func (s *Service) UpdateStatus(ctx context.Context, dbRequest *processing.SuperRequest, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
-	var transactions = s.Infra.Index.MultiCallTxNew()
+func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+	var multiCallTx = s.Infra.Index.MultiCallTxNew()
 
-	if err := s.SaveStatus(ctx, transactions, dbRequest, userID, ehrUUID, ehrSystemID, status); err != nil {
+	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, status); err != nil {
 		log.Println("SaveStatus error:", err)
 		return errors.New("EHR_STATUS saving error")
 	}
 
 	// TODO i dont like this logic, because in method GetByID we always grab whole data from filecoin, which contain last status id. It need fix it.
-	if err := s.UpdateEhr(ctx, transactions, dbRequest, userID, ehrUUID, status); err != nil {
+	if err := s.UpdateEhr(ctx, multiCallTx, procRequest, userID, ehrUUID, status); err != nil {
 		log.Println("UpdateEhr error:", err)
 		return errors.New("EHR updating error")
 	}
 
-	txHash, err := s.Infra.Index.MultiCallCommit(transactions)
+	txHash, err := multiCallTx.Commit()
 	if err != nil {
 		return fmt.Errorf("UpdateStatus commit error: %w", err)
 	}
 
-	multiCallTx, err := s.Proc.AddTx(dbRequest, txHash, processing.TxMultiCall, processing.BcEthereum, 0, 0)
-	if err != nil {
-		return fmt.Errorf("processing MulticallTx: %w", err)
-	}
-
-	for _, txKind := range transactions.GetTxKinds() {
-		_, err = s.Proc.AddTx(dbRequest, txHash, processing.TxKind(txKind), processing.BcEthereum, 0, multiCallTx.ID)
-		if err != nil {
-			return fmt.Errorf("processing MulticallTx list of transactions: %w", err)
-		}
+	for _, txKind := range multiCallTx.GetTxKinds() {
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return nil

@@ -148,13 +148,13 @@ func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint
 	return deal, minerAddr.String(), nil
 }
 
-func (c *Client) GetDealStatus(ctx context.Context, CID *cid.Cid) (storagemarket.StorageDealStatus, error) {
+func (c *Client) GetDealStatus(ctx context.Context, CID *cid.Cid) (storagemarket.StorageDealStatus, uint64, error) {
 	dealInfo, err := c.api.ClientGetDealInfo(ctx, *CID)
 	if err != nil {
-		return 0, fmt.Errorf("Lotus ClientGetDealInfo error: %w CID %s", err, CID.String())
+		return 0, 0, fmt.Errorf("Lotus ClientGetDealInfo error: %w CID %s", err, CID.String())
 	}
 
-	return dealInfo.State, nil
+	return dealInfo.State, uint64(dealInfo.DealID), nil
 }
 
 func (c *Client) StartRetrieve(ctx context.Context, CID *cid.Cid) (retrievalmarket.DealID, error) {
@@ -356,6 +356,7 @@ func (c *Client) FindMiner(ctx context.Context) (*address.Address, error) {
 		"f01310564",
 		"f01394448",
 		"f01672748",
+		"f01443744",
 	}
 	_ = blackList
 
@@ -363,7 +364,7 @@ func (c *Client) FindMiner(ctx context.Context) (*address.Address, error) {
 
 	for i := 0; i < 10; i++ {
 		// nolint
-		x := rand.Intn(3)
+		x := rand.Intn(len(c.miners))
 
 		addr := c.miners[x]
 
@@ -375,16 +376,16 @@ func (c *Client) FindMiner(ctx context.Context) (*address.Address, error) {
 
 		minerInfo, err := c.api.StateMinerInfo(ctx, minerAddr, types.EmptyTSK)
 		if err != nil {
-			//log.Println("Lotus api.StateMinerInfo error:", err)
+			log.Println("Lotus api.StateMinerInfo error:", err)
 			continue
 		}
 
-		cctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 
 		_, err = c.api.ClientQueryAsk(cctx, *minerInfo.PeerId, minerAddr)
 		if err != nil {
 			cancel()
-			//log.Println("Lotus api.ClientQueryAsk error:", err)
+			log.Println("Lotus api.ClientQueryAsk error:", err)
 			continue
 		}
 

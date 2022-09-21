@@ -112,6 +112,8 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 
 	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
+	cfg.DefaultUserID = uuid.New().String()
+
 	infra := infrastructure.New(cfg)
 	r := api.New(cfg, infra).Build()
 	ts = httptest.NewServer(r)
@@ -1225,9 +1227,9 @@ func requestWait(userID, requestID string, tw *testWrap) error {
 			return err
 		}
 
-		if request.Status == processing.StatusSuccess.String() {
+		if request.Ethereum[0].StatusStr == processing.StatusSuccess.String() {
 			return nil
-		} else if request.Status == processing.StatusFailed.String() {
+		} else if request.Ethereum[0].StatusStr == processing.StatusFailed.String() {
 			return errors.New("Request failed")
 		}
 	}
