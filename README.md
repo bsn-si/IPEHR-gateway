@@ -45,13 +45,15 @@ The solution is being developed with 7 milestones:
 * Application to manage your own medical data and access
 * Testing, documentation and deployment
 
+### Milestone 1
+
 On Milestone 1 we develop the IPEHR-gateway to provide benefits of decentralized architecture to common HMS solutions using standard APIs.
  
 <p align="center">
   <img width="75%" src="https://user-images.githubusercontent.com/98888366/170698968-56ee7efe-e882-4236-b170-e9680ea12135.png">
 </p>
 
-### IPEHR-gateway features:
+#### IPEHR-gateway features:
 
 - generates user’s cryptographic keys;
 - exchanges medical data with HMS in openEHR format;
@@ -61,6 +63,33 @@ On Milestone 1 we develop the IPEHR-gateway to provide benefits of decentralized
 - stores encrypted documents’ indexes in a smart contract on a blockchain;
 - sends decrypted documents back to HMS;
 - supports AQL queries without decrypting data.
+
+### Milestone 2
+
+On Milestone 2 we mostly indexes storage, access revocation and integrate the IPEHR-gateway with the Filecoin network.
+
+![smart-contract](https://user-images.githubusercontent.com/8058268/190085702-6edf9437-1273-4db3-a7c9-414f66afe823.svg)
+
+#### The main functions of a smart contract are
+
+1. Search for `ehr_id` by user ID
+2. Obtaining a list of documents related to the specified `ehr_id`.
+3. Getting meta-information of the document by `ehr_id` and `document_uid`.
+4. Getting an access key to the document.
+5. Management of access to the document.
+6. Document search using [AQL](https://specifications.openehr.org/releases/QUERY/latest/AQL.html) queries.
+
+User and EHR document data in the contract is stored encrypted and prevents unauthorized persons from accessing private information.
+
+For more information see [here](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_2/2_Indexes_storage.md).
+
+#### Access rights management
+
+![doc_access](https://user-images.githubusercontent.com/8058268/190620811-fd433f0b-44b7-4e04-a425-d77f62b55835.svg)
+
+To grant access to a document, the document access key is asymmetrically encrypted with the public key of the user (or group) being granted access and added to the IPEHR smart contract table.
+
+For more information see [here](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_2/3_Revoking_access.md).
 
 ## How to
 
