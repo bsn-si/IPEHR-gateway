@@ -179,8 +179,14 @@ For now we have the following methods:
 - Getting info on created summary EHR by summary id 
 - Getting info on created EHR status
 - Getting info on EHR status version by time
+- Getting info on EHR by request id
 - Update EHR status with id
 - Create composition
+- Get composition
+- Update composition
+- Delete composition
+- Create group access
+- Get group access
 - Execute AQL request
 
 ## Docker
