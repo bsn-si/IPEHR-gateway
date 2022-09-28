@@ -37,8 +37,8 @@ The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of 
 This work is being done under the FileCoin development grant program RFP. See our proposal [here](https://github.com/filecoin-project/devgrants/issues/418)
 
 The solution is being developed with 7 milestones:
-* Development of MH-ORM and structure of storage of medical data - **we are here**
-* The functionality of encryption and saving/reading personal data to/from Filecoin
+* Development of MH-ORM and structure of storage of medical data
+* The functionality of encryption and saving/reading personal data to/from Filecoin - **we are here**
 * Access rights management on a blockchain
 * BsnGateway. Implementation of OpenEHR API, integration with MH-ORM
 * Public data publishing features using the Chainlink network
