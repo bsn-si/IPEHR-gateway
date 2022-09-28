@@ -66,7 +66,7 @@ On Milestone 1 we develop the IPEHR-gateway to provide benefits of decentralized
 
 ### Milestone 2
 
-On Milestone 2 we mostly indexes storage, access revocation and integrate the IPEHR-gateway with the Filecoin network.
+On Milestone 2 we have developed indexes storage, access revocation algorythm and integrated the IPEHR-gateway with the Filecoin network.
 
 ![smart-contract](https://user-images.githubusercontent.com/8058268/190085702-6edf9437-1273-4db3-a7c9-414f66afe823.svg)
 
