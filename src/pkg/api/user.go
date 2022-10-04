@@ -43,7 +43,6 @@ func NewUserHandler(docService *service.DefaultDocumentService) *UserHandler {
 // @Failure  500         "Is returned when an unexpected error occurs while processing a request"
 // @Router   /requests/ [get]
 func (h UserHandler) Register(c *gin.Context) {
-
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})

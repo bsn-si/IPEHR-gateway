@@ -38,6 +38,7 @@ func (s *Service) Register(userID, systemID, password, role string) (err error) 
 
 	privateUserKey := userPrivateKey[:]
 	privateKey, err := crypto.ToECDSA(privateUserKey)
+
 	if err != nil {
 		return fmt.Errorf("register user error: %w userID %s", err, userID)
 	}
