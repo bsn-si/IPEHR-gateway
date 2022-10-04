@@ -37,6 +37,7 @@ type API struct {
 	Query       *QueryHandler
 	GroupAccess *GroupAccessHandler
 	Request     *RequestHandler
+	User        *UserHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -50,6 +51,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Query:       NewQueryHandler(docService),
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),
+		User:        NewUserHandler(docService),
 	}
 }
 
@@ -81,8 +83,10 @@ func (a *API) Build() *gin.Engine {
 	access := v1.Group("access")
 	query := v1.Group("query")
 	requests := v1.Group("requests")
+	user := v1.Group("user")
 
 	a.setRedirections(r).
+		buildUserAPI(user).
 		buildEhrAPI(ehr).
 		buildGroupAccessAPI(access).
 		buildQueryAPI(query).
@@ -134,6 +138,13 @@ func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
 	r.Use(auth)
 	r.GET("/", a.Request.GetAll)
 	r.GET("/:reqId", a.Request.GetByID)
+
+	return a
+}
+
+func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.POST("/register", a.User.Register)
 
 	return a
 }

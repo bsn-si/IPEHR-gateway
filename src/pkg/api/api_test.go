@@ -29,10 +29,11 @@ import (
 )
 
 type testData struct {
-	ehrSystemID string
-	subject     string
-	namespace   string
-	testUserID  string
+	ehrSystemID  string
+	subject      string
+	namespace    string
+	testUserID   string
+	userPassword string
 }
 
 type testWrap struct {
@@ -63,9 +64,16 @@ func Test_API(t *testing.T) {
 	defer tearDown(*testWrap)
 
 	testData := &testData{
-		ehrSystemID: common.EhrSystemID,
-		testUserID:  uuid.New().String(),
+		ehrSystemID:  common.EhrSystemID,
+		testUserID:   uuid.New().String(),
+		userPassword: fakeData.GetRandomStringWithLength(10),
 	}
+
+	if !t.Run("User register", testWrap.userRegister(testData)) {
+		t.Fatal()
+	}
+	// TODO user register incorrect input data
+	// TODO user register duplicate registration request
 
 	if !t.Run("EHR creating", testWrap.ehrCreate(testData)) {
 		t.Fatal()
@@ -182,6 +190,37 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 
 		if response.StatusCode != http.StatusOK {
 			t.Fatalf("GetAllRequests expected %d, received %d", http.StatusOK, response.StatusCode)
+		}
+	}
+}
+
+func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		userRegisterRequest, err := userCreateBodyRequest(testData.testUserID, testData.ehrSystemID, testData.userPassword)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/register", userRegisterRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("Prefer", "return=representation")
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
 		}
 	}
 }
@@ -1057,6 +1096,22 @@ func (testWrap *testWrap) queryExecPostFail(testData *testData) func(t *testing.
 			t.Errorf("Expected fail, received status: %d", response.StatusCode)
 		}
 	}
+}
+
+func userCreateBodyRequest(userID, systemID, password string) (*bytes.Reader, error) {
+	userRegisterRequest := &model.UserCreateRequest{
+		SystemID: systemID,
+		UserID:   userID,
+		Password: password,
+		Role:     "",
+	}
+
+	docBytes, err := json.Marshal(userRegisterRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(docBytes), nil
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {
