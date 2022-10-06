@@ -4,7 +4,7 @@ type UserCreateRequest struct {
 	SystemID string `json:"systemID"`
 	UserID   string `json:"userID"`
 	Password string `json:"password"`
-	Role     string `json:"role"`
+	Role     uint8  `json:"role"`
 }
 
 func (e *UserCreateRequest) Validate() bool {

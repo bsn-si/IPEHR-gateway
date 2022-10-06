@@ -26,6 +26,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
+	userRoles "hms/gateway/pkg/user/roles"
 )
 
 type testData struct {
@@ -1103,7 +1104,7 @@ func userCreateBodyRequest(userID, systemID, password string) (*bytes.Reader, er
 		SystemID: systemID,
 		UserID:   userID,
 		Password: password,
-		Role:     "",
+		Role:     uint8(userRoles.Patient),
 	}
 
 	docBytes, err := json.Marshal(userRegisterRequest)

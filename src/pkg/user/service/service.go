@@ -51,7 +51,7 @@ func (s *Service) Register(user *model.UserCreateRequest) (err error) {
 		return fmt.Errorf("register s.generateHash error: %w userID %s, password: %s", err, user.UserID, user.Password)
 	}
 
-	log.Printf("s.Doc.Infra.Index.userAdd(%s, %s, %s, %s, %s)", address, err, user.UserID, user.Role, pwdHash)
+	log.Printf("s.Doc.Infra.Index.userAdd(%s, %s, %s, %d, %s)", address, err, user.UserID, user.Role, pwdHash)
 	//TODO s.Doc.Infra.Index.userAdd(address userAddr, bytes32 id, Role role, bytes pwdHash)
 	return nil
 }
