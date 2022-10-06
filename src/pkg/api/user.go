@@ -2,9 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	userService "hms/gateway/pkg/user/service"
 
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service/user"
 	"hms/gateway/pkg/errors"
 	"io"
 	"log"
@@ -16,12 +16,12 @@ import (
 )
 
 type UserHandler struct {
-	service *user.Service
+	service *userService.Service
 }
 
 func NewUserHandler(docService *service.DefaultDocumentService) *UserHandler {
 	return &UserHandler{
-		service: user.NewUserService(docService),
+		service: userService.NewUserService(docService),
 	}
 }
 
