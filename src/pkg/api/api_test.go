@@ -197,7 +197,7 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 
 func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		userRegisterRequest, err := userCreateBodyRequest(testData.testUserID, testData.ehrSystemID, testData.userPassword)
+		userRegisterRequest, err := userCreateBodyRequest(testData.testUserID, testData.userPassword)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -209,6 +209,7 @@ func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -222,6 +223,15 @@ func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
 
 		if response.StatusCode != http.StatusCreated {
 			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
+		}
+
+		requestID := response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", requestID)
+
+		err = requestWait(testData.testUserID, requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 }
@@ -1099,9 +1109,8 @@ func (testWrap *testWrap) queryExecPostFail(testData *testData) func(t *testing.
 	}
 }
 
-func userCreateBodyRequest(userID, systemID, password string) (*bytes.Reader, error) {
+func userCreateBodyRequest(userID, password string) (*bytes.Reader, error) {
 	userRegisterRequest := &model.UserCreateRequest{
-		SystemID: systemID,
 		UserID:   userID,
 		Password: password,
 		Role:     uint8(userRoles.Patient),

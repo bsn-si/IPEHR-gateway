@@ -62,6 +62,7 @@ const (
 	RequestCompositionUpdate
 	RequestCompositionGetByID
 	RequestCompositionDelete
+	RequestUserRegister
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {

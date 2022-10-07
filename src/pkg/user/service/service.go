@@ -1,15 +1,17 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	"log"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"strings"
 
 	"crypto/rand"
 
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/scrypt"
 )
 
@@ -31,7 +33,7 @@ func NewUserService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) Register(user *model.UserCreateRequest) (err error) {
+func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest) (err error) {
 	_, userPrivateKey, err := s.Doc.Infra.Keystore.Get(user.UserID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, user.UserID)
@@ -46,13 +48,22 @@ func (s *Service) Register(user *model.UserCreateRequest) (err error) {
 
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	pwdHash, err := s.generateHash(user.UserID, user.SystemID, user.Password)
+	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
+	pwdHash, err := s.generateHash(user.UserID, ehrSystemID, user.Password)
+
 	if err != nil {
 		return fmt.Errorf("register s.generateHash error: %w userID %s, password: %s", err, user.UserID, user.Password)
 	}
 
-	log.Printf("s.Doc.Infra.Index.userAdd(%s, %s, %s, %d, %s)", address, err, user.UserID, user.Role, pwdHash)
-	//TODO s.Doc.Infra.Index.userAdd(address userAddr, bytes32 id, Role role, bytes pwdHash)
+	requestID := ctx.(*gin.Context).GetString("reqId")
+	txHash, err := s.Doc.Infra.Index.UserAdd(requestID, address, user.UserID, user.Role, pwdHash)
+
+	if err != nil {
+		return fmt.Errorf("Index.DeleteDoc error: %w", err)
+	}
+
+	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
+
 	return nil
 }
 

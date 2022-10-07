@@ -308,6 +308,29 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 	return groupAccessValue, nil
 }
 
+func (i *Index) UserAdd(requestID string, userAddr common.Address, userID string, role uint8, pwdHash []byte) (string, error) {
+	var uID [32]byte
+
+	copy(uID[:], userID[:])
+
+	i.Lock()
+	defer i.Unlock()
+
+	tx, err := i.ehrIndex.UserAdd(i.transactOpts, userAddr, uID, role, pwdHash)
+	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return "", errors.ErrNotFound
+		} else if err.Error() == "execution reverted: ADL" {
+			return "", errors.ErrAlreadyDeleted
+		}
+		return "", fmt.Errorf("ehrIndex.UserAdd error: %w", err)
+	}
+
+	log.Printf("%s UserAdd tx %s nonce %d", requestID, tx.Hash().Hex(), tx.Nonce())
+
+	return tx.Hash().Hex(), nil
+}
+
 func (i *Index) SetSubject(ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (packed []byte, err error) {
 	var eID [32]byte
 

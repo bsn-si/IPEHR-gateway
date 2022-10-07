@@ -144,6 +144,7 @@ func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
 
 func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(ehrSystemID)
 	r.POST("/register", a.User.Register)
 
 	return a
