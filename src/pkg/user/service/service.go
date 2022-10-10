@@ -2,21 +2,24 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	proc "hms/gateway/pkg/docs/service/processing"
-	"strings"
-
 	"crypto/rand"
+	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/scrypt"
+
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service/processing"
+	proc "hms/gateway/pkg/docs/service/processing"
+	"hms/gateway/pkg/infrastructure"
 )
 
 type Service struct {
-	Doc *service.DefaultDocumentService
+	Infra *infrastructure.Infra
+	Proc  *processing.Proc
 }
 
 const (
@@ -27,37 +30,47 @@ const (
 	saltLenBytes = 16
 )
 
-func NewUserService(docService *service.DefaultDocumentService) *Service {
+func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
+	proc := processing.New(
+		infra.LocalDB,
+		infra.EthClient,
+		infra.FilecoinClient,
+		infra.IpfsClient,
+		cfg.Storage.Localfile.Path,
+	)
+
+	proc.Start()
+
 	return &Service{
-		docService,
+		Infra: infra,
+		Proc:  proc,
 	}
 }
 
 func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest) (err error) {
-	_, userPrivateKey, err := s.Doc.Infra.Keystore.Get(user.UserID)
+	_, userPrivateKey, err := s.Infra.Keystore.Get(user.UserID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, user.UserID)
 	}
 
 	privateUserKey := userPrivateKey[:]
-	privateKey, err := crypto.ToECDSA(privateUserKey)
 
+	privateKey, err := crypto.ToECDSA(privateUserKey)
 	if err != nil {
 		return fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, user.UserID)
 	}
 
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
-
 	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
-	pwdHash, err := s.generateHash(user.UserID, ehrSystemID, user.Password)
 
+	pwdHash, err := s.generateHash(user.UserID, ehrSystemID, user.Password)
 	if err != nil {
 		return fmt.Errorf("register s.generateHash error: %w userID %s, password: %s", err, user.UserID, user.Password)
 	}
 
 	requestID := ctx.(*gin.Context).GetString("reqId")
-	txHash, err := s.Doc.Infra.Index.UserAdd(requestID, address, user.UserID, user.Role, pwdHash)
 
+	txHash, err := s.Infra.Index.UserAdd(requestID, address, user.UserID, user.Role, pwdHash)
 	if err != nil {
 		return fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
@@ -78,7 +91,7 @@ func (s *Service) generateHash(phrases ...string) ([]byte, error) {
 
 	pwdHash, err := scrypt.Key([]byte(hash), salt, N, r, p, keyLen)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("scrypt.Key error: %w", err)
 	}
 
 	return append(salt, pwdHash...), nil

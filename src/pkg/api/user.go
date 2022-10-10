@@ -2,28 +2,28 @@ package api
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/model/base"
-	proc "hms/gateway/pkg/docs/service/processing"
-	userService "hms/gateway/pkg/user/service"
-
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
 	"io"
 	"log"
 	"net/http"
 
-	"hms/gateway/pkg/docs/service"
-
 	"github.com/gin-gonic/gin"
+
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
+	proc "hms/gateway/pkg/docs/service/processing"
+	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/infrastructure"
+	"hms/gateway/pkg/user/service"
 )
 
 type UserHandler struct {
-	service *userService.Service
+	service *service.Service
 }
 
-func NewUserHandler(docService *service.DefaultDocumentService) *UserHandler {
+func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra) *UserHandler {
 	return &UserHandler{
-		service: userService.NewUserService(docService),
+		service: service.NewUserService(cfg, infra),
 	}
 }
 
@@ -72,7 +72,7 @@ func (h UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userCreateRequest.UserID, "", proc.RequestUserRegister)
+	procRequest, err := h.service.Proc.NewRequest(reqID, userCreateRequest.UserID, "", proc.RequestUserRegister)
 	if err != nil {
 		log.Println("User register NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

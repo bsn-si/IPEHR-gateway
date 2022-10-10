@@ -51,7 +51,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Query:       NewQueryHandler(docService),
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),
-		User:        NewUserHandler(docService),
+		User:        NewUserHandler(cfg, infra),
 	}
 }
 
