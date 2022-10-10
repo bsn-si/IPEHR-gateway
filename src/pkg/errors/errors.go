@@ -2,6 +2,7 @@ package errors
 
 import (
 	"errors"
+	"fmt"
 )
 
 var (
@@ -26,3 +27,11 @@ var (
 	ErrObjectNotInit    = errors.New("Object is not initialized")
 	ErrIsInProcessing   = errors.New("Request is in processing")
 )
+
+func ErrFieldIsEmpty(name string) error {
+	return fmt.Errorf("%w: %s", ErrIsEmpty, name)
+}
+
+func ErrFieldIsIncorrect(name string) error {
+	return fmt.Errorf("%w: %s", ErrIncorrectFormat, name)
+}

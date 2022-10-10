@@ -27,11 +27,13 @@ type DefaultDocumentService struct {
 
 func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) *DefaultDocumentService {
 	proc := processing.New(
-		infra.LocalDB, infra.EthClient,
+		infra.LocalDB,
+		infra.EthClient,
 		infra.FilecoinClient,
 		infra.IpfsClient,
 		cfg.Storage.Localfile.Path,
 	)
+
 	proc.Start()
 
 	return &DefaultDocumentService{

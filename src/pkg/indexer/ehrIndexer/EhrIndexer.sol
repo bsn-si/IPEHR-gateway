@@ -4,15 +4,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 
 contract EhrIndexer is Ownable, Multicall {
-  /** 
+  /**
     Error codes:
     ADL - already deleted
     WTP - wrong type passed
     LST - new version of the EHR document must be the latest
+    NFD - not found
   */
 
   enum DocType { Ehr, EhrAccess, EhrStatus , Composition }
   enum DocStatus { Active, Deleted }
+  enum Role { Patient, Doctor }
+
+  struct User {
+    bytes32   id;
+    bytes32   systemID;
+    Role      role;
+    bytes32[] groups;
+    bytes     pwdHash;
+    bool      isUser;
+  }
 
   struct DocumentMeta {
     DocType docType;
@@ -49,12 +60,13 @@ contract EhrIndexer is Ownable, Multicall {
   }
 
   Node public dataSearch;
-  mapping (bytes32 => mapping(DocType => DocumentMeta[])) public ehrDocs; // ehr_id -> docType -> DocumentMeta[]
-  mapping (bytes32 => bytes32) public ehrUsers; // userId -> EHRid
-  mapping (bytes32 => bytes32) public ehrSubject;  // subjectKey -> ehr_id
-  mapping (bytes32 => bytes) public docAccess;
-  mapping (bytes32 => bytes) public groupAccess;
+  mapping (bytes32  => mapping(DocType => DocumentMeta[])) public ehrDocs; // ehr_id -> docType -> DocumentMeta[]
+  mapping (bytes32  => bytes32) public ehrUsers; // userId -> EHRid
+  mapping (bytes32  => bytes32) public ehrSubject;  // subjectKey -> ehr_id
+  mapping (bytes32  => bytes) public docAccess;
+  mapping (bytes32  => bytes) public groupAccess;
   mapping (address => bool) public allowedChange;
+  mapping (address => User) users;
 
   event EhrSubjectSet(bytes32 subjectKey, bytes32  ehrId);
   event EhrDocAdded(bytes32 ehrId, bytes CID);
@@ -77,16 +89,10 @@ contract EhrIndexer is Ownable, Multicall {
   function addEhrDoc(bytes32 ehrId, DocumentMeta calldata docMeta) external onlyAllowed(msg.sender) {
       require(docMeta.isLast == true, "LST");
 
-      if (docMeta.docType == DocType.Ehr) {
-        if (ehrDocs[ehrId][DocType.Ehr].length > 0) {
-          revert("Ehr already exists");
-        }
-      }
-
       uint i;
-      if (docMeta.docType == DocType.EhrStatus) {
-        for (i = 0; i < ehrDocs[ehrId][DocType.EhrStatus].length; i++) {
-            ehrDocs[ehrId][DocType.EhrStatus][i].isLast = false;
+      if (docMeta.docType == DocType.Ehr || docMeta.docType == DocType.EhrStatus) {
+        for (i = 0; i < ehrDocs[ehrId][docMeta.docType].length; i++) {
+            ehrDocs[ehrId][docMeta.docType][i].isLast = false;
         }
       }
 
@@ -122,14 +128,13 @@ contract EhrIndexer is Ownable, Multicall {
   }
 
   function getLastEhrDocByType(bytes32 ehrId, DocType docType) public view returns(DocumentMeta memory) {
-    DocumentMeta memory docMeta;
     for (uint i = 0; i < ehrDocs[ehrId][docType].length; i++) {
       if (ehrDocs[ehrId][docType][i].isLast == true) {
-        docMeta = ehrDocs[ehrId][docType][i];
-        break;
+        return ehrDocs[ehrId][docType][i];
       }
     }
-    return docMeta;
+
+    revert("NFD");
   }
 
   function deleteDoc(bytes32 ehrId, DocType docType, bytes32 docBaseUIDHash, bytes32 version) external onlyAllowed(msg.sender) {
@@ -138,29 +143,31 @@ contract EhrIndexer is Ownable, Multicall {
       if (ehrDocs[ehrId][docType][i].docBaseUIDHash == docBaseUIDHash && ehrDocs[ehrId][docType][i].version == version) {
         require (ehrDocs[ehrId][docType][i].status != DocStatus.Deleted, "ADL");
         ehrDocs[ehrId][docType][i].status = DocStatus.Deleted;
+        return;
       }
     }
+
+    revert("NFD");
   }
 
   function getDocByVersion(bytes32 ehrId, DocType docType, bytes32 docBaseUIDHash, bytes32 version) public view returns (DocumentMeta memory) {
-    DocumentMeta memory docMeta;
     for (uint i = 0; i < ehrDocs[ehrId][docType].length; i++) {
       if (ehrDocs[ehrId][docType][i].docBaseUIDHash == docBaseUIDHash && ehrDocs[ehrId][docType][i].version == version) {
-        docMeta = ehrDocs[ehrId][docType][i];
-        break;
+        return ehrDocs[ehrId][docType][i];
       }
     }
-    return docMeta;
+
+    revert("NFD");
   }
 
   function getDocLastByBaseID(bytes32 ehrId, DocType docType, bytes32 docBaseUIDHash) public view returns (DocumentMeta memory) {
-    DocumentMeta memory docMeta;
     for (uint i = 0; i < ehrDocs[ehrId][docType].length; i++) {
       if (ehrDocs[ehrId][docType][i].docBaseUIDHash == docBaseUIDHash) {
-        docMeta = ehrDocs[ehrId][docType][i];
+        return ehrDocs[ehrId][docType][i];
       }
     }
-    return docMeta;
+
+    revert("NFD");
   }
 
   function getDocByTime(bytes32 ehrId, DocType docType, uint32 timestamp) public view returns (DocumentMeta memory) {
@@ -172,6 +179,21 @@ contract EhrIndexer is Ownable, Multicall {
         break;
       }
     }
+
+    require(docMeta.timestamp != 0, "NFD");
+
     return docMeta;
+  }
+
+  function userAdd(address userAddr, bytes32 id, Role role, bytes calldata pwdHash) external onlyAllowed(msg.sender) {
+    users[userAddr].id = id;
+    users[userAddr].pwdHash = pwdHash;
+    users[userAddr].role = role;
+    users[userAddr].isUser = true;
+  }
+
+  function getUserPasswordHash(address userAddr) public view returns (bytes memory) {
+    if (!users[userAddr].isUser) revert("NFD");
+    return users[userAddr].pwdHash;
   }
 }
