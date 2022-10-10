@@ -146,7 +146,9 @@ func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(ehrSystemID)
 	r.POST("/register", a.User.Register)
-
+	r.POST("/login", a.User.Login)
+	r.POST("/refresh", a.User.Refresh)
+	r.POST("/logout", a.User.LoginOut)
 	return a
 }
 

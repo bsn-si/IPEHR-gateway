@@ -236,6 +236,49 @@ func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
 	}
 }
 
+func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
+	return func(t *testing.T) {
+		authRequest, err := authRequest(testData.testUserID, testData.userPassword)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// TODO add timeout between tryes
+
+		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", authRequest)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("Content-type", "application/json")
+		request.Header.Set("Prefer", "return=representation")
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatalf("Expected nil, received %s", err.Error())
+		}
+
+		err = response.Body.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusCreated {
+			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
+		}
+
+		requestID := response.Header.Get("RequestId")
+
+		t.Logf("Waiting for request %s done", requestID)
+
+		err = requestWait(testData.testUserID, requestID, testWrap)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/ehr", ehrCreateBodyRequest())
@@ -244,6 +287,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 		}
 
 		request.Header.Set("Content-type", "application/json")
+		// TODO replace AuthUserId to barier ???
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
@@ -1117,6 +1161,20 @@ func userCreateBodyRequest(userID, password string) (*bytes.Reader, error) {
 	}
 
 	docBytes, err := json.Marshal(userRegisterRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(docBytes), nil
+}
+
+func authRequest(userID, password string) (*bytes.Reader, error) {
+	userAuthRequest := &model.UserAuthRequest{
+		UserID:   userID,
+		Password: password,
+	}
+
+	docBytes, err := json.Marshal(userAuthRequest)
 	if err != nil {
 		return nil, err
 	}

@@ -99,3 +99,15 @@ func (h UserHandler) Register(c *gin.Context) {
 
 	c.Status(http.StatusCreated)
 }
+
+func (h UserHandler) Login(c *gin.Context) {
+	// TODO if we have AuthUserId or Barrier should be say 'gerrarahea!)???'
+}
+
+func (h UserHandler) Refresh(c *gin.Context) {
+	// TODO refresh token exp
+}
+
+func (h UserHandler) LoginOut(c *gin.Context) {
+	// TODO exit
+}
