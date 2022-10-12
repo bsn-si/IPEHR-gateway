@@ -8,4 +8,6 @@ const (
 	PageLimit                 = 10
 	BlockchainTxProcAwaitTime = time.Millisecond * 500
 	FilecoinTxProcAwaitTime   = time.Second * 5
+	JWTExpires                = time.Minute * 15
+	JWTRefreshExpires         = time.Hour * 24 * 7
 )

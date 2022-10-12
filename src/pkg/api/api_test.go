@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/api"
+	"hms/gateway/pkg/api/test_helpers"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/common/utils"
@@ -75,6 +76,8 @@ func Test_API(t *testing.T) {
 	}
 	// TODO user register incorrect input data
 	// TODO user register duplicate registration request
+
+	t.Run("User login", testWrap.userLogin(testData))
 
 	if !t.Run("EHR creating", testWrap.ehrCreate(testData)) {
 		t.Fatal()
@@ -237,44 +240,119 @@ func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
 }
 
 func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
+	userHelper := test_helpers.UserHelper{}
+
+	userID := uuid.New().String()
+	userPassword := fakeData.GetRandomStringWithLength(10)
+
+	err := testWrap.registerUser(userID, userPassword, testData.ehrSystemID)
+
+	if err != nil {
+		log.Fatalf("UserLogin.registerUser error: %s", err)
+	}
+
+	tests := []struct {
+		name       string
+		request    *model.UserAuthRequest
+		statusCode int
+	}{
+		{
+			name:       "Empty userID and password",
+			request:    userHelper.UserAuthRequest(),
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name:       "Empty userID",
+			request:    userHelper.UserAuthRequest(userHelper.WithPassword("password")),
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: "Incorrect userID",
+			request: userHelper.UserAuthRequest(
+				userHelper.WithUserId("incorrect format"),
+				userHelper.WithPassword("password")),
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name:       "Empty password",
+			request:    userHelper.UserAuthRequest(userHelper.WithUserId(uuid.New().String())),
+			statusCode: http.StatusBadRequest,
+		},
+		{
+			name: "UserID not exist",
+			request: userHelper.UserAuthRequest(
+				userHelper.WithUserId(uuid.New().String()),
+				userHelper.WithPassword("password")),
+			statusCode: http.StatusNotFound,
+		},
+		{
+			name: "Password incorrect",
+			request: userHelper.UserAuthRequest(
+				userHelper.WithUserId(userID),
+				userHelper.WithPassword("incorrect")),
+			statusCode: http.StatusUnauthorized,
+		},
+		{
+			name: "Successfully auth",
+			request: userHelper.UserAuthRequest(
+				userHelper.WithUserId(userID),
+				userHelper.WithPassword(userPassword)),
+			statusCode: http.StatusOK,
+		},
+		// TODO already logged
+		// TODO refresh token
+	}
+
 	return func(t *testing.T) {
-		authRequest, err := authRequest(testData.testUserID, testData.userPassword)
-		if err != nil {
-			t.Fatal(err)
+		result := true
+
+		for _, data := range tests {
+			authRequest := authRequest(data.request)
+
+			request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", authRequest)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			request.Header.Set("Content-type", "application/json")
+			request.Header.Set("Prefer", "return=representation")
+			request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+			response, err := testWrap.httpClient.Do(request)
+			if err != nil {
+				t.Fatalf("Expected nil, received %s", err.Error())
+			}
+
+			content, err := io.ReadAll(response.Body)
+			if err != nil {
+				t.Fatalf("Response body read error: %v", err)
+			}
+
+			err = response.Body.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Logf("User login test: %s, response: %s", data.name, content)
+
+			if response.StatusCode != data.statusCode {
+				if result {
+					result = false
+				}
+				t.Errorf("Test: %s, Expected %d, received %d", data.name, data.statusCode, response.StatusCode)
+				continue
+			}
+
+			if response.StatusCode == http.StatusOK {
+				var jwt model.JWT
+				if err = json.Unmarshal(content, &jwt); err != nil {
+					t.Fatal(err)
+				}
+				// TODO refresh token
+			}
 		}
 
-		// TODO add timeout between tryes
-
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", authRequest)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("Prefer", "return=representation")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-
-		err = response.Body.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
-		}
-
-		requestID := response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", requestID)
-
-		err = requestWait(testData.testUserID, requestID, testWrap)
-		if err != nil {
-			t.Fatal(err)
+		if !result {
+			t.Fatal()
 		}
 	}
 }
@@ -1168,18 +1246,10 @@ func userCreateBodyRequest(userID, password string) (*bytes.Reader, error) {
 	return bytes.NewReader(docBytes), nil
 }
 
-func authRequest(userID, password string) (*bytes.Reader, error) {
-	userAuthRequest := &model.UserAuthRequest{
-		UserID:   userID,
-		Password: password,
-	}
+func authRequest(userAuthRequest *model.UserAuthRequest) *bytes.Reader {
+	docBytes, _ := json.Marshal(userAuthRequest)
 
-	docBytes, err := json.Marshal(userAuthRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes.NewReader(docBytes), nil
+	return bytes.NewReader(docBytes)
 }
 
 func ehrCreateBodyRequest() *bytes.Reader {
@@ -1556,4 +1626,43 @@ func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess 
 	}
 
 	return &c, nil
+}
+
+func (testWrap *testWrap) registerUser(userID, userPassword, ehrSystemID string) error {
+	userRegisterRequest, err := userCreateBodyRequest(userID, userPassword)
+	if err != nil {
+		return err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/register", userRegisterRequest)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", ehrSystemID)
+
+	response, err := testWrap.httpClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	err = response.Body.Close()
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return err
+	}
+
+	requestID := response.Header.Get("RequestId")
+
+	err = requestWait(userID, requestID, testWrap)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

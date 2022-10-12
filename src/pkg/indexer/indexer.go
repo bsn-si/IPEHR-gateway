@@ -331,6 +331,22 @@ func (i *Index) UserAdd(requestID string, userAddr common.Address, userID string
 	return tx.Hash().Hex(), nil
 }
 
+func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
+	callOpts := &bind.CallOpts{
+		Context: ctx,
+	}
+
+	userPasswordHash, err := i.ehrIndex.GetUserPasswordHash(callOpts, userAddr)
+	if err != nil {
+		if err.Error() == ExecutionRevertedNFD {
+			return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w", errors.ErrNotFound)
+		}
+		return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w userAddr %s", err, userAddr.String())
+	}
+
+	return userPasswordHash, nil
+}
+
 func (i *Index) SetSubject(ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (packed []byte, err error) {
 	var eID [32]byte
 

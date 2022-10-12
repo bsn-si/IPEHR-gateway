@@ -100,8 +100,48 @@ func (h UserHandler) Register(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
+// TODO fill comments
 func (h UserHandler) Login(c *gin.Context) {
+	// TODO add timeout between attempts, we dont need password brute force
+
 	// TODO if we have AuthUserId or Barrier should be say 'gerrarahea!)???'
+	var u model.UserAuthRequest
+	if err := c.ShouldBindJSON(&u); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
+		return
+	}
+
+	if ok, err := u.Validate(); !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	err := h.service.Login(c, &u)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.JSON(http.StatusNotFound, err.Error())
+			return
+		}
+
+		c.JSON(http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	ts, err := h.service.CreateToken(u.UserID)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	//saveErr := CreateAuth(user.ID, ts)
+	//if saveErr != nil {
+	//	c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+	//}
+
+	c.JSON(http.StatusOK, &model.JWT{
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	})
 }
 
 func (h UserHandler) Refresh(c *gin.Context) {

@@ -17,7 +17,7 @@ require (
 	github.com/swaggo/gin-swagger v1.4.3
 	github.com/swaggo/swag v1.8.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
-	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa
+	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2
 	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 )
