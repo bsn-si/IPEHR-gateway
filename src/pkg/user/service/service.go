@@ -28,6 +28,11 @@ type Service struct {
 	Proc  *processing.Proc
 }
 
+type AccessDetails struct {
+	AccessUuid string
+	UserId     string
+}
+
 type TokenDetails struct {
 	AccessToken  string
 	RefreshToken string
@@ -155,7 +160,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 
 	atClaims := jwt.MapClaims{}
 	atClaims["access_uuid"] = td.AccessUuid
-	atClaims["userId"] = userID
+	atClaims["user_id"] = userID
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString((*accessTokenSecret)[:])
@@ -163,7 +168,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 		return nil, err
 	}
 
-	//Creating Refresh Token
+	//Creating Refresh token
 	rtClaims := jwt.MapClaims{}
 	rtClaims["refresh_uuid"] = td.RefreshUuid
 	rtClaims["user_id"] = userID
@@ -190,6 +195,63 @@ func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
 	err = s.Infra.Cacher.Set(td.RefreshUuid, userid, rt.Sub(now)).Err()
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *Service) VerifyToken(userID, tokenString string) (*jwt.Token, error) {
+	accessTokenSecret, _, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("CreateToken Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return (*accessTokenSecret)[:], nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
+func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*AccessDetails, error) {
+	var err error
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
+		accessUuid, ok := claims["access_uuid"].(string)
+		if !ok {
+			return nil, err
+		}
+
+		return &AccessDetails{
+			AccessUuid: accessUuid,
+			UserId:     claims["user_id"].(string),
+		}, nil
+	}
+	return nil, err
+}
+
+func (s *Service) DeleteTokens(authD *AccessDetails) error {
+	//delete access token
+	deletedAt, err := s.Infra.Cacher.Del(authD.AccessUuid).Result()
+	if err != nil {
+		return err
+	}
+
+	//get the refresh uuid
+	refreshUuid := authD.AccessUuid + "++" + authD.UserId
+	//delete refresh token
+	deletedRt, err := s.Infra.Cacher.Del(refreshUuid).Result()
+	if err != nil {
+		return err
+	}
+	//When the record is deleted, the return value is 1
+	if deletedAt != 1 || deletedRt != 1 {
+		return errors.Err500
 	}
 	return nil
 }

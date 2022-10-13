@@ -104,7 +104,6 @@ func (h UserHandler) Register(c *gin.Context) {
 func (h UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
 
-	// TODO if we have AuthUserId or Barrier should be say 'gerrarahea!)???'
 	var u model.UserAuthRequest
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
@@ -144,10 +143,35 @@ func (h UserHandler) Login(c *gin.Context) {
 	})
 }
 
-func (h UserHandler) Refresh(c *gin.Context) {
-	// TODO refresh token exp
+func (h UserHandler) Logout(c *gin.Context) {
+	tokenString := c.Request.Header.Get("Authorization")
+	userID := c.Request.Header.Get("AuthUserId")
+
+	if tokenString == "" || userID == "" {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	token, err := h.service.VerifyToken(userID, tokenString)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	metadata, err := h.service.ExtractTokenMetadata(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	delErr := h.service.DeleteTokens(metadata)
+	if delErr != nil {
+		c.JSON(http.StatusUnauthorized, delErr.Error())
+		return
+	}
+	c.JSON(http.StatusOK, "Successfully logged out")
 }
 
-func (h UserHandler) LoginOut(c *gin.Context) {
-	// TODO exit
+func (h UserHandler) RefreshToken(c *gin.Context) {
+	// TODO refresh token exp
 }

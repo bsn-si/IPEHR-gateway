@@ -253,21 +253,25 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		action     string
 		request    *model.UserAuthRequest
 		statusCode int
 	}{
 		{
 			name:       "Empty userID and password",
+			action:     "login",
 			request:    userHelper.UserAuthRequest(),
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name:       "Empty userID",
+			action:     "login",
 			request:    userHelper.UserAuthRequest(userHelper.WithPassword("password")),
 			statusCode: http.StatusBadRequest,
 		},
 		{
-			name: "Incorrect userID",
+			name:   "Incorrect userID",
+			action: "login",
 			request: userHelper.UserAuthRequest(
 				userHelper.WithUserId("incorrect format"),
 				userHelper.WithPassword("password")),
@@ -275,28 +279,39 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 		},
 		{
 			name:       "Empty password",
+			action:     "login",
 			request:    userHelper.UserAuthRequest(userHelper.WithUserId(uuid.New().String())),
 			statusCode: http.StatusBadRequest,
 		},
 		{
-			name: "UserID not exist",
+			name:   "UserID not exist",
+			action: "login",
 			request: userHelper.UserAuthRequest(
 				userHelper.WithUserId(uuid.New().String()),
 				userHelper.WithPassword("password")),
 			statusCode: http.StatusNotFound,
 		},
 		{
-			name: "Password incorrect",
+			name:   "Password incorrect",
+			action: "login",
 			request: userHelper.UserAuthRequest(
 				userHelper.WithUserId(userID),
 				userHelper.WithPassword("incorrect")),
 			statusCode: http.StatusUnauthorized,
 		},
 		{
-			name: "Successfully auth",
+			name:   "Successfully auth",
+			action: "login",
 			request: userHelper.UserAuthRequest(
 				userHelper.WithUserId(userID),
 				userHelper.WithPassword(userPassword)),
+			statusCode: http.StatusOK,
+		},
+		{
+			name:   "Successfully logout",
+			action: "logout",
+			request: userHelper.UserAuthRequest(
+				userHelper.WithUserId(userID)),
 			statusCode: http.StatusOK,
 		},
 		// TODO already logged
@@ -306,12 +321,22 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 	return func(t *testing.T) {
 		result := true
 
+		var jwt model.JWT
 		for _, data := range tests {
-			authRequest := authRequest(data.request)
+			payload := getReaderJsonFrom(data.request)
 
-			request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", authRequest)
+			if data.action == "refresh" {
+				payload = getReaderJsonFrom(jwt)
+			}
+
+			request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/"+data.action, payload)
 			if err != nil {
 				t.Fatal(err)
+			}
+
+			if data.action != "login" {
+				request.Header.Set("AuthUserId", data.request.UserID)
+				request.Header.Set("Authorization", jwt.AccessToken)
 			}
 
 			request.Header.Set("Content-type", "application/json")
@@ -343,10 +368,12 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			}
 
 			if response.StatusCode == http.StatusOK {
-				var jwt model.JWT
-				if err = json.Unmarshal(content, &jwt); err != nil {
-					t.Fatal(err)
+				if data.action == "login" {
+					if err = json.Unmarshal(content, &jwt); err != nil {
+						t.Fatal(err)
+					}
 				}
+
 				// TODO refresh token
 			}
 		}
@@ -1246,8 +1273,8 @@ func userCreateBodyRequest(userID, password string) (*bytes.Reader, error) {
 	return bytes.NewReader(docBytes), nil
 }
 
-func authRequest(userAuthRequest *model.UserAuthRequest) *bytes.Reader {
-	docBytes, _ := json.Marshal(userAuthRequest)
+func getReaderJsonFrom(data interface{}) *bytes.Reader {
+	docBytes, _ := json.Marshal(data)
 
 	return bytes.NewReader(docBytes)
 }
