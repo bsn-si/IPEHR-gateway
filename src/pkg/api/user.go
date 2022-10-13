@@ -145,12 +145,13 @@ func (h UserHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
 	}
 
-	c.JSON(http.StatusOK, &model.JWT{
+	c.JSON(http.StatusCreated, &model.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
 }
 
+// TODO fill comments
 func (h UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
@@ -160,7 +161,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.VerifyToken(userID, tokenString)
+	token, err := h.service.VerifyToken(userID, tokenString, false)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
@@ -172,7 +173,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	delErr := h.service.DeleteTokens(metadata)
+	delErr := h.service.DeleteToken(metadata.Uuid)
 	if delErr != nil {
 		c.JSON(http.StatusUnauthorized, delErr.Error())
 		return
@@ -180,6 +181,53 @@ func (h UserHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
 
+// TODO fill comments
 func (h UserHandler) RefreshToken(c *gin.Context) {
-	// TODO refresh token exp
+	userID := c.Request.Header.Get("AuthUserId")
+	tokenString := c.Request.Header.Get("Authorization")
+
+	if userID == "" || tokenString == "" {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	var jwt model.JWT
+	if err := c.ShouldBindJSON(&jwt); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
+		return
+	}
+
+	token, err := h.service.VerifyToken(userID, jwt.RefreshToken, true)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "Refresh token expired")
+		return
+	}
+
+	metadata, err := h.service.ExtractTokenMetadata(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	delErr := h.service.DeleteToken(metadata.Uuid)
+	if delErr != nil {
+		c.JSON(http.StatusUnauthorized, delErr.Error())
+		return
+	}
+
+	ts, err := h.service.CreateToken(metadata.UserId)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	saveErr := h.service.CreateAuth(metadata.UserId, ts)
+	if saveErr != nil {
+		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+	}
+
+	c.JSON(http.StatusCreated, &model.JWT{
+		AccessToken:  ts.AccessToken,
+		RefreshToken: ts.RefreshToken,
+	})
 }

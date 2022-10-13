@@ -28,9 +28,9 @@ type Service struct {
 	Proc  *processing.Proc
 }
 
-type AccessDetails struct {
-	AccessUuid string
-	UserId     string
+type TokenMetadata struct {
+	Uuid   string
+	UserId string
 }
 
 type TokenDetails struct {
@@ -159,7 +159,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	}
 
 	atClaims := jwt.MapClaims{}
-	atClaims["access_uuid"] = td.AccessUuid
+	atClaims["uuid"] = td.AccessUuid
 	atClaims["user_id"] = userID
 	atClaims["exp"] = td.AtExpires
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -170,7 +170,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 
 	//Creating Refresh token
 	rtClaims := jwt.MapClaims{}
-	rtClaims["refresh_uuid"] = td.RefreshUuid
+	rtClaims["uuid"] = td.RefreshUuid
 	rtClaims["user_id"] = userID
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
@@ -199,59 +199,67 @@ func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
 	return nil
 }
 
-func (s *Service) VerifyToken(userID, tokenString string) (*jwt.Token, error) {
-	accessTokenSecret, _, err := s.Infra.Keystore.Get(userID)
+func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (*jwt.Token, error) {
+	tokenUUID := userID
+	if isRefreshToken {
+		tokenUUID = tokenUUID + "_refresh"
+	}
+
+	tokenSecret, _, err := s.Infra.Keystore.Get(tokenUUID)
 	if err != nil {
-		return nil, fmt.Errorf("CreateToken Keystore.Get error: %w userID %s", err, userID)
+		return nil, fmt.Errorf("VerifyToken Keystore.Get error: %w userID %s", err, userID)
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return (*accessTokenSecret)[:], nil
+		return (*tokenSecret)[:], nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
+
+	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
+		return nil, err
+	}
+
+	//Since token is valid, get the uuid:
+	_, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
+	if !ok || !token.Valid {
+		return nil, err
+	}
+
 	return token, nil
 }
 
-func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*AccessDetails, error) {
-	var err error
+func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		accessUuid, ok := claims["access_uuid"].(string)
-		if !ok {
-			return nil, err
-		}
-
-		return &AccessDetails{
-			AccessUuid: accessUuid,
-			UserId:     claims["user_id"].(string),
-		}, nil
+	if !ok || !token.Valid {
+		return nil, errors.ErrIsNotValid
 	}
-	return nil, err
+
+	u, ok := claims["uuid"].(string)
+	if !ok {
+		return nil, errors.ErrIsEmpty
+	}
+
+	return &TokenMetadata{
+		Uuid:   u,
+		UserId: claims["user_id"].(string),
+	}, nil
 }
 
-func (s *Service) DeleteTokens(authD *AccessDetails) error {
-	//delete access token
-	deletedAt, err := s.Infra.Cacher.Del(authD.AccessUuid).Result()
+func (s *Service) DeleteToken(token string) error {
+	deletedAt, err := s.Infra.Cacher.Del(token).Result()
 	if err != nil {
 		return err
 	}
 
-	//get the refresh uuid
-	refreshUuid := authD.AccessUuid + "++" + authD.UserId
-	//delete refresh token
-	deletedRt, err := s.Infra.Cacher.Del(refreshUuid).Result()
-	if err != nil {
-		return err
-	}
-	//When the record is deleted, the return value is 1
-	if deletedAt != 1 || deletedRt != 1 {
+	if deletedAt != 1 {
 		return errors.Err500
 	}
+
 	return nil
 }

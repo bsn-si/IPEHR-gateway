@@ -83,12 +83,14 @@ func New(cfg *config.Config) *Infra {
 	if len(dsn) == 0 {
 		dsn = "localhost:6379"
 	}
+
 	cacher := redis.NewClient(&redis.Options{
-		Addr: dsn, //redis port
+		Addr: dsn,
 	})
+
 	_, err = cacher.Ping().Result()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	return &Infra{
