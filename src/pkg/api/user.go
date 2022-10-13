@@ -115,6 +115,14 @@ func (h UserHandler) Login(c *gin.Context) {
 		return
 	}
 
+	tokenString := c.Request.Header.Get("Authorization")
+	userID := c.Request.Header.Get("AuthUserId")
+
+	if tokenString != "" && userID != "" {
+		c.JSON(http.StatusUnprocessableEntity, "You are already authorised, please use logout")
+		return
+	}
+
 	err := h.service.Login(c, &u)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {

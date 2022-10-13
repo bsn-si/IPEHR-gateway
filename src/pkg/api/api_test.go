@@ -252,10 +252,11 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		action     string
-		request    *model.UserAuthRequest
-		statusCode int
+		name           string
+		action         string
+		useAuthHeaders bool
+		request        *model.UserAuthRequest
+		statusCode     int
 	}{
 		{
 			name:       "Empty userID and password",
@@ -308,13 +309,21 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			statusCode: http.StatusOK,
 		},
 		{
+			name:           "Fail if already logged",
+			action:         "login",
+			useAuthHeaders: true,
+			request: userHelper.UserAuthRequest(
+				userHelper.WithUserId(userID),
+				userHelper.WithPassword(userPassword)),
+			statusCode: http.StatusUnprocessableEntity,
+		},
+		{
 			name:   "Successfully logout",
 			action: "logout",
 			request: userHelper.UserAuthRequest(
 				userHelper.WithUserId(userID)),
 			statusCode: http.StatusOK,
 		},
-		// TODO already logged
 		// TODO refresh token
 	}
 
@@ -334,7 +343,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if data.action != "login" {
+			if data.useAuthHeaders || data.action != "login" {
 				request.Header.Set("AuthUserId", data.request.UserID)
 				request.Header.Set("Authorization", jwt.AccessToken)
 			}
