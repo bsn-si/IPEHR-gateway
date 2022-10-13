@@ -177,19 +177,19 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	return td, nil
 }
 
-func (s *Service) CreateAuth(userid int64, td *TokenDetails) error {
-	//at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
-	//rt := time.Unix(td.RtExpires, 0)
-	//now := time.Now()
+func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
+	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
+	rt := time.Unix(td.RtExpires, 0)
+	now := time.Now()
 
-	//var client *redis.Client
-	//errAccess := client.Set(td.AccessUuid, strconv.Itoa(int(userid)), at.Sub(now)).Err()
-	//if errAccess != nil {
-	//	return errAccess
-	//}
-	//errRefresh := client.Set(td.RefreshUuid, strconv.Itoa(int(userid)), rt.Sub(now)).Err()
-	//if errRefresh != nil {
-	//	return errRefresh
-	//}
+	err := s.Infra.Cacher.Set(td.AccessUuid, userid, at.Sub(now)).Err()
+	if err != nil {
+		return err
+	}
+
+	err = s.Infra.Cacher.Set(td.RefreshUuid, userid, rt.Sub(now)).Err()
+	if err != nil {
+		return err
+	}
 	return nil
 }

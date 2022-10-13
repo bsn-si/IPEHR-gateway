@@ -133,10 +133,10 @@ func (h UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	//saveErr := CreateAuth(user.ID, ts)
-	//if saveErr != nil {
-	//	c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
-	//}
+	saveErr := h.service.CreateAuth(u.UserID, ts)
+	if saveErr != nil {
+		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
+	}
 
 	c.JSON(http.StatusOK, &model.JWT{
 		AccessToken:  ts.AccessToken,
