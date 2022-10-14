@@ -9,9 +9,6 @@ import (
 )
 
 func auth(c *gin.Context) {
-	//TODO decode barier get AuthUserId and put it into userId
-	//TODO JWT validation or http.StatusUnauthorized
-
 	userID := c.Request.Header.Get("AuthUserId")
 	if userID == "" {
 		_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)

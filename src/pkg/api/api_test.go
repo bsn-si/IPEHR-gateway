@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/api"
-	"hms/gateway/pkg/api/test_helpers"
+	"hms/gateway/pkg/api/testhelpers"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/common/utils"
@@ -71,14 +71,13 @@ func Test_API(t *testing.T) {
 		userPassword: fakeData.GetRandomStringWithLength(10),
 	}
 
-	//if !t.Run("User register", testWrap.userRegister(testData)) {
-	//	t.Fatal()
-	//}
+	if !t.Run("User register", testWrap.userRegister(testData)) {
+		t.Fatal()
+	}
 	// TODO user register incorrect input data
 	// TODO user register duplicate registration request
 
 	t.Run("User login", testWrap.userLogin(testData))
-	return
 
 	if !t.Run("EHR creating", testWrap.ehrCreate(testData)) {
 		t.Fatal()
@@ -241,7 +240,7 @@ func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
 }
 
 func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
-	userHelper := test_helpers.UserHelper{}
+	userHelper := testhelpers.UserHelper{}
 
 	userID := uuid.New().String()
 	userPassword := fakeData.GetRandomStringWithLength(10)
@@ -275,21 +274,21 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			name:   "Incorrect userID",
 			action: "login",
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId("incorrect format"),
+				userHelper.WithUserID("incorrect format"),
 				userHelper.WithPassword("password")),
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name:       "Empty password",
 			action:     "login",
-			request:    userHelper.UserAuthRequest(userHelper.WithUserId(uuid.New().String())),
+			request:    userHelper.UserAuthRequest(userHelper.WithUserID(uuid.New().String())),
 			statusCode: http.StatusBadRequest,
 		},
 		{
 			name:   "UserID not exist",
 			action: "login",
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId(uuid.New().String()),
+				userHelper.WithUserID(uuid.New().String()),
 				userHelper.WithPassword("password")),
 			statusCode: http.StatusNotFound,
 		},
@@ -297,7 +296,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			name:   "Password incorrect",
 			action: "login",
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId(userID),
+				userHelper.WithUserID(userID),
 				userHelper.WithPassword("incorrect")),
 			statusCode: http.StatusUnauthorized,
 		},
@@ -305,7 +304,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			name:   "Successfully auth",
 			action: "login",
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId(userID),
+				userHelper.WithUserID(userID),
 				userHelper.WithPassword(userPassword)),
 			statusCode: http.StatusCreated,
 		},
@@ -314,7 +313,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			action:         "login",
 			useAuthHeaders: true,
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId(userID),
+				userHelper.WithUserID(userID),
 				userHelper.WithPassword(userPassword)),
 			statusCode: http.StatusUnprocessableEntity,
 		},
@@ -322,27 +321,28 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			name:   "Refresh token",
 			action: "refresh",
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId(userID)),
+				userHelper.WithUserID(userID)),
 			statusCode: http.StatusCreated,
 		},
 		{
 			name:   "Successfully logout",
 			action: "logout",
 			request: userHelper.UserAuthRequest(
-				userHelper.WithUserId(userID)),
+				userHelper.WithUserID(userID)),
 			statusCode: http.StatusOK,
 		},
 	}
 
 	return func(t *testing.T) {
+		var jwt model.JWT
+
 		result := true
 
-		var jwt model.JWT
 		for _, data := range tests {
-			payload := getReaderJsonFrom(data.request)
+			payload := getReaderJSONFrom(data.request)
 
 			if data.action == "refresh" {
-				payload = getReaderJsonFrom(jwt)
+				payload = getReaderJSONFrom(jwt)
 			}
 
 			request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/"+data.action, payload)
@@ -373,13 +373,16 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			t.Logf("User login test: %s, response: %s", data.name, content)
 
 			if response.StatusCode != data.statusCode {
 				if result {
 					result = false
 				}
+
 				t.Errorf("Test: %s, Expected %d, received %d", data.name, data.statusCode, response.StatusCode)
+
 				continue
 			}
 
@@ -404,7 +407,6 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 		}
 
 		request.Header.Set("Content-type", "application/json")
-		// TODO replace AuthUserId to barier ???
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
@@ -1285,7 +1287,7 @@ func userCreateBodyRequest(userID, password string) (*bytes.Reader, error) {
 	return bytes.NewReader(docBytes), nil
 }
 
-func getReaderJsonFrom(data interface{}) *bytes.Reader {
+func getReaderJSONFrom(data interface{}) *bytes.Reader {
 	docBytes, _ := json.Marshal(data)
 
 	return bytes.NewReader(docBytes)

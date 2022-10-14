@@ -29,15 +29,15 @@ type Service struct {
 }
 
 type TokenMetadata struct {
-	Uuid   string
-	UserId string
+	UUID   string
+	UserID string
 }
 
 type TokenDetails struct {
 	AccessToken  string
 	RefreshToken string
-	AccessUuid   string
-	RefreshUuid  string
+	AccessUUID   string
+	RefreshUUID  string
 	AtExpires    int64
 	RtExpires    int64
 }
@@ -69,6 +69,7 @@ func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
 func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest) (err error) {
 	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
 	address, pwdHash, err := s.getUserAddressAndHash(ehrSystemID, user.UserID, user.Password)
+
 	if err != nil {
 		return err
 	}
@@ -88,6 +89,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err error) {
 	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
 	address, pwdHash, err := s.getUserAddressAndHash(ehrSystemID, user.UserID, user.Password)
+
 	if err != nil {
 		return err
 	}
@@ -97,7 +99,7 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
-	if bytes.Compare(pwdHash, userHash) != 0 {
+	if !bytes.Equal(pwdHash, userHash) {
 		return errors.ErrFieldIsIncorrect("Password")
 	}
 
@@ -141,10 +143,10 @@ func (s *Service) generateHash(salt []byte, phrases ...string) ([]byte, error) {
 func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(common.JWTExpires).Unix()
-	td.AccessUuid = uuid.New().String()
+	td.AccessUUID = uuid.New().String()
 
 	td.RtExpires = time.Now().Add(common.JWTRefreshExpires).Unix()
-	td.RefreshUuid = td.AccessUuid + "++" + userID
+	td.RefreshUUID = td.AccessUUID + "++" + userID
 
 	var err error
 	//Creating Access Token
@@ -159,22 +161,25 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	}
 
 	atClaims := jwt.MapClaims{}
-	atClaims["uuid"] = td.AccessUuid
+	atClaims["uuid"] = td.AccessUUID
 	atClaims["user_id"] = userID
 	atClaims["exp"] = td.AtExpires
+	// TODO to fill user metadata like roles we should create new method in contract i.e. UserGet!!!
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString((*accessTokenSecret)[:])
+
 	if err != nil {
 		return nil, err
 	}
 
 	//Creating Refresh token
 	rtClaims := jwt.MapClaims{}
-	rtClaims["uuid"] = td.RefreshUuid
+	rtClaims["uuid"] = td.RefreshUUID
 	rtClaims["user_id"] = userID
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
 	td.RefreshToken, err = rt.SignedString((*refreshTokenSecret)[:])
+
 	if err != nil {
 		return nil, err
 	}
@@ -187,12 +192,12 @@ func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	err := s.Infra.Cacher.Set(td.AccessUuid, userid, at.Sub(now)).Err()
+	err := s.Infra.Cacher.Set(td.AccessUUID, userid, at.Sub(now)).Err()
 	if err != nil {
 		return err
 	}
 
-	err = s.Infra.Cacher.Set(td.RefreshUuid, userid, rt.Sub(now)).Err()
+	err = s.Infra.Cacher.Set(td.RefreshUUID, userid, rt.Sub(now)).Err()
 	if err != nil {
 		return err
 	}
@@ -220,16 +225,12 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("%w signing method: %v", errors.ErrIsUnsupported, token.Header["alg"])
 		}
 		return (*tokenSecret)[:], nil
 	})
 
 	if err != nil {
-		return nil, err
-	}
-
-	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
 		return nil, err
 	}
 
@@ -254,8 +255,8 @@ func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error)
 	}
 
 	return &TokenMetadata{
-		Uuid:   u,
-		UserId: claims["user_id"].(string),
+		UUID:   u,
+		UserID: claims["user_id"].(string),
 	}, nil
 }
 

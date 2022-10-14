@@ -1,4 +1,4 @@
-package test_helpers
+package testhelpers
 
 import "hms/gateway/pkg/docs/model"
 
@@ -26,7 +26,7 @@ func (UserHelper) WithPassword(val string) AuthOption {
 	}
 }
 
-func (UserHelper) WithUserId(val string) AuthOption {
+func (UserHelper) WithUserID(val string) AuthOption {
 	return func(r *model.UserAuthRequest) {
 		r.UserID = val
 	}

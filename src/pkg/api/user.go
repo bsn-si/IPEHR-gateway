@@ -118,7 +118,6 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Router   /user/login/ [post]
 func (h UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
-
 	var u model.UserAuthRequest
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
@@ -201,15 +200,16 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	delErr := h.service.DeleteToken(metadata.Uuid)
+	delErr := h.service.DeleteToken(metadata.UUID)
 	if delErr != nil {
 		c.JSON(http.StatusUnauthorized, delErr.Error())
 		return
 	}
+
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
 
-// Refresh
+// RefreshToken
 // @Summary  Refresh JWT
 // @Description
 // @Tags     User
@@ -254,19 +254,19 @@ func (h UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	delErr := h.service.DeleteToken(metadata.Uuid)
+	delErr := h.service.DeleteToken(metadata.UUID)
 	if delErr != nil {
 		c.JSON(http.StatusUnauthorized, delErr.Error())
 		return
 	}
 
-	ts, err := h.service.CreateToken(metadata.UserId)
+	ts, err := h.service.CreateToken(metadata.UserID)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
-	saveErr := h.service.CreateAuth(metadata.UserId, ts)
+	saveErr := h.service.CreateAuth(metadata.UserID, ts)
 	if saveErr != nil {
 		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
 	}
