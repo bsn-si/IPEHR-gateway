@@ -352,7 +352,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 
 			if data.useAuthHeaders || data.action != "login" {
 				request.Header.Set("AuthUserId", data.request.UserID)
-				request.Header.Set("Authorization", jwt.AccessToken)
+				request.Header.Set("Authorization", "Bearer "+jwt.AccessToken)
 			}
 
 			request.Header.Set("Content-type", "application/json")

@@ -156,6 +156,8 @@ func (h UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
 
+	tokenString = h.service.ExtractToken(tokenString)
+
 	if tokenString == "" || userID == "" {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
@@ -185,6 +187,8 @@ func (h UserHandler) Logout(c *gin.Context) {
 func (h UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 	tokenString := c.Request.Header.Get("Authorization")
+
+	tokenString = h.service.ExtractToken(tokenString)
 
 	if userID == "" || tokenString == "" {
 		c.JSON(http.StatusUnauthorized, "unauthorized")

@@ -199,6 +199,14 @@ func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
 	return nil
 }
 
+func (s *Service) ExtractToken(bearToken string) string {
+	strArr := strings.Split(bearToken, " ")
+	if len(strArr) == 2 {
+		return strArr[1]
+	}
+	return ""
+}
+
 func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (*jwt.Token, error) {
 	tokenUUID := userID
 	if isRefreshToken {
