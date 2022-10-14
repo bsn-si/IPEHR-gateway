@@ -30,7 +30,7 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra) *UserHandle
 // Register
 // @Summary      Register user
 // @Description
-// @Tags     REQUEST
+// @Tags     User
 // @Accept   json
 // @Produce  json
 // @Param    userID       body    string  true  "UserId UUID"
@@ -44,7 +44,7 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra) *UserHandle
 // @Failure  409         "User with that userId already exist"
 // @Failure  422         "Password, systemID or role incorrect"
 // @Failure  500         "Is returned when an unexpected error occurs while processing a request"
-// @Router   /requests/ [get]
+// @Router   /user/register/ [post]
 func (h UserHandler) Register(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -100,7 +100,22 @@ func (h UserHandler) Register(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-// TODO fill comments
+// Login
+// @Summary  Login user
+// @Description
+// @Tags     User
+// @Accept   json
+// @Produce  json
+// @Param    userID       body    string  true  "UserId UUID"
+// @Param    password     body    string  true  "Password"
+// @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Success  201         {object}  model.JWT
+// @Failure  404         "User with ID not exist"
+// @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  400         "Password, EhrSystemId or userID incorrect"
+// @Failure  401         "Password or userID incorrect"
+// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/login/ [post]
 func (h UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
 
@@ -151,7 +166,18 @@ func (h UserHandler) Login(c *gin.Context) {
 	})
 }
 
-// TODO fill comments
+// Logout
+// @Summary  Logout
+// @Description
+// @Tags     User
+// @Accept   json
+// @Produce  json
+// @Param    Authorization  header  string  true  "Bearer <JWT>"
+// @Param    AuthUserId  header  string  true  "UserId - UUID"
+// @Success  200         "Successfully logged out"
+// @Failure  401         "User unauthorized"
+// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/logout/ [post]
 func (h UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
@@ -183,7 +209,22 @@ func (h UserHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
 
-// TODO fill comments
+// Refresh
+// @Summary  Refresh JWT
+// @Description
+// @Tags     User
+// @Accept   json
+// @Produce  json
+// @Param    Authorization  header  string  true  "Bearer <JWT>"
+// @Param    AuthUserId  header  string  true  "UserId - UUID"
+// @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    Request      body    model.JWT  true  "JWT"
+// @Success  201         {object}  model.JWT
+// @Failure  401         "User unauthorized"
+// @Failure  404         "User with ID not exist"
+// @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/refresh/ [post]
 func (h UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 	tokenString := c.Request.Header.Get("Authorization")
