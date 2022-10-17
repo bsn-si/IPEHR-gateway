@@ -120,7 +120,7 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 	}
 
 	if !match {
-		return fmt.Errorf("passwords do not match")
+		return errors.ErrAuthorization
 	}
 
 	return nil
@@ -137,6 +137,7 @@ func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, e
 	salt := targetKey[keylenBytes : keylenBytes+saltLenBytes]
 	// Get the params
 	var N, r, p int32
+
 	paramsStartIndex := keylenBytes + saltLenBytes
 
 	err := binary.Read(bytes.NewReader(targetKey[paramsStartIndex:paramsStartIndex+4]), // 4 bytes for N
@@ -174,10 +175,12 @@ func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, e
 	// Doing the sha-256 checksum at the last because we want the attacker
 	// to spend as much time possible cracking
 	hashDigest := sha256.New()
+
 	_, err = hashDigest.Write(targetKey[:paramsStartIndex+12])
 	if err != nil {
 		return false, fmt.Errorf("VerifyPassphrase hashDigest.Write error: %w", err)
 	}
+
 	sourceHash := hashDigest.Sum(nil)
 
 	// ConstantTimeCompare returns ints. Converting it to bool
@@ -227,14 +230,17 @@ func (s *Service) generateHashFromPassword(ehrSystemID, userID, password string)
 			return nil, fmt.Errorf("binary.Write error: %w userID %s, password: %s", err, userID, password)
 		}
 	}
+
 	pwdHash = append(pwdHash, buf.Bytes()...)
 
 	// appending the sha-256 of the entire header at the end
 	hashDigest := sha256.New()
+
 	_, err = hashDigest.Write(pwdHash)
 	if err != nil {
 		return nil, fmt.Errorf("hashDigest.Write error: %w userID %s, password: %s", err, userID, password)
 	}
+
 	hash := hashDigest.Sum(nil)
 	pwdHash = append(pwdHash, hash...)
 
@@ -376,6 +382,4 @@ func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error)
 
 func (s *Service) DeleteToken(token string) {
 	s.Cache.Delete(token)
-
-	return
 }
