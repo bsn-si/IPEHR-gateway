@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"hms/gateway/pkg/common"
 	"strings"
 	"time"
 
+	"github.com/akyoto/cache"
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/scrypt"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/processing"
@@ -26,11 +27,11 @@ import (
 type Service struct {
 	Infra *infrastructure.Infra
 	Proc  *processing.Proc
+	Cache *cache.Cache
 }
 
 type TokenMetadata struct {
-	UUID   string
-	UserID string
+	UUID string
 }
 
 type TokenDetails struct {
@@ -50,7 +51,7 @@ const (
 )
 
 func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
-	process := processing.New(
+	p := processing.New(
 		infra.LocalDB,
 		infra.EthClient,
 		infra.FilecoinClient,
@@ -58,11 +59,12 @@ func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
 		cfg.Storage.Localfile.Path,
 	)
 
-	process.Start()
+	p.Start()
 
 	return &Service{
 		Infra: infra,
-		Proc:  process,
+		Proc:  p,
+		Cache: cache.New(common.CacheCleanerTimeout),
 	}
 }
 
@@ -130,9 +132,9 @@ func (s *Service) getUserAddressAndHash(ehrSystemID, userID, password string) (e
 
 // method should be idempotent
 func (s *Service) generateHash(salt []byte, phrases ...string) ([]byte, error) {
-	hash := strings.Join(phrases, "")
-
-	pwdHash, err := scrypt.Key([]byte(hash), salt, N, r, p, keyLen)
+	password := strings.Join(phrases, "")
+	// todo salt - random
+	pwdHash, err := scrypt.Key([]byte(password), salt, N, r, p, keyLen)
 	if err != nil {
 		return nil, fmt.Errorf("scrypt.Key error: %w", err)
 	}
@@ -162,7 +164,6 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 
 	atClaims := jwt.MapClaims{}
 	atClaims["uuid"] = td.AccessUUID
-	atClaims["user_id"] = userID
 	atClaims["exp"] = td.AtExpires
 	// TODO to fill user metadata like roles we should create new method in contract i.e. UserGet!!!
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
@@ -175,7 +176,6 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	//Creating Refresh token
 	rtClaims := jwt.MapClaims{}
 	rtClaims["uuid"] = td.RefreshUUID
-	rtClaims["user_id"] = userID
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
 	td.RefreshToken, err = rt.SignedString((*refreshTokenSecret)[:])
@@ -192,15 +192,9 @@ func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
 	rt := time.Unix(td.RtExpires, 0)
 	now := time.Now()
 
-	err := s.Infra.Cacher.Set(td.AccessUUID, userid, at.Sub(now)).Err()
-	if err != nil {
-		return err
-	}
+	s.Cache.Set(td.AccessUUID, userid, at.Sub(now))
+	s.Cache.Set(td.RefreshUUID, userid, rt.Sub(now))
 
-	err = s.Infra.Cacher.Set(td.RefreshUUID, userid, rt.Sub(now)).Err()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -255,20 +249,12 @@ func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error)
 	}
 
 	return &TokenMetadata{
-		UUID:   u,
-		UserID: claims["user_id"].(string),
+		UUID: u,
 	}, nil
 }
 
-func (s *Service) DeleteToken(token string) error {
-	deletedAt, err := s.Infra.Cacher.Del(token).Result()
-	if err != nil {
-		return err
-	}
+func (s *Service) DeleteToken(token string) {
+	s.Cache.Delete(token)
 
-	if deletedAt != 1 {
-		return errors.Err500
-	}
-
-	return nil
+	return
 }

@@ -3,10 +3,8 @@ package infrastructure
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/go-redis/redis/v7"
 	"gorm.io/gorm"
 
 	"hms/gateway/pkg/compressor"
@@ -22,7 +20,6 @@ import (
 
 type Infra struct {
 	LocalDB            *gorm.DB
-	Cacher             *redis.Client
 	Keystore           *keystore.KeyStore
 	HTTPClient         *http.Client
 	EthClient          *ethclient.Client
@@ -78,24 +75,8 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	//Initializing redis
-	dsn := os.Getenv("REDIS_DSN")
-	if len(dsn) == 0 {
-		dsn = "localhost:6379"
-	}
-
-	cacher := redis.NewClient(&redis.Options{
-		Addr: dsn,
-	})
-
-	_, err = cacher.Ping().Result()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return &Infra{
 		LocalDB:            db,
-		Cacher:             cacher,
 		Keystore:           ks,
 		HTTPClient:         http.DefaultClient,
 		EthClient:          ehtClient,

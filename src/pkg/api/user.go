@@ -200,11 +200,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	delErr := h.service.DeleteToken(metadata.UUID)
-	if delErr != nil {
-		c.JSON(http.StatusUnauthorized, delErr.Error())
-		return
-	}
+	h.service.DeleteToken(metadata.UUID)
 
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
@@ -254,19 +250,15 @@ func (h UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	delErr := h.service.DeleteToken(metadata.UUID)
-	if delErr != nil {
-		c.JSON(http.StatusUnauthorized, delErr.Error())
-		return
-	}
+	h.service.DeleteToken(metadata.UUID)
 
-	ts, err := h.service.CreateToken(metadata.UserID)
+	ts, err := h.service.CreateToken(userID)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
 	}
 
-	saveErr := h.service.CreateAuth(metadata.UserID, ts)
+	saveErr := h.service.CreateAuth(userID, ts)
 	if saveErr != nil {
 		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
 	}
