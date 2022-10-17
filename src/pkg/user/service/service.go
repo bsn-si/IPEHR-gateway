@@ -73,7 +73,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 	address, pwdHash, err := s.getUserAddressAndHash(ehrSystemID, user.UserID, user.Password)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("getUserAddressAndHash error: %w", err)
 	}
 
 	requestID := ctx.(*gin.Context).GetString("reqId")
@@ -93,7 +93,7 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 	address, pwdHash, err := s.getUserAddressAndHash(ehrSystemID, user.UserID, user.Password)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("Login s.getUserAddressAndHash error: %w", err)
 	}
 
 	userHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
@@ -170,7 +170,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	td.AccessToken, err = at.SignedString((*accessTokenSecret)[:])
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("at.SignedString error:%w", err)
 	}
 
 	//Creating Refresh token
@@ -181,7 +181,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	td.RefreshToken, err = rt.SignedString((*refreshTokenSecret)[:])
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("rt.SignedString error:%w", err)
 	}
 
 	return td, nil
@@ -225,13 +225,13 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("VerifyToken jwt.Parse error: %w", err)
 	}
 
 	//Since token is valid, get the uuid:
 	_, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
 	if !ok || !token.Valid {
-		return nil, err
+		return nil, errors.ErrIsNotValid
 	}
 
 	return token, nil
