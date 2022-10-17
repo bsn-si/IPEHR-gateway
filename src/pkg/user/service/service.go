@@ -272,12 +272,12 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 
 	var err error
 	//Creating Access Token
-	accessTokenSecret, _, err := s.Infra.Keystore.Get(userID)
+	_, accessTokenSecret, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("CreateToken Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	refreshTokenSecret, _, err := s.Infra.Keystore.Get(userID + "_refresh")
+	_, refreshTokenSecret, err := s.Infra.Keystore.Get(userID + "_refresh")
 	if err != nil {
 		return nil, fmt.Errorf("CreateRefreshToken Keystore.Get error: %w userID %s", err, userID)
 	}
@@ -286,6 +286,7 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	atClaims["uuid"] = td.AccessUUID
 	atClaims["exp"] = td.AtExpires
 	// TODO to fill user metadata like roles we should create new method in contract i.e. UserGet!!!
+
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
 	td.AccessToken, err = at.SignedString((*accessTokenSecret)[:])
 
@@ -332,7 +333,7 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 		tokenUUID = tokenUUID + "_refresh"
 	}
 
-	tokenSecret, _, err := s.Infra.Keystore.Get(tokenUUID)
+	_, tokenSecret, err := s.Infra.Keystore.Get(tokenUUID)
 	if err != nil {
 		return nil, fmt.Errorf("VerifyToken Keystore.Get error: %w userID %s", err, userID)
 	}
