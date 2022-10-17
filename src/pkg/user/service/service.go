@@ -3,6 +3,10 @@ package service
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
@@ -44,10 +48,12 @@ type TokenDetails struct {
 }
 
 const (
-	N      = 1048576
-	r      = 8
-	p      = 1
-	keyLen = 32
+	N                = 1048576
+	r                = 8
+	p                = 1
+	keyLen           = 32
+	metadataLenBytes = 60
+	saltLenBytes     = 16
 )
 
 func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
@@ -70,10 +76,16 @@ func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
 
 func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest) (err error) {
 	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
-	address, pwdHash, err := s.getUserAddressAndHash(ehrSystemID, user.UserID, user.Password)
+	address, err := s.getUserAddress(user.UserID)
 
 	if err != nil {
-		return fmt.Errorf("getUserAddressAndHash error: %w", err)
+		return fmt.Errorf("getUserAddress error: %w", err)
+	}
+
+	pwdHash, err := s.generateHashFromPassword(ehrSystemID, user.UserID, user.Password)
+
+	if err != nil {
+		return fmt.Errorf("generateHashFromPassword error: %w", err)
 	}
 
 	requestID := ctx.(*gin.Context).GetString("reqId")
@@ -90,53 +102,161 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 
 func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err error) {
 	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
-	address, pwdHash, err := s.getUserAddressAndHash(ehrSystemID, user.UserID, user.Password)
+	address, err := s.getUserAddress(user.UserID)
 
 	if err != nil {
-		return fmt.Errorf("Login s.getUserAddressAndHash error: %w", err)
+		return fmt.Errorf("Login s.getUserAddress error: %w", err)
 	}
 
-	userHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
+	passwordHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
 	if err != nil {
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
-	if !bytes.Equal(pwdHash, userHash) {
-		return errors.ErrFieldIsIncorrect("Password")
+	match, err := s.VerifyPassphrase(ehrSystemID+user.UserID+user.Password, passwordHash)
+
+	if err != nil {
+		return fmt.Errorf("generateHashFromPassword error: %w", err)
+	}
+
+	if !match {
+		return fmt.Errorf("passwords do not match")
 	}
 
 	return nil
 }
 
-func (s *Service) getUserAddressAndHash(ehrSystemID, userID, password string) (eth_common.Address, []byte, error) {
+func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
+	keylenBytes := len(targetKey) - metadataLenBytes
+	if keylenBytes < 1 {
+		return false, errors.New("Invalid targetKey length")
+	}
+	// Get the master_key
+	targetMasterKey := targetKey[:keylenBytes]
+	// Get the salt
+	salt := targetKey[keylenBytes : keylenBytes+saltLenBytes]
+	// Get the params
+	var N, r, p int32
+	paramsStartIndex := keylenBytes + saltLenBytes
+
+	err := binary.Read(bytes.NewReader(targetKey[paramsStartIndex:paramsStartIndex+4]), // 4 bytes for N
+		binary.LittleEndian,
+		&N)
+	if err != nil {
+		return false, fmt.Errorf("VerifyPassphrase binary.Read error: %w", err)
+	}
+
+	err = binary.Read(bytes.NewReader(targetKey[paramsStartIndex+4:paramsStartIndex+8]), // 4 bytes for r
+		binary.LittleEndian,
+		&r)
+	if err != nil {
+		return false, fmt.Errorf("VerifyPassphrase binary.Read error: %w", err)
+	}
+
+	err = binary.Read(bytes.NewReader(targetKey[paramsStartIndex+8:paramsStartIndex+12]), // 4 bytes for p
+		binary.LittleEndian,
+		&p)
+	if err != nil {
+		return false, fmt.Errorf("VerifyPassphrase binary.Read error: %w", err)
+	}
+
+	sourceMasterKey, err := scrypt.Key([]byte(passphrase),
+		salt,
+		int(N), // Must be a power of 2 greater than 1
+		int(r),
+		int(p), // r*p must be < 2^30
+		keylenBytes)
+	if err != nil {
+		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
+	}
+
+	targetHash := targetKey[paramsStartIndex+12:]
+	// Doing the sha-256 checksum at the last because we want the attacker
+	// to spend as much time possible cracking
+	hashDigest := sha256.New()
+	_, err = hashDigest.Write(targetKey[:paramsStartIndex+12])
+	if err != nil {
+		return false, fmt.Errorf("VerifyPassphrase hashDigest.Write error: %w", err)
+	}
+	sourceHash := hashDigest.Sum(nil)
+
+	// ConstantTimeCompare returns ints. Converting it to bool
+	keyComp := subtle.ConstantTimeCompare(sourceMasterKey, targetMasterKey) != 0
+	hashComp := subtle.ConstantTimeCompare(targetHash, sourceHash) != 0
+	result := keyComp && hashComp
+	return result, nil
+}
+
+func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {
 	_, userPrivateKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
-		return eth_common.Address{}, nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+		return eth_common.Address{}, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
 	privateUserKey := userPrivateKey[:]
 
 	privateKey, err := crypto.ToECDSA(privateUserKey)
 	if err != nil {
-		return eth_common.Address{}, nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
+		return eth_common.Address{}, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
 
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	pwdHash, err := s.generateHash(privateUserKey, userID, ehrSystemID, password)
-	if err != nil {
-		return eth_common.Address{}, nil, fmt.Errorf("register s.generateHash error: %w userID %s, password: %s", err, userID, password)
-	}
-	return address, pwdHash, nil
+	return address, nil
 }
 
-// method should be idempotent
+func (s *Service) generateHashFromPassword(ehrSystemID, userID, password string) ([]byte, error) {
+	salt, err := s.generateSalt()
+	if err != nil {
+		return nil, fmt.Errorf("s.generateSalt error: %w userID %s, password: %s", err, userID, password)
+	}
+
+	pwdHash, err := s.generateHash(salt, userID, ehrSystemID, password)
+	if err != nil {
+		return nil, fmt.Errorf("s.generateHash error: %w userID %s, password: %s", err, userID, password)
+	}
+
+	// Appending the salt
+	pwdHash = append(pwdHash, salt...)
+
+	// Encoding the params to be stored
+	buf := &bytes.Buffer{}
+	for _, elem := range [3]int{N, r, p} {
+		err = binary.Write(buf, binary.LittleEndian, int32(elem))
+		if err != nil {
+			return nil, fmt.Errorf("binary.Write error: %w userID %s, password: %s", err, userID, password)
+		}
+	}
+	pwdHash = append(pwdHash, buf.Bytes()...)
+
+	// appending the sha-256 of the entire header at the end
+	hashDigest := sha256.New()
+	_, err = hashDigest.Write(pwdHash)
+	if err != nil {
+		return nil, fmt.Errorf("hashDigest.Write error: %w userID %s, password: %s", err, userID, password)
+	}
+	hash := hashDigest.Sum(nil)
+	pwdHash = append(pwdHash, hash...)
+
+	return pwdHash, nil
+}
+
+func (s *Service) generateSalt() ([]byte, error) {
+	salt := make([]byte, saltLenBytes)
+
+	if _, err := rand.Read(salt); err != nil {
+		return nil, fmt.Errorf("generateSalt rand.Read error: %w", err)
+	}
+
+	return salt, nil
+}
+
 func (s *Service) generateHash(salt []byte, phrases ...string) ([]byte, error) {
 	password := strings.Join(phrases, "")
-	// todo salt - random
+
 	pwdHash, err := scrypt.Key([]byte(password), salt, N, r, p, keyLen)
 	if err != nil {
-		return nil, fmt.Errorf("scrypt.Key error: %w", err)
+		return nil, fmt.Errorf("generateHash scrypt.Key error: %w", err)
 	}
 
 	return pwdHash, nil
