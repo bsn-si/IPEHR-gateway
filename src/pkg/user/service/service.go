@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/binary"
 	"fmt"
@@ -52,7 +51,7 @@ const (
 	r                = 8
 	p                = 1
 	keyLen           = 32
-	metadataLenBytes = 60
+	metadataLenBytes = 28
 	saltLenBytes     = 16
 )
 
@@ -171,23 +170,8 @@ func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, e
 		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
 	}
 
-	targetHash := targetKey[paramsStartIndex+12:]
-	// Doing the sha-256 checksum at the last because we want the attacker
-	// to spend as much time possible cracking
-	hashDigest := sha256.New()
-
-	_, err = hashDigest.Write(targetKey[:paramsStartIndex+12])
-	if err != nil {
-		return false, fmt.Errorf("VerifyPassphrase hashDigest.Write error: %w", err)
-	}
-
-	sourceHash := hashDigest.Sum(nil)
-
-	// ConstantTimeCompare returns ints. Converting it to bool
 	keyComp := subtle.ConstantTimeCompare(sourceMasterKey, targetMasterKey) != 0
-	hashComp := subtle.ConstantTimeCompare(targetHash, sourceHash) != 0
-	result := keyComp && hashComp
-	return result, nil
+	return keyComp, nil
 }
 
 func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {
@@ -233,17 +217,6 @@ func (s *Service) generateHashFromPassword(ehrSystemID, userID, password string)
 
 	pwdHash = append(pwdHash, buf.Bytes()...)
 
-	// appending the sha-256 of the entire header at the end
-	hashDigest := sha256.New()
-
-	_, err = hashDigest.Write(pwdHash)
-	if err != nil {
-		return nil, fmt.Errorf("hashDigest.Write error: %w userID %s, password: %s", err, userID, password)
-	}
-
-	hash := hashDigest.Sum(nil)
-	pwdHash = append(pwdHash, hash...)
-
 	return pwdHash, nil
 }
 
@@ -283,29 +256,38 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 		return nil, fmt.Errorf("CreateToken Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	_, refreshTokenSecret, err := s.Infra.Keystore.Get(userID + "_refresh")
+	ecdsaAccessKey, err := crypto.ToECDSA(accessTokenSecret[:])
 	if err != nil {
-		return nil, fmt.Errorf("CreateRefreshToken Keystore.Get error: %w userID %s", err, userID)
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
 
 	atClaims := jwt.MapClaims{}
 	atClaims["uuid"] = td.AccessUUID
 	atClaims["exp"] = td.AtExpires
 	// TODO to fill user metadata like roles we should create new method in contract i.e. UserGet!!!
-
-	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-	td.AccessToken, err = at.SignedString((*accessTokenSecret)[:])
+	at := jwt.NewWithClaims(jwt.SigningMethodES256, atClaims)
+	td.AccessToken, err = at.SignedString(ecdsaAccessKey)
 
 	if err != nil {
 		return nil, fmt.Errorf("at.SignedString error:%w", err)
 	}
 
 	//Creating Refresh token
+	_, refreshTokenSecret, err := s.Infra.Keystore.Get(userID + "_refresh")
+	if err != nil {
+		return nil, fmt.Errorf("CreateRefreshToken Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	ecdsaRefreshKey, err := crypto.ToECDSA(refreshTokenSecret[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
+	}
+
 	rtClaims := jwt.MapClaims{}
 	rtClaims["uuid"] = td.RefreshUUID
 	rtClaims["exp"] = td.RtExpires
-	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, rtClaims)
-	td.RefreshToken, err = rt.SignedString((*refreshTokenSecret)[:])
+	rt := jwt.NewWithClaims(jwt.SigningMethodES256, rtClaims)
+	td.RefreshToken, err = rt.SignedString(ecdsaRefreshKey)
 
 	if err != nil {
 		return nil, fmt.Errorf("rt.SignedString error:%w", err)
@@ -345,7 +327,7 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 			return nil, fmt.Errorf("%w signing method: %v", errors.ErrIsUnsupported, token.Header["alg"])
 		}
 		return (*tokenSecret)[:], nil

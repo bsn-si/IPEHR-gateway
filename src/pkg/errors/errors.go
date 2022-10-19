@@ -26,7 +26,6 @@ var (
 	ErrNotFound         = errors.New("Not found")
 	ErrObjectNotInit    = errors.New("Object is not initialized")
 	ErrIsInProcessing   = errors.New("Request is in processing")
-	Err500              = errors.New("Something is wrong")
 	ErrIsNotValid       = errors.New("Is not valid")
 )
 
