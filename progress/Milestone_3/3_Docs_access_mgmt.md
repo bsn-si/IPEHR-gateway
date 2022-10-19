@@ -45,6 +45,12 @@ At this point we will distinguish three levels of access: **Owner**, **Admin**, 
 
 Access to documents is managed according to the following access matrix:
 
+|  Who \ Whom  | Owner |       Admin       |       Read        |
+|     :---:    | :---: |       :---:       |      :---:        |  
+|     Owner    |   no  | grant<br>restrict | grant<br>restrict |
+|     Admin    |   no  |        grant      | grant<br>restrict |
+|     Read     |   no  |        no         |        no         |
+
 ### Access control
 
 List of methods:  
