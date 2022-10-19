@@ -22,11 +22,11 @@ Documents can be grouped by arbitrary criteria. From medical classification to g
 
 ```
 struct DocumentGroup {
-	ID                [32]byte
-	owner             [32]byte
-	description        string
-	documents          [][]byte
-	userGroupsAccess   [][32]byte
+	ID           [32]byte
+	owner        [32]byte
+	description  string
+	docs    [][]byte
+	userGroups   [][32]byte
 }
 ```
 
