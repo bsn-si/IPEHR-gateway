@@ -339,7 +339,7 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 
 func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok || !token.Valid {
+	if !ok {
 		return nil, errors.ErrIsNotValid
 	}
 
@@ -368,4 +368,33 @@ func (s *Service) GetTokenHash(tokenRaw string) []byte {
 	h.Write([]byte(tokenRaw))
 
 	return h.Sum(nil)
+}
+
+func (s *Service) VerifyAndGetTokenDetails(userID string, jwt *model.JWT) (*TokenDetails, error) {
+	tokenAccess, err := s.VerifyToken(userID, jwt.AccessToken, false)
+	if err != nil {
+		return nil, errors.ErrAccessTokenExp
+	}
+
+	metadataAccess, err := s.ExtractTokenMetadata(tokenAccess)
+	if err != nil {
+		return nil, errors.ErrUnauthorized
+	}
+
+	tokenRefresh, err := s.VerifyToken(userID, jwt.RefreshToken, true)
+	if err != nil {
+		return nil, errors.ErrRefreshTokenExp
+	}
+
+	metadataRefresh, err := s.ExtractTokenMetadata(tokenRefresh)
+	if err != nil {
+		return nil, errors.ErrUnauthorized
+	}
+
+	return &TokenDetails{
+		AccessToken:  tokenAccess.Raw,
+		RefreshToken: tokenRefresh.Raw,
+		AtExpires:    metadataAccess.Exp,
+		RtExpires:    metadataRefresh.Exp,
+	}, nil
 }

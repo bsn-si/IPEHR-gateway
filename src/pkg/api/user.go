@@ -168,8 +168,10 @@ func (h UserHandler) Login(c *gin.Context) {
 // @Produce  json
 // @Param    Authorization  header  string  true  "Bearer <JWT>"
 // @Param    AuthUserId  header  string  true  "UserId - UUID"
+// @Param    Request      body    model.JWT  true  "JWT"
 // @Success  200         "Successfully logged out"
 // @Failure  401         "User unauthorized"
+// @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500         "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/logout/ [post]
 func (h UserHandler) Logout(c *gin.Context) {
@@ -189,33 +191,14 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	tokenAccess, err := h.service.VerifyToken(userID, jwt.AccessToken, false)
+	td, err := h.service.VerifyAndGetTokenDetails(userID, &jwt)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
+		c.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
-	metadataAccess, err := h.service.ExtractTokenMetadata(tokenAccess)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	h.service.AddTokenInBlackList(jwt.AccessToken, metadataAccess.Exp)
-
-	tokenRefresh, err := h.service.VerifyToken(userID, jwt.RefreshToken, true)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	metadataRefresh, err := h.service.ExtractTokenMetadata(tokenRefresh)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	h.service.AddTokenInBlackList(jwt.RefreshToken, metadataRefresh.Exp)
+	h.service.AddTokenInBlackList(td.AccessToken, td.AtExpires)
+	h.service.AddTokenInBlackList(td.RefreshToken, td.RtExpires)
 
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
@@ -253,33 +236,14 @@ func (h UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	tokenRefresh, err := h.service.VerifyToken(userID, jwt.RefreshToken, true)
+	td, err := h.service.VerifyAndGetTokenDetails(userID, &jwt)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, "Refresh token expired")
+		c.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
-	metadataRefresh, err := h.service.ExtractTokenMetadata(tokenRefresh)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	h.service.AddTokenInBlackList(jwt.RefreshToken, metadataRefresh.Exp)
-
-	tokenAccess, err := h.service.VerifyToken(userID, jwt.AccessToken, false)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, "Refresh token expired")
-		return
-	}
-
-	metadataAccess, err := h.service.ExtractTokenMetadata(tokenAccess)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	h.service.AddTokenInBlackList(jwt.AccessToken, metadataAccess.Exp)
+	h.service.AddTokenInBlackList(td.AccessToken, td.AtExpires)
+	h.service.AddTokenInBlackList(td.RefreshToken, td.RtExpires)
 
 	ts, err := h.service.CreateToken(userID)
 	if err != nil {
