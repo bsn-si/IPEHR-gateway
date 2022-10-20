@@ -154,11 +154,6 @@ func (h UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	saveErr := h.service.CreateAuth(u.UserID, ts)
-	if saveErr != nil {
-		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
-	}
-
 	c.JSON(http.StatusCreated, &model.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
@@ -188,19 +183,39 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.VerifyToken(userID, tokenString, false)
+	var jwt model.JWT
+	if err := c.ShouldBindJSON(&jwt); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
+		return
+	}
+
+	tokenAccess, err := h.service.VerifyToken(userID, jwt.AccessToken, false)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	metadata, err := h.service.ExtractTokenMetadata(token)
+	metadataAccess, err := h.service.ExtractTokenMetadata(tokenAccess)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	h.service.DeleteToken(metadata.UUID)
+	h.service.AddTokenInBlackList(jwt.AccessToken, metadataAccess.Exp)
+
+	tokenRefresh, err := h.service.VerifyToken(userID, jwt.RefreshToken, true)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	metadataRefresh, err := h.service.ExtractTokenMetadata(tokenRefresh)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	h.service.AddTokenInBlackList(jwt.RefreshToken, metadataRefresh.Exp)
 
 	c.JSON(http.StatusOK, "Successfully logged out")
 }
@@ -238,29 +253,38 @@ func (h UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	token, err := h.service.VerifyToken(userID, jwt.RefreshToken, true)
+	tokenRefresh, err := h.service.VerifyToken(userID, jwt.RefreshToken, true)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, "Refresh token expired")
 		return
 	}
 
-	metadata, err := h.service.ExtractTokenMetadata(token)
+	metadataRefresh, err := h.service.ExtractTokenMetadata(tokenRefresh)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	h.service.DeleteToken(metadata.UUID)
+	h.service.AddTokenInBlackList(jwt.RefreshToken, metadataRefresh.Exp)
+
+	tokenAccess, err := h.service.VerifyToken(userID, jwt.AccessToken, false)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "Refresh token expired")
+		return
+	}
+
+	metadataAccess, err := h.service.ExtractTokenMetadata(tokenAccess)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	h.service.AddTokenInBlackList(jwt.AccessToken, metadataAccess.Exp)
 
 	ts, err := h.service.CreateToken(userID)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, err.Error())
 		return
-	}
-
-	saveErr := h.service.CreateAuth(userID, ts)
-	if saveErr != nil {
-		c.JSON(http.StatusUnprocessableEntity, saveErr.Error())
 	}
 
 	c.JSON(http.StatusCreated, &model.JWT{

@@ -341,7 +341,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 		for _, data := range tests {
 			payload := getReaderJSONFrom(data.request)
 
-			if data.action == "refresh" {
+			if data.action != "login" {
 				payload = getReaderJSONFrom(jwt)
 			}
 

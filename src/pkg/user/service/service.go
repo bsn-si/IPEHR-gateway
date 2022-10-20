@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/binary"
 	"fmt"
@@ -15,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/scrypt"
 
 	"hms/gateway/pkg/common"
@@ -34,14 +34,12 @@ type Service struct {
 }
 
 type TokenMetadata struct {
-	UUID string
+	Exp int64
 }
 
 type TokenDetails struct {
 	AccessToken  string
 	RefreshToken string
-	AccessUUID   string
-	RefreshUUID  string
 	AtExpires    int64
 	RtExpires    int64
 }
@@ -244,10 +242,7 @@ func (s *Service) generateHash(salt []byte, phrases ...string) ([]byte, error) {
 func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	td := &TokenDetails{}
 	td.AtExpires = time.Now().Add(common.JWTExpires).Unix()
-	td.AccessUUID = uuid.New().String()
-
 	td.RtExpires = time.Now().Add(common.JWTRefreshExpires).Unix()
-	td.RefreshUUID = td.AccessUUID + "++" + userID
 
 	var err error
 	//Creating Access Token
@@ -262,7 +257,6 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	}
 
 	atClaims := jwt.MapClaims{}
-	atClaims["uuid"] = td.AccessUUID
 	atClaims["exp"] = td.AtExpires
 	// TODO to fill user metadata like roles we should create new method in contract i.e. UserGet!!!
 	at := jwt.NewWithClaims(jwt.SigningMethodES256, atClaims)
@@ -284,7 +278,6 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	}
 
 	rtClaims := jwt.MapClaims{}
-	rtClaims["uuid"] = td.RefreshUUID
 	rtClaims["exp"] = td.RtExpires
 	rt := jwt.NewWithClaims(jwt.SigningMethodES256, rtClaims)
 	td.RefreshToken, err = rt.SignedString(ecdsaRefreshKey)
@@ -294,17 +287,6 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 	}
 
 	return td, nil
-}
-
-func (s *Service) CreateAuth(userid string, td *TokenDetails) error {
-	at := time.Unix(td.AtExpires, 0) //converting Unix to UTC(to Time object)
-	rt := time.Unix(td.RtExpires, 0)
-	now := time.Now()
-
-	s.Cache.Set(td.AccessUUID, userid, at.Sub(now))
-	s.Cache.Set(td.RefreshUUID, userid, rt.Sub(now))
-
-	return nil
 }
 
 func (s *Service) ExtractToken(bearToken string) string {
@@ -326,11 +308,16 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 		return nil, fmt.Errorf("VerifyToken Keystore.Get error: %w userID %s", err, userID)
 	}
 
+	ecdsaKey, err := crypto.ToECDSA(tokenSecret[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
+	}
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 			return nil, fmt.Errorf("%w signing method: %v", errors.ErrIsUnsupported, token.Header["alg"])
 		}
-		return (*tokenSecret)[:], nil
+		return ecdsaKey.Public(), nil
 	})
 
 	if err != nil {
@@ -343,6 +330,10 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 		return nil, errors.ErrIsNotValid
 	}
 
+	if ok := s.IsTokenInBlackList(tokenString); ok {
+		return nil, errors.ErrIsNotValid
+	}
+
 	return token, nil
 }
 
@@ -352,16 +343,29 @@ func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error)
 		return nil, errors.ErrIsNotValid
 	}
 
-	u, ok := claims["uuid"].(string)
-	if !ok {
-		return nil, errors.ErrIsEmpty
-	}
-
 	return &TokenMetadata{
-		UUID: u,
+		Exp: int64(claims["exp"].(float64)),
 	}, nil
 }
 
-func (s *Service) DeleteToken(token string) {
-	s.Cache.Delete(token)
+func (s *Service) IsTokenInBlackList(tokenRaw string) bool {
+	hash := string(s.GetTokenHash(tokenRaw))
+	_, ok := s.Cache.Get(hash)
+	return ok
+}
+
+func (s *Service) AddTokenInBlackList(tokenRaw string, expires int64) {
+	at := time.Unix(expires, 0) //converting Unix to UTC(to Time object)
+	now := time.Now()
+
+	hash := string(s.GetTokenHash(tokenRaw))
+
+	s.Cache.Set(hash, nil, at.Sub(now))
+}
+
+func (s *Service) GetTokenHash(tokenRaw string) []byte {
+	h := sha256.New()
+	h.Write([]byte(tokenRaw))
+
+	return h.Sum(nil)
 }
