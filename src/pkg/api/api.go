@@ -148,7 +148,7 @@ func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.POST("/register", a.User.Register)
 	r.POST("/login", a.User.Login)
 	r.POST("/logout", a.User.Logout)
-	r.POST("/refresh", a.User.RefreshToken)
+	r.GET("/refresh", a.User.RefreshToken)
 	return a
 }
 

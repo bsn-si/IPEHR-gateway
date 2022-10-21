@@ -254,6 +254,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 	tests := []struct {
 		name           string
 		action         string
+		method         string
 		useAuthHeaders bool
 		request        *model.UserAuthRequest
 		statusCode     int
@@ -320,6 +321,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 		{
 			name:   "Refresh token",
 			action: "refresh",
+			method: http.MethodGet,
 			request: userHelper.UserAuthRequest(
 				userHelper.WithUserID(userID)),
 			statusCode: http.StatusCreated,
@@ -340,19 +342,29 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 
 		for _, data := range tests {
 			payload := getReaderJSONFrom(data.request)
+			httpMethod := http.MethodPost
 
-			if data.action != "login" {
+			if data.method != "" {
+				httpMethod = data.method
+			}
+
+			if data.action == "logout" {
 				payload = getReaderJSONFrom(jwt)
 			}
 
-			request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/"+data.action, payload)
+			request, err := http.NewRequest(httpMethod, testWrap.server.URL+"/v1/user/"+data.action, payload)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			if data.useAuthHeaders || data.action != "login" {
 				request.Header.Set("AuthUserId", data.request.UserID)
-				request.Header.Set("Authorization", "Bearer "+jwt.AccessToken)
+
+				if data.action == "refresh" {
+					request.Header.Set("Authorization", "Bearer "+jwt.RefreshToken)
+				} else {
+					request.Header.Set("Authorization", "Bearer "+jwt.AccessToken)
+				}
 			}
 
 			request.Header.Set("Content-type", "application/json")

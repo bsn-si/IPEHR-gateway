@@ -363,31 +363,41 @@ func (s *Service) GetTokenHash(tokenRaw string) [32]byte {
 	return hash
 }
 
-func (s *Service) VerifyAndGetTokenDetails(userID string, jwt *model.JWT) (*TokenDetails, error) {
-	tokenAccess, err := s.VerifyToken(userID, jwt.AccessToken, TokenAccessType)
-	if err != nil {
-		return nil, errors.ErrAccessTokenExp
+func (s *Service) VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*TokenDetails, error) {
+	details := TokenDetails{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		AtExpires:    0,
+		RtExpires:    0,
 	}
 
-	metadataAccess, err := s.ExtractTokenMetadata(tokenAccess)
-	if err != nil {
-		return nil, errors.ErrUnauthorized
+	if accessToken != "" {
+		tokenAccess, err := s.VerifyToken(userID, accessToken, TokenAccessType)
+		if err != nil {
+			return nil, errors.ErrAccessTokenExp
+		}
+
+		metadataAccess, err := s.ExtractTokenMetadata(tokenAccess)
+		if err != nil {
+			return nil, errors.ErrUnauthorized
+		}
+
+		details.AtExpires = metadataAccess.ExpiresAt
 	}
 
-	tokenRefresh, err := s.VerifyToken(userID, jwt.RefreshToken, TokenRefreshType)
-	if err != nil {
-		return nil, errors.ErrRefreshTokenExp
+	if refreshToken != "" {
+		tokenRefresh, err := s.VerifyToken(userID, refreshToken, TokenRefreshType)
+		if err != nil {
+			return nil, errors.ErrRefreshTokenExp
+		}
+
+		metadataRefresh, err := s.ExtractTokenMetadata(tokenRefresh)
+		if err != nil {
+			return nil, errors.ErrUnauthorized
+		}
+
+		details.RtExpires = metadataRefresh.ExpiresAt
 	}
 
-	metadataRefresh, err := s.ExtractTokenMetadata(tokenRefresh)
-	if err != nil {
-		return nil, errors.ErrUnauthorized
-	}
-
-	return &TokenDetails{
-		AccessToken:  tokenAccess.Raw,
-		RefreshToken: tokenRefresh.Raw,
-		AtExpires:    metadataAccess.ExpiresAt,
-		RtExpires:    metadataRefresh.ExpiresAt,
-	}, nil
+	return &details, nil
 }

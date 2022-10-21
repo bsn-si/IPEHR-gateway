@@ -191,7 +191,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	td, err := h.service.VerifyAndGetTokenDetails(userID, &jwt)
+	td, err := h.service.VerifyAndGetTokenDetails(userID, tokenString, jwt.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, err)
 		return
@@ -209,16 +209,15 @@ func (h UserHandler) Logout(c *gin.Context) {
 // @Tags     User
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header  string  true  "Bearer <JWT>"
+// @Param    Authorization  header  string  true  "Refresh token: Bearer <JWT>"
 // @Param    AuthUserId  header  string  true  "UserId - UUID"
 // @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Param    Request      body    model.JWT  true  "JWT"
 // @Success  201         {object}  model.JWT
 // @Failure  401         "User unauthorized"
 // @Failure  404         "User with ID not exist"
 // @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500         "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/refresh/ [post]
+// @Router   /user/refresh/ [get]
 func (h UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 	tokenString := c.Request.Header.Get("Authorization")
@@ -230,19 +229,12 @@ func (h UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	var jwt model.JWT
-	if err := c.ShouldBindJSON(&jwt); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
-		return
-	}
-
-	td, err := h.service.VerifyAndGetTokenDetails(userID, &jwt)
+	td, err := h.service.VerifyAndGetTokenDetails(userID, "", tokenString)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, err)
 		return
 	}
 
-	h.service.AddTokenInBlackList(td.AccessToken, td.AtExpires)
 	h.service.AddTokenInBlackList(td.RefreshToken, td.RtExpires)
 
 	ts, err := h.service.CreateToken(userID)
