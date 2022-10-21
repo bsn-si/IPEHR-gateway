@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/subtle"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -33,10 +32,6 @@ type Service struct {
 	Cache *cache.Cache
 }
 
-type TokenMetadata struct {
-	Exp int64
-}
-
 type TokenDetails struct {
 	AccessToken  string
 	RefreshToken string
@@ -44,7 +39,17 @@ type TokenDetails struct {
 	RtExpires    int64
 }
 
+type TokenType uint8
+
+type TokenClaims struct {
+	TokenType TokenType `json:"token_type"`
+	jwt.StandardClaims
+}
+
 const (
+	TokenAccessType TokenType = iota
+	TokenRefreshType
+
 	N                = 1048576
 	r                = 8
 	p                = 1
@@ -113,7 +118,7 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 	match, err := s.VerifyPassphrase(ehrSystemID+user.UserID+user.Password, passwordHash)
 
 	if err != nil {
-		return fmt.Errorf("generateHashFromPassword error: %w", err)
+		return fmt.Errorf("VerifyPassphrase error: %w", err)
 	}
 
 	if !match {
@@ -168,8 +173,7 @@ func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, e
 		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
 	}
 
-	keyComp := subtle.ConstantTimeCompare(sourceMasterKey, targetMasterKey) != 0
-	return keyComp, nil
+	return bytes.Equal(sourceMasterKey, targetMasterKey), nil
 }
 
 func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {
@@ -251,36 +255,28 @@ func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
 		return nil, fmt.Errorf("CreateToken Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	ecdsaAccessKey, err := crypto.ToECDSA(accessTokenSecret[:])
+	userECDSAKey, err := crypto.ToECDSA(accessTokenSecret[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
 
-	atClaims := jwt.MapClaims{}
-	atClaims["exp"] = td.AtExpires
+	atClaims := TokenClaims{}
+	atClaims.ExpiresAt = td.AtExpires
+	atClaims.TokenType = TokenAccessType
+
 	// TODO to fill user metadata like roles we should create new method in contract i.e. UserGet!!!
 	at := jwt.NewWithClaims(jwt.SigningMethodES256, atClaims)
-	td.AccessToken, err = at.SignedString(ecdsaAccessKey)
 
+	td.AccessToken, err = at.SignedString(userECDSAKey)
 	if err != nil {
 		return nil, fmt.Errorf("at.SignedString error:%w", err)
 	}
 
-	//Creating Refresh token
-	_, refreshTokenSecret, err := s.Infra.Keystore.Get(userID + "_refresh")
-	if err != nil {
-		return nil, fmt.Errorf("CreateRefreshToken Keystore.Get error: %w userID %s", err, userID)
-	}
-
-	ecdsaRefreshKey, err := crypto.ToECDSA(refreshTokenSecret[:])
-	if err != nil {
-		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
-	}
-
-	rtClaims := jwt.MapClaims{}
-	rtClaims["exp"] = td.RtExpires
+	rtClaims := TokenClaims{}
+	rtClaims.ExpiresAt = td.RtExpires
+	rtClaims.TokenType = TokenRefreshType
 	rt := jwt.NewWithClaims(jwt.SigningMethodES256, rtClaims)
-	td.RefreshToken, err = rt.SignedString(ecdsaRefreshKey)
+	td.RefreshToken, err = rt.SignedString(userECDSAKey)
 
 	if err != nil {
 		return nil, fmt.Errorf("rt.SignedString error:%w", err)
@@ -297,36 +293,36 @@ func (s *Service) ExtractToken(bearToken string) string {
 	return ""
 }
 
-func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (*jwt.Token, error) {
+func (s *Service) VerifyToken(userID, tokenString string, tokenType TokenType) (*jwt.Token, error) {
 	tokenUUID := userID
-	if isRefreshToken {
-		tokenUUID = tokenUUID + "_refresh"
-	}
 
 	_, tokenSecret, err := s.Infra.Keystore.Get(tokenUUID)
 	if err != nil {
 		return nil, fmt.Errorf("VerifyToken Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	ecdsaKey, err := crypto.ToECDSA(tokenSecret[:])
+	userECDSAKey, err := crypto.ToECDSA(tokenSecret[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 			return nil, fmt.Errorf("%w signing method: %v", errors.ErrIsUnsupported, token.Header["alg"])
 		}
-		return ecdsaKey.Public(), nil
+		return userECDSAKey.Public(), nil
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("VerifyToken jwt.Parse error: %w", err)
 	}
 
-	//Since token is valid, get the uuid:
-	_, ok := token.Claims.(jwt.MapClaims) //the token claims should conform to MapClaims
+	c, ok := token.Claims.(*TokenClaims)
 	if !ok || !token.Valid {
+		return nil, errors.ErrIsNotValid
+	}
+
+	if c.TokenType != tokenType {
 		return nil, errors.ErrIsNotValid
 	}
 
@@ -337,15 +333,13 @@ func (s *Service) VerifyToken(userID, tokenString string, isRefreshToken bool) (
 	return token, nil
 }
 
-func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenMetadata, error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
+func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenClaims, error) {
+	claims, ok := token.Claims.(*TokenClaims)
 	if !ok {
 		return nil, errors.ErrIsNotValid
 	}
 
-	return &TokenMetadata{
-		Exp: int64(claims["exp"].(float64)),
-	}, nil
+	return claims, nil
 }
 
 func (s *Service) IsTokenInBlackList(tokenRaw string) bool {
@@ -371,7 +365,7 @@ func (s *Service) GetTokenHash(tokenRaw string) []byte {
 }
 
 func (s *Service) VerifyAndGetTokenDetails(userID string, jwt *model.JWT) (*TokenDetails, error) {
-	tokenAccess, err := s.VerifyToken(userID, jwt.AccessToken, false)
+	tokenAccess, err := s.VerifyToken(userID, jwt.AccessToken, TokenAccessType)
 	if err != nil {
 		return nil, errors.ErrAccessTokenExp
 	}
@@ -381,7 +375,7 @@ func (s *Service) VerifyAndGetTokenDetails(userID string, jwt *model.JWT) (*Toke
 		return nil, errors.ErrUnauthorized
 	}
 
-	tokenRefresh, err := s.VerifyToken(userID, jwt.RefreshToken, true)
+	tokenRefresh, err := s.VerifyToken(userID, jwt.RefreshToken, TokenRefreshType)
 	if err != nil {
 		return nil, errors.ErrRefreshTokenExp
 	}
@@ -394,7 +388,7 @@ func (s *Service) VerifyAndGetTokenDetails(userID string, jwt *model.JWT) (*Toke
 	return &TokenDetails{
 		AccessToken:  tokenAccess.Raw,
 		RefreshToken: tokenRefresh.Raw,
-		AtExpires:    metadataAccess.Exp,
-		RtExpires:    metadataRefresh.Exp,
+		AtExpires:    metadataAccess.ExpiresAt,
+		RtExpires:    metadataRefresh.ExpiresAt,
 	}, nil
 }
