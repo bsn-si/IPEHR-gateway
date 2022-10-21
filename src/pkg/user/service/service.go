@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
@@ -50,12 +49,11 @@ const (
 	TokenAccessType TokenType = iota
 	TokenRefreshType
 
-	N                = 1048576
-	r                = 8
-	p                = 1
-	keyLen           = 32
-	metadataLenBytes = 28
-	saltLenBytes     = 16
+	N            = 1048576
+	r            = 8
+	p            = 1
+	keyLen       = 32
+	saltLenBytes = 16
 )
 
 func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
@@ -129,46 +127,16 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 }
 
 func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
-	keylenBytes := len(targetKey) - metadataLenBytes
-	if keylenBytes < 1 {
+	keyLenBytes := len(targetKey) - saltLenBytes
+	if keyLenBytes < 1 {
 		return false, errors.New("Invalid targetKey length")
 	}
 	// Get the master_key
-	targetMasterKey := targetKey[:keylenBytes]
+	targetMasterKey := targetKey[:keyLenBytes]
 	// Get the salt
-	salt := targetKey[keylenBytes : keylenBytes+saltLenBytes]
-	// Get the params
-	var N, r, p int32
+	salt := targetKey[keyLenBytes : keyLenBytes+saltLenBytes]
 
-	paramsStartIndex := keylenBytes + saltLenBytes
-
-	err := binary.Read(bytes.NewReader(targetKey[paramsStartIndex:paramsStartIndex+4]), // 4 bytes for N
-		binary.LittleEndian,
-		&N)
-	if err != nil {
-		return false, fmt.Errorf("VerifyPassphrase binary.Read error: %w", err)
-	}
-
-	err = binary.Read(bytes.NewReader(targetKey[paramsStartIndex+4:paramsStartIndex+8]), // 4 bytes for r
-		binary.LittleEndian,
-		&r)
-	if err != nil {
-		return false, fmt.Errorf("VerifyPassphrase binary.Read error: %w", err)
-	}
-
-	err = binary.Read(bytes.NewReader(targetKey[paramsStartIndex+8:paramsStartIndex+12]), // 4 bytes for p
-		binary.LittleEndian,
-		&p)
-	if err != nil {
-		return false, fmt.Errorf("VerifyPassphrase binary.Read error: %w", err)
-	}
-
-	sourceMasterKey, err := scrypt.Key([]byte(passphrase),
-		salt,
-		int(N), // Must be a power of 2 greater than 1
-		int(r),
-		int(p), // r*p must be < 2^30
-		keylenBytes)
+	sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, N, r, p, keyLenBytes)
 	if err != nil {
 		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
 	}
@@ -207,17 +175,6 @@ func (s *Service) generateHashFromPassword(ehrSystemID, userID, password string)
 
 	// Appending the salt
 	pwdHash = append(pwdHash, salt...)
-
-	// Encoding the params to be stored
-	buf := &bytes.Buffer{}
-	for _, elem := range [3]int{N, r, p} {
-		err = binary.Write(buf, binary.LittleEndian, int32(elem))
-		if err != nil {
-			return nil, fmt.Errorf("binary.Write error: %w userID %s, password: %s", err, userID, password)
-		}
-	}
-
-	pwdHash = append(pwdHash, buf.Bytes()...)
 
 	return pwdHash, nil
 }
