@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/scrypt"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
@@ -343,7 +343,7 @@ func (s *Service) ExtractTokenMetadata(token *jwt.Token) (*TokenClaims, error) {
 }
 
 func (s *Service) IsTokenInBlackList(tokenRaw string) bool {
-	hash := string(s.GetTokenHash(tokenRaw))
+	hash := s.GetTokenHash(tokenRaw)
 	_, ok := s.Cache.Get(hash)
 	return ok
 }
@@ -352,16 +352,15 @@ func (s *Service) AddTokenInBlackList(tokenRaw string, expires int64) {
 	at := time.Unix(expires, 0) //converting Unix to UTC(to Time object)
 	now := time.Now()
 
-	hash := string(s.GetTokenHash(tokenRaw))
+	hash := s.GetTokenHash(tokenRaw)
 
 	s.Cache.Set(hash, nil, at.Sub(now))
 }
 
-func (s *Service) GetTokenHash(tokenRaw string) []byte {
-	h := sha256.New()
-	h.Write([]byte(tokenRaw))
+func (s *Service) GetTokenHash(tokenRaw string) [32]byte {
+	hash := sha3.Sum256([]byte(tokenRaw))
 
-	return h.Sum(nil)
+	return hash
 }
 
 func (s *Service) VerifyAndGetTokenDetails(userID string, jwt *model.JWT) (*TokenDetails, error) {
