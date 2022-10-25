@@ -40,6 +40,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -90,6 +97,13 @@ const docTemplate = `{
                         "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "group_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -146,6 +160,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -190,6 +211,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create EHR",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",
@@ -277,6 +305,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -324,6 +359,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create EHR with id",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",
@@ -414,6 +456,13 @@ const docTemplate = `{
                         "description": "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "ehr_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -519,6 +568,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -587,6 +643,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -651,6 +714,13 @@ const docTemplate = `{
                         "description": "identifier of the COMPOSITION to be updated. Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515` + "`" + `",
                         "name": "versioned_object_uid",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -760,6 +830,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -812,6 +889,13 @@ const docTemplate = `{
                         "description": "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "ehr_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -931,6 +1015,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -982,6 +1073,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -1030,6 +1128,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get list of transactions requests by authorized user",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",
@@ -1087,6 +1192,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -1112,6 +1224,253 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Is returned when requests not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/login/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "UserId UUID",
+                        "name": "userID",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Password",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.JWT"
+                        }
+                    },
+                    "400": {
+                        "description": "Password, EhrSystemId or userID incorrect"
+                    },
+                    "401": {
+                        "description": "Password or userID incorrect"
+                    },
+                    "404": {
+                        "description": "User with ID not exist"
+                    },
+                    "422": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/logout/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Logout",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId - UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "JWT",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.JWT"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully logged out"
+                    },
+                    "401": {
+                        "description": "User unauthorized"
+                    },
+                    "422": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/refresh/": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Refresh JWT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Refresh token: Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId - UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.JWT"
+                        }
+                    },
+                    "401": {
+                        "description": "User unauthorized"
+                    },
+                    "404": {
+                        "description": "User with ID not exist"
+                    },
+                    "422": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/register/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Register user",
+                "parameters": [
+                    {
+                        "description": "UserId UUID",
+                        "name": "userID",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Password",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "The role identifier, cant be patient, doctor and etc. Default: 0 (role patient)",
+                        "name": "role",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Indicates that the request has succeeded and transaction about register new user has been created",
+                        "headers": {
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+                    },
+                    "409": {
+                        "description": "User with that userId already exist"
+                    },
+                    "422": {
+                        "description": "Password, systemID or role incorrect"
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -1510,6 +1869,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.JWT": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
                     "type": "string"
                 }
             }

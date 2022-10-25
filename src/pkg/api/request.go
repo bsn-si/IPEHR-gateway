@@ -28,6 +28,7 @@ func NewRequestHandler(docService *service.DefaultDocumentService) *RequestHandl
 // @Tags     REQUEST
 // @Accept   json
 // @Produce  json
+// @Param    Authorization  header  string  true  "Bearer <JWT>"
 // @Param    AuthUserId  header    string  true  "UserId UUID"
 // @Param    limit       query     string  true  "default: 10"
 // @Param    offset      query     string  true  "id namespace. Example: examples"
@@ -77,6 +78,7 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 // @Tags     REQUEST
 // @Accept   json
 // @Produce  json
+// @Param    Authorization  header  string  true  "Bearer <JWT>"
 // @Param    AuthUserId  header    string  true  "UserId UUID"
 // @Param    request_id  path      string  true  "Unique id of request"
 // @Success  200         {object}  processing.RequestResult

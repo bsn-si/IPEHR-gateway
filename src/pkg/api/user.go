@@ -35,7 +35,7 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra) *UserHandle
 // @Produce  json
 // @Param    userID       body    string  true  "UserId UUID"
 // @Param    password     body    string  true  "Password"
-// @Param    role         body    string  true  ""
+// @Param    role         body    uint8   true  "The role identifier, cant be patient, doctor and etc. Default: 0 (role patient)"
 // @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
 // TODO can users register by themselves, or does it have to be an already authorized user?
 // @Success  201         "Indicates that the request has succeeded and transaction about register new user has been created"

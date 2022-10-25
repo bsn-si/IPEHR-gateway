@@ -1,6 +1,6 @@
 package main
 
-// Generating swagger doc spec
+// Generating swagger doc spec//
 //go:generate swag init --parseDependency -g ../../pkg/api/api.go -d ../../pkg/api -o ../../pkg/api/docs
 
 import (

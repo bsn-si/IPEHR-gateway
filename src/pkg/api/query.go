@@ -32,6 +32,7 @@ func NewQueryHandler(docService *service.DefaultDocumentService) *QueryHandler {
 // @Tags     QUERY
 // @Accept   json
 // @Produce  json
+// @Param    Authorization  header  string  true  "Bearer <JWT>"
 // @Param    AuthUserId  header    string              true  "UserId UUID"
 // @Param    Request     body      model.QueryRequest  true  "Query Request"
 // @Success  200         {object}  model.QueryResponse
