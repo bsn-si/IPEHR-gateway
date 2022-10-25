@@ -214,47 +214,6 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 	}
 }
 
-func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
-	return func(t *testing.T) {
-		userRegisterRequest, err := userCreateBodyRequest(testData.testUserID, testData.userPassword)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/register", userRegisterRequest)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("Prefer", "return=representation")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-
-		err = response.Body.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
-		}
-
-		requestID := response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", requestID)
-
-		err = requestWait(testData.testUserID, requestID, testWrap)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-}
-
 func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 	userHelper := testhelpers.UserHelper{}
 
