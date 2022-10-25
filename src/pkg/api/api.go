@@ -38,6 +38,7 @@ type API struct {
 	GroupAccess *GroupAccessHandler
 	Request     *RequestHandler
 	User        *UserHandler
+	testMode    bool
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -52,7 +53,16 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),
 		User:        NewUserHandler(cfg, infra),
+		testMode:    false,
 	}
+}
+
+func (a *API) IsTestMode() bool {
+	return a.testMode
+}
+
+func (a *API) SetTestMode() {
+	a.testMode = true
 }
 
 func (a *API) Build() *gin.Engine {
@@ -100,9 +110,7 @@ func (a *API) Build() *gin.Engine {
 func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	//r.Use(Recovery, app_errors.ErrHandler)
-
-	// Other methods should be authorized
-	r.Use(auth)
+	r.Use(auth(a))
 	r.Use(ehrSystemID)
 	r.POST("", a.Ehr.Create)
 	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
@@ -120,7 +128,7 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 }
 
 func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
-	r.Use(auth)
+	r.Use(auth(a))
 	r.GET("/group/:group_id", a.GroupAccess.Get)
 	r.POST("/group", a.GroupAccess.Create)
 
@@ -128,14 +136,14 @@ func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
 }
 
 func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
-	r.Use(auth)
+	r.Use(auth(a))
 	r.POST("/aql", a.Query.ExecPost)
 
 	return a
 }
 
 func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
-	r.Use(auth)
+	r.Use(auth(a))
 	r.GET("/", a.Request.GetAll)
 	r.GET("/:reqId", a.Request.GetByID)
 
@@ -147,6 +155,8 @@ func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.Use(ehrSystemID)
 	r.POST("/register", a.User.Register)
 	r.POST("/login", a.User.Login)
+
+	r.Use(auth(a))
 	r.POST("/logout", a.User.Logout)
 	r.GET("/refresh", a.User.RefreshToken)
 	return a

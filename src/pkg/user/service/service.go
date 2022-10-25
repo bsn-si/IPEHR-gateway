@@ -250,6 +250,22 @@ func (s *Service) ExtractToken(bearToken string) string {
 	return ""
 }
 
+func (s *Service) VerifyAccess(userID, tokenString string) error {
+	tokenString = s.ExtractToken(tokenString)
+
+	tokenAccess, err := s.VerifyToken(userID, tokenString, TokenAccessType)
+	if err != nil {
+		return errors.ErrAccessTokenExp
+	}
+
+	_, err = s.ExtractTokenMetadata(tokenAccess)
+	if err != nil {
+		return errors.ErrUnauthorized
+	}
+
+	return nil
+}
+
 func (s *Service) VerifyToken(userID, tokenString string, tokenType TokenType) (*jwt.Token, error) {
 	tokenUUID := userID
 

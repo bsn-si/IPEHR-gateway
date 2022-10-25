@@ -36,6 +36,7 @@ type testData struct {
 	namespace    string
 	testUserID   string
 	userPassword string
+	accessToken  string
 }
 
 type testWrap struct {
@@ -71,11 +72,23 @@ func Test_API(t *testing.T) {
 		userPassword: fakeData.GetRandomStringWithLength(10),
 	}
 
-	if !t.Run("User register", testWrap.userRegister(testData)) {
-		t.Fatal()
+	err := testWrap.registerUser(testData.testUserID, testData.userPassword, testData.ehrSystemID)
+	if err != nil {
+		t.Fatalf("Can not register user, err: %v", err)
 	}
+
+	accessToken, err := testWrap.loginUser(testData.testUserID, testData.userPassword, testData.ehrSystemID)
+	if err != nil {
+		t.Fatalf("Can not auth user, err: %v", err)
+	}
+
+	testData.accessToken = accessToken
+
 	// TODO user register incorrect input data
 	// TODO user register duplicate registration request
+	//if !t.Run("User register", testWrap.userRegister(testData)) {
+	//	t.Fatal()
+	//}
 
 	t.Run("User login", testWrap.userLogin(testData))
 
@@ -127,7 +140,10 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	cfg.DefaultUserID = uuid.New().String()
 
 	infra := infrastructure.New(cfg)
-	r := api.New(cfg, infra).Build()
+	apiHandler := api.New(cfg, infra)
+	apiHandler.SetTestMode()
+
+	r := apiHandler.Build()
 	ts = httptest.NewServer(r)
 
 	return ts, storage.Storage()
@@ -1718,4 +1734,45 @@ func (testWrap *testWrap) registerUser(userID, userPassword, ehrSystemID string)
 	}
 
 	return nil
+}
+
+func (testWrap *testWrap) loginUser(userID, userPassword, ehrSystemID string) (string, error) {
+	userRegisterRequest, err := userCreateBodyRequest(userID, userPassword)
+	if err != nil {
+		return "", err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", userRegisterRequest)
+	if err != nil {
+		return "", err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", ehrSystemID)
+
+	response, err := testWrap.httpClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	content, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if err = response.Body.Close(); err != nil {
+		return "", err
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return "", err
+	}
+
+	jwt := model.JWT{}
+	if err = json.Unmarshal(content, &jwt); err != nil {
+		return "", err
+	}
+
+	return jwt.AccessToken, nil
 }
