@@ -11,7 +11,6 @@ import (
 	"github.com/akyoto/cache"
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/sha3"
@@ -83,10 +82,8 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 	return nil
 }
 
-func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err error) {
-	systemID := ctx.(*gin.Context).GetString("ehrSystemID")
-
-	address, err := s.getUserAddress(user.UserID)
+func (s *Service) Login(ctx context.Context, userID, systemID, password string) (err error) {
+	address, err := s.getUserAddress(userID)
 	if err != nil {
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)
 	}
@@ -99,7 +96,7 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
-	match, err := verifyPassphrase(user.UserID+systemID+user.Password, pwdHash)
+	match, err := verifyPassphrase(userID+systemID+password, pwdHash)
 	if err != nil {
 		return fmt.Errorf("verifyPassphrase error: %w", err)
 	}

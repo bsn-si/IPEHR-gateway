@@ -108,6 +108,7 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
+// @Param    AuthUserId   header    string                 true  "UserId UUID"
 // @Param    EhrSystemId  header    string                 true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request      body      model.UserAuthRequest  true  "User authentication request"
 // @Success  201          {object}  model.JWT
@@ -132,13 +133,14 @@ func (h UserHandler) Login(c *gin.Context) {
 
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
+	systemID := c.GetString("ehrSystemID")
 
 	if tokenString != "" && userID != "" {
 		c.JSON(http.StatusUnprocessableEntity, "You are already authorised, please use logout")
 		return
 	}
 
-	err := h.service.Login(c, &u)
+	err := h.service.Login(c, u.UserID, systemID, u.Password)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.JSON(http.StatusNotFound, err.Error())

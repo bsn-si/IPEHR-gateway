@@ -1246,6 +1246,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
                         "in": "header",

@@ -1293,6 +1293,11 @@ paths:
       consumes:
       - application/json
       parameters:
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
