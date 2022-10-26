@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/service/processing"
@@ -96,8 +95,8 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	ehrUUIDnew := uuid.New()
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-	reqID := c.MustGet("reqId").(string)
+	ehrSystemID := c.GetString("ehrSystemID")
+	reqID := c.GetString("reqId")
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
@@ -163,12 +162,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-		return
-	}
+	ehrSystemID := c.GetString("ehrSystemID")
 
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -208,7 +202,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	reqID := c.MustGet("reqId").(string)
+	reqID := c.GetString("reqId")
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
@@ -261,13 +255,6 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Incorrect ehr_id"})
-		return
-	}
-
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 

@@ -51,7 +51,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Query:       NewQueryHandler(docService),
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),
-		User:        NewUserHandler(cfg, infra),
+		User:        NewUserHandler(cfg, infra, docService.Proc),
 	}
 }
 
@@ -146,7 +146,9 @@ func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(ehrSystemID)
 	r.POST("/register", a.User.Register)
-
+	r.POST("/login", a.User.Login)
+	r.POST("/logout", a.User.Logout)
+	r.GET("/refresh", a.User.RefreshToken)
 	return a
 }
 

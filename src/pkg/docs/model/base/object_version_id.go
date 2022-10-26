@@ -17,7 +17,7 @@ type ObjectVersionID struct {
 	UID *UIDBasedID `json:"uid,omitempty"`
 
 	objectID         uuid.UUID
-	creatingSystemID EhrSystemID
+	creatingSystemID string
 	versionTreeID    string
 	versionBytes     *[32]byte
 }
@@ -30,12 +30,12 @@ const (
 type UID interface {
 	String() string
 	ObjectID() uuid.UUID
-	CreatingSystemID() EhrSystemID
+	CreatingSystemID() string
 	VersionTreeID() string
 	//IsBranch() bool
 }
 
-func NewObjectVersionID(UID string, creatingSystemID EhrSystemID) (*ObjectVersionID, error) {
+func NewObjectVersionID(UID string, creatingSystemID string) (*ObjectVersionID, error) {
 	o := &ObjectVersionID{
 		creatingSystemID: creatingSystemID,
 	}
@@ -50,12 +50,12 @@ func NewObjectVersionID(UID string, creatingSystemID EhrSystemID) (*ObjectVersio
 }
 
 func (o *ObjectVersionID) String() string {
-	uid := []string{o.ObjectID().String(), o.CreatingSystemID().String(), o.VersionString()}
+	uid := []string{o.ObjectID().String(), o.CreatingSystemID(), o.VersionString()}
 	return strings.Join(uid, uidDelimiter)
 }
 
 func (o *ObjectVersionID) BasedID() string {
-	UID := []string{o.ObjectID().String(), o.CreatingSystemID().String()}
+	UID := []string{o.ObjectID().String(), o.CreatingSystemID()}
 	return strings.Join(UID, uidDelimiter)
 }
 
@@ -63,7 +63,7 @@ func (o *ObjectVersionID) ObjectID() uuid.UUID {
 	return o.objectID
 }
 
-func (o *ObjectVersionID) CreatingSystemID() EhrSystemID {
+func (o *ObjectVersionID) CreatingSystemID() string {
 	return o.creatingSystemID
 }
 
@@ -101,7 +101,7 @@ func (o *ObjectVersionID) parseUID(UID string) error {
 	} else if length == 2 {
 		ver := strings.Join(parts[1:2], "")
 		if !o.isVersion(ver) {
-			if !o.creatingSystemID.Equal(ver) {
+			if o.creatingSystemID != ver {
 				return fmt.Errorf("%w creatingSystemID mismatch", errors.ErrIncorrectFormat)
 			}
 
@@ -111,7 +111,7 @@ func (o *ObjectVersionID) parseUID(UID string) error {
 	} else if length == 3 {
 		creatingSystemID := strings.Join(parts[1:2], "")
 
-		if !o.creatingSystemID.Equal(creatingSystemID) {
+		if o.creatingSystemID != creatingSystemID {
 			return fmt.Errorf("%w creatingSystemID mismatch", errors.ErrIncorrectFormat)
 		}
 

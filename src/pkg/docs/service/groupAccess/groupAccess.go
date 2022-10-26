@@ -10,6 +10,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -44,22 +45,7 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 	groupAccess, err := service.Get(ctx, defaultUserID, &groupUUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
-			groupAccess = &model.GroupAccess{
-				GroupUUID:   &groupUUID,
-				Description: "Default access group",
-				Key:         chachaPoly.GenerateKey(),
-				Nonce:       &[12]byte{},
-			}
-
-			if _, err := rand.Read(groupAccess.Nonce[:]); err != nil {
-				log.Fatal(err)
-			}
-
-			if err = service.save(ctx, defaultUserID, groupAccess); err != nil {
-				log.Fatal(err)
-			}
-
-			log.Println("defaultUserID:", defaultUserID)
+			log.Println("Default access group is not registered.")
 		} else {
 			log.Fatal(err)
 		}
@@ -112,7 +98,7 @@ func (s *Service) save(ctx context.Context, userID string, groupAccess *model.Gr
 
 	h := sha3.Sum256(append([]byte(userID), groupAccess.GroupUUID[:]...))
 
-	txHash, err := s.Infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted)
+	txHash, err := s.Infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetGroupAccess error: %w", err)
 	}

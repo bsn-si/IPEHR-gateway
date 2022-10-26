@@ -15,7 +15,6 @@ import (
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 )
@@ -155,16 +154,7 @@ func (d *DefaultDocumentService) GenerateID() string {
 	return uuid.New().String()
 }
 
-func (d *DefaultDocumentService) GetSystemID() base.EhrSystemID {
+func (d *DefaultDocumentService) GetSystemID() string {
 	ehrSystemID, _ := base.NewEhrSystemID(common.EhrSystemID)
-	return ehrSystemID
-}
-
-func (d *DefaultDocumentService) ValidateID(id string, systemID base.EhrSystemID, docType types.DocumentType) bool {
-	if docType == types.Composition {
-		_, err := base.NewObjectVersionID(id, systemID)
-		return err == nil
-	}
-
-	return true
+	return ehrSystemID.String()
 }

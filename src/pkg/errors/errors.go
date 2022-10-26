@@ -26,6 +26,11 @@ var (
 	ErrNotFound         = errors.New("Not found")
 	ErrObjectNotInit    = errors.New("Object is not initialized")
 	ErrIsInProcessing   = errors.New("Request is in processing")
+	ErrIsNotValid       = errors.New("Is not valid")
+	ErrAccessTokenExp   = errors.New("Access token expired")
+	ErrRefreshTokenExp  = errors.New("Refresh token expired")
+	ErrUnauthorized     = errors.New("Unauthorized")
+	ErrAccessDenied     = errors.New("Access denied")
 )
 
 func ErrFieldIsEmpty(name string) error {
