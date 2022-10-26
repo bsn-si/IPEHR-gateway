@@ -41,7 +41,7 @@ type TokenDetails struct {
 type TokenType uint8
 
 type TokenClaims struct {
-	TokenType TokenType `json:"token_type"`
+	TokenType TokenType `json:"type"`
 	jwt.StandardClaims
 }
 
@@ -285,7 +285,6 @@ func (s *Service) VerifyToken(userID, tokenString string, tokenType TokenType) (
 		}
 		return userECDSAKey.Public(), nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("VerifyToken jwt.Parse error: %w", err)
 	}
@@ -299,7 +298,7 @@ func (s *Service) VerifyToken(userID, tokenString string, tokenType TokenType) (
 		return nil, errors.ErrIsNotValid
 	}
 
-	if ok := s.IsTokenInBlackList(tokenString); ok {
+	if s.IsTokenInBlackList(tokenString) {
 		return nil, errors.ErrIsNotValid
 	}
 
@@ -322,18 +321,13 @@ func (s *Service) IsTokenInBlackList(tokenRaw string) bool {
 }
 
 func (s *Service) AddTokenInBlackList(tokenRaw string, expires int64) {
-	at := time.Unix(expires, 0) //converting Unix to UTC(to Time object)
-	now := time.Now()
-
+	at := time.Unix(expires, 0)
 	hash := s.GetTokenHash(tokenRaw)
-
-	s.Cache.Set(hash, nil, at.Sub(now))
+	s.Cache.Set(hash, nil, at.Sub(time.Now()))
 }
 
 func (s *Service) GetTokenHash(tokenRaw string) [32]byte {
-	hash := sha3.Sum256([]byte(tokenRaw))
-
-	return hash
+	return sha3.Sum256([]byte(tokenRaw))
 }
 
 func (s *Service) VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*TokenDetails, error) {
