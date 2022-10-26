@@ -279,9 +279,8 @@ func (s *Service) IsTokenInBlackList(tokenRaw string) bool {
 }
 
 func (s *Service) AddTokenInBlackList(tokenRaw string, expires int64) {
-	at := time.Unix(expires, 0)
 	hash := s.GetTokenHash(tokenRaw)
-	s.Cache.Set(hash, nil, at.Sub(time.Now()))
+	s.Cache.Set(hash, nil, time.Until(time.Unix(expires, 0)))
 }
 
 func (s *Service) GetTokenHash(tokenRaw string) [32]byte {
