@@ -31,11 +31,12 @@ func NewGroupAccessHandler(docService *service.DefaultDocumentService, groupAcce
 // @Tags         GROUP_ACCESS
 // @Accept       json
 // @Produce      json
-// @Param        AuthUserId  header    string                          true  "UserId UUID"
-// @Param        Request     body      model.GroupAccessCreateRequest  true  "DTO with data to create group access"
-// @Success      200         {object}  model.GroupAccess
-// @Failure      400         "Is returned when the request has invalid content."
-// @Failure      500         "Is returned when an unexpected error occurs while processing a request"
+// @Param        Authorization  header    string                          true  "Bearer <JWT>"
+// @Param        AuthUserId     header    string                          true  "UserId UUID"
+// @Param        Request        body      model.GroupAccessCreateRequest  true  "DTO with data to create group access"
+// @Success      200            {object}  model.GroupAccess
+// @Failure      400            "Is returned when the request has invalid content."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /access/group [post]
 func (h *GroupAccessHandler) Create(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
@@ -78,11 +79,12 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 // @Tags         GROUP_ACCESS
 // @Accept       json
 // @Produce      json
-// @Param        group_id    path      string  true  "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        AuthUserId  header    string  true  "UserId UUID"
-// @Success      200         {object}  model.GroupAccess
-// @Failure      400         "Is returned when the request has invalid content."
-// @Failure      500         "Is returned when an unexpected error occurs while processing a request"
+// @Param        group_id       path      string  true  "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        Authorization  header    string  true  "Bearer <JWT>"
+// @Param        AuthUserId     header    string  true  "UserId UUID"
+// @Success      200            {object}  model.GroupAccess
+// @Failure      400            "Is returned when the request has invalid content."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /access/group/{group_id} [get]
 func (h *GroupAccessHandler) Get(c *gin.Context) {
 	groupID := c.Param("group_id")

@@ -36,6 +36,7 @@ type testData struct {
 	namespace    string
 	testUserID   string
 	userPassword string
+	accessToken  string
 }
 
 type testWrap struct {
@@ -71,11 +72,23 @@ func Test_API(t *testing.T) {
 		userPassword: fakeData.GetRandomStringWithLength(10),
 	}
 
-	if !t.Run("User register", testWrap.userRegister(testData)) {
-		t.Fatal()
+	err := testWrap.registerUser(testData.testUserID, testData.userPassword, testData.ehrSystemID)
+	if err != nil {
+		t.Fatalf("Can not register user, err: %v", err)
 	}
+
+	accessToken, err := testWrap.loginUser(testData.testUserID, testData.userPassword, testData.ehrSystemID)
+	if err != nil {
+		t.Fatalf("Can not auth user, err: %v", err)
+	}
+
+	testData.accessToken = accessToken
+
 	// TODO user register incorrect input data
 	// TODO user register duplicate registration request
+	//if !t.Run("User register", testWrap.userRegister(testData)) {
+	//	t.Fatal()
+	//}
 
 	t.Run("User login", testWrap.userLogin(testData))
 
@@ -127,7 +140,10 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	cfg.DefaultUserID = uuid.New().String()
 
 	infra := infrastructure.New(cfg)
-	r := api.New(cfg, infra).Build()
+	apiHandler := api.New(cfg, infra)
+	apiHandler.SetTestMode()
+
+	r := apiHandler.Build()
 	ts = httptest.NewServer(r)
 
 	return ts, storage.Storage()
@@ -194,47 +210,6 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 
 		if response.StatusCode != http.StatusOK {
 			t.Fatalf("GetAllRequests expected %d, received %d", http.StatusOK, response.StatusCode)
-		}
-	}
-}
-
-func (testWrap *testWrap) userRegister(testData *testData) func(t *testing.T) {
-	return func(t *testing.T) {
-		userRegisterRequest, err := userCreateBodyRequest(testData.testUserID, testData.userPassword)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/register", userRegisterRequest)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-		defer response.Body.Close()
-
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			t.Fatalf("Response body read error: %v", err)
-		}
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected %d, received %d body: %s", http.StatusCreated, response.StatusCode, body)
-		}
-
-		requestID := response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", requestID)
-
-		err = requestWait(testData.testUserID, requestID, testWrap)
-		if err != nil {
-			t.Fatal(err)
 		}
 	}
 }
@@ -738,7 +713,6 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 	return func(t *testing.T) {
 		// replace substring in ehrStatusID
 		objectVersionID, err := base.NewObjectVersionID(testEhr.EhrStatus.ID.Value, testData.ehrSystemID)
-
 		if err != nil {
 			log.Fatalf("Expected model.EHR, received %s", err.Error())
 		}
@@ -1715,4 +1689,45 @@ func (testWrap *testWrap) registerUser(userID, userPassword, ehrSystemID string)
 	}
 
 	return nil
+}
+
+func (testWrap *testWrap) loginUser(userID, userPassword, ehrSystemID string) (string, error) {
+	userRegisterRequest, err := userCreateBodyRequest(userID, userPassword)
+	if err != nil {
+		return "", err
+	}
+
+	request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", userRegisterRequest)
+	if err != nil {
+		return "", err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", ehrSystemID)
+
+	response, err := testWrap.httpClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	content, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if err = response.Body.Close(); err != nil {
+		return "", err
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return "", err
+	}
+
+	jwt := model.JWT{}
+	if err = json.Unmarshal(content, &jwt); err != nil {
+		return "", err
+	}
+
+	return jwt.AccessToken, nil
 }

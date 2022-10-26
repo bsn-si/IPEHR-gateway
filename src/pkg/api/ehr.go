@@ -42,17 +42,18 @@ func NewEhrHandler(docService *service.DefaultDocumentService, baseURL string) *
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        AuthUserId   header    string                  true  "UserId UUID"
-// @Param        EhrSystemId  header    string                  true  "The identifier of the system, typically a reverse domain identifier"
-// @Param        Prefer       header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        Request      body      model.EhrCreateRequest  true  "Query Request"
-// @Success      201          {object}  model.EhrSummary
-// @Header       201          {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Header       201          {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Header       201          {string}  RequestID  "Request identifier"
-// @Failure      400          "Is returned when the request body (if provided) could not be parsed."
-// @Failure      409          "Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
-// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
+// @Param        Authorization  header    string                  true  "Bearer <JWT>"
+// @Param        AuthUserId     header    string                  true  "UserId UUID"
+// @Param        EhrSystemId    header    string                  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
+// @Success      201            {object}  model.EhrSummary
+// @Header       201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201            {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201            {string}  RequestID  "Request identifier"
+// @Failure      400            "Is returned when the request body (if provided) could not be parsed."
+// @Failure      409            "Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr [post]
 func (h *EhrHandler) Create(c *gin.Context) {
 	userID := c.GetString("userId")
@@ -140,18 +141,19 @@ func (h *EhrHandler) Create(c *gin.Context) {
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        AuthUserId   header    string                  true  "UserId UUID"
-// @Param        EhrSystemId  header    string                  true  "The identifier of the system, typically a reverse domain identifier"
-// @Param        Prefer       header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        ehr_id       path      string                  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        Request      body      model.EhrCreateRequest  true  "Query Request"
-// @Success      201          {object}  model.EhrSummary
-// @Header       201          {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Header       201          {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Header       201          {string}  RequestID  "Request identifier"
-// @Failure      400          "Is returned when the request body (if provided) could not be parsed."
-// @Failure      409          "Unable to create a new EHR due to a conflict with an already existing EHR. Can happen when the supplied ehr_id is already used by an existing EHR."
-// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
+// @Param        Authorization  header    string                  true  "Bearer <JWT>"
+// @Param        AuthUserId     header    string                  true  "UserId UUID"
+// @Param        EhrSystemId    header    string                  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        ehr_id         path      string                  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
+// @Success      201            {object}  model.EhrSummary
+// @Header       201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201            {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201            {string}  RequestID  "Request identifier"
+// @Failure      400            "Is returned when the request body (if provided) could not be parsed."
+// @Failure      409            "Unable to create a new EHR due to a conflict with an already existing EHR. Can happen when the supplied ehr_id is already used by an existing EHR."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id} [put]
 func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
@@ -240,14 +242,15 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        ehr_id       path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        AuthUserId   header    string  true  "UserId UUID"
-// @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Success      200          {object}  model.EhrSummary
-// @Success      202                "Is returned when the request is still being processed"
-// @Failure      400          "Is returned when userId is empty"
-// @Failure      404          "Is returned when an EHR with ehr_id does not exist."
-// @Failure      500          "Is returned when an unexpected error occurs while processing a request"
+// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        Authorization  header    string  true  "Bearer <JWT>"
+// @Param        AuthUserId     header    string  true  "UserId UUID"
+// @Param        EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Success      200            {object}  model.EhrSummary
+// @Success      202            "Is returned when the request is still being processed"
+// @Failure      400            "Is returned when userId is empty"
+// @Failure      404            "Is returned when an EHR with ehr_id does not exist."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id} [get]
 func (h *EhrHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
@@ -297,10 +300,11 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 // @Produce      json
 // @Param        subject_id         query     string  true  "subject id. Example: ins01"
 // @Param        subject_namespace  query     string  true  "id namespace. Example: examples"
+// @Param        Authorization      header    string  true  "Bearer <JWT>"
 // @Param        AuthUserId         header    string  true  "UserId UUID"
-// @Param        EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary
-// @Success      202          "Is returned when the request is still being processed"
+// @Success      202                "Is returned when the request is still being processed"
 // @Failure      400                "Is returned when userId is empty"
 // @Failure      404                "Is returned when an EHR with ehr_id does not exist."
 // @Router       /ehr [get]

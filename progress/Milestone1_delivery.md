@@ -41,10 +41,10 @@ P.S. For creating a UUID you can use a generator (e.g. [uuid generator](https://
 
 ### Create an EHR
 1. Click `POST /ehr` [Create EHR](https://gateway.ipehr.org/swagger/index.html#/EHR/post_ehr) method
-2. Click `Try it out`
-3. Fill in `AuthUserId` (UUID format e.g. `46f3df9f-817c-4910-825f-92d5ea595c73`), `EhrSystemID` (e.g. `openEHRSys.example.com`)
+1. Click `Try it out`
+1 .Fill in `Authorization` (Bearer <JWT>), `AuthUserId` (UUID format e.g. `46f3df9f-817c-4910-825f-92d5ea595c73`), `EhrSystemID` (e.g. `openEHRSys.example.com`)
    and Prefer `return=representation`
-4. Click `Execute`
+1. Click `Execute`
 
 Result: in the response, you see a created EHR with structured data in JSON format. Also in the response, you see other 
 important information (e.g. fields like `ehr_id`, `ehr_status`, `ehr_access`, `time_created` that help you to work with EHR in
@@ -55,7 +55,7 @@ the future requests)
 ### Create EHR with subject_id and subject_namespace params
 1. Click `PUT /ehr/{ehr_id}` [Create EHR](https://gateway.ipehr.org/swagger/index.html#/EHR/post_ehr) method
 2. Click `Try it out`
-3. Fill in `AuthUserId` (UUID format e.g. `46f3df9f-817c-4910-825f-92d5ea595c73`),
+3. Fill in `Authorization` (Bearer <JWT>), `AuthUserId` (UUID format e.g. `46f3df9f-817c-4910-825f-92d5ea595c73`),
    `EhrSystemID` (e.g. `openEHRSys.example.com`) and specify `ehr_id` (also UUID format)
 4. Change params in `Request` field
     - "subject" -> "external_ref" -> "id" ->  "value" -> put here id (e.g. num123)
@@ -71,7 +71,7 @@ requests). There are no subject_id and subject_space fields, they can be only re
 ### Create EHR with id
 1. Click `PUT /ehr/{ehr_id}` [Create EHR with id](https://gateway.ipehr.org/swagger/index.html#/EHR/put_ehr__ehr_id_) method
 2. Click `Try it out`
-3. Fill in `AuthUserId` (UUID format e.g. 46f3df9f-817c-4910-825f-92d5ea595c73), `Prefer` (return=representation),
+3. Fill in `Authorization` (Bearer <JWT>), `AuthUserId` (UUID format e.g. 46f3df9f-817c-4910-825f-92d5ea595c73), `Prefer` (return=representation),
    `EhrSystemID` (e.g. `openEHRSys.example.com`) and specify `ehr_id` (also UUID format)
 4. Click `Execute`
 
@@ -87,7 +87,7 @@ Precondition: [Create EHR with subject_id and subject_namespace](https://github.
 
 1. Click `/GET ehr/{ehr_id}` [Get EHR summary by subject id](https://gateway.ipehr.org/swagger/index.html#/EHR/get_ehr)
 1. Click `Try it out`
-1. Paste `subject_id`, `subject_namespace` and `AuthUserId` from previously created EHR
+1. Paste `subject_id`, `subject_namespace`, `Authorization` (Bearer <JWT>) and `AuthUserId` from previously created EHR
 1. Click `Execute`
 
 Result: in the response, you see created before EHR with the requested `subject_id` and `subject_namespace`. Here you 
@@ -112,11 +112,11 @@ Result: in the response, you see created before EHR which was found with `ehr_id
 ### Getting info on EHR status version by time
 
 Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project/_edit#create-an-ehr-1) and 
-`ehr_id`, `AuthUserId`,  `Prefer`, and `time_created` (`return=representation`) are copied to a buffer
+`ehr_id`, `Authorization`, `AuthUserId`,  `Prefer`, and `time_created` (`return=representation`) are copied to a buffer
 
 1. Click `/GET ehr/{ehr_id}/ehr_status` [Get EHR_STATUS version by time](https://gateway.ipehr.org/swagger/index.html#/EHR_STATUS/get_ehr__ehr_id__ehr_status)
 2. Click `Try it out`
-3. Fill in `ehr_id`, `AuthUserId`, `Prefer`, and `time_created` (or any other time between creation EHR and current time
+3. Fill in `ehr_id`, `Authorization`, `AuthUserId`, `Prefer`, and `time_created` (or any other time between creation EHR and current time
    in format "2022-06-22T13:26:39.042+00:00") with copied information 
 4. Click `Execute`
 
@@ -127,11 +127,11 @@ Result: in the response, you see the EHR status version by time
 ### Getting info on EHR_STATUS by version id
 
 Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project/_edit#create-an-ehr-1) and 
-ehr_id, AuthUserId, version_id (look at "ehr_status" -> "value") are copied to a buffer
+ehr_id, Authorization, AuthUserId, version_id (look at "ehr_status" -> "value") are copied to a buffer
 
 1. Click `GET /ehr/{ehr_id}/ehr_status/{version_uid}` [Get EHR_STATUS by version id](https://gateway.ipehr.org/swagger/index.html#/EHR_STATUS/get_ehr__ehr_id__ehr_status__version_uid_)
 2. Click `Try it out`
-3. Fill in `ehr_id`, `AuthUserId`, `EhrSystemID`, `version_id` (e.g. `8cf1779d-f050-4be3-a671-579bf277f294::openEHRSys.example.com::1`
+3. Fill in `ehr_id`, `Authorization`, `AuthUserId`, `EhrSystemID`, `version_id` (e.g. `8cf1779d-f050-4be3-a671-579bf277f294::openEHRSys.example.com::1`
    where `::1` is version of EHR, and `openEHRSys.example.com` is your `EhrSystemID`) with copied information 
 4. Click `Execute`
 
@@ -145,11 +145,11 @@ means requested the first version)
 ### Update EHR status
 
 Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project/_edit#create-an-ehr-1) and 
-ehr_id, AuthUserId are copied to a buffer 
+ehr_id, Authorization, AuthUserId are copied to a buffer 
 
 1. Click `/PUT /ehr/{ehr_id}/ehr_status` [Update EHR_STATUS](https://gateway.ipehr.org/swagger/index.html#/EHR_STATUS/put_ehr__ehr_id__ehr_status)
 1. Click `Try it out`
-1. Fill in `AuthUserId` and `EhrSystemID` with copied information 
+1. Fill in `Authorization`, `AuthUserId` and `EhrSystemID` with copied information 
 1. Fill in a new ehr_id according to the UUID format
 1. Fill in `If-Match` with `version_id` (e.g. the current version is `8cf1779d-f050-4be3-a671-579bf277f294::openEHRSys.example.com::1`)
 1. Fill in Request with a body template (also can find it [here](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/ehr.html#ehr_status-ehr_status-put)):
@@ -200,13 +200,13 @@ see that the changed param has a new value
 ### Creates the first version of a new COMPOSITION in the EHR identified by ehr_id
 
 Precondition: [EHR was created](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project/_edit#create-an-ehr-1) and 
-`ehr_id`, `AuthUserId`, and `Prefer` (`return=representation`) are copied to a buffer
+`ehr_id`, `Authorization`, `AuthUserId`, and `Prefer` (`return=representation`) are copied to a buffer
 
 1. Click `/POST /ehr/{ehr_id}/composition` [Create COMPOSITION](https://gateway.ipehr.org/swagger/index.html#/COMPOSITION/post_ehr__ehr_id__composition)
 2. Click `Try it out`
 3. Fill in `EhrSystemID`, for instance if your composition ID will be `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`
    then your `EhrSystemID` is `openEHRSys.example.com`
-4. Fill in `ehr_id`, `AuthUserId` and `Prefer` with copied information 
+4. Fill in `ehr_id`, `Authorization`, `AuthUserId` and `Prefer` with copied information 
 5. In the `Request` put information (body of JSON) from [this](https://media.bsn.si/ipehr/composition.json) file 
 6. Click `Execute`
 
@@ -220,7 +220,7 @@ health_care_facility etc.)
 ### Execute AQL query
 1. Click `/POST query/aql` [Execute ad-hoc (non-stored) AQL query](https://gateway.ipehr.org/swagger/index.html#/QUERY/post_query_aql)
 1. Click `Try it out`
-1. Fill in `AuthUserId`
+1. Fill in `Authorization`, `AuthUserId`
 1. Fill in `Request` with AQL request
 ```json
 {

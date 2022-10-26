@@ -40,6 +40,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -90,6 +97,13 @@ const docTemplate = `{
                         "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "group_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -146,6 +160,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -190,6 +211,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create EHR",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",
@@ -277,6 +305,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -324,6 +359,13 @@ const docTemplate = `{
                 ],
                 "summary": "Create EHR with id",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",
@@ -414,6 +456,13 @@ const docTemplate = `{
                         "description": "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "ehr_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -519,6 +568,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -587,6 +643,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -651,6 +714,13 @@ const docTemplate = `{
                         "description": "identifier of the COMPOSITION to be updated. Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515` + "`" + `",
                         "name": "versioned_object_uid",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -760,6 +830,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -812,6 +889,13 @@ const docTemplate = `{
                         "description": "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
                         "name": "ehr_id",
                         "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
                         "required": true
                     },
                     {
@@ -931,6 +1015,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -982,6 +1073,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
                         "in": "header",
@@ -1030,6 +1128,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get list of transactions requests by authorized user",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",
@@ -1085,6 +1190,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get list of transactions by certain request id for authorized user",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "UserId UUID",

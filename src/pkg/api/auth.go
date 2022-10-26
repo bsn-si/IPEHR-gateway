@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -8,35 +9,33 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func auth(c *gin.Context) {
-	userID := c.Request.Header.Get("AuthUserId")
-	if userID == "" {
-		_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
-		return
+func auth(a *API) func(*gin.Context) {
+	return func(c *gin.Context) {
+		tokenString := c.Request.Header.Get("Authorization")
+		userID := c.Request.Header.Get("AuthUserId")
+
+		if a.IsTestMode() {
+			if userID == "" {
+				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
+				return
+			}
+		} else {
+			if tokenString == "" || userID == "" {
+				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
+				return
+			}
+
+			userService := a.User.service
+			err := userService.VerifyAccess(userID, tokenString)
+			if err != nil {
+				log.Println(err)
+				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
+				return
+			}
+		}
+
+		c.Set("userId", userID)
+
+		c.Next()
 	}
-
-	c.Set("userId", userID)
-
-	/* TODO
-	signature := c.Request.Header.Get("AuthSign")
-	if signature == "" {
-		c.AbortWithError(http.StatusForbidden, errors.AuthorizationError)
-		return
-	}
-
-	if !checkSignature(publicKey, signature) {
-		c.AbortWithError(http.StatusForbidden, errors.AuthorizationError)
-		return
-	}
-	*/
-
-	c.Next()
 }
-
-/*
-func checkSignature(pubKey, signature string) bool {
-	//TODO with NaCl sign
-
-	return true
-}
-*/
