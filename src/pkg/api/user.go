@@ -33,8 +33,7 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Pro
 // @Accept   json
 // @Produce  json
 // @Param    EhrSystemId  header  string                   true  "The identifier of the system, typically a reverse domain identifier"
-// @Param    Request      body    model.UserCreateRequest  true
-// TODO can users register by themselves, or does it have to be an already authorized user?
+// @Param    Request      body    model.UserCreateRequest  true  "User creation request"
 // @Success  201          "Indicates that the request has succeeded and transaction about register new user has been created"
 // @Header   201          {string}  RequestID  "Request identifier"
 // @Failure  400          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
@@ -42,6 +41,8 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Pro
 // @Failure  422          "Password, systemID or role incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/register/ [post]
+
+// TODO can users register by themselves, or does it have to be an already authorized user?
 func (h UserHandler) Register(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -107,8 +108,8 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Param    Request      body    model.UserAuthRequest  true
+// @Param    EhrSystemId  header    string                 true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    Request      body      model.UserAuthRequest  true  "User authentication request"
 // @Success  201          {object}  model.JWT
 // @Failure  404          "User with ID not exist"
 // @Failure  422          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
