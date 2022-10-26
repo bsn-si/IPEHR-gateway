@@ -42,9 +42,15 @@ type EhrIndexerDocumentMeta struct {
 	Timestamp       uint32
 }
 
+// EhrUsersAccess is an auto generated low-level Go binding around an user-defined struct.
+type EhrUsersAccess struct {
+	Level        uint8
+	KeyEncrypted []byte
+}
+
 // EhrIndexerMetaData contains all meta data concerning the EhrIndexer contract.
 var EhrIndexerMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"DocAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"}],\"name\":\"EhrDocAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"EhrSubjectSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"GroupAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"docMeta\",\"type\":\"tuple\"}],\"name\":\"addEhrDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dataSearch\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"nodeType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"nodeID\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"deleteDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"docAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ehrDocs\",\"outputs\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrSubject\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrUsers\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"name\":\"getDocByTime\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"getDocByVersion\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"}],\"name\":\"getDocLastByBaseID\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getEhrDocs\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getLastEhrDocByType\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddr\",\"type\":\"address\"}],\"name\":\"getUserPasswordHash\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"groupAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"setDocAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"setEhrSubject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"setEhrUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"setGroupAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddr\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"pwdHash\",\"type\":\"bytes\"}],\"name\":\"userAdd\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"DocAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"}],\"name\":\"EhrDocAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"EhrSubjectSet\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"indeed\":false,\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"GroupAccessChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"docMeta\",\"type\":\"tuple\"}],\"name\":\"addEhrDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"dataSearch\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"nodeType\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"nodeID\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"deleteDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"docAccess\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"\",\"type\":\"uint8\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ehrDocs\",\"outputs\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrSubject\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrUsers\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"name\":\"getDocByTime\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"getDocByVersion\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"}],\"name\":\"getDocLastByBaseID\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getEhrDocs\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getLastEhrDocByType\",\"outputs\":[{\"components\":[{\"internalType\":\"enumEhrIndexer.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"enumEhrIndexer.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"CID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"dealCID\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"minerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"docUIDEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"internalType\":\"structEhrIndexer.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddr\",\"type\":\"address\"}],\"name\":\"getUserPasswordHash\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"groupAccess\",\"outputs\":[{\"internalType\":\"enumEhrUsers.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"keyEncrypted\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"addingUserAddr\",\"type\":\"address\"},{\"internalType\":\"enumEhrUsers.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"keyEncrypted\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"groupAddUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"description\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"groupCreate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"removingUserAddr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"groupRemoveUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"access\",\"type\":\"bytes\"}],\"name\":\"setDocAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"setEhrSubject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"}],\"name\":\"setEhrUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"key\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumEhrUsers.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"keyEncrypted\",\"type\":\"bytes\"}],\"internalType\":\"structEhrUsers.Access\",\"name\":\"access\",\"type\":\"tuple\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setGroupAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"userAddr\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"systemID\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"pwdHash\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"userAdd\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"userGroups\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"description\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"users\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"systemID\",\"type\":\"bytes32\"},{\"internalType\":\"enumEhrUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"pwdHash\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]x",
 }
 
 // EhrIndexerABI is the input ABI used to generate the binding from.
@@ -635,33 +641,78 @@ func (_EhrIndexer *EhrIndexerCallerSession) GetUserPasswordHash(userAddr common.
 
 // GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
 //
-// Solidity: function groupAccess(bytes32 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerCaller) GroupAccess(opts *bind.CallOpts, arg0 [32]byte) ([]byte, error) {
+// Solidity: function groupAccess(bytes32 ) view returns(uint8 level, bytes keyEncrypted)
+func (_EhrIndexer *EhrIndexerCaller) GroupAccess(opts *bind.CallOpts, arg0 [32]byte) (struct {
+	Level        uint8
+	KeyEncrypted []byte
+}, error) {
 	var out []interface{}
 	err := _EhrIndexer.contract.Call(opts, &out, "groupAccess", arg0)
 
+	outstruct := new(struct {
+		Level        uint8
+		KeyEncrypted []byte
+	})
 	if err != nil {
-		return *new([]byte), err
+		return *outstruct, err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+	outstruct.Level = *abi.ConvertType(out[0], new(uint8)).(*uint8)
+	outstruct.KeyEncrypted = *abi.ConvertType(out[1], new([]byte)).(*[]byte)
+
+	return *outstruct, err
+
+}
+
+// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+//
+// Solidity: function groupAccess(bytes32 ) view returns(uint8 level, bytes keyEncrypted)
+func (_EhrIndexer *EhrIndexerSession) GroupAccess(arg0 [32]byte) (struct {
+	Level        uint8
+	KeyEncrypted []byte
+}, error) {
+	return _EhrIndexer.Contract.GroupAccess(&_EhrIndexer.CallOpts, arg0)
+}
+
+// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+//
+// Solidity: function groupAccess(bytes32 ) view returns(uint8 level, bytes keyEncrypted)
+func (_EhrIndexer *EhrIndexerCallerSession) GroupAccess(arg0 [32]byte) (struct {
+	Level        uint8
+	KeyEncrypted []byte
+}, error) {
+	return _EhrIndexer.Contract.GroupAccess(&_EhrIndexer.CallOpts, arg0)
+}
+
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
+//
+// Solidity: function nonces(address ) view returns(uint256)
+func (_EhrIndexer *EhrIndexerCaller) Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "nonces", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
 
 }
 
-// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function groupAccess(bytes32 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerSession) GroupAccess(arg0 [32]byte) ([]byte, error) {
-	return _EhrIndexer.Contract.GroupAccess(&_EhrIndexer.CallOpts, arg0)
+// Solidity: function nonces(address ) view returns(uint256)
+func (_EhrIndexer *EhrIndexerSession) Nonces(arg0 common.Address) (*big.Int, error) {
+	return _EhrIndexer.Contract.Nonces(&_EhrIndexer.CallOpts, arg0)
 }
 
-// GroupAccess is a free data retrieval call binding the contract method 0xe51ad625.
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
 //
-// Solidity: function groupAccess(bytes32 ) view returns(bytes)
-func (_EhrIndexer *EhrIndexerCallerSession) GroupAccess(arg0 [32]byte) ([]byte, error) {
-	return _EhrIndexer.Contract.GroupAccess(&_EhrIndexer.CallOpts, arg0)
+// Solidity: function nonces(address ) view returns(uint256)
+func (_EhrIndexer *EhrIndexerCallerSession) Nonces(arg0 common.Address) (*big.Int, error) {
+	return _EhrIndexer.Contract.Nonces(&_EhrIndexer.CallOpts, arg0)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
@@ -693,6 +744,92 @@ func (_EhrIndexer *EhrIndexerSession) Owner() (common.Address, error) {
 // Solidity: function owner() view returns(address)
 func (_EhrIndexer *EhrIndexerCallerSession) Owner() (common.Address, error) {
 	return _EhrIndexer.Contract.Owner(&_EhrIndexer.CallOpts)
+}
+
+// UserGroups is a free data retrieval call binding the contract method 0x12fe3162.
+//
+// Solidity: function userGroups(bytes32 ) view returns(bytes description)
+func (_EhrIndexer *EhrIndexerCaller) UserGroups(opts *bind.CallOpts, arg0 [32]byte) ([]byte, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "userGroups", arg0)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
+}
+
+// UserGroups is a free data retrieval call binding the contract method 0x12fe3162.
+//
+// Solidity: function userGroups(bytes32 ) view returns(bytes description)
+func (_EhrIndexer *EhrIndexerSession) UserGroups(arg0 [32]byte) ([]byte, error) {
+	return _EhrIndexer.Contract.UserGroups(&_EhrIndexer.CallOpts, arg0)
+}
+
+// UserGroups is a free data retrieval call binding the contract method 0x12fe3162.
+//
+// Solidity: function userGroups(bytes32 ) view returns(bytes description)
+func (_EhrIndexer *EhrIndexerCallerSession) UserGroups(arg0 [32]byte) ([]byte, error) {
+	return _EhrIndexer.Contract.UserGroups(&_EhrIndexer.CallOpts, arg0)
+}
+
+// Users is a free data retrieval call binding the contract method 0xa87430ba.
+//
+// Solidity: function users(address ) view returns(bytes32 id, bytes32 systemID, uint8 role, bytes pwdHash)
+func (_EhrIndexer *EhrIndexerCaller) Users(opts *bind.CallOpts, arg0 common.Address) (struct {
+	Id       [32]byte
+	SystemID [32]byte
+	Role     uint8
+	PwdHash  []byte
+}, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "users", arg0)
+
+	outstruct := new(struct {
+		Id       [32]byte
+		SystemID [32]byte
+		Role     uint8
+		PwdHash  []byte
+	})
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Id = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	outstruct.SystemID = *abi.ConvertType(out[1], new([32]byte)).(*[32]byte)
+	outstruct.Role = *abi.ConvertType(out[2], new(uint8)).(*uint8)
+	outstruct.PwdHash = *abi.ConvertType(out[3], new([]byte)).(*[]byte)
+
+	return *outstruct, err
+
+}
+
+// Users is a free data retrieval call binding the contract method 0xa87430ba.
+//
+// Solidity: function users(address ) view returns(bytes32 id, bytes32 systemID, uint8 role, bytes pwdHash)
+func (_EhrIndexer *EhrIndexerSession) Users(arg0 common.Address) (struct {
+	Id       [32]byte
+	SystemID [32]byte
+	Role     uint8
+	PwdHash  []byte
+}, error) {
+	return _EhrIndexer.Contract.Users(&_EhrIndexer.CallOpts, arg0)
+}
+
+// Users is a free data retrieval call binding the contract method 0xa87430ba.
+//
+// Solidity: function users(address ) view returns(bytes32 id, bytes32 systemID, uint8 role, bytes pwdHash)
+func (_EhrIndexer *EhrIndexerCallerSession) Users(arg0 common.Address) (struct {
+	Id       [32]byte
+	SystemID [32]byte
+	Role     uint8
+	PwdHash  []byte
+}, error) {
+	return _EhrIndexer.Contract.Users(&_EhrIndexer.CallOpts, arg0)
 }
 
 // AddEhrDoc is a paid mutator transaction binding the contract method 0xf69ffe32.
@@ -735,6 +872,69 @@ func (_EhrIndexer *EhrIndexerSession) DeleteDoc(ehrId [32]byte, docType uint8, d
 // Solidity: function deleteDoc(bytes32 ehrId, uint8 docType, bytes32 docBaseUIDHash, bytes32 version) returns()
 func (_EhrIndexer *EhrIndexerTransactorSession) DeleteDoc(ehrId [32]byte, docType uint8, docBaseUIDHash [32]byte, version [32]byte) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.DeleteDoc(&_EhrIndexer.TransactOpts, ehrId, docType, docBaseUIDHash, version)
+}
+
+// GroupAddUser is a paid mutator transaction binding the contract method 0xb68d6097.
+//
+// Solidity: function groupAddUser(bytes32 groupID, address addingUserAddr, uint8 level, bytes keyEncrypted, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactor) GroupAddUser(opts *bind.TransactOpts, groupID [32]byte, addingUserAddr common.Address, level uint8, keyEncrypted []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "groupAddUser", groupID, addingUserAddr, level, keyEncrypted, nonce, signer, signature)
+}
+
+// GroupAddUser is a paid mutator transaction binding the contract method 0xb68d6097.
+//
+// Solidity: function groupAddUser(bytes32 groupID, address addingUserAddr, uint8 level, bytes keyEncrypted, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerSession) GroupAddUser(groupID [32]byte, addingUserAddr common.Address, level uint8, keyEncrypted []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.GroupAddUser(&_EhrIndexer.TransactOpts, groupID, addingUserAddr, level, keyEncrypted, nonce, signer, signature)
+}
+
+// GroupAddUser is a paid mutator transaction binding the contract method 0xb68d6097.
+//
+// Solidity: function groupAddUser(bytes32 groupID, address addingUserAddr, uint8 level, bytes keyEncrypted, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) GroupAddUser(groupID [32]byte, addingUserAddr common.Address, level uint8, keyEncrypted []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.GroupAddUser(&_EhrIndexer.TransactOpts, groupID, addingUserAddr, level, keyEncrypted, nonce, signer, signature)
+}
+
+// GroupCreate is a paid mutator transaction binding the contract method 0x7168d58a.
+//
+// Solidity: function groupCreate(bytes32 groupID, bytes description, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactor) GroupCreate(opts *bind.TransactOpts, groupID [32]byte, description []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "groupCreate", groupID, description, nonce, signer, signature)
+}
+
+// GroupCreate is a paid mutator transaction binding the contract method 0x7168d58a.
+//
+// Solidity: function groupCreate(bytes32 groupID, bytes description, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerSession) GroupCreate(groupID [32]byte, description []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.GroupCreate(&_EhrIndexer.TransactOpts, groupID, description, nonce, signer, signature)
+}
+
+// GroupCreate is a paid mutator transaction binding the contract method 0x7168d58a.
+//
+// Solidity: function groupCreate(bytes32 groupID, bytes description, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) GroupCreate(groupID [32]byte, description []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.GroupCreate(&_EhrIndexer.TransactOpts, groupID, description, nonce, signer, signature)
+}
+
+// GroupRemoveUser is a paid mutator transaction binding the contract method 0x7ca1ed44.
+//
+// Solidity: function groupRemoveUser(bytes32 groupID, address removingUserAddr, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactor) GroupRemoveUser(opts *bind.TransactOpts, groupID [32]byte, removingUserAddr common.Address, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "groupRemoveUser", groupID, removingUserAddr, nonce, signer, signature)
+}
+
+// GroupRemoveUser is a paid mutator transaction binding the contract method 0x7ca1ed44.
+//
+// Solidity: function groupRemoveUser(bytes32 groupID, address removingUserAddr, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerSession) GroupRemoveUser(groupID [32]byte, removingUserAddr common.Address, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.GroupRemoveUser(&_EhrIndexer.TransactOpts, groupID, removingUserAddr, nonce, signer, signature)
+}
+
+// GroupRemoveUser is a paid mutator transaction binding the contract method 0x7ca1ed44.
+//
+// Solidity: function groupRemoveUser(bytes32 groupID, address removingUserAddr, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) GroupRemoveUser(groupID [32]byte, removingUserAddr common.Address, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.GroupRemoveUser(&_EhrIndexer.TransactOpts, groupID, removingUserAddr, nonce, signer, signature)
 }
 
 // Multicall is a paid mutator transaction binding the contract method 0xac9650d8.
@@ -863,25 +1063,25 @@ func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrUser(userId [32]byte, ehrI
 	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, userId, ehrId)
 }
 
-// SetGroupAccess is a paid mutator transaction binding the contract method 0xe40671ac.
+// SetGroupAccess is a paid mutator transaction binding the contract method 0x0fd699e4.
 //
-// Solidity: function setGroupAccess(bytes32 key, bytes access) returns()
-func (_EhrIndexer *EhrIndexerTransactor) SetGroupAccess(opts *bind.TransactOpts, key [32]byte, access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "setGroupAccess", key, access)
+// Solidity: function setGroupAccess(bytes32 key, (uint8,bytes) access, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactor) SetGroupAccess(opts *bind.TransactOpts, key [32]byte, access EhrUsersAccess, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "setGroupAccess", key, access, nonce, signer, signature)
 }
 
-// SetGroupAccess is a paid mutator transaction binding the contract method 0xe40671ac.
+// SetGroupAccess is a paid mutator transaction binding the contract method 0x0fd699e4.
 //
-// Solidity: function setGroupAccess(bytes32 key, bytes access) returns()
-func (_EhrIndexer *EhrIndexerSession) SetGroupAccess(key [32]byte, access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetGroupAccess(&_EhrIndexer.TransactOpts, key, access)
+// Solidity: function setGroupAccess(bytes32 key, (uint8,bytes) access, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerSession) SetGroupAccess(key [32]byte, access EhrUsersAccess, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetGroupAccess(&_EhrIndexer.TransactOpts, key, access, nonce, signer, signature)
 }
 
-// SetGroupAccess is a paid mutator transaction binding the contract method 0xe40671ac.
+// SetGroupAccess is a paid mutator transaction binding the contract method 0x0fd699e4.
 //
-// Solidity: function setGroupAccess(bytes32 key, bytes access) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) SetGroupAccess(key [32]byte, access []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetGroupAccess(&_EhrIndexer.TransactOpts, key, access)
+// Solidity: function setGroupAccess(bytes32 key, (uint8,bytes) access, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) SetGroupAccess(key [32]byte, access EhrUsersAccess, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetGroupAccess(&_EhrIndexer.TransactOpts, key, access, nonce, signer, signature)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
@@ -905,25 +1105,25 @@ func (_EhrIndexer *EhrIndexerTransactorSession) TransferOwnership(newOwner commo
 	return _EhrIndexer.Contract.TransferOwnership(&_EhrIndexer.TransactOpts, newOwner)
 }
 
-// UserAdd is a paid mutator transaction binding the contract method 0x401aaea1.
+// UserAdd is a paid mutator transaction binding the contract method 0xf58239a8.
 //
-// Solidity: function userAdd(address userAddr, bytes32 id, uint8 role, bytes pwdHash) returns()
-func (_EhrIndexer *EhrIndexerTransactor) UserAdd(opts *bind.TransactOpts, userAddr common.Address, id [32]byte, role uint8, pwdHash []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "userAdd", userAddr, id, role, pwdHash)
+// Solidity: function userAdd(address userAddr, bytes32 id, bytes32 systemID, uint8 role, bytes pwdHash, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactor) UserAdd(opts *bind.TransactOpts, userAddr common.Address, id [32]byte, systemID [32]byte, role uint8, pwdHash []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "userAdd", userAddr, id, systemID, role, pwdHash, nonce, signer, signature)
 }
 
-// UserAdd is a paid mutator transaction binding the contract method 0x401aaea1.
+// UserAdd is a paid mutator transaction binding the contract method 0xf58239a8.
 //
-// Solidity: function userAdd(address userAddr, bytes32 id, uint8 role, bytes pwdHash) returns()
-func (_EhrIndexer *EhrIndexerSession) UserAdd(userAddr common.Address, id [32]byte, role uint8, pwdHash []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.UserAdd(&_EhrIndexer.TransactOpts, userAddr, id, role, pwdHash)
+// Solidity: function userAdd(address userAddr, bytes32 id, bytes32 systemID, uint8 role, bytes pwdHash, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerSession) UserAdd(userAddr common.Address, id [32]byte, systemID [32]byte, role uint8, pwdHash []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.UserAdd(&_EhrIndexer.TransactOpts, userAddr, id, systemID, role, pwdHash, nonce, signer, signature)
 }
 
-// UserAdd is a paid mutator transaction binding the contract method 0x401aaea1.
+// UserAdd is a paid mutator transaction binding the contract method 0xf58239a8.
 //
-// Solidity: function userAdd(address userAddr, bytes32 id, uint8 role, bytes pwdHash) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) UserAdd(userAddr common.Address, id [32]byte, role uint8, pwdHash []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.UserAdd(&_EhrIndexer.TransactOpts, userAddr, id, role, pwdHash)
+// Solidity: function userAdd(address userAddr, bytes32 id, bytes32 systemID, uint8 role, bytes pwdHash, uint256 nonce, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) UserAdd(userAddr common.Address, id [32]byte, systemID [32]byte, role uint8, pwdHash []byte, nonce *big.Int, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.UserAdd(&_EhrIndexer.TransactOpts, userAddr, id, systemID, role, pwdHash, nonce, signer, signature)
 }
 
 // EhrIndexerDocAccessChangedIterator is returned from FilterDocAccessChanged and is used to iterate over the raw logs and unpacked data for DocAccessChanged events raised by the EhrIndexer contract.

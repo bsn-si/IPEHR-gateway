@@ -33,25 +33,25 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) EhrCreate(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
+func (s *Service) EhrCreate(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID string, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
 	return s.EhrCreateWithID(ctx, userID, ehrUUID, ehrSystemID, request, procRequest)
 }
 
-func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
+func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID string, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
 	var ehr model.EHR
 
-	ehr.SystemID.Value = ehrSystemID.String()
+	ehr.SystemID.Value = ehrSystemID
 	ehr.EhrID.Value = ehrUUID.String()
 
 	ehr.EhrAccess.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + ehrSystemID.String() + "::1"
+	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + ehrSystemID + "::1"
 	ehr.EhrAccess.Namespace = "local"
 	ehr.EhrAccess.Type = "EHR_ACCESS"
 
 	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
 
 	// Creating EHR_STATUS
-	ehrStatusID := uuid.New().String() + "::" + ehrSystemID.String() + "::1"
+	ehrStatusID := uuid.New().String() + "::" + ehrSystemID + "::1"
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
@@ -278,13 +278,13 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID string, status *model.EhrStatus) error {
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
 	objectVersionID, err := base.NewObjectVersionID(status.UID.Value, ehrSystemID)
 	if err != nil {
-		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID.String())
+		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID)
 	}
 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
@@ -390,7 +390,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	return nil
 }
 
-func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID base.EhrSystemID, status *model.EhrStatus) error {
+func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID string, status *model.EhrStatus) error {
 	var multiCallTx = s.Infra.Index.MultiCallTxNew()
 
 	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, status); err != nil {

@@ -10,12 +10,10 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
@@ -56,12 +54,9 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, groupAcce
 // @Router   /ehr/{ehr_id}/composition [post]
 func (h *CompositionHandler) Create(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+	ehrSystemID := c.GetString("ehrSystemID")
 
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
+	//TODO validate id
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -110,7 +105,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	var (
 		groupAccessUUID *uuid.UUID
 		groupIDStr      = c.GetHeader("GroupAccessId")
-		reqID           = c.MustGet("reqId").(string)
+		reqID           = c.GetString("reqId")
 	)
 
 	if groupIDStr != "" {
@@ -168,12 +163,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{version_uid} [get]
 func (h *CompositionHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
+	ehrSystemID := c.GetString("ehrSystemID")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -183,10 +173,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("version_uid")
 
-	if !h.service.ValidateID(versionUID, ehrSystemID, types.Composition) {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
+	//TODO validate versionUID
 
 	userID := c.GetString("userId")
 	if userID == "" {
@@ -244,12 +231,9 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
 func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+	ehrSystemID := c.GetString("ehrSystemID")
 
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
+	//TODO validate ehrID
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -258,10 +242,8 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	}
 
 	versionUID := c.Param("preceding_version_uid")
-	if !h.service.ValidateID(versionUID, ehrSystemID, types.Composition) {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
+
+	//TODO validate versionUID
 
 	userID := c.GetString("userId")
 	if userID == "" {
@@ -280,7 +262,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	reqID := c.MustGet("reqId").(string)
+	reqID := c.GetString("reqId")
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionDelete)
 	if err != nil {
@@ -342,12 +324,9 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
+	ehrSystemID := c.GetString("ehrSystemID")
 
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
+	//TODO validate ehrID
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -356,10 +335,8 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	}
 
 	versionUID := c.Param("versioned_object_uid")
-	if !h.service.ValidateID(versionUID, ehrSystemID, types.Composition) {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
+
+	//TODO validate versionUID
 
 	precedingVersionUID := c.GetHeader("If-Match")
 	if precedingVersionUID == "" {
@@ -387,7 +364,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	var (
 		groupAccessUUID *uuid.UUID
 		groupIDStr      = c.GetHeader("GroupAccessId")
-		reqID           = c.MustGet("reqId").(string)
+		reqID           = c.GetString("reqId")
 	)
 
 	if groupIDStr != "" {

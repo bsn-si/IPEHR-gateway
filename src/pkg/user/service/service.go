@@ -48,25 +48,9 @@ type TokenClaims struct {
 const (
 	TokenAccessType TokenType = iota
 	TokenRefreshType
-
-	N            = 1048576
-	r            = 8
-	p            = 1
-	keyLen       = 32
-	saltLenBytes = 16
 )
 
-func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
-	p := processing.New(
-		infra.LocalDB,
-		infra.EthClient,
-		infra.FilecoinClient,
-		infra.IpfsClient,
-		cfg.Storage.Localfile.Path,
-	)
-
-	p.Start()
-
+func NewUserService(cfg *config.Config, infra *infrastructure.Infra, p *processing.Proc) *Service {
 	return &Service{
 		Infra: infra,
 		Proc:  p,
@@ -74,23 +58,18 @@ func NewUserService(cfg *config.Config, infra *infrastructure.Infra) *Service {
 	}
 }
 
-func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest) (err error) {
-	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
-	address, err := s.getUserAddress(user.UserID)
-
+func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error) {
+	_, userPrivateKey, err := s.Infra.Keystore.Get(user.UserID)
 	if err != nil {
-		return fmt.Errorf("getUserAddress error: %w", err)
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, user.UserID)
 	}
 
-	pwdHash, err := s.generateHashFromPassword(ehrSystemID, user.UserID, user.Password)
-
+	pwdHash, err := generateHashFromPassword(systemID, user.UserID, user.Password)
 	if err != nil {
 		return fmt.Errorf("generateHashFromPassword error: %w", err)
 	}
 
-	requestID := ctx.(*gin.Context).GetString("reqId")
-
-	txHash, err := s.Infra.Index.UserAdd(requestID, address, user.UserID, user.Role, pwdHash)
+	txHash, err := s.Infra.Index.UserAdd(ctx, user.UserID, systemID, user.Role, pwdHash, userPrivateKey)
 	if err != nil {
 		return fmt.Errorf("Index.UserAdd error: %w", err)
 	}
@@ -113,7 +92,7 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
-	match, err := s.VerifyPassphrase(ehrSystemID+user.UserID+user.Password, passwordHash)
+	match, err := verifyPassphrase(ehrSystemID+user.UserID+user.Password, passwordHash)
 
 	if err != nil {
 		return fmt.Errorf("VerifyPassphrase error: %w", err)
@@ -126,17 +105,17 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 	return nil
 }
 
-func (s *Service) VerifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
-	keyLenBytes := len(targetKey) - saltLenBytes
+func verifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
+	keyLenBytes := len(targetKey) - common.ScryptSaltLen
 	if keyLenBytes < 1 {
 		return false, errors.New("Invalid targetKey length")
 	}
 	// Get the master_key
 	targetMasterKey := targetKey[:keyLenBytes]
 	// Get the salt
-	salt := targetKey[keyLenBytes : keyLenBytes+saltLenBytes]
+	salt := targetKey[keyLenBytes : keyLenBytes+common.ScryptSaltLen]
 
-	sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, N, r, p, keyLenBytes)
+	sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
 	if err != nil {
 		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
 	}
@@ -162,42 +141,20 @@ func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {
 	return address, nil
 }
 
-func (s *Service) generateHashFromPassword(ehrSystemID, userID, password string) ([]byte, error) {
-	salt, err := s.generateSalt()
-	if err != nil {
-		return nil, fmt.Errorf("s.generateSalt error: %w userID %s, password: %s", err, userID, password)
-	}
-
-	pwdHash, err := s.generateHash(salt, userID, ehrSystemID, password)
-	if err != nil {
-		return nil, fmt.Errorf("s.generateHash error: %w userID %s, password: %s", err, userID, password)
-	}
-
-	// Appending the salt
-	pwdHash = append(pwdHash, salt...)
-
-	return pwdHash, nil
-}
-
-func (s *Service) generateSalt() ([]byte, error) {
-	salt := make([]byte, saltLenBytes)
-
+func generateHashFromPassword(ehrSystemID, userID, password string) ([]byte, error) {
+	salt := make([]byte, common.ScryptSaltLen)
 	if _, err := rand.Read(salt); err != nil {
-		return nil, fmt.Errorf("generateSalt rand.Read error: %w", err)
+		return nil, fmt.Errorf("rand.Read error: %w", err)
 	}
 
-	return salt, nil
-}
+	password = strings.Join([]string{userID, ehrSystemID, password}, "")
 
-func (s *Service) generateHash(salt []byte, phrases ...string) ([]byte, error) {
-	password := strings.Join(phrases, "")
-
-	pwdHash, err := scrypt.Key([]byte(password), salt, N, r, p, keyLen)
+	pwdHash, err := scrypt.Key([]byte(password), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
 	if err != nil {
 		return nil, fmt.Errorf("generateHash scrypt.Key error: %w", err)
 	}
 
-	return pwdHash, nil
+	return append(pwdHash, salt...), nil
 }
 
 func (s *Service) CreateToken(userID string) (*TokenDetails, error) {

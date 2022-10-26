@@ -2,8 +2,10 @@ package indexer
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 	"strings"
 	"sync"
@@ -21,14 +23,13 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/ehrIndexer"
 	"hms/gateway/pkg/storage"
 )
-
-const ExecutionRevertedNFD = "execution reverted: NFD"
 
 type Index struct {
 	sync.RWMutex
@@ -47,6 +48,24 @@ type MultiCallTx struct {
 	kinds []uint8
 	data  [][]byte
 }
+
+const (
+	ExecutionRevertedNFD = "execution reverted: NFD"
+	ExecutionRevertedDNY = "execution reverted: DNY"
+)
+
+var (
+	String, _  = abi.NewType("string", "", nil)
+	Bytes32, _ = abi.NewType("bytes32", "", nil)
+	Bytes, _   = abi.NewType("bytes", "", nil)
+	Uint8, _   = abi.NewType("uint8", "", nil)
+	Uint256, _ = abi.NewType("uint256", "", nil)
+	Address, _ = abi.NewType("address", "", nil)
+	Access, _  = abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{Name: "level", Type: "uint8"},
+		{Name: "keyEncrypted", Type: "bytes"},
+	})
+)
 
 func (i *Index) MultiCallTxNew() *MultiCallTx {
 	return &MultiCallTx{index: i}
@@ -114,12 +133,12 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 	}
 }
 
-func (i *Index) pack(name string, args ...interface{}) (result []byte, err error) {
-	result, err = i.abi.Pack(name, args...)
+func (i *Index) pack(name string, args ...interface{}) ([]byte, error) {
+	result, err := i.abi.Pack(name, args...)
 	if err != nil {
-		return nil, fmt.Errorf("add setEhrUser error: %w", err)
+		return nil, fmt.Errorf("abi.Pack error: %w", err)
 	}
-	return
+	return result, nil
 }
 
 func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (packed []byte, err error) {
@@ -277,11 +296,39 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.
 	return docAccessValue, nil
 }
 
-func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte) (string, error) {
+func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, userPrivKey *[32]byte) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
-	tx, err := i.ehrIndex.SetGroupAccess(i.transactOpts, *key, value)
+	userKey, err := crypto.ToECDSA(userPrivKey[:])
+	if err != nil {
+		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	access := ehrIndexer.EhrUsersAccess{
+		Level:        uint8(access.Owner),
+		KeyEncrypted: value,
+	}
+
+	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, userAddress)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.Nonces error: %w userAddress: %s", err, userAddress.String())
+	}
+
+	nonce.Add(nonce, big.NewInt(1))
+
+	sig, err := makeSignature(
+		userKey,
+		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Access}, {Type: Uint256}},
+		"setGroupAccess", *key, ehrIndexer.EhrUsersAccess{Level: accessLevel, KeyEncrypted: value}, nonce,
+	)
+	if err != nil {
+		return "", fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	tx, err := i.ehrIndex.SetGroupAccess(i.transactOpts, *key, access, nonce, userAddress, sig)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetGroupAccess error: %w", err)
 	}
@@ -292,43 +339,86 @@ func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte)
 func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uuid.UUID) ([]byte, error) {
 	groupAccessIndexKey := sha3.Sum256(append([]byte(userID), groupUUID[:]...))
 
-	callOpts := &bind.CallOpts{
-		Context: ctx,
-	}
-
-	groupAccessValue, err := i.ehrIndex.GroupAccess(callOpts, groupAccessIndexKey)
+	groupAccessValue, err := i.ehrIndex.GroupAccess(&bind.CallOpts{Context: ctx}, groupAccessIndexKey)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.GroupAccess error: %w", err)
 	}
 
-	if len(groupAccessValue) == 0 {
+	if len(groupAccessValue.KeyEncrypted) == 0 {
 		return nil, errors.ErrIsNotExist
 	}
 
-	return groupAccessValue, nil
+	//TODO need refactoring for access
+
+	return groupAccessValue.KeyEncrypted, nil
 }
 
-func (i *Index) UserAdd(requestID string, userAddr common.Address, userID string, role uint8, pwdHash []byte) (string, error) {
-	var uID [32]byte
-
-	copy(uID[:], userID[:])
-
+func (i *Index) UserAdd(ctx context.Context, userID string, systemID string, role uint8, pwdHash []byte, userKey *[32]byte) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
-	tx, err := i.ehrIndex.UserAdd(i.transactOpts, userAddr, uID, role, pwdHash)
+	var uID, sID [32]byte
+
+	copy(uID[:], []byte(userID)[:])
+	copy(sID[:], []byte(systemID)[:])
+
+	userPrivateKey, err := crypto.ToECDSA(userKey[:])
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
-			return "", errors.ErrNotFound
-		} else if err.Error() == "execution reverted: ADL" {
-			return "", errors.ErrAlreadyDeleted
+		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userPrivateKey.PublicKey)
+
+	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, userAddress)
+	if err != nil {
+		return "", fmt.Errorf("ehrIndex.Nonces error: %w userAddress: %s", err, userAddress.String())
+	}
+
+	nonce.Add(nonce, big.NewInt(1))
+
+	sig, err := makeSignature(
+		userPrivateKey,
+		abi.Arguments{{Type: String}, {Type: Address}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}, {Type: Bytes}, {Type: Uint256}},
+		"userAdd", userAddress, uID, sID, big.NewInt(int64(role)), pwdHash, nonce,
+	)
+	if err != nil {
+		return "", fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	//TODO remove userAddr arg, its same as signer
+	tx, err := i.ehrIndex.UserAdd(i.transactOpts, userAddress, uID, sID, role, pwdHash, nonce, userAddress, sig)
+	if err != nil {
+		if err.Error() == ExecutionRevertedDNY {
+			return "", fmt.Errorf("%w userID: %s, userAddr: %s", errors.ErrAccessDenied, userID, userAddress)
 		}
 		return "", fmt.Errorf("ehrIndex.UserAdd error: %w", err)
 	}
 
-	log.Printf("%s UserAdd tx %s nonce %d", requestID, tx.Hash().Hex(), tx.Nonce())
-
 	return tx.Hash().Hex(), nil
+}
+
+func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface{}) ([]byte, error) {
+	data, err := args.Pack(values...)
+	if err != nil {
+		fmt.Println("len", len(values))
+		return nil, fmt.Errorf("args.Pack error: %w", err)
+	}
+
+	hash := crypto.Keccak256Hash(data)
+
+	prefixedHash := crypto.Keccak256Hash(
+		[]byte("\x19Ethereum Signed Message:\n32"),
+		hash.Bytes(),
+	)
+
+	sig, err := crypto.Sign(prefixedHash.Bytes(), pk)
+	if err != nil {
+		return nil, fmt.Errorf("crypto.Sign error: %w", err)
+	}
+
+	sig[64] += 27
+
+	return sig, nil
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {

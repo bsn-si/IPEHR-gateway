@@ -10,7 +10,6 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
@@ -21,29 +20,27 @@ type UserHandler struct {
 	service *service.Service
 }
 
-func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra) *UserHandler {
+func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Proc) *UserHandler {
 	return &UserHandler{
-		service: service.NewUserService(cfg, infra),
+		service: service.NewUserService(cfg, infra, p),
 	}
 }
 
 // Register
-// @Summary      Register user
+// @Summary  Register user
 // @Description
-// @Tags     User
+// @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    userID       body    string  true  "UserId UUID"
-// @Param    password     body    string  true  "Password"
-// @Param    role         body    string  true  ""
-// @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId  header  string                   true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    Request      body    model.UserCreateRequest  true
 // TODO can users register by themselves, or does it have to be an already authorized user?
-// @Success  201         "Indicates that the request has succeeded and transaction about register new user has been created"
-// @Header   201 {string}  RequestID  "Request identifier"
-// @Failure  400         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  409         "User with that userId already exist"
-// @Failure  422         "Password, systemID or role incorrect"
-// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Success  201          "Indicates that the request has succeeded and transaction about register new user has been created"
+// @Header   201          {string}  RequestID  "Request identifier"
+// @Failure  400          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  409          "User with that userId already exist"
+// @Failure  422          "Password, systemID or role incorrect"
+// @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/register/ [post]
 func (h UserHandler) Register(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
@@ -53,11 +50,15 @@ func (h UserHandler) Register(c *gin.Context) {
 	}
 	defer c.Request.Body.Close()
 
-	reqID := c.MustGet("reqId").(string)
-	_ = c.MustGet("ehrSystemID").(base.EhrSystemID)
-
+	reqID := c.GetString("reqId")
 	if reqID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "requestId is empty"})
+		return
+	}
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "EhrSystemId required"})
 		return
 	}
 
@@ -79,7 +80,7 @@ func (h UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Register(c, procRequest, &userCreateRequest)
+	err = h.service.Register(c, procRequest, &userCreateRequest, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
@@ -103,18 +104,17 @@ func (h UserHandler) Register(c *gin.Context) {
 // Login
 // @Summary  Login user
 // @Description
-// @Tags     User
+// @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    userID       body    string  true  "UserId UUID"
-// @Param    password     body    string  true  "Password"
-// @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Success  201         {object}  model.JWT
-// @Failure  404         "User with ID not exist"
-// @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  400         "Password, EhrSystemId or userID incorrect"
-// @Failure  401         "Password or userID incorrect"
-// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Param    EhrSystemId  header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    Request      body    model.UserAuthRequest  true
+// @Success  201          {object}  model.JWT
+// @Failure  404          "User with ID not exist"
+// @Failure  422          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  400          "Password, EhrSystemId or userID incorrect"
+// @Failure  401          "Password or userID incorrect"
+// @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/login/ [post]
 func (h UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
@@ -166,13 +166,13 @@ func (h UserHandler) Login(c *gin.Context) {
 // @Tags     User
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header  string  true  "Bearer <JWT>"
-// @Param    AuthUserId  header  string  true  "UserId - UUID"
-// @Param    Request      body    model.JWT  true  "JWT"
-// @Success  200         "Successfully logged out"
-// @Failure  401         "User unauthorized"
-// @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Param    Authorization  header  string     true  "Bearer <JWT>"
+// @Param    AuthUserId     header  string     true  "UserId - UUID"
+// @Param    Request        body    model.JWT  true  "JWT"
+// @Success  200            "Successfully logged out"
+// @Failure  401            "User unauthorized"
+// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/logout/ [post]
 func (h UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
@@ -209,14 +209,14 @@ func (h UserHandler) Logout(c *gin.Context) {
 // @Tags     User
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header  string  true  "Refresh token: Bearer <JWT>"
-// @Param    AuthUserId  header  string  true  "UserId - UUID"
-// @Param    EhrSystemId  header  string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Success  201         {object}  model.JWT
-// @Failure  401         "User unauthorized"
-// @Failure  404         "User with ID not exist"
-// @Failure  422         "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Param    Authorization  header    string  true  "Bearer <JWT>" "Refresh token"
+// @Param    AuthUserId     header    string  true  "UserId - UUID"
+// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Success  201            {object}  model.JWT
+// @Failure  401            "User unauthorized"
+// @Failure  404            "User with ID not exist"
+// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/refresh/ [get]
 func (h UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")

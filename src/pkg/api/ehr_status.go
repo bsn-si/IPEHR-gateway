@@ -59,13 +59,10 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h *EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-	reqID := c.MustGet("reqId").(string)
+	ehrSystemID := c.GetString("ehrSystemID")
+	reqID := c.GetString("reqId")
 
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
+	//TODO validate ehrID
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -171,12 +168,6 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status [get]
 func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -240,12 +231,7 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.MustGet("ehrSystemID").(base.EhrSystemID)
-
-	if !h.service.ValidateID(ehrID, ehrSystemID, types.Ehr) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
+	ehrSystemID := c.GetString("ehrSystemID")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -255,10 +241,7 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 
 	versionUID := c.Param("versionid")
 
-	if !h.service.ValidateID(versionUID, ehrSystemID, types.EhrStatus) {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
+	//TODO validate versionUID
 
 	userID := c.GetString("userId")
 	if userID == "" {

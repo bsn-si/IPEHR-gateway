@@ -30,6 +30,7 @@ var (
 	ErrAccessTokenExp   = errors.New("Access token expired")
 	ErrRefreshTokenExp  = errors.New("Refresh token expired")
 	ErrUnauthorized     = errors.New("Unauthorized")
+	ErrAccessDenied     = errors.New("Access denied")
 )
 
 func ErrFieldIsEmpty(name string) error {
