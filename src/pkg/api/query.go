@@ -32,14 +32,14 @@ func NewQueryHandler(docService *service.DefaultDocumentService) *QueryHandler {
 // @Tags     QUERY
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header  string  true  "Bearer <JWT>"
-// @Param    AuthUserId  header    string              true  "UserId UUID"
-// @Param    Request     body      model.QueryRequest  true  "Query Request"
-// @Success  200         {object}  model.QueryResponse
-// @Header   201         {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
-// @Failure  400         "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
-// @Failure  408         "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
-// @Failure  500         "Is returned when an unexpected error occurs while processing a request"
+// @Param    Authorization  header    string              true  "Bearer <JWT>"
+// @Param    AuthUserId     header    string              true  "UserId UUID"
+// @Param    Request        body      model.QueryRequest  true  "Query Request"
+// @Success  200            {object}  model.QueryResponse
+// @Header   201            {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+// @Failure  400            "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
+// @Failure  408            "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /query/aql [post]
 func (h QueryHandler) ExecPost(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)

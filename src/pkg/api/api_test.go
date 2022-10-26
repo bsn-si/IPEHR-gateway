@@ -712,9 +712,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 
 	return func(t *testing.T) {
 		// replace substring in ehrStatusID
-		ehrSystemID, _ := base.NewEhrSystemID(testData.ehrSystemID)
-		objectVersionID, err := base.NewObjectVersionID(testEhr.EhrStatus.ID.Value, ehrSystemID)
-
+		objectVersionID, err := base.NewObjectVersionID(testEhr.EhrStatus.ID.Value, testData.ehrSystemID)
 		if err != nil {
 			log.Fatalf("Expected model.EHR, received %s", err.Error())
 		}
@@ -1050,9 +1048,7 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 	}
 
 	return func(t *testing.T) {
-		ehrSystemID, _ := base.NewEhrSystemID(testData.ehrSystemID)
-		objectVersionID, err := base.NewObjectVersionID(testCreateComposition.UID.Value, ehrSystemID)
-
+		objectVersionID, err := base.NewObjectVersionID(testCreateComposition.UID.Value, testData.ehrSystemID)
 		if err != nil {
 			t.Fatal(err)
 		}

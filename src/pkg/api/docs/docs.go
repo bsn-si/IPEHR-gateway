@@ -1240,34 +1240,25 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "USER"
                 ],
                 "summary": "Login user",
                 "parameters": [
-                    {
-                        "description": "UserId UUID",
-                        "name": "userID",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Password",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
                     {
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "description": "User authentication request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UserAuthRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1363,7 +1354,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Refresh token: Bearer \u003cJWT\u003e",
+                        "description": "Bearer \u003cJWT\u003e",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1398,79 +1389,6 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
-        "/user/register/": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Register user",
-                "parameters": [
-                    {
-                        "description": "UserId UUID",
-                        "name": "userID",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Password",
-                        "name": "password",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "The role identifier, cant be patient, doctor and etc. Default: 0 (role patient)",
-                        "name": "role",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Indicates that the request has succeeded and transaction about register new user has been created",
-                        "headers": {
-                            "RequestID": {
-                                "type": "string",
-                                "description": "Request identifier"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-                    },
-                    "409": {
-                        "description": "User with that userId already exist"
-                    },
-                    "422": {
-                        "description": "Password, systemID or role incorrect"
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -1951,6 +1869,17 @@ const docTemplate = `{
                 "rows": {
                     "type": "array",
                     "items": {}
+                }
+            }
+        },
+        "model.UserAuthRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
                 }
             }
         },
