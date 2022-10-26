@@ -5,6 +5,8 @@ COPY config.json config.json
 RUN apk update && \
     apk add --no-cache gcc musl-dev && \
     rm -rf /var/lib/apt/lists/*
+RUN go run ./utils/defaultUserRegister/.
+RUN go run ./utils/defaultGroupAccessRegister/.
 RUN go build -o ./bin/ipehr-gateway cmd/ipehrgw/main.go
 
 FROM alpine:3.16

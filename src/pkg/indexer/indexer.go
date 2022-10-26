@@ -52,6 +52,7 @@ type MultiCallTx struct {
 const (
 	ExecutionRevertedNFD = "execution reverted: NFD"
 	ExecutionRevertedDNY = "execution reverted: DNY"
+	ExecutionRevertedAEX = "execution reverted: AEX"
 )
 
 var (
@@ -388,10 +389,12 @@ func (i *Index) UserAdd(ctx context.Context, userID string, systemID string, rol
 	//TODO remove userAddr arg, its same as signer
 	tx, err := i.ehrIndex.UserAdd(i.transactOpts, userAddress, uID, sID, role, pwdHash, nonce, userAddress, sig)
 	if err != nil {
-		if err.Error() == ExecutionRevertedDNY {
-			return "", fmt.Errorf("%w userID: %s, userAddr: %s", errors.ErrAccessDenied, userID, userAddress)
+		switch err.Error() {
+		case ExecutionRevertedAEX:
+			return "", errors.ErrAlreadyExist
+		default:
+			return "", fmt.Errorf("ehrIndex.UserAdd error: %w", err)
 		}
-		return "", fmt.Errorf("ehrIndex.UserAdd error: %w", err)
 	}
 
 	return tx.Hash().Hex(), nil
@@ -422,14 +425,10 @@ func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
-	callOpts := &bind.CallOpts{
-		Context: ctx,
-	}
-
-	userPasswordHash, err := i.ehrIndex.GetUserPasswordHash(callOpts, userAddr)
+	userPasswordHash, err := i.ehrIndex.GetUserPasswordHash(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
 		if err.Error() == ExecutionRevertedNFD {
-			return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w", errors.ErrNotFound)
+			return nil, errors.ErrNotFound
 		}
 		return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w userAddr %s", err, userAddr.String())
 	}

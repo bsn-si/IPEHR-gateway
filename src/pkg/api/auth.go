@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,7 @@ func auth(a *API) func(*gin.Context) {
 			userService := a.User.service
 			err := userService.VerifyAccess(userID, tokenString)
 			if err != nil {
+				log.Println(err)
 				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
 				return
 			}

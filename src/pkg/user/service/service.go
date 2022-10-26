@@ -71,6 +71,10 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 
 	txHash, err := s.Infra.Index.UserAdd(ctx, user.UserID, systemID, user.Role, pwdHash, userPrivateKey)
 	if err != nil {
+		if errors.Is(err, errors.ErrAlreadyExist) {
+			return err
+		}
+
 		return fmt.Errorf("Index.UserAdd error: %w", err)
 	}
 
@@ -80,22 +84,24 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 }
 
 func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err error) {
-	ehrSystemID := ctx.(*gin.Context).GetString("ehrSystemID")
-	address, err := s.getUserAddress(user.UserID)
+	systemID := ctx.(*gin.Context).GetString("ehrSystemID")
 
+	address, err := s.getUserAddress(user.UserID)
 	if err != nil {
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)
 	}
 
-	passwordHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
+	pwdHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
 	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return err
+		}
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
-	match, err := verifyPassphrase(ehrSystemID+user.UserID+user.Password, passwordHash)
-
+	match, err := verifyPassphrase(user.UserID+systemID+user.Password, pwdHash)
 	if err != nil {
-		return fmt.Errorf("VerifyPassphrase error: %w", err)
+		return fmt.Errorf("verifyPassphrase error: %w", err)
 	}
 
 	if !match {
@@ -105,49 +111,27 @@ func (s *Service) Login(ctx context.Context, user *model.UserAuthRequest) (err e
 	return nil
 }
 
-func verifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
-	keyLenBytes := len(targetKey) - common.ScryptSaltLen
-	if keyLenBytes < 1 {
-		return false, errors.New("Invalid targetKey length")
-	}
-	// Get the master_key
-	targetMasterKey := targetKey[:keyLenBytes]
-	// Get the salt
-	salt := targetKey[keyLenBytes : keyLenBytes+common.ScryptSaltLen]
-
-	sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
-	if err != nil {
-		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
-	}
-
-	return bytes.Equal(sourceMasterKey, targetMasterKey), nil
-}
-
 func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {
 	_, userPrivateKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return eth_common.Address{}, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	privateUserKey := userPrivateKey[:]
-
-	privateKey, err := crypto.ToECDSA(privateUserKey)
+	privateKey, err := crypto.ToECDSA(userPrivateKey[:])
 	if err != nil {
 		return eth_common.Address{}, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
 
-	address := crypto.PubkeyToAddress(privateKey.PublicKey)
-
-	return address, nil
+	return crypto.PubkeyToAddress(privateKey.PublicKey), nil
 }
 
-func generateHashFromPassword(ehrSystemID, userID, password string) ([]byte, error) {
+func generateHashFromPassword(systemID, userID, password string) ([]byte, error) {
 	salt := make([]byte, common.ScryptSaltLen)
 	if _, err := rand.Read(salt); err != nil {
 		return nil, fmt.Errorf("rand.Read error: %w", err)
 	}
 
-	password = strings.Join([]string{userID, ehrSystemID, password}, "")
+	password = userID + systemID + password
 
 	pwdHash, err := scrypt.Key([]byte(password), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
 	if err != nil {
@@ -155,6 +139,23 @@ func generateHashFromPassword(ehrSystemID, userID, password string) ([]byte, err
 	}
 
 	return append(pwdHash, salt...), nil
+}
+
+func verifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
+	keyLenBytes := len(targetKey) - common.ScryptSaltLen
+	if keyLenBytes < 1 {
+		return false, errors.New("Invalid targetKey length")
+	}
+
+	targetMasterKey := targetKey[:keyLenBytes]
+	salt := targetKey[keyLenBytes:]
+
+	sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
+	if err != nil {
+		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
+	}
+
+	return bytes.Equal(sourceMasterKey, targetMasterKey), nil
 }
 
 func (s *Service) CreateToken(userID string) (*TokenDetails, error) {
@@ -212,12 +213,12 @@ func (s *Service) VerifyAccess(userID, tokenString string) error {
 
 	tokenAccess, err := s.VerifyToken(userID, tokenString, TokenAccessType)
 	if err != nil {
-		return errors.ErrAccessTokenExp
+		return fmt.Errorf("VerifyToken error: %w", err)
 	}
 
 	_, err = s.ExtractTokenMetadata(tokenAccess)
 	if err != nil {
-		return errors.ErrUnauthorized
+		return fmt.Errorf("ExtractTokenMetadata error: %w", err)
 	}
 
 	return nil

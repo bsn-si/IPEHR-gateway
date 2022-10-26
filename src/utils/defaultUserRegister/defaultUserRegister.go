@@ -41,7 +41,7 @@ func main() {
 
 	txHash, err := infra.Index.UserAdd(context.Background(), cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, userPrivKey)
 	if err != nil {
-		log.Fatalf("Index.SetGroupAccess error: %v", err)
+		log.Fatalf("Index.UserAdd error: %v", err)
 	}
 
 	_, err = infra.Index.TxWait(context.Background(), txHash)

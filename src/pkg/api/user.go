@@ -145,6 +145,7 @@ func (h UserHandler) Login(c *gin.Context) {
 			return
 		}
 
+		log.Println(err)
 		c.JSON(http.StatusUnauthorized, err.Error())
 		return
 	}
