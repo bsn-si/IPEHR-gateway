@@ -1302,7 +1302,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "USER"
                 ],
                 "summary": "Logout",
                 "parameters": [
@@ -1355,7 +1355,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "USER"
                 ],
                 "summary": "Refresh JWT",
                 "parameters": [
@@ -1396,6 +1396,61 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/register/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "USER"
+                ],
+                "summary": "Register user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "User creation request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UserCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Indicates that the request has succeeded and transaction about register new user has been created",
+                        "headers": {
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+                    },
+                    "409": {
+                        "description": "User with that userId already exist"
+                    },
+                    "422": {
+                        "description": "Password, systemID or role incorrect"
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -1884,6 +1939,20 @@ const docTemplate = `{
             "properties": {
                 "password": {
                     "type": "string"
+                },
+                "userID": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserCreateRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "integer"
                 },
                 "userID": {
                     "type": "string"

@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/indexer"
-	"log"
-
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func main() {
@@ -27,12 +31,29 @@ func main() {
 		log.Fatal(err)
 	}
 
-	index := indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient)
+	index := indexer.New(
+		cfg.Contract.Address,
+		cfg.Contract.PrivKeyPath,
+		ehtClient,
+		cfg.Contract.GasTipCap,
+	)
 
-	address := "<address>"
-
-	_, err = index.SetAllowed(context.Background(), address)
+	key, err := os.ReadFile(cfg.Contract.PrivKeyPath)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	privateKey, err := crypto.HexToECDSA(strings.TrimSpace(string(key)))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	address := crypto.PubkeyToAddress(privateKey.PublicKey)
+
+	txHash, err := index.SetAllowed(context.Background(), address.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("txHash: ", txHash)
 }

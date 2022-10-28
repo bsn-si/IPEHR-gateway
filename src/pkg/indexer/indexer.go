@@ -17,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
@@ -94,7 +93,7 @@ func (m *MultiCallTx) Commit() (string, error) {
 	return tx.Hash().Hex(), nil
 }
 
-func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
+func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
 	ctx := context.Background()
 
 	key, err := os.ReadFile(keyPath)
@@ -124,6 +123,10 @@ func New(contractAddr, keyPath string, client *ethclient.Client) *Index {
 	transactOpts, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if gasTipCap > 0 {
+		transactOpts.GasTipCap = big.NewInt(gasTipCap)
 	}
 
 	return &Index{
@@ -489,8 +492,6 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
 
-	log.Printf("%s DeleteDoc tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
-
 	return tx.Hash().Hex(), nil
 }
 
@@ -502,8 +503,6 @@ func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetAllowed error: %w", err)
 	}
-
-	log.Printf("%s SetAllowed tx %s nonce %d", ctx.(*gin.Context).GetString("reqId"), tx.Hash().Hex(), tx.Nonce())
 
 	return tx.Hash().Hex(), nil
 }

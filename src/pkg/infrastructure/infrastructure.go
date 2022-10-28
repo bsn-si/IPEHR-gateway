@@ -76,13 +76,18 @@ func New(cfg *config.Config) *Infra {
 	}
 
 	return &Infra{
-		LocalDB:            db,
-		Keystore:           ks,
-		HTTPClient:         http.DefaultClient,
-		EthClient:          ehtClient,
-		IpfsClient:         ipfsClient,
-		FilecoinClient:     filecoinClient,
-		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient), //
+		LocalDB:        db,
+		Keystore:       ks,
+		HTTPClient:     http.DefaultClient,
+		EthClient:      ehtClient,
+		IpfsClient:     ipfsClient,
+		FilecoinClient: filecoinClient,
+		Index: indexer.New(
+			cfg.Contract.Address,
+			cfg.Contract.PrivKeyPath,
+			ehtClient,
+			cfg.Contract.GasTipCap,
+		),
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,

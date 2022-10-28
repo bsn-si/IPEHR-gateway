@@ -41,9 +41,8 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Pro
 // @Failure  422          "Password, systemID or role incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/register/ [post]
-
-// TODO can users register by themselves, or does it have to be an already authorized user?
 func (h UserHandler) Register(c *gin.Context) {
+	// TODO can users register by themselves, or does it have to be an already authorized user?
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
@@ -167,7 +166,7 @@ func (h UserHandler) Login(c *gin.Context) {
 // Logout
 // @Summary  Logout
 // @Description
-// @Tags     User
+// @Tags     USER
 // @Accept   json
 // @Produce  json
 // @Param    Authorization  header  string     true  "Bearer <JWT>"
@@ -210,7 +209,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 // RefreshToken
 // @Summary  Refresh JWT
 // @Description
-// @Tags     User
+// @Tags     USER
 // @Accept   json
 // @Produce  json
 // @Param    Authorization  header    string  true  "Bearer <JWT>" "Refresh token"
