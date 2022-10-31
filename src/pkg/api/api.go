@@ -38,7 +38,6 @@ type API struct {
 	GroupAccess *GroupAccessHandler
 	Request     *RequestHandler
 	User        *UserHandler
-	testMode    bool
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -53,16 +52,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),
 		User:        NewUserHandler(cfg, infra, docService.Proc),
-		testMode:    false,
 	}
-}
-
-func (a *API) IsTestMode() bool {
-	return a.testMode
-}
-
-func (a *API) SetTestMode() {
-	a.testMode = true
 }
 
 func (a *API) Build() *gin.Engine {

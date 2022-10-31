@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	proc "hms/gateway/pkg/docs/service/processing"
@@ -41,7 +43,6 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Pro
 // @Failure  422          "Password, systemID or role incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/register/ [post]
-
 // TODO can users register by themselves, or does it have to be an already authorized user?
 func (h UserHandler) Register(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
@@ -93,13 +94,39 @@ func (h UserHandler) Register(c *gin.Context) {
 		return
 	}
 
+	cDone := make(chan bool, 1)
+
+	sub := h.service.Proc.Subscribe(func(mes proc.Message) {
+		if mes.ReqID != reqID {
+			return
+		}
+
+		if mes.Status == proc.StatusSuccess {
+			cDone <- true
+		}
+	})
+
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), common.RegisterRequestTimeout)
+	defer func() {
+		h.service.Proc.Unsubscribe(sub)
+		cancel()
+	}()
+
 	if err := procRequest.Commit(); err != nil {
 		log.Println("User register procRequest commit error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	c.Status(http.StatusCreated)
+	select {
+	case <-ctxTimeout.Done():
+		// TODO what we will do in that case? I mean we already have finished transaction with certain userId...
+		log.Println("User register procRequest timeout: %v", ctxTimeout.Err())
+		c.AbortWithStatus(http.StatusInternalServerError)
+	case <-cDone:
+		c.Status(http.StatusCreated)
+	}
+
 }
 
 // Login

@@ -13,6 +13,7 @@ import (
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/localDB"
+	"hms/gateway/pkg/publisher"
 	"hms/gateway/pkg/storage"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"
@@ -29,6 +30,7 @@ type Infra struct {
 	LocalStorage       storage.Storager
 	Compressor         compressor.Interface
 	CompressionEnabled bool
+	Publisher          *publisher.Publisher
 }
 
 func New(cfg *config.Config) *Infra {
@@ -75,6 +77,8 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
+	newPublisher := publisher.NewPublisher()
+
 	return &Infra{
 		LocalDB:            db,
 		Keystore:           ks,
@@ -82,9 +86,14 @@ func New(cfg *config.Config) *Infra {
 		EthClient:          ehtClient,
 		IpfsClient:         ipfsClient,
 		FilecoinClient:     filecoinClient,
-		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient), //
+		Index:              indexer.New(cfg.Contract.Address, cfg.Contract.PrivKeyPath, ehtClient),
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,
+		Publisher:          newPublisher,
 	}
+}
+
+func (i *Infra) Release() {
+	i.Publisher.Stop()
 }
