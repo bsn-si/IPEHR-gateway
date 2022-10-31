@@ -17,6 +17,7 @@ import (
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/publisher"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"
 )
@@ -36,6 +37,7 @@ type (
 		lockFilecoin     bool
 		localStoragePath string
 		done             chan bool
+		publisher        *publisher.Publisher
 	}
 
 	Retrieve struct {
@@ -144,7 +146,7 @@ func logf(format string, a ...interface{}) {
 	)
 }
 
-func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Client, ipfsClient *ipfs.Client, storagePath string) *Proc {
+func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Client, ipfsClient *ipfs.Client, storagePath string, p *publisher.Publisher) *Proc {
 	return &Proc{
 		db:               db,
 		ethClient:        ethClient,
@@ -153,6 +155,7 @@ func New(db *gorm.DB, ethClient *ethclient.Client, filecoinClient *filecoin.Clie
 		httpClient:       http.DefaultClient,
 		done:             make(chan bool),
 		localStoragePath: storagePath,
+		publisher:        p,
 	}
 }
 
@@ -182,6 +185,45 @@ func (p *Proc) GetRetrieveStatus(CID *cid.Cid) (Status, error) {
 	}
 
 	return ret.Status, nil
+}
+
+type Message struct {
+	ReqID  string
+	Status Status
+}
+
+type subscriber struct {
+	active bool
+	notify *func(sub Message)
+}
+
+func (s *subscriber) Disable() {
+	s.active = false
+}
+
+func (s *subscriber) isActive() bool {
+	return s.active
+}
+
+func (s *subscriber) Notify(msg interface{}) {
+	if !s.isActive() {
+		return
+	}
+
+	(*s.notify)(msg.(Message))
+}
+
+func (p *Proc) Subscribe(f func(sub Message)) *subscriber {
+	sub := subscriber{
+		active: true,
+		notify: &f,
+	}
+	p.publisher.AddSubscriber() <- &sub
+
+	return &sub
+}
+func (p *Proc) Unsubscribe(sub publisher.Subscriber) {
+	p.publisher.RemoveSubscribe() <- sub
 }
 
 func (p *Proc) Start() {
@@ -241,6 +283,7 @@ func (p *Proc) execEthereum() {
 		Select("req_id, hash, status").
 		Where("status IN ?", statuses).
 		Group("hash").
+		// TODO add priority and sort
 		Find(&txs)
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)
@@ -277,6 +320,11 @@ func (p *Proc) execEthereum() {
 
 		if status == tx.Status {
 			continue
+		}
+
+		p.publisher.PublishMessage() <- Message{
+			ReqID:  tx.ReqID,
+			Status: status,
 		}
 
 		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
@@ -353,6 +401,11 @@ func (p *Proc) execFilecoin() {
 
 		if status == tx.Status {
 			continue
+		}
+
+		p.publisher.PublishMessage() <- Message{
+			ReqID:  tx.ReqID,
+			Status: tx.Status,
 		}
 
 		err = p.db.Model(&FileCoinTx{}).Where("deal_c_id", tx.DealCID).Updates(map[string]interface{}{"status": status, "deal_id": dealID}).Error
