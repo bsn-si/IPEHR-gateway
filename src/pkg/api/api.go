@@ -50,7 +50,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
 		Query:       NewQueryHandler(docService),
-		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
+		GroupAccess: NewGroupAccessHandler(groupAccessService, cfg.BaseURL),
 		Request:     NewRequestHandler(docService),
 		User:        NewUserHandler(cfg, infra, docService.Proc),
 		testMode:    false,
@@ -66,6 +66,16 @@ func (a *API) SetTestMode() {
 }
 
 func (a *API) Build() *gin.Engine {
+	return a.setupRouter(
+		a.buildUserAPI(),
+		a.buildEhrAPI(),
+		a.buildGroupAccessAPI(),
+		a.buildQueryAPI(),
+		a.buildRequestsAPI(),
+	)
+}
+
+func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	r := gin.New()
 
 	r.NoRoute(func(c *gin.Context) {
@@ -89,80 +99,79 @@ func (a *API) Build() *gin.Engine {
 	}))
 
 	v1 := r.Group("v1")
-	ehr := v1.Group("ehr")
-	access := v1.Group("access")
-	query := v1.Group("query")
-	requests := v1.Group("requests")
-	user := v1.Group("user")
-
-	a.setRedirections(r).
-		buildUserAPI(user).
-		buildEhrAPI(ehr).
-		buildGroupAccessAPI(access).
-		buildQueryAPI(query).
-		buildRequestsAPI(requests)
+	for _, b := range apiHandlers {
+		b(v1)
+	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
 
-func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	//r.Use(Recovery, app_errors.ErrHandler)
-	r.Use(auth(a))
-	r.Use(ehrSystemID)
-	r.POST("", a.Ehr.Create)
-	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
-	r.PUT("/:ehrid", a.Ehr.CreateWithID)
-	r.GET("/:ehrid", a.Ehr.GetByID)
-	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
-	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
-	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
-	r.POST("/:ehrid/composition", a.Composition.Create)
-	r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
-	r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
-	r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
+type handlerBuilder func(r *gin.RouterGroup)
 
-	return a
+func (a *API) buildEhrAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("ehr")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		//r.Use(Recovery, app_errors.ErrHandler)
+		r.Use(auth(a))
+		r.Use(ehrSystemID)
+		r.POST("", a.Ehr.Create)
+		r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
+		r.PUT("/:ehrid", a.Ehr.CreateWithID)
+		r.GET("/:ehrid", a.Ehr.GetByID)
+		r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
+		r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
+		r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
+		r.POST("/:ehrid/composition", a.Composition.Create)
+		r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
+		r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
+		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
+	}
 }
 
-func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
-	r.GET("/group/:group_id", a.GroupAccess.Get)
-	r.POST("/group", a.GroupAccess.Create)
-
-	return a
+func (a *API) buildGroupAccessAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("access")
+		r.Use(auth(a))
+		r.GET("/group/:group_id", a.GroupAccess.Get)
+		r.POST("/group", a.GroupAccess.Create)
+	}
 }
 
-func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
-	r.POST("/aql", a.Query.ExecPost)
-
-	return a
+func (a *API) buildQueryAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("query")
+		r.Use(auth(a))
+		r.POST("/aql", a.Query.ExecPost)
+	}
 }
 
-func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
-	r.GET("/", a.Request.GetAll)
-	r.GET("/:reqId", a.Request.GetByID)
-
-	return a
+func (a *API) buildRequestsAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("requests")
+		r.Use(auth(a))
+		r.GET("/", a.Request.GetAll)
+		r.GET("/:reqId", a.Request.GetByID)
+	}
 }
 
-func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	r.Use(ehrSystemID)
-	r.POST("/register", a.User.Register)
-	r.POST("/login", a.User.Login)
+func (a *API) buildUserAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("user")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		r.Use(ehrSystemID)
+		r.POST("/register", a.User.Register)
+		r.POST("/login", a.User.Login)
 
-	r.Use(auth(a))
-	r.POST("/logout", a.User.Logout)
-	r.GET("/refresh", a.User.RefreshToken)
-	return a
+		r.Use(auth(a))
+		r.POST("/logout", a.User.Logout)
+		r.GET("/refresh", a.User.RefreshToken)
+	}
 }
 
-func (a *API) setRedirections(r *gin.Engine) *API {
+func setRedirections(r *gin.Engine) *gin.Engine {
 	redirect := func(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "v1/")
 	}
@@ -170,5 +179,5 @@ func (a *API) setRedirections(r *gin.Engine) *API {
 	r.GET("/", redirect)
 	r.HEAD("/", redirect)
 
-	return a
+	return r
 }

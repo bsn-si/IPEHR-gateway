@@ -1,24 +1,27 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/groupAccess"
 )
 
+type GroupAccessService interface {
+	Create(ctx context.Context, userID string, c *model.GroupAccessCreateRequest) (*model.GroupAccess, error)
+	Get(ctx context.Context, userID string, groupAccessUUID *uuid.UUID) (*model.GroupAccess, error)
+}
+
 type GroupAccessHandler struct {
-	service *groupAccess.Service
+	service GroupAccessService
 	baseURL string
 }
 
-func NewGroupAccessHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL string) *GroupAccessHandler {
+func NewGroupAccessHandler(groupAccessService GroupAccessService, baseURL string) *GroupAccessHandler {
 	return &GroupAccessHandler{
 		service: groupAccessService,
 		baseURL: baseURL,
@@ -39,16 +42,12 @@ func NewGroupAccessHandler(docService *service.DefaultDocumentService, groupAcce
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /access/group [post]
 func (h *GroupAccessHandler) Create(c *gin.Context) {
-	data, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-		return
-	}
 	defer c.Request.Body.Close()
 
 	var request model.GroupAccessCreateRequest
 
-	if err = json.Unmarshal(data, &request); err != nil {
+	decoder := json.NewDecoder(c.Request.Body)
+	if err := decoder.Decode(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request decoding error"})
 		return
 	}
