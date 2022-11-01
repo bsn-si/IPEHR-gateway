@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -74,6 +75,8 @@ func Test_API(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Can not register user, err: %v", err)
 	}
+
+	t.Run("User login", testWrap.userLogin(testData))
 
 	accessToken, err := testWrap.loginUser(testData.testUserID, testData.userPassword, testData.ehrSystemID)
 	if err != nil {
@@ -171,7 +174,7 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("Prefer", "return=representation")
 
 		response, err := testWrap.httpClient.Do(request)
@@ -195,7 +198,7 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("Prefer", "return=representation")
 
 		response, err = testWrap.httpClient.Do(request)
@@ -359,7 +362,7 @@ func (testWrap *testWrap) userLogin(testData *testData) func(t *testing.T) {
 					result = false
 				}
 
-				t.Errorf("Test: %s, Expected %d, received %d", data.name, data.statusCode, response.StatusCode)
+				t.Errorf("Test: %s, Expected: %d, received: %d, body: %v", data.name, data.statusCode, response.StatusCode, content)
 
 				continue
 			}
@@ -386,7 +389,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.Header.Set("Prefer", "return=representation")
 
@@ -423,7 +426,7 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 
 func (testWrap *testWrap) ehrCreateWithID(testDataComon *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		testData := testDataComon
+		testData := testData(*testDataComon)
 
 		testData.testUserID = uuid.New().String()
 		testData.userPassword = fakeData.GetRandomStringWithLength(10)
@@ -453,7 +456,7 @@ func (testWrap *testWrap) ehrCreateWithID(testDataComon *testData) func(t *testi
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.Header.Set("Prefer", "return=representation")
 
@@ -511,7 +514,7 @@ func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *testData) func(t 
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -543,7 +546,7 @@ func (testWrap *testWrap) ehrGetByID(testData *testData) func(t *testing.T) {
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -599,7 +602,7 @@ func (testWrap *testWrap) ehrGetBySubject(testData *testData) func(t *testing.T)
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.Header.Set("Prefer", "return=representation")
 
@@ -649,7 +652,7 @@ func (testWrap *testWrap) ehrStatusGet(testData *testData) func(t *testing.T) {
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -699,7 +702,7 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *testData) func(t *
 		q.Add("version_at_time", versionAtTime.Format(common.OpenEhrTimeFormat))
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.URL.RawQuery = q.Encode()
 
@@ -774,7 +777,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("If-Match", testEhr.EhrStatus.ID.Value)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
@@ -823,7 +826,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *testData) func(t *testing.T)
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err = testWrap.httpClient.Do(request)
@@ -859,7 +862,7 @@ func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *test
 	return func(t *testing.T) {
 		ehrID := uuid.New().String()
 
-		body, err := compositionCreateBodyRequest()
+		body, err := compositionCreateBodyRequest(testData.ehrSystemID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -871,7 +874,7 @@ func (testWrap *testWrap) compositionCreateFail(testData *testData) func(t *test
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
@@ -901,7 +904,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 	testGroupAccessID := testGroupAccess.GroupUUID.String()
 
 	return func(t *testing.T) {
-		body, err := compositionCreateBodyRequest()
+		body, err := compositionCreateBodyRequest(testData.ehrSystemID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -915,7 +918,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *testData) func(t *t
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("GroupAccessId", testGroupAccessID)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
@@ -977,7 +980,7 @@ func (testWrap *testWrap) compositionGetByID(testData *testData) func(t *testing
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("GroupAccessId", testGroupAccessID)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
@@ -1027,7 +1030,7 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *testData) func(t *te
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -1078,7 +1081,7 @@ func (testWrap *testWrap) compositionUpdate(testData *testData) func(t *testing.
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("GroupAccessId", testGroupAccessID)
 		request.Header.Set("If-Match", testCreateComposition.ObjectVersionID.String())
 		request.Header.Set("Content-type", "application/json")
@@ -1139,7 +1142,7 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *testData) func(t 
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -1179,7 +1182,7 @@ func (testWrap *testWrap) compositionDeleteByID(testData *testData) func(t *test
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -1232,7 +1235,7 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *testData) func(t *testi
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -1259,7 +1262,7 @@ func (testWrap *testWrap) queryExecPostFail(testData *testData) func(t *testing.
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -1300,7 +1303,7 @@ func ehrCreateBodyRequest() *bytes.Reader {
 	return bytes.NewReader(req)
 }
 
-func compositionCreateBodyRequest() (*bytes.Reader, error) {
+func compositionCreateBodyRequest(ehrSystemID string) (*bytes.Reader, error) {
 	rootDir, err := utils.ProjectRootDir()
 	if err != nil {
 		return nil, err
@@ -1312,6 +1315,20 @@ func compositionCreateBodyRequest() (*bytes.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	compositionID := uuid.New().String()
+
+	objectVersionID, err := base.NewObjectVersionID(compositionID, ehrSystemID)
+	if err != nil {
+		log.Fatalf("Expected model.EHR, received %s", err.Error())
+	}
+
+	_, err = objectVersionID.IncreaseUIDVersion()
+	if err != nil {
+		log.Fatalf("Expected model.EHR, received %s", err.Error())
+	}
+
+	data = []byte(strings.Replace(string(data), "__COMPOSITION_ID__", objectVersionID.String(), 1))
 
 	return bytes.NewReader(data), nil
 }
@@ -1332,7 +1349,7 @@ func (testWrap *testWrap) accessGroupCreate(testData *testData) func(t *testing.
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -1369,7 +1386,7 @@ func (testWrap *testWrap) wrongAccessGroupGetting(testData *testData) func(t *te
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -1404,7 +1421,7 @@ func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing
 		}
 
 		request.Header.Set("AuthUserId", testData.testUserID)
-		request.Header.Set("Authorization", testData.accessToken)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -1442,7 +1459,7 @@ func requestWait(userID, accessToken, requestID string, tw *testWrap) error {
 	request.Header.Set("AuthUserId", userID)
 
 	if accessToken != "" {
-		request.Header.Set("Authorization", accessToken)
+		request.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 
 	timeout := time.Now().Add(2 * time.Minute)
@@ -1497,7 +1514,7 @@ func (testWrap *testWrap) createEhr(userID, ehrSystemID, accessToken string) (eh
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("AuthUserId", userID)
 	request.Header.Set("Prefer", "return=representation")
-	request.Header.Set("Authorization", accessToken)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
 	request.Header.Set("EhrSystemId", ehrSystemID)
 
 	response, err := testWrap.httpClient.Do(request)
@@ -1544,7 +1561,7 @@ func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID, acc
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("Prefer", "return=representation")
 	request.Header.Set("AuthUserId", userID)
-	request.Header.Set("AuthUserId", accessToken)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
 	request.Header.Set("EhrSystemId", ehrSystemID)
 
 	response, err := testWrap.httpClient.Do(request)
@@ -1590,7 +1607,7 @@ func (testWrap *testWrap) createGroupAccess(userID, accessToken string) (*model.
 
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("AuthUserId", userID)
-	request.Header.Set("Authorization", accessToken)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
 
 	response, err := testWrap.httpClient.Do(request)
 
@@ -1629,7 +1646,7 @@ func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess 
 		return composition, nil
 	}
 
-	body, err := compositionCreateBodyRequest()
+	body, err := compositionCreateBodyRequest(ehrSystemID)
 	if err != nil {
 		return nil, err
 	}
@@ -1643,7 +1660,7 @@ func (testWrap *testWrap) createComposition(testEhr *model.EHR, testGroupAccess 
 
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("AuthUserId", userID)
-	request.Header.Set("Authorization", accessToken)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
 	request.Header.Set("GroupAccessId", testGroupAccessID)
 	request.Header.Set("Prefer", "return=representation")
 	request.Header.Set("EhrSystemId", ehrSystemID)

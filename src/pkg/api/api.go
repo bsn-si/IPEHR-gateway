@@ -145,10 +145,10 @@ func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.Use(ehrSystemID)
 	r.POST("/register", a.User.Register)
 	r.POST("/login", a.User.Login)
+	r.GET("/refresh", a.User.RefreshToken)
 
 	r.Use(auth(a))
 	r.POST("/logout", a.User.Logout)
-	r.GET("/refresh", a.User.RefreshToken)
 	return a
 }
 
