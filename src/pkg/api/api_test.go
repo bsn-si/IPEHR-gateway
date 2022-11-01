@@ -90,7 +90,9 @@ func Test_API(t *testing.T) {
 	//	t.Fatal()
 	//}
 
-	t.Run("User login", testWrap.userLogin(testData))
+	if !t.Run("User login", testWrap.userLogin(testData)) {
+		t.Fatal()
+	}
 
 	if !t.Run("EHR creating", testWrap.ehrCreate(testData)) {
 		t.Fatal()
@@ -141,7 +143,7 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 
 	infra := infrastructure.New(cfg)
 	apiHandler := api.New(cfg, infra)
-	apiHandler.SetTestMode()
+	//apiHandler.SetTestMode()
 
 	r := apiHandler.Build()
 	ts = httptest.NewServer(r)
@@ -397,6 +399,8 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 		request.Header.Set("AuthUserId", testData.testUserID)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+		request.Header.Set("", testData.ehrSystemID)
+		request.Header.Set("Authorization", "Bearer "+testData.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -1681,12 +1685,14 @@ func (testWrap *testWrap) registerUser(userID, userPassword, ehrSystemID string)
 		return err
 	}
 
-	requestID := response.Header.Get("RequestId")
+	/*
+		requestID := response.Header.Get("RequestId")
 
-	err = requestWait(userID, requestID, testWrap)
-	if err != nil {
-		return err
-	}
+		err = requestWait(userID, requestID, testWrap)
+		if err != nil {
+			return err
+		}
+	*/
 
 	return nil
 }

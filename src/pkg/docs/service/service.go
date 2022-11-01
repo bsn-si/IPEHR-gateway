@@ -58,28 +58,10 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 		}
 	}
 
-	// Get doc key
-	var docKey *chachaPoly.Key
-	{
-		docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID)
-		if err != nil {
-			return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
-		}
-
-		userPubKey, userPrivateKey, err := d.Infra.Keystore.Get(userID)
-		if err != nil {
-			return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
-		}
-
-		docKeyBytes, err := keybox.OpenAnonymous(docKeyEncr, userPubKey, userPrivateKey)
-		if err != nil {
-			return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
-		}
-
-		docKey, err = chachaPoly.NewKeyFromBytes(docKeyBytes)
-		if err != nil {
-			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
-		}
+	// Get doc access key
+	docKey, err := d.GetDocAccessKey(ctx, userID, CID)
+	if err != nil {
+		return nil, fmt.Errorf("GetDocAccessKey error: %w", err)
 	}
 
 	// Get doc encrypted
@@ -125,6 +107,30 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 	}
 
 	return docDecrypted, nil
+}
+
+func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID string, CID *cid.Cid) (*chachaPoly.Key, error) {
+	docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID)
+	if err != nil {
+		return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
+	}
+
+	userPubKey, userPrivateKey, err := d.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
+	}
+
+	docKeyBytes, err := keybox.OpenAnonymous(docKeyEncr, userPubKey, userPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
+	}
+
+	docKey, err := chachaPoly.NewKeyFromBytes(docKeyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+	}
+
+	return docKey, nil
 }
 
 /* TODO будет на блокчейне

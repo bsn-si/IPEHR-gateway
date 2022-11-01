@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
@@ -62,7 +62,15 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("create status error: %w", err)
 	}
 
-	var multiCallTx = s.Infra.Index.MultiCallTxNew()
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCallTxNew error: %w. userID: %s", err, userID)
+	}
 
 	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, doc)
 	if err != nil {
@@ -171,19 +179,20 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 
 	// Index Access
 	{
-		userPubKey, _, err := s.Infra.Keystore.Get(userID)
+		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 		if err != nil {
 			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 		}
 
-		docAccessValue, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+		accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		packed, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
+		//TODO doctor should create doc for patient
+		packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
@@ -367,19 +376,20 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 
 	// Index Access
 	{
-		userPubKey, _, err := s.Infra.Keystore.Get(userID)
+		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 		if err != nil {
 			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 		}
 
-		docAccessValue, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+		accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		packed, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
+		//TODO doctor should create doc for patient
+		packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}
@@ -391,17 +401,23 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 }
 
 func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID string, status *model.EhrStatus) error {
-	var multiCallTx = s.Infra.Index.MultiCallTxNew()
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("MultiCallTxNew error: %w", err)
+	}
 
 	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, status); err != nil {
-		log.Println("SaveStatus error:", err)
-		return errors.New("EHR_STATUS saving error")
+		return fmt.Errorf("SaveStatus error: %w", err)
 	}
 
 	// TODO i dont like this logic, because in method GetByID we always grab whole data from filecoin, which contain last status id. It need fix it.
 	if err := s.UpdateEhr(ctx, multiCallTx, procRequest, userID, ehrUUID, status); err != nil {
-		log.Println("UpdateEhr error:", err)
-		return errors.New("EHR updating error")
+		return fmt.Errorf("UpdateEhr error: %w", err)
 	}
 
 	txHash, err := multiCallTx.Commit()

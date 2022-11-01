@@ -68,6 +68,7 @@ const (
 	TxSaveEhr
 	TxSaveEhrStatus
 	TxSaveComposition
+	TxUserRegister
 )
 
 var (
@@ -94,6 +95,7 @@ var (
 		TxSaveEhr:            "TxSaveEhr",
 		TxSaveEhrStatus:      "TxSaveEhrStatus",
 		TxSaveComposition:    "TxSaveComposition",
+		TxUserRegister:       "TxUserRegister",
 
 		TxUnknown: "Unknown",
 	}

@@ -34,7 +34,7 @@ func auth(a *API) func(*gin.Context) {
 			}
 		}
 
-		c.Set("userId", userID)
+		c.Set("userID", userID)
 
 		c.Next()
 	}

@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -41,9 +42,18 @@ func NewCompositionService(docService *service.DefaultDocumentService, groupAcce
 func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
 	var (
 		groupAccess = s.groupAccessService.Default()
-		multiCallTx = s.Infra.Index.MultiCallTxNew()
 		err         error
 	)
+
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
+	}
 
 	if groupAccessUUID != nil {
 		groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
@@ -72,9 +82,18 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition) (*model.Composition, error) {
 	var (
 		groupAccess = s.groupAccessService.Default()
-		multiCallTx = s.Infra.Index.MultiCallTxNew()
 		err         error
 	)
+
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
+	}
 
 	if groupAccessUUID != nil {
 		groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
@@ -222,19 +241,19 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 
 	// Index Access
 	{
-		userPubKey, _, err := s.Infra.Keystore.Get(userID)
+		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 		if err != nil {
 			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 		}
 
-		docAccessValue, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+		accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
-		packed, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
+		packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.SetDocAccess error: %w", err)
 		}

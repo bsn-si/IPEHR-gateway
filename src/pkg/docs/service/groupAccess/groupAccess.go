@@ -98,7 +98,7 @@ func (s *Service) save(ctx context.Context, userID string, groupAccess *model.Gr
 
 	h := sha3.Sum256(append([]byte(userID), groupAccess.GroupUUID[:]...))
 
-	txHash, err := s.Infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey)
+	txHash, err := s.Infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey, nil)
 	if err != nil {
 		return fmt.Errorf("Index.SetGroupAccess error: %w", err)
 	}

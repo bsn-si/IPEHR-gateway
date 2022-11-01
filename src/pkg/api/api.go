@@ -36,6 +36,7 @@ type API struct {
 	Composition *CompositionHandler
 	Query       *QueryHandler
 	GroupAccess *GroupAccessHandler
+	DocAccess   *DocAccessHandler
 	Request     *RequestHandler
 	User        *UserHandler
 	testMode    bool
@@ -51,6 +52,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
 		Query:       NewQueryHandler(docService),
 		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
+		DocAccess:   NewDocAccessHandler(docService),
 		Request:     NewRequestHandler(docService),
 		User:        NewUserHandler(cfg, infra, docService.Proc),
 		testMode:    false,
@@ -98,7 +100,7 @@ func (a *API) Build() *gin.Engine {
 	a.setRedirections(r).
 		buildUserAPI(user).
 		buildEhrAPI(ehr).
-		buildGroupAccessAPI(access).
+		buildAccessAPI(access).
 		buildQueryAPI(query).
 		buildRequestsAPI(requests)
 
@@ -127,10 +129,12 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 	return a
 }
 
-func (a *API) buildGroupAccessAPI(r *gin.RouterGroup) *API {
+func (a *API) buildAccessAPI(r *gin.RouterGroup) *API {
 	r.Use(auth(a))
 	r.GET("/group/:group_id", a.GroupAccess.Get)
 	r.POST("/group", a.GroupAccess.Create)
+
+	r.POST("/document/manage", a.DocAccess.Manage)
 
 	return a
 }

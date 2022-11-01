@@ -22,7 +22,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
@@ -46,6 +45,7 @@ type MultiCallTx struct {
 	index *Index
 	kinds []uint8
 	data  [][]byte
+	nonce *big.Int
 }
 
 const (
@@ -67,17 +67,36 @@ var (
 	})
 )
 
-func (i *Index) MultiCallTxNew() *MultiCallTx {
-	return &MultiCallTx{index: i}
+func (i *Index) MultiCallTxNew(ctx context.Context, pk *[32]byte) (*MultiCallTx, error) {
+	userKey, err := crypto.ToECDSA(pk[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	address := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, address)
+	if err != nil {
+		return nil, fmt.Errorf("ehrIndex.Nonces error: %w address: %s", err, address.String())
+	}
+
+	nonce.Add(nonce, big.NewInt(1))
+
+	return &MultiCallTx{index: i, nonce: nonce}, nil
 }
 
 func (m *MultiCallTx) Add(kind uint8, packed []byte) {
 	m.kinds = append(m.kinds, kind)
 	m.data = append(m.data, packed)
+	m.nonce.Add(m.nonce, big.NewInt(1))
 }
 
 func (m *MultiCallTx) GetTxKinds() []uint8 {
 	return m.kinds
+}
+
+func (m *MultiCallTx) Nonce() *big.Int {
+	return m.nonce
 }
 
 func (m *MultiCallTx) Commit() (string, error) {
@@ -91,6 +110,15 @@ func (m *MultiCallTx) Commit() (string, error) {
 	}
 
 	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) SendSingle(ctx context.Context, data []byte) (string, error) {
+	tx, err := i.ehrIndex.Multicall(i.transactOpts, [][]byte{data})
+	if err != nil {
+		return "", fmt.Errorf("Multicall error: %w", err)
+	}
+
+	return tx.Hash().String(), nil
 }
 
 func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
@@ -191,7 +219,7 @@ func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (pack
 
 	packed, err = i.pack("addEhrDoc",
 		eID,
-		(ehrIndexer.EhrIndexerDocumentMeta)(*docMeta),
+		(ehrIndexer.EhrDocsDocumentMeta)(*docMeta),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.AddEhrDoc error: %w", err)
@@ -276,6 +304,7 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
+/*
 func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (packed []byte, err error) {
 	packed, err = i.pack("setDocAccess", *key, value)
 	if err != nil {
@@ -284,23 +313,24 @@ func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (packed []byte, 
 
 	return
 }
+*/
 
 func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.Cid) ([]byte, error) {
-	docAccessIndexKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+	accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
 
 	callOpts := &bind.CallOpts{
 		Context: ctx,
 	}
 
-	docAccessValue, err := i.ehrIndex.DocAccess(callOpts, docAccessIndexKey)
+	access, err := i.ehrIndex.AccessStore(callOpts, accessID)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.DocAccess error: %w", err)
 	}
 
-	return docAccessValue, nil
+	return access.KeyEncrypted, nil
 }
 
-func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, userPrivKey *[32]byte) (string, error) {
+func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, userPrivKey *[32]byte, nonce *big.Int) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -311,22 +341,22 @@ func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte,
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	access := ehrIndexer.EhrUsersAccess{
-		Level:        uint8(access.Owner),
+	access := ehrIndexer.EhrAccessAccess{
+		Level:        accessLevel,
 		KeyEncrypted: value,
 	}
 
-	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, userAddress)
-	if err != nil {
-		return "", fmt.Errorf("ehrIndex.Nonces error: %w userAddress: %s", err, userAddress.String())
+	if nonce == nil {
+		nonce, err = i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, userAddress)
+		if err != nil {
+			return "", fmt.Errorf("ehrIndex.Nonces error: %w address: %s", err, userAddress.String())
+		}
 	}
-
-	nonce.Add(nonce, big.NewInt(1))
 
 	sig, err := makeSignature(
 		userKey,
 		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Access}, {Type: Uint256}},
-		"setGroupAccess", *key, ehrIndexer.EhrUsersAccess{Level: accessLevel, KeyEncrypted: value}, nonce,
+		"setGroupAccess", *key, access, nonce,
 	)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
@@ -343,18 +373,16 @@ func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte,
 func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uuid.UUID) ([]byte, error) {
 	groupAccessIndexKey := sha3.Sum256(append([]byte(userID), groupUUID[:]...))
 
-	groupAccessValue, err := i.ehrIndex.GroupAccess(&bind.CallOpts{Context: ctx}, groupAccessIndexKey)
+	access, err := i.ehrIndex.AccessStore(&bind.CallOpts{Context: ctx}, groupAccessIndexKey)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.GroupAccess error: %w", err)
 	}
 
-	if len(groupAccessValue.KeyEncrypted) == 0 {
+	if len(access.KeyEncrypted) == 0 {
 		return nil, errors.ErrIsNotExist
 	}
 
-	//TODO need refactoring for access
-
-	return groupAccessValue.KeyEncrypted, nil
+	return access.KeyEncrypted, nil
 }
 
 func (i *Index) UserAdd(ctx context.Context, userID string, systemID string, role uint8, pwdHash []byte, userKey *[32]byte) (string, error) {
@@ -430,7 +458,7 @@ func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
 	userPasswordHash, err := i.ehrIndex.GetUserPasswordHash(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
+		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
 		}
 		return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w userAddr %s", err, userAddr.String())

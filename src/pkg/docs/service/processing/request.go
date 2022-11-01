@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+
+	"hms/gateway/pkg/errors"
 )
 
 type (
@@ -63,9 +65,14 @@ const (
 	RequestCompositionGetByID
 	RequestCompositionDelete
 	RequestUserRegister
+	RequestDocAccessSet
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("%w userID is empty", errors.ErrIncorrectRequest)
+	}
+
 	req := &Request{
 		ReqID:   reqID,
 		Kind:    kind,
