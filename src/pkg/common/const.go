@@ -10,9 +10,8 @@ const (
 	FilecoinTxProcAwaitTime   = time.Second * 5
 	JWTExpires                = time.Minute * 15
 	JWTRefreshExpires         = time.Hour * 24 * 7
-
-	CacheCleanerTimeout    = 5 * time.Minute
-	RegisterRequestTimeout = time.Second * 60
+	CacheCleanerTimeout       = 5 * time.Minute
+	RegisterRequestTimeout    = time.Second * 60
 
 	ScryptKeyLen  = 32
 	ScryptSaltLen = 16

@@ -15,7 +15,7 @@ func TestParseEhr(t *testing.T) {
 
 	inJSON, err := os.ReadFile(filePath)
 	if err != nil {
-		t.Fatal("Can't open composition.json file", filePath)
+		t.Fatal("Can't open ehr.json file", filePath)
 	}
 
 	res, err := parser.ParseEhr(inJSON)

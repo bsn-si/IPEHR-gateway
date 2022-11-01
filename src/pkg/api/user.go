@@ -121,7 +121,7 @@ func (h UserHandler) Register(c *gin.Context) {
 	select {
 	case <-ctxTimeout.Done():
 		// TODO what we will do in that case? I mean we already have finished transaction with certain userId...
-		log.Println("User register procRequest timeout: %v", ctxTimeout.Err())
+		log.Println("User register procRequest timeout:", ctxTimeout.Err())
 		c.AbortWithStatus(http.StatusInternalServerError)
 	case <-cDone:
 		c.Status(http.StatusCreated)
