@@ -78,6 +78,7 @@ func (a *API) Build() *gin.Engine {
 func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	r := gin.New()
 
+	setRedirections(r)
 	r.NoRoute(func(c *gin.Context) {
 		c.AbortWithStatus(404)
 	})
