@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -58,14 +59,15 @@ func (h *GroupAccessHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
 	newGroupAccess, err := h.service.Create(c, userID, &request)
 	if err != nil {
+		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Group Access creating error"})
 		return
 	}
@@ -95,9 +97,9 @@ func (h *GroupAccessHandler) Get(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 

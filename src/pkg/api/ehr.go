@@ -56,9 +56,9 @@ func NewEhrHandler(docService *service.DefaultDocumentService, baseURL string) *
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr [post]
 func (h *EhrHandler) Create(c *gin.Context) {
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -185,9 +185,9 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -248,7 +248,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 // @Param        EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrSummary
 // @Success      202            "Is returned when the request is still being processed"
-// @Failure      400            "Is returned when userId is empty"
+// @Failure      400            "Is returned when userID is empty"
 // @Failure      404            "Is returned when an EHR with ehr_id does not exist."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id} [get]
@@ -261,9 +261,9 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -305,7 +305,7 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 // @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary
 // @Success      202                "Is returned when the request is still being processed"
-// @Failure      400                "Is returned when userId is empty"
+// @Failure      400                "Is returned when userID is empty"
 // @Failure      404                "Is returned when an EHR with ehr_id does not exist."
 // @Router       /ehr [get]
 func (h *EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
@@ -319,9 +319,9 @@ func (h *EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 

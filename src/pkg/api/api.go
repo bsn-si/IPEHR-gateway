@@ -39,7 +39,6 @@ type API struct {
 	DocAccess   *DocAccessHandler
 	Request     *RequestHandler
 	User        *UserHandler
-	testMode    bool
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -55,16 +54,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		DocAccess:   NewDocAccessHandler(docService),
 		Request:     NewRequestHandler(docService),
 		User:        NewUserHandler(cfg, infra, docService.Proc),
-		testMode:    false,
 	}
-}
-
-func (a *API) IsTestMode() bool {
-	return a.testMode
-}
-
-func (a *API) SetTestMode() {
-	a.testMode = true
 }
 
 func (a *API) Build() *gin.Engine {
@@ -159,10 +149,10 @@ func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
 	r.Use(ehrSystemID)
 	r.POST("/register", a.User.Register)
 	r.POST("/login", a.User.Login)
+	r.GET("/refresh", a.User.RefreshToken)
 
 	r.Use(auth(a))
 	r.POST("/logout", a.User.Logout)
-	r.GET("/refresh", a.User.RefreshToken)
 	return a
 }
 

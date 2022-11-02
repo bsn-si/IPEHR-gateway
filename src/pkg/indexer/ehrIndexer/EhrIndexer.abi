@@ -105,6 +105,26 @@
           "internalType": "struct EhrDocs.DocumentMeta",
           "name": "docMeta",
           "type": "tuple"
+        },
+        {
+          "internalType": "bytes",
+          "name": "keyEncrypted",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
       "name": "addEhrDoc",
@@ -880,6 +900,21 @@
           "internalType": "bytes32",
           "name": "ehrId",
           "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
       "name": "setEhrSubject",
@@ -898,6 +933,21 @@
           "internalType": "bytes32",
           "name": "ehrId",
           "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
       "name": "setEhrUser",

@@ -6,7 +6,7 @@
   },
   "uid": {
     "_type": "OBJECT_VERSION_ID",
-    "value": "41f6fdb5-9ea5-4bb8-b2fa-21131543f82e::openEHRSys.example.com::1"
+    "value": "__COMPOSITION_ID__"
   },
   "archetype_details": {
     "_type": "ARCHETYPED",

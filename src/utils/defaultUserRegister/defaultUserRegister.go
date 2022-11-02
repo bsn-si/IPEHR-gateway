@@ -39,7 +39,7 @@ func main() {
 		log.Fatalf("generateHashFromPassword error: %v", err)
 	}
 
-	txHash, err := infra.Index.UserAdd(context.Background(), cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, userPrivKey)
+	txHash, err := infra.Index.UserAdd(context.Background(), cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, userPrivKey, nil)
 	if err != nil {
 		log.Fatalf("Index.UserAdd error: %v", err)
 	}

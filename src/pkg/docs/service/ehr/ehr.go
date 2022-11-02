@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
@@ -91,7 +90,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
 	}
 
 	return &ehr, nil
@@ -101,6 +100,11 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
 	if err != nil {
 		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
+	}
+
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
 	docBytes, err := json.Marshal(doc)
@@ -142,7 +146,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 
 	// Index EHR userID -> ehrUUID
 	{
-		packed, err := s.Infra.Index.SetEhrUser(userID, &ehrUUID)
+		packed, err := s.Infra.Index.SetEhrUser(ctx, userID, &ehrUUID, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.SetEhrUser error: %w", err)
 		}
@@ -169,7 +173,12 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(&ehrUUID, docMeta)
+		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, &ehrUUID, docMeta, keyEncrypted, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -178,27 +187,21 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 	}
 
 	// Index Access
-	{
-		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
-		if err != nil {
-			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	/*
+		{
+
+
+			accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+
+			//TODO doctor should create doc for patient
+			packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
+			if err != nil {
+				return fmt.Errorf("Index.SetDocAccess error: %w", err)
+			}
+
+			multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
 		}
-
-		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		}
-
-		accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
-
-		//TODO doctor should create doc for patient
-		packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
-		if err != nil {
-			return fmt.Errorf("Index.SetDocAccess error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
-	}
+	*/
 
 	return nil
 }
@@ -288,6 +291,11 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 }
 
 func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID string, status *model.EhrStatus) error {
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
@@ -338,7 +346,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		subjectID := status.Subject.ExternalRef.ID.Value
 		subjectNamespace := status.Subject.ExternalRef.Namespace
 
-		setSubjectPacked, err := s.Infra.Index.SetSubject(ehrUUID, subjectID, subjectNamespace)
+		setSubjectPacked, err := s.Infra.Index.SetEhrSubject(ctx, ehrUUID, subjectID, subjectNamespace, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.SetSubject error: %w ehrID: %s subjectID: %s subjectNamespace: %s", err, ehrUUID.String(), subjectID, subjectNamespace)
 		}
@@ -366,7 +374,12 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
+		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncrypted, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -375,27 +388,24 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	}
 
 	// Index Access
-	{
-		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
-		if err != nil {
-			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	/*
+		{
+			keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+			if err != nil {
+				return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+			}
+
+			accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+
+			//TODO doctor should create doc for patient
+			packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
+			if err != nil {
+				return fmt.Errorf("Index.SetDocAccess error: %w", err)
+			}
+
+			multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
 		}
-
-		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		}
-
-		accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
-
-		//TODO doctor should create doc for patient
-		packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
-		if err != nil {
-			return fmt.Errorf("Index.SetDocAccess error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
-	}
+	*/
 
 	return nil
 }
@@ -426,7 +436,7 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
 	}
 
 	return nil

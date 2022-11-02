@@ -41,13 +41,6 @@ type Index struct {
 	abi          *abi.ABI
 }
 
-type MultiCallTx struct {
-	index *Index
-	kinds []uint8
-	data  [][]byte
-	nonce *big.Int
-}
-
 const (
 	ExecutionRevertedNFD = "execution reverted: NFD"
 	ExecutionRevertedDNY = "execution reverted: DNY"
@@ -65,61 +58,19 @@ var (
 		{Name: "level", Type: "uint8"},
 		{Name: "keyEncrypted", Type: "bytes"},
 	})
+	DocMeta, _ = abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{Name: "docType", Type: "uint8"},
+		{Name: "status", Type: "uint8"},
+		{Name: "CID", Type: "bytes"},
+		{Name: "dealCID", Type: "bytes"},
+		{Name: "minerAddress", Type: "bytes"},
+		{Name: "docUIDEncrypted", Type: "bytes"},
+		{Name: "docBaseUIDHash", Type: "bytes32"},
+		{Name: "version", Type: "bytes32"},
+		{Name: "isLast", Type: "bool"},
+		{Name: "timestamp", Type: "uint32"},
+	})
 )
-
-func (i *Index) MultiCallTxNew(ctx context.Context, pk *[32]byte) (*MultiCallTx, error) {
-	userKey, err := crypto.ToECDSA(pk[:])
-	if err != nil {
-		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
-	}
-
-	address := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, address)
-	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.Nonces error: %w address: %s", err, address.String())
-	}
-
-	nonce.Add(nonce, big.NewInt(1))
-
-	return &MultiCallTx{index: i, nonce: nonce}, nil
-}
-
-func (m *MultiCallTx) Add(kind uint8, packed []byte) {
-	m.kinds = append(m.kinds, kind)
-	m.data = append(m.data, packed)
-	m.nonce.Add(m.nonce, big.NewInt(1))
-}
-
-func (m *MultiCallTx) GetTxKinds() []uint8 {
-	return m.kinds
-}
-
-func (m *MultiCallTx) Nonce() *big.Int {
-	return m.nonce
-}
-
-func (m *MultiCallTx) Commit() (string, error) {
-	if len(m.data) == 0 {
-		return "", fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
-	}
-
-	tx, err := m.index.ehrIndex.Multicall(m.index.transactOpts, m.data)
-	if err != nil {
-		return "", fmt.Errorf("ehrIndex.Multicall error: %w", err)
-	}
-
-	return tx.Hash().Hex(), nil
-}
-
-func (i *Index) SendSingle(ctx context.Context, data []byte) (string, error) {
-	tx, err := i.ehrIndex.Multicall(i.transactOpts, [][]byte{data})
-	if err != nil {
-		return "", fmt.Errorf("Multicall error: %w", err)
-	}
-
-	return tx.Hash().String(), nil
-}
 
 func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
 	ctx := context.Background()
@@ -173,18 +124,41 @@ func (i *Index) pack(name string, args ...interface{}) ([]byte, error) {
 	return result, nil
 }
 
-func (i *Index) SetEhrUser(userID string, ehrUUID *uuid.UUID) (packed []byte, err error) {
+func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUID, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	var uID, eID [32]byte
 
 	copy(uID[:], []byte(userID))
 	copy(eID[:], ehrUUID[:])
 
-	packed, err = i.pack("setEhrUser", uID, eID)
+	userKey, err := crypto.ToECDSA(privKey[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	if nonce == nil {
+		nonce, err = i.userNonce(ctx, &userAddress)
+		if err != nil {
+			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
+		}
+	}
+
+	sig, err := makeSignature(
+		userKey,
+		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}},
+		"setEhrUser", uID, eID, nonce,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	data, err := i.pack("setEhrUser", uID, eID, nonce, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
 	}
 
-	return packed, err
+	return data, err
 }
 
 func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UUID, error) {
@@ -212,20 +186,46 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	return &ehrUUID, nil
 }
 
-func (i *Index) AddEhrDoc(ehrUUID *uuid.UUID, docMeta *model.DocumentMeta) (packed []byte, err error) {
+func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta, keyEncrypted []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
 
-	packed, err = i.pack("addEhrDoc",
-		eID,
-		(ehrIndexer.EhrDocsDocumentMeta)(*docMeta),
+	userKey, err := crypto.ToECDSA(privKey[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	if nonce == nil {
+		nonce, err = i.userNonce(ctx, &userAddress)
+		if err != nil {
+			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
+		}
+	}
+
+	sig, err := makeSignature(
+		userKey,
+		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: DocMeta}, {Type: Bytes}, {Type: Uint256}},
+		"addEhrDoc", eID, *docMeta, keyEncrypted, nonce,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	data, err := i.pack("addEhrDoc", eID, *docMeta, keyEncrypted, nonce, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.AddEhrDoc error: %w", err)
 	}
 
-	return
+	/*
+		log.Printf("signature: %x", sig)
+		log.Printf("userAddress: %x", userAddress.Bytes())
+		log.Printf("data: %x", data)
+	*/
+
+	return data, nil
 }
 
 func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType) (*model.DocumentMeta, error) {
@@ -238,7 +238,7 @@ func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docTyp
 
 	docMeta, err := i.ehrIndex.GetLastEhrDocByType(callOpts, eID, uint8(docType))
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
+		if strings.Contains(err.Error(), "NFD") {
 			return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w", errors.ErrNotFound)
 		}
 		return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
@@ -257,7 +257,7 @@ func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docT
 
 	docMeta, err := i.ehrIndex.GetDocLastByBaseID(callOpts, eID, uint8(docType), *docBaseUIDHash)
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
+		if strings.Contains(err.Error(), "NFD") {
 			return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w", errors.ErrNotFound)
 		}
 		return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w ehrUUID %s docType %s docBaseUIDHash %x", err, ehrUUID.String(), docType.String(), docBaseUIDHash)
@@ -276,7 +276,7 @@ func (i *Index) GetDocByTime(ctx context.Context, ehrUUID *uuid.UUID, docType ty
 
 	docMeta, err := i.ehrIndex.GetDocByTime(callOpts, eID, uint8(docType), timestamp)
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
+		if strings.Contains(err.Error(), "NFD") {
 			return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w", errors.ErrNotFound)
 		}
 		return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w ehrUUID %s docType %s timestamp %d", err, ehrUUID.String(), docType.String(), timestamp)
@@ -295,7 +295,7 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 
 	docMeta, err := i.ehrIndex.GetDocByVersion(callOpts, eID, uint8(docType), *docBaseUIDHash, *version)
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
+		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
 		}
 		return nil, fmt.Errorf("ehrIndex.GetDocByVersion error: %w ehrUUID %s docType %s docBaseUIDHash %x version %s", err, ehrUUID.String(), docType.String(), docBaseUIDHash, version)
@@ -304,37 +304,44 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-/*
-func (i *Index) SetDocKeyEncrypted(key *[32]byte, value []byte) (packed []byte, err error) {
-	packed, err = i.pack("setDocAccess", *key, value)
+func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.Cid) ([]byte, error) {
+	var uID [32]byte
+
+	copy(uID[:], []byte(userID))
+
+	args := abi.Arguments{{Type: Bytes32}, {Type: Bytes}}
+
+	data, err := args.Pack(uID, CID.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.SetDocAccess error: %w", err)
+		return nil, fmt.Errorf("args.Pack error: %w", err)
 	}
 
-	return
-}
-*/
-
-func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.Cid) ([]byte, error) {
-	accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+	accessID := crypto.Keccak256Hash(data)
 
 	callOpts := &bind.CallOpts{
 		Context: ctx,
 	}
+
+	log.Printf("CID: %x", CID.Bytes())
+	log.Printf("accessID: %x", accessID)
 
 	access, err := i.ehrIndex.AccessStore(callOpts, accessID)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.DocAccess error: %w", err)
 	}
 
+	if len(access.KeyEncrypted) == 0 {
+		return nil, errors.ErrNotFound
+	}
+
 	return access.KeyEncrypted, nil
 }
 
-func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, userPrivKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, privKey *[32]byte, nonce *big.Int) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
-	userKey, err := crypto.ToECDSA(userPrivKey[:])
+	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
@@ -347,9 +354,9 @@ func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte,
 	}
 
 	if nonce == nil {
-		nonce, err = i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, userAddress)
+		nonce, err = i.userNonce(ctx, &userAddress)
 		if err != nil {
-			return "", fmt.Errorf("ehrIndex.Nonces error: %w address: %s", err, userAddress.String())
+			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
@@ -385,52 +392,6 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 	return access.KeyEncrypted, nil
 }
 
-func (i *Index) UserAdd(ctx context.Context, userID string, systemID string, role uint8, pwdHash []byte, userKey *[32]byte) (string, error) {
-	i.Lock()
-	defer i.Unlock()
-
-	var uID, sID [32]byte
-
-	copy(uID[:], []byte(userID)[:])
-	copy(sID[:], []byte(systemID)[:])
-
-	userPrivateKey, err := crypto.ToECDSA(userKey[:])
-	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
-	}
-
-	userAddress := crypto.PubkeyToAddress(userPrivateKey.PublicKey)
-
-	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, userAddress)
-	if err != nil {
-		return "", fmt.Errorf("ehrIndex.Nonces error: %w userAddress: %s", err, userAddress.String())
-	}
-
-	nonce.Add(nonce, big.NewInt(1))
-
-	sig, err := makeSignature(
-		userPrivateKey,
-		abi.Arguments{{Type: String}, {Type: Address}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}, {Type: Bytes}, {Type: Uint256}},
-		"userAdd", userAddress, uID, sID, big.NewInt(int64(role)), pwdHash, nonce,
-	)
-	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
-	}
-
-	//TODO remove userAddr arg, its same as signer
-	tx, err := i.ehrIndex.UserAdd(i.transactOpts, userAddress, uID, sID, role, pwdHash, nonce, userAddress, sig)
-	if err != nil {
-		switch err.Error() {
-		case ExecutionRevertedAEX:
-			return "", errors.ErrAlreadyExist
-		default:
-			return "", fmt.Errorf("ehrIndex.UserAdd error: %w", err)
-		}
-	}
-
-	return tx.Hash().Hex(), nil
-}
-
 func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface{}) ([]byte, error) {
 	data, err := args.Pack(values...)
 	if err != nil {
@@ -455,31 +416,42 @@ func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface
 	return sig, nil
 }
 
-func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
-	userPasswordHash, err := i.ehrIndex.GetUserPasswordHash(&bind.CallOpts{Context: ctx}, userAddr)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, errors.ErrNotFound
-		}
-		return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w userAddr %s", err, userAddr.String())
-	}
-
-	return userPasswordHash, nil
-}
-
-func (i *Index) SetSubject(ehrUUID *uuid.UUID, subjectID, subjectNamespace string) (packed []byte, err error) {
+func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
 
 	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
 
-	packed, err = i.pack("setEhrSubject", subjectKey, eID)
+	userKey, err := crypto.ToECDSA(privKey[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	if nonce == nil {
+		nonce, err = i.userNonce(ctx, &userAddress)
+		if err != nil {
+			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
+		}
+	}
+
+	sig, err := makeSignature(
+		userKey,
+		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}},
+		"setEhrSubject", subjectKey, eID, nonce,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	data, err := i.pack("setEhrSubject", subjectKey, eID, nonce, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.SetSubject error: %w", err)
 	}
 
-	return
+	return data, nil
 }
 
 func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNamespace string) (*uuid.UUID, error) {
@@ -512,9 +484,9 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version)
 	if err != nil {
-		if err.Error() == ExecutionRevertedNFD {
+		if strings.Contains(err.Error(), "NFD") {
 			return "", errors.ErrNotFound
-		} else if err.Error() == "execution reverted: ADL" {
+		} else if strings.Contains(err.Error(), "ADL") {
 			return "", errors.ErrAlreadyDeleted
 		}
 		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())

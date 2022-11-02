@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -73,7 +72,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
 	}
 
 	return composition, nil
@@ -117,7 +116,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
 	}
 
 	// TODO what we should do with prev composition?
@@ -144,6 +143,11 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID string) erro
 }
 
 func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID string, doc *model.Composition) error {
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID, ehrSystemID)
@@ -218,7 +222,12 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
+		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncrypted, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -240,26 +249,18 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	*/
 
 	// Index Access
-	{
-		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
-		if err != nil {
-			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	/*
+		{
+			accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+
+			packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
+			if err != nil {
+				return fmt.Errorf("Index.SetDocAccess error: %w", err)
+			}
+
+			multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
 		}
-
-		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		}
-
-		accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
-
-		packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
-		if err != nil {
-			return fmt.Errorf("Index.SetDocAccess error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
-	}
+	*/
 
 	return nil
 }
@@ -349,7 +350,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
+	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash, false)
 
 	// Waiting for tx processed and pending nonce increased
 	//time.Sleep(common.BlockchainTxProcAwaitTime)

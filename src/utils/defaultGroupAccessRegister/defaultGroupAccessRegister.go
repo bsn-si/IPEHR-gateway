@@ -63,7 +63,9 @@ func main() {
 
 	h := sha3.Sum256(append([]byte(cfg.DefaultUserID), groupUUID[:]...))
 
-	txHash, err := infra.Index.SetGroupAccess(context.Background(), &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey)
+	ctx := context.Background()
+
+	txHash, err := infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey, nil)
 	if err != nil {
 		log.Fatalf("Index.SetGroupAccess error: %v", err)
 	}
