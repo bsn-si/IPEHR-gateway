@@ -1,52 +1,27 @@
 package publisher
 
-import "log"
-
 type Publisher struct {
-	subscribers []Subscriber
+	subscribers map[string]Subscriber
 	addSubCh    chan Subscriber
 	removeSubCh chan Subscriber
-	inMsg       chan interface{}
+	msg         chan interface{}
 	stop        chan struct{}
-
-	addSubHandler    func(Subscriber)
-	removeSubHandler func(Subscriber)
 }
 
-func (p *Publisher) AddSubscriber() chan<- Subscriber {
-	return p.addSubCh
+func (p *Publisher) AddSubscriber(sub Subscriber) {
+	p.addSubCh <- sub
 }
-func (p *Publisher) RemoveSubscribe() chan<- Subscriber {
-	return p.removeSubCh
+
+func (p *Publisher) RemoveSubscribe(sub Subscriber) {
+	p.removeSubCh <- sub
 }
-func (p *Publisher) PublishMessage() chan<- interface{} {
-	return p.inMsg
+
+func (p *Publisher) PublishMessage(msg interface{}) {
+	p.msg <- msg
 }
+
 func (p *Publisher) Stop() {
 	close(p.stop)
-}
-
-func (p *Publisher) onAddSubscriber(sub Subscriber) {
-	if p.addSubHandler != nil {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("panic onAddSubscriber:%v", r)
-			}
-		}()
-
-		p.addSubHandler(sub)
-	}
-}
-func (p *Publisher) onRemoveSubscriber(sub Subscriber) {
-	if p.removeSubHandler != nil {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("panic onRemoveSubscriber:%v", r)
-			}
-		}()
-
-		p.removeSubHandler(sub)
-	}
 }
 
 func (p *Publisher) start() {
@@ -54,21 +29,16 @@ func (p *Publisher) start() {
 		select {
 		case sub := <-p.addSubCh:
 			{
-				p.subscribers = append(p.subscribers, sub)
-				p.onAddSubscriber(sub)
+				p.subscribers[sub.Name()] = sub
 			}
 		case sub := <-p.removeSubCh:
 			{
-				for i, s := range p.subscribers {
-					if sub == s {
-						p.subscribers = append(p.subscribers[:i], p.subscribers[i+1:]...)
-						s.Disable()
-						p.onRemoveSubscriber(sub)
-						break
-					}
+				if s, ok := p.subscribers[sub.Name()]; ok {
+					s.Disable()
+					delete(p.subscribers, sub.Name())
 				}
 			}
-		case msg := <-p.inMsg:
+		case msg := <-p.msg:
 			{
 				for _, sub := range p.subscribers {
 					sub.Notify(msg)
@@ -82,7 +52,7 @@ func (p *Publisher) start() {
 
 				close(p.addSubCh)
 				close(p.removeSubCh)
-				close(p.inMsg)
+				close(p.msg)
 
 				return
 			}
@@ -92,9 +62,10 @@ func (p *Publisher) start() {
 
 func NewPublisher() *Publisher {
 	em := Publisher{
+		subscribers: map[string]Subscriber{},
 		addSubCh:    make(chan Subscriber),
 		removeSubCh: make(chan Subscriber),
-		inMsg:       make(chan interface{}),
+		msg:         make(chan interface{}),
 		stop:        make(chan struct{}),
 	}
 	go em.start()

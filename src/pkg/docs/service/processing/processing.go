@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/filecoin-project/go-fil-markets/retrievalmarket"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
+	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"gorm.io/gorm"
 
@@ -194,15 +195,16 @@ type Message struct {
 
 type subscriber struct {
 	active bool
-	notify *func(sub Message)
-}
-
-func (s *subscriber) Disable() {
-	s.active = false
+	notify func(sub Message)
+	name   string
 }
 
 func (s *subscriber) isActive() bool {
 	return s.active
+}
+
+func (s *subscriber) Disable() {
+	s.active = false
 }
 
 func (s *subscriber) Notify(msg interface{}) {
@@ -210,20 +212,29 @@ func (s *subscriber) Notify(msg interface{}) {
 		return
 	}
 
-	(*s.notify)(msg.(Message))
+	(s.notify)(msg.(Message))
 }
 
-func (p *Proc) Subscribe(f func(sub Message)) *subscriber {
+func (s *subscriber) Name() string {
+	return s.name
+}
+
+func (p *Proc) NewSubscriber(f func(mes Message)) publisher.Subscriber {
 	sub := subscriber{
 		active: true,
-		notify: &f,
+		notify: f,
+		name:   uuid.New().String(),
 	}
-	p.publisher.AddSubscriber() <- &sub
 
 	return &sub
 }
+
+func (p *Proc) Subscribe(sub publisher.Subscriber) {
+	p.publisher.AddSubscriber(sub)
+}
+
 func (p *Proc) Unsubscribe(sub publisher.Subscriber) {
-	p.publisher.RemoveSubscribe() <- sub
+	p.publisher.RemoveSubscribe(sub)
 }
 
 func (p *Proc) Start() {
@@ -322,10 +333,10 @@ func (p *Proc) execEthereum() {
 			continue
 		}
 
-		p.publisher.PublishMessage() <- Message{
+		p.publisher.PublishMessage(Message{
 			ReqID:  tx.ReqID,
 			Status: status,
-		}
+		})
 
 		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
 			logf("db.Update error: %v", result.Error)
@@ -403,10 +414,10 @@ func (p *Proc) execFilecoin() {
 			continue
 		}
 
-		p.publisher.PublishMessage() <- Message{
+		p.publisher.PublishMessage(Message{
 			ReqID:  tx.ReqID,
 			Status: tx.Status,
-		}
+		})
 
 		err = p.db.Model(&FileCoinTx{}).Where("deal_c_id", tx.DealCID).Updates(map[string]interface{}{"status": status, "deal_id": dealID}).Error
 		if err != nil {

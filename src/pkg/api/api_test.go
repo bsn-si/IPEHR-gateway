@@ -424,9 +424,11 @@ func (testWrap *testWrap) ehrCreate(testData *testData) func(t *testing.T) {
 	}
 }
 
-func (testWrap *testWrap) ehrCreateWithID(testDataComon *testData) func(t *testing.T) {
+func (testWrap *testWrap) ehrCreateWithID(testDataCommon *testData) func(t *testing.T) {
 	return func(t *testing.T) {
-		testData := testData(*testDataComon)
+		testData := testData{
+			ehrSystemID: testDataCommon.ehrSystemID,
+		}
 
 		testData.testUserID = uuid.New().String()
 		testData.userPassword = fakeData.GetRandomStringWithLength(10)

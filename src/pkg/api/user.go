@@ -96,7 +96,7 @@ func (h UserHandler) Register(c *gin.Context) {
 
 	cDone := make(chan bool, 1)
 
-	sub := h.service.Proc.Subscribe(func(mes proc.Message) {
+	sub := h.service.Proc.NewSubscriber(func(mes proc.Message) {
 		if mes.ReqID != reqID {
 			return
 		}
@@ -105,6 +105,8 @@ func (h UserHandler) Register(c *gin.Context) {
 			cDone <- true
 		}
 	})
+
+	h.service.Proc.Subscribe(sub)
 
 	ctxTimeout, cancel := context.WithTimeout(context.Background(), common.RegisterRequestTimeout)
 	defer func() {
@@ -126,7 +128,6 @@ func (h UserHandler) Register(c *gin.Context) {
 	case <-cDone:
 		c.Status(http.StatusCreated)
 	}
-
 }
 
 // Login
