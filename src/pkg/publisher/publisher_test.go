@@ -1,8 +1,10 @@
-package publisher
+package publisher_test
 
 import (
 	"sync"
 	"testing"
+
+	"hms/gateway/pkg/publisher"
 )
 
 type mockSubscriber struct {
@@ -18,14 +20,14 @@ func (s *mockSubscriber) Disable() {
 }
 
 func TestPublisher(t *testing.T) {
-	pub := NewPublisher()
+	pub := publisher.NewPublisher()
 
 	var testFunNotify func(string)
 
 	t.Run("AddSubscriber", func(t *testing.T) {
 		cntSub := 50
 		wg := sync.WaitGroup{}
-		pub.addSubHandler = func(s Subscriber) {
+		pub.AddSubHandler = func(s publisher.Subscriber) {
 			wg.Done()
 		}
 
@@ -37,7 +39,7 @@ func TestPublisher(t *testing.T) {
 					testNotify: &testFunNotify,
 				}
 
-				pub.addSubCh <- &sub
+				pub.AddSubCh <- &sub
 			}()
 		}
 

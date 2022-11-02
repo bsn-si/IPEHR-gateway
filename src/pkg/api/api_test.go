@@ -33,7 +33,7 @@ import (
 
 const (
 	reqKindEhrCreate = iota
-	reqKindUserRegister
+	//reqKindUserRegister
 )
 
 type User struct {
@@ -52,10 +52,6 @@ type Request struct {
 	user *User
 }
 
-type GroupAccess struct {
-	id string
-}
-
 type TestData struct {
 	ehrSystemID  string
 	users        []*User
@@ -67,11 +63,6 @@ type testWrap struct {
 	server     *httptest.Server
 	httpClient *http.Client
 	storage    *storage.Storager
-}
-
-type ehrContainer struct {
-	ehr       *model.EHR
-	requestID string
 }
 
 func Test_API(t *testing.T) {
@@ -434,9 +425,11 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				statusCode: http.StatusOK,
 			},
 		}
-		var jwt model.JWT
 
-		result := true
+		var (
+			jwt    model.JWT
+			result = true
+		)
 
 		for _, data := range tests {
 			payload := getReaderJSONFrom(data.request)
@@ -997,6 +990,7 @@ func (testWrap *testWrap) compositionCreateFail(testData *TestData) func(t *test
 		}
 
 		url := testWrap.server.URL + "/v1/ehr/" + ehrID + "/composition"
+
 		request, err := http.NewRequest(http.MethodPost, url, body)
 		if err != nil {
 			t.Fatal(err)
@@ -1021,15 +1015,6 @@ func (testWrap *testWrap) compositionCreateFail(testData *TestData) func(t *test
 }
 
 func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *testing.T) {
-	/*
-		testGroupAccess, err := testWrap.createGroupAccess(testData.testUserID, testData.accessToken)
-		if err != nil {
-			log.Fatalf("Expected model.GroupAccess, received %s", err.Error())
-		}
-
-		testGroupAccessID := testGroupAccess.GroupUUID.String()
-	*/
-
 	return func(t *testing.T) {
 		if len(testData.users) == 0 {
 			t.Fatal("Test user required")
@@ -1096,13 +1081,6 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 }
 
 func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing.T) {
-	/*
-		testCreateComposition, err := testWrap.createComposition(testEhr, testGroupAccess, testData.testUserID, testData.ehrSystemID, testData.accessToken)
-		if err != nil {
-			log.Fatalf("Expected model.Composition, received %s", err.Error())
-		}
-	*/
-
 	return func(t *testing.T) {
 		if len(testData.users) == 0 {
 			t.Fatal("Test user required")
@@ -1123,6 +1101,7 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 		comp := user.compositions[0]
 
 		url := testWrap.server.URL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.UID.Value
+
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -1160,18 +1139,6 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 }
 
 func (testWrap *testWrap) compositionGetByWrongID(testData *TestData) func(t *testing.T) {
-	/*
-		testEhr, _, err := testWrap.createEhr(testData.testUserID, testData.ehrSystemID, testData.accessToken)
-		if err != nil {
-			log.Fatalf("Expected model.EHR, received %s", err.Error())
-		}
-
-		_, err = testWrap.createGroupAccess(testData.testUserID, testData.accessToken)
-		if err != nil {
-			log.Fatalf("Expected model.GroupAccess, received %s", err.Error())
-		}
-	*/
-
 	return func(t *testing.T) {
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")

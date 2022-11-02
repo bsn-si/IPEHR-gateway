@@ -9,8 +9,8 @@ type Publisher struct {
 	inMsg       chan interface{}
 	stop        chan struct{}
 
-	addSubHandler    func(Subscriber)
-	removeSubHandler func(Subscriber)
+	AddSubHandler    func(Subscriber)
+	RemoveSubHandler func(Subscriber)
 }
 
 func (p *Publisher) AddSubscriber() chan<- Subscriber {
@@ -27,25 +27,25 @@ func (p *Publisher) Stop() {
 }
 
 func (p *Publisher) onAddSubscriber(sub Subscriber) {
-	if p.addSubHandler != nil {
+	if p.AddSubHandler != nil {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("panic onAddSubscriber:%v", r)
 			}
 		}()
 
-		p.addSubHandler(sub)
+		p.AddSubHandler(sub)
 	}
 }
 func (p *Publisher) onRemoveSubscriber(sub Subscriber) {
-	if p.removeSubHandler != nil {
+	if p.RemoveSubHandler != nil {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("panic onRemoveSubscriber:%v", r)
 			}
 		}()
 
-		p.removeSubHandler(sub)
+		p.RemoveSubHandler(sub)
 	}
 }
 
