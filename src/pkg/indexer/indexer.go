@@ -322,9 +322,6 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.
 		Context: ctx,
 	}
 
-	log.Printf("CID: %x", CID.Bytes())
-	log.Printf("accessID: %x", accessID)
-
 	access, err := i.ehrIndex.AccessStore(callOpts, accessID)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.DocAccess error: %w", err)

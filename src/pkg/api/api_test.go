@@ -43,7 +43,7 @@ type User struct {
 	refreshToken string
 	ehrID        string
 	ehrStatusID  string
-	compositions []model.Composition
+	compositions []*model.Composition
 }
 
 type Request struct {
@@ -79,6 +79,7 @@ func Test_API(t *testing.T) {
 
 	testData := &TestData{
 		ehrSystemID: common.EhrSystemID,
+		//nolint
 		users: []*User{
 			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
 			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
@@ -983,33 +984,11 @@ func (testWrap *testWrap) compositionCreateFail(testData *TestData) func(t *test
 		user := testData.users[0]
 
 		ehrID := uuid.New().String()
+		groupAccessID := ""
 
-		body, err := compositionCreateBodyRequest(testData.ehrSystemID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		url := testWrap.server.URL + "/v1/ehr/" + ehrID + "/composition"
-
-		request, err := http.NewRequest(http.MethodPost, url, body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", user.id)
-		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-		request.Header.Set("Prefer", "return=representation")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-		defer response.Body.Close()
-
-		if response.StatusCode == http.StatusCreated {
-			t.Fatalf("Expected error, received status: %d", response.StatusCode)
+		composition, _, err := createComposition(user.id, ehrID, testData.ehrSystemID, user.accessToken, groupAccessID, testWrap.server.URL, testWrap.httpClient)
+		if err == nil {
+			t.Fatalf("Expected error, received status: %v", composition)
 		}
 	}
 }
@@ -1028,50 +1007,14 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 
 		ga := testData.groupsAccess[0]
 
-		body, err := compositionCreateBodyRequest(testData.ehrSystemID)
+		c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, ga.GroupUUID.String(), testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("Expected composition, received error: %v", err)
 		}
 
-		url := testWrap.server.URL + "/v1/ehr/" + user.ehrID + "/composition"
+		t.Logf("Waiting for request %s done", reqID)
 
-		request, err := http.NewRequest(http.MethodPost, url, body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", user.id)
-		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-		request.Header.Set("GroupAccessId", ga.GroupUUID.String())
-		request.Header.Set("Prefer", "return=representation")
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-		defer response.Body.Close()
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected success, received status: %d", response.StatusCode)
-		}
-
-		data, err := io.ReadAll(response.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		var c model.Composition
-		if err = json.Unmarshal(data, &c); err != nil {
-			t.Fatal(err)
-		}
-
-		requestID := response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", requestID)
-
-		err = requestWait(user.id, user.accessToken, requestID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1474,45 +1417,12 @@ func (testWrap *testWrap) accessGroupCreate(testData *TestData) func(t *testing.
 
 		user := testData.users[0]
 
-		description := fakeData.GetRandomStringWithLength(50)
-
-		req := []byte(`{
-			"description": "` + description + `"
-		}`)
-
-		url := testWrap.server.URL + "/v1/access/group"
-
-		request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(req))
+		ga, err := createGroupAccess(user.id, user.accessToken, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
-			t.Error(err)
-			return
+			t.Fatalf("Expected group access, received error: %v", err)
 		}
 
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", user.id)
-		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-		defer response.Body.Close()
-
-		data, err := io.ReadAll(response.Body)
-		if err != nil {
-			t.Fatalf("Response body read error: %v", err)
-		}
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected %d, received %d body: %s", http.StatusCreated, response.StatusCode, data)
-		}
-
-		var groupAccess model.GroupAccess
-		if err = json.Unmarshal(data, &groupAccess); err != nil {
-			t.Fatal(err)
-		}
-
-		testData.groupsAccess = append(testData.groupsAccess, &groupAccess)
+		testData.groupsAccess = append(testData.groupsAccess, ga)
 	}
 }
 
@@ -1777,17 +1687,17 @@ func createGroupAccess(userID, accessToken, baseURL string, client *http.Client)
 	return &groupAccess, nil
 }
 
-func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, baseURL string, client *http.Client) (*model.Composition, error) {
+func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, baseURL string, client *http.Client) (*model.Composition, string, error) {
 	body, err := compositionCreateBodyRequest(ehrSystemID)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	url := baseURL + "/v1/ehr/" + ehrID + "/composition"
 
 	request, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	request.Header.Set("Content-type", "application/json")
@@ -1799,32 +1709,27 @@ func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, b
 
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, errors.New(response.Status)
+		return nil, "", errors.New(response.Status)
 	}
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	var c model.Composition
 	if err = json.Unmarshal(data, &c); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	requestID := response.Header.Get("RequestId")
 
-	err = requestWait(userID, accessToken, requestID, baseURL, client)
-	if err != nil {
-		return nil, err
-	}
-
-	return &c, nil
+	return &c, requestID, nil
 }
 
 func registerUser(user *User, systemID, baseURL string, client *http.Client) error {

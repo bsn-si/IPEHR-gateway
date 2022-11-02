@@ -31,7 +31,6 @@ func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) 
 		infra.FilecoinClient,
 		infra.IpfsClient,
 		cfg.Storage.Localfile.Path,
-		infra.Publisher,
 	)
 
 	proc.Start()

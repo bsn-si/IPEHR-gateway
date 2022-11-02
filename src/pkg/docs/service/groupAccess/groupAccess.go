@@ -98,21 +98,24 @@ func (s *Service) save(ctx context.Context, userID string, groupAccess *model.Gr
 
 	h := sha3.Sum256(append([]byte(userID), groupAccess.GroupUUID[:]...))
 
-	txHash, err := s.Infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey, nil)
+	_, err = s.Infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey, nil)
 	if err != nil {
 		return fmt.Errorf("Index.SetGroupAccess error: %w", err)
 	}
 
-	txStatus, err := s.Infra.Index.TxWait(ctx, txHash)
-	if err != nil {
-		return fmt.Errorf("index.TxWait error: %w txHash %s", err, txHash)
-	}
+	/*
+		txStatus, err := s.Infra.Index.TxWait(ctx, txHash)
+		if err != nil {
+			return fmt.Errorf("index.TxWait error: %w txHash %s", err, txHash)
+		}
 
-	if txStatus == 1 {
-		return nil
-	}
+		if txStatus == 1 {
+			return nil
+		}
 
-	return fmt.Errorf("%w: tx %s Failed", errors.ErrCustom, txHash)
+		return fmt.Errorf("%w: tx %s Failed", errors.ErrCustom, txHash)
+	*/
+	return nil
 }
 
 func (s *Service) Get(ctx context.Context, userID string, groupAccessUUID *uuid.UUID) (*model.GroupAccess, error) {

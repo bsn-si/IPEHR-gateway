@@ -27,9 +27,6 @@ func main() {
 	}
 
 	infra := infrastructure.New(cfg)
-	defer func() {
-		infra.Release()
-	}()
 
 	a := api.New(cfg, infra).Build()
 
