@@ -108,7 +108,7 @@ func (h UserHandler) Register(c *gin.Context) {
 
 	h.service.Proc.Subscribe(sub)
 
-	ctxTimeout, cancel := context.WithTimeout(context.Background(), common.RegisterRequestTimeout)
+	ctxTimeout, cancel := context.WithTimeout(c.Request.Context(), common.RegisterRequestTimeout)
 	defer func() {
 		h.service.Proc.Unsubscribe(sub)
 		cancel()
