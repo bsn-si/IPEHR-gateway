@@ -4,37 +4,84 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"time"
 
 	"golang.org/x/crypto/sha3"
 
 	"github.com/google/uuid"
+	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/groupAccess"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
-	"hms/gateway/pkg/indexer/service/dataSearch"
 )
 
-type Service struct {
-	*service.DefaultDocumentService
-	DataSearchIndex    *dataSearch.Index
-	groupAccessService *groupAccess.Service
+type GroupAccessService interface {
+	Default() *model.GroupAccess
 }
 
-func NewCompositionService(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service) *Service {
+type Indexer interface {
+	MultiCallTxNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
+	GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (*model.DocumentMeta, error)
+	AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta, keyEncrypted, CIDEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error)
+	GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
+	DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (string, error)
+}
+
+type IpfsService interface {
+	Add(ctx context.Context, fileContent []byte) (*cid.Cid, error)
+}
+
+type FileCoinService interface {
+	StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint64) (*cid.Cid, string, error)
+}
+
+type DocumentsSvc interface {
+	GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error)
+}
+
+type KeyStore interface {
+	Get(userID string) (publicKey, privateKey *[32]byte, err error)
+}
+
+type Compressor interface {
+	Compress(decompressedData []byte) (compressedData []byte, err error)
+}
+
+type Service struct {
+	indexer            Indexer
+	ipfs               IpfsService
+	fileCoin           FileCoinService
+	keyStore           KeyStore
+	compressor         Compressor
+	docSvc             DocumentsSvc
+	groupAccessService GroupAccessService
+}
+
+func NewCompositionService(
+	indexer Indexer,
+	ipfs IpfsService,
+	fileCoin FileCoinService,
+	keyStore KeyStore,
+	compressor Compressor,
+	docSvc DocumentsSvc,
+	groupAccessService GroupAccessService,
+) *Service {
 	return &Service{
-		DefaultDocumentService: docService,
-		DataSearchIndex:        dataSearch.New(),
-		groupAccessService:     groupAccessService,
+		docSvc:             docSvc,
+		indexer:            indexer,
+		ipfs:               ipfs,
+		fileCoin:           fileCoin,
+		keyStore:           keyStore,
+		compressor:         compressor,
+		groupAccessService: groupAccessService,
 	}
 }
 
@@ -44,12 +91,12 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		err         error
 	)
 
-	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	_, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	multiCallTx, err := s.indexer.MultiCallTxNew(ctx, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
 	}
@@ -86,12 +133,12 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 		err         error
 	)
 
-	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	_, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	multiCallTx, err := s.indexer.MultiCallTxNew(ctx, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
 	}
@@ -147,7 +194,7 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID string) erro
 }
 
 func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID string, doc *model.Composition) error {
-	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
@@ -161,7 +208,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
 	// Checking the existence of the Composition
-	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
+	docMeta, err := s.indexer.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		return fmt.Errorf("Index.GetDocByVersion error: %w", err)
 	} else if docMeta != nil {
@@ -173,8 +220,8 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		return fmt.Errorf("Composition marshal error: %w", err)
 	}
 
-	if s.Infra.CompressionEnabled {
-		docBytes, err = s.Infra.Compressor.Compress(docBytes)
+	if s.compressor != nil {
+		docBytes, err = s.compressor.Compress(docBytes)
 		if err != nil {
 			return fmt.Errorf("Compress error: %w", err)
 		}
@@ -190,13 +237,13 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	}
 
 	// IPFS saving
-	CID, err := s.Infra.IpfsClient.Add(ctx, docEncrypted)
+	CID, err := s.ipfs.Add(ctx, docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
 	// Filecoin saving
-	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+	dealCID, minerAddr, err := s.fileCoin.StartDeal(ctx, CID, uint64(len(docEncrypted)))
 	if err != nil {
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
@@ -236,7 +283,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
+		packed, err := s.indexer.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -283,7 +330,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	docMeta, err := s.Infra.Index.GetDocLastByBaseID(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash)
+	docMeta, err := s.indexer.GetDocLastByBaseID(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash)
 	if err != nil {
 		return nil, fmt.Errorf("GetLastVersionDocIndexByBaseID error: %w userID %s objectVersionID %s", err, userID, objectVersionID)
 	}
@@ -292,7 +339,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("GetLastByBaseID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -316,7 +363,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
+	docMeta, err := s.indexer.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
 	if err != nil && errors.Is(err, errors.ErrNotFound) {
 		return nil, errors.ErrNotFound
 	} else if err != nil {
@@ -327,7 +374,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("GetCompositionByID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -351,7 +398,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
+	txHash, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log"
@@ -13,19 +14,49 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
 	"hms/gateway/pkg/docs/service/groupAccess"
+	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 )
 
+type CompositionService interface {
+	DefaultGroupAccess() *model.GroupAccess
+	Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
+	Update(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition) (*model.Composition, error)
+	GetLastByBaseID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (*model.Composition, error)
+	GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (*model.Composition, error)
+	DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (string, error)
+}
+
+type Indexer interface {
+	GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UUID, error)
+}
+
+type ProcessingService interface {
+	NewRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (*processing.Request, error)
+}
+
 type CompositionHandler struct {
-	service *composition.Service
-	baseURL string
+	service       CompositionService
+	indexer       Indexer
+	processingSvc ProcessingService
+	baseURL       string
 }
 
 func NewCompositionHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL string) *CompositionHandler {
 	return &CompositionHandler{
-		service: composition.NewCompositionService(docService, groupAccessService),
-		baseURL: baseURL,
+		service: composition.NewCompositionService(
+			docService.Infra.Index,
+			docService.Infra.IpfsClient,
+			docService.Infra.FilecoinClient,
+			docService.Infra.Keystore,
+			docService.Infra.Compressor,
+			docService,
+			groupAccessService,
+		),
+		indexer:       docService.Infra.Index,
+		processingSvc: docService.Proc,
+		baseURL:       baseURL,
 	}
 }
 
@@ -65,19 +96,13 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	data, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
-		return
-	}
+	decoder := json.NewDecoder(c.Request.Body)
 	defer c.Request.Body.Close()
 
 	var composition model.Composition
-
-	if err = json.Unmarshal(data, &composition); err != nil {
+	if err = decoder.Decode(&composition); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
-
 		return
 	}
 
@@ -92,7 +117,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.indexer.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -125,7 +150,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		groupAccessUUID = &UUID
 	}
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionCreate)
+	procRequest, err := h.processingSvc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionCreate)
 	if err != nil {
 		log.Println("Composition create NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -189,7 +214,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	}
 
 	// Checking EHR does not exist
-	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.indexer.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -264,7 +289,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.indexer.GetEhrUUIDByUserID(c, userID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -282,7 +307,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 
 	reqID := c.GetString("reqId")
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionDelete)
+	procRequest, err := h.processingSvc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionDelete)
 	if err != nil {
 		log.Println("Composition delete NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -369,7 +394,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.indexer.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -449,7 +474,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionUpdate)
+	procRequest, err := h.processingSvc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestCompositionUpdate)
 	if err != nil {
 		log.Println("Compocition update NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
