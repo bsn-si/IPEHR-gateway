@@ -26,41 +26,39 @@ func (s *mockSubscriber) Name() string {
 func TestPublisher(t *testing.T) {
 	pub := publisher.NewPublisher()
 
-	t.Run("PublishMessage", func(t *testing.T) {
-		wg := sync.WaitGroup{}
+	wg := sync.WaitGroup{}
 
-		cntSubs := 100
-		wg.Add(cntSubs)
+	cntSubs := 100
+	wg.Add(cntSubs)
 
-		msg := "test msg"
-		cntSuccessDeliveries := 0
-		testFunNotify := func(s string) {
-			if msg != s {
-				t.Errorf("expected:%s got:%s", msg, s)
-			}
-			cntSuccessDeliveries++
-			wg.Done()
+	msg := "test msg"
+	cntSuccessDeliveries := 0
+	testFunNotify := func(s string) {
+		if msg != s {
+			t.Errorf("expected:%s got:%s", msg, s)
+		}
+		cntSuccessDeliveries++
+		wg.Done()
+	}
+
+	for i := 0; i < cntSubs; i++ {
+		sub := mockSubscriber{
+			isClose:    false,
+			testNotify: &testFunNotify,
+			name:       strconv.Itoa(i),
 		}
 
-		for i := 0; i < cntSubs; i++ {
-			sub := mockSubscriber{
-				isClose:    false,
-				testNotify: &testFunNotify,
-				name:       strconv.Itoa(i),
-			}
+		pub.AddSubscriber(&sub)
+		defer func() {
+			pub.RemoveSubscribe(&sub)
+		}()
+	}
 
-			pub.AddSubscriber(&sub)
-			defer func() {
-				pub.RemoveSubscribe(&sub)
-			}()
-		}
+	pub.PublishMessage(msg)
 
-		pub.PublishMessage(msg)
+	wg.Wait()
 
-		wg.Wait()
-
-		if cntSubs != cntSuccessDeliveries {
-			t.Errorf("expected delivered messages:%d got:%d", cntSubs, cntSuccessDeliveries)
-		}
-	})
+	if cntSubs != cntSuccessDeliveries {
+		t.Errorf("expected delivered messages:%d got:%d", cntSubs, cntSuccessDeliveries)
+	}
 }
