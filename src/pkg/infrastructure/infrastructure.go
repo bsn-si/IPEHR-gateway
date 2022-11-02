@@ -78,6 +78,7 @@ func New(cfg *config.Config) *Infra {
 	}
 
 	newPublisher := publisher.NewPublisher()
+	go newPublisher.Start()
 
 	return &Infra{
 		LocalDB:            db,

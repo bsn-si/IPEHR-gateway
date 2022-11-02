@@ -8,6 +8,18 @@ type Publisher struct {
 	stop        chan struct{}
 }
 
+func NewPublisher() *Publisher {
+	em := Publisher{
+		subscribers: map[string]Subscriber{},
+		addSubCh:    make(chan Subscriber),
+		removeSubCh: make(chan Subscriber),
+		msg:         make(chan interface{}),
+		stop:        make(chan struct{}),
+	}
+
+	return &em
+}
+
 func (p *Publisher) AddSubscriber(sub Subscriber) {
 	p.addSubCh <- sub
 }
@@ -24,7 +36,7 @@ func (p *Publisher) Stop() {
 	close(p.stop)
 }
 
-func (p *Publisher) start() {
+func (p *Publisher) Start() {
 	for {
 		select {
 		case sub := <-p.addSubCh:
@@ -58,16 +70,4 @@ func (p *Publisher) start() {
 			}
 		}
 	}
-}
-
-func NewPublisher() *Publisher {
-	em := Publisher{
-		subscribers: map[string]Subscriber{},
-		addSubCh:    make(chan Subscriber),
-		removeSubCh: make(chan Subscriber),
-		msg:         make(chan interface{}),
-		stop:        make(chan struct{}),
-	}
-	go em.start()
-	return &em
 }
