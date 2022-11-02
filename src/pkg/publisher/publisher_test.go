@@ -1,6 +1,8 @@
-package publisher
+package publisher_test
 
 import (
+	"hms/gateway/pkg/publisher"
+	"strconv"
 	"sync"
 	"testing"
 )
@@ -8,6 +10,7 @@ import (
 type mockSubscriber struct {
 	isClose    bool
 	testNotify *func(string)
+	name       string
 }
 
 func (s *mockSubscriber) Notify(msg interface{}) {
@@ -16,70 +19,48 @@ func (s *mockSubscriber) Notify(msg interface{}) {
 func (s *mockSubscriber) Disable() {
 	s.isClose = true
 }
+func (s *mockSubscriber) Name() string {
+	return s.name
+}
 
 func TestPublisher(t *testing.T) {
-	pub := NewPublisher()
-
-	var testFunNotify func(string)
-
-	t.Run("AddSubscriber", func(t *testing.T) {
-		cntSub := 50
-		wg := sync.WaitGroup{}
-		pub.addSubHandler = func(s Subscriber) {
-			wg.Done()
-		}
-
-		for i := 0; i < cntSub; i++ {
-			wg.Add(1)
-			go func() {
-				sub := mockSubscriber{
-					isClose:    false,
-					testNotify: &testFunNotify,
-				}
-
-				pub.addSubCh <- &sub
-			}()
-		}
-
-		wg.Wait()
-
-		if cntSub != len(pub.subscribers) {
-			t.Errorf("expected cnt sub:%d, got:%d", cntSub, len(pub.subscribers))
-		}
-	})
+	pub := publisher.NewPublisher()
 
 	t.Run("PublishMessage", func(t *testing.T) {
-		msg := "Test Msg"
+		wg := sync.WaitGroup{}
 
-		testFunNotify = func(s string) {
+		cntSubs := 100
+		wg.Add(cntSubs)
+
+		msg := "test msg"
+		cntSuccessDeliveries := 0
+		testFunNotify := func(s string) {
 			if msg != s {
 				t.Errorf("expected:%s got:%s", msg, s)
 			}
-		}
-
-		pub.PublishMessage() <- msg
-	})
-
-	t.Run("RemoveSubscribe", func(t *testing.T) {
-		cntSub := 40
-		wg := sync.WaitGroup{}
-		pub.removeSubHandler = func(s Subscriber) {
+			cntSuccessDeliveries++
 			wg.Done()
 		}
 
-		for i := 0; i < 10; i++ {
-			wg.Add(1)
-			go func() {
-				pub.removeSubCh <- pub.subscribers[0]
+		for i := 0; i < cntSubs; i++ {
+			sub := mockSubscriber{
+				isClose:    false,
+				testNotify: &testFunNotify,
+				name:       strconv.Itoa(i),
+			}
+
+			pub.AddSubscriber(&sub)
+			defer func() {
+				pub.RemoveSubscribe(&sub)
 			}()
 		}
 
+		pub.PublishMessage(msg)
+
 		wg.Wait()
 
-		if cntSub != len(pub.subscribers) {
-			t.Errorf("expected cnt sub:%d, got:%d", cntSub, len(pub.subscribers))
+		if cntSubs != cntSuccessDeliveries {
+			t.Errorf("expected delivered messages:%d got:%d", cntSubs, cntSuccessDeliveries)
 		}
 	})
-
-	pub.stop <- struct{}{}
 }
