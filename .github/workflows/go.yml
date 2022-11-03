@@ -39,11 +39,14 @@ jobs:
     - name: Set the config path
       run: echo "IPEHR_CONFIG_PATH=/srv/IPEHR-gateway/config.json" >> $GITHUB_ENV
 
-    - name: Build
-      run: | 
-        go run ./utils/ehrIndexerSetAllowed
-        go run ./utils/defaultUserRegister
-        go run ./utils/defaultGroupAccessRegister
+    - name: Set contract allowed
+      run: go run ./utils/ehrIndexerSetAllowed
+    
+    - name: Contract register default user
+      run: go run ./utils/defaultUserRegister
+      
+    - name: Contract register default group
+      run: go run ./utils/defaultGroupAccessRegister
 
     - name: Test
       run: go test -v ./...
