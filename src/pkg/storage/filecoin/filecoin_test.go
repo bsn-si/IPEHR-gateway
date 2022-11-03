@@ -55,6 +55,8 @@ func TestFindMiner(t *testing.T) {
 }
 
 func TestRetrieve(t *testing.T) {
+	t.Skip()
+
 	filecoinClient, err := prepare(t)
 	if err != nil {
 		t.Fatal(err)
