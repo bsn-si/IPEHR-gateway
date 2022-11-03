@@ -70,10 +70,5 @@ func main() {
 		log.Fatalf("Index.SetGroupAccess error: %v", err)
 	}
 
-	_, err = infra.Index.TxWait(context.Background(), txHash)
-	if err != nil {
-		log.Fatalf("index.TxWait error: %v txHash %s", err, txHash)
-	}
-
 	log.Println("txHash:", txHash)
 }
