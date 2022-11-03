@@ -12,6 +12,20 @@ defaults:
 
 jobs:
 
+  hardhat:
+      - uses: actions/checkout@v3
+      - name: Install packages
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - name: Create local node and deploy contract
+        run: |
+          git clone https://github.com/bsn-si/IPEHR-blockchain-indexes.git ./IPEHR-blockchain-indexes
+          cd ./IPEHR-blockchain-indexes
+          npm i
+          npx hardhat node --hostname 0.0.0.0 &
+          npx hardhat run scripts/deploy.ts --network localhost
+
   build:
     runs-on: self-hosted
     # Service containers to run with `runner-job`
