@@ -66,13 +66,11 @@ type testWrap struct {
 }
 
 func Test_API(t *testing.T) {
-	var httpClient http.Client
-
 	testServer, storager := prepareTest(t)
 
 	testWrap := &testWrap{
 		server:     testServer,
-		httpClient: &httpClient,
+		httpClient: &http.Client{},
 		storage:    &storager,
 	}
 	defer tearDown(*testWrap)
@@ -81,6 +79,7 @@ func Test_API(t *testing.T) {
 		ehrSystemID: common.EhrSystemID,
 		//nolint
 		users: []*User{
+			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
 			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
 			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
 		},
@@ -131,7 +130,9 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
-	t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData))
+	if !t.Run("EHR_STATUS getting by version time", testWrap.ehrStatusGetByVersionTime(testData)) {
+		t.Fatal()
+	}
 
 	if !t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData)) {
 		t.Fatal()
@@ -186,13 +187,13 @@ func Test_API(t *testing.T) {
 	}
 }
 
-func (u *User) login(ehrSystemID string, testWrap *testWrap) error {
+func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
 	userRegisterRequest, err := userCreateBodyRequest(u.id, u.password)
 	if err != nil {
 		return err
 	}
 
-	request, err := http.NewRequest(http.MethodPost, testWrap.server.URL+"/v1/user/login", userRegisterRequest)
+	request, err := http.NewRequest(http.MethodPost, baseURL+"/v1/user/login", userRegisterRequest)
 	if err != nil {
 		return err
 	}
@@ -201,7 +202,7 @@ func (u *User) login(ehrSystemID string, testWrap *testWrap) error {
 	request.Header.Set("Prefer", "return=representation")
 	request.Header.Set("EhrSystemId", ehrSystemID)
 
-	response, err := testWrap.httpClient.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -279,7 +280,7 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 		}
 
 		if req.user.accessToken == "" {
-			err := req.user.login(testData.ehrSystemID, testWrap)
+			err := req.user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -520,13 +521,18 @@ func (testWrap *testWrap) ehrCreate(testData *TestData) func(t *testing.T) {
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap)
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
 		}
 
 		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -551,7 +557,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 		user := testData.users[1]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap)
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -559,43 +565,8 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 
 		ehrID2 := uuid.New().String()
 
-		subject := uuid.New().String()
-		namespace := "test_namespace"
-
-		createRequest := fakeData.EhrCreateCustomRequest(subject, namespace)
-
-		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+ehrID2, bytes.NewReader(createRequest))
+		ehr, _, err := createEhrWithID(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, ehrID2, testWrap.httpClient)
 		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", user.id)
-		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-		request.Header.Set("Prefer", "return=representation")
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatalf("Expected nil, received %s", err.Error())
-		}
-
-		data, err := io.ReadAll(response.Body)
-		if err != nil {
-			t.Fatalf("Response body read error: %v", err)
-		}
-
-		if err = response.Body.Close(); err != nil {
-			t.Fatal(err)
-		}
-
-		if response.StatusCode != http.StatusCreated {
-			t.Fatalf("Expected %d, received %d", http.StatusCreated, response.StatusCode)
-		}
-
-		var ehr model.EHR
-		if err = json.Unmarshal(data, &ehr); err != nil {
 			t.Fatal(err)
 		}
 
@@ -603,45 +574,22 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 		if newEhrID != ehrID2 {
 			t.Fatal("EhrID is not matched")
 		}
-
-		requestID := response.Header.Get("RequestId")
-
-		t.Logf("Waiting for request %s done", requestID)
-
-		err = requestWait(user.id, user.accessToken, requestID, testWrap.server.URL, testWrap.httpClient)
-		if err != nil {
-			t.Fatal(err)
-		}
 	}
 }
 
 func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
+
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")
 		}
 
 		user := testData.users[0]
 
-		request, err := http.NewRequest(http.MethodPut, testWrap.server.URL+"/v1/ehr/"+user.ehrID, ehrCreateBodyRequest())
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", user.id)
-		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-
-		response, err := testWrap.httpClient.Do(request)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer response.Body.Close()
-
-		if response.StatusCode != http.StatusConflict {
-			t.Errorf("Expected %d, received %d", http.StatusConflict, response.StatusCode)
-			return
+		_, _, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		if err == nil {
+			t.Fatal("Expected error, received EHR")
 		}
 	}
 }
@@ -1529,10 +1477,10 @@ func requestWait(userID, accessToken, requestID, baseURL string, client *http.Cl
 		request.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 
-	timeout := time.Now().Add(2 * time.Minute)
+	timeout := time.Now().Add(1 * time.Minute)
 
 	for {
-		time.Sleep(3 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		if time.Now().After(timeout) {
 			return errors.ErrTimeout
@@ -1638,10 +1586,41 @@ func createEhr(userID, ehrSystemID, accessToken, baseURL string, client *http.Cl
 
 	requestID = response.Header.Get("RequestId")
 
-	err = requestWait(userID, accessToken, requestID, baseURL, client)
+	return ehr, requestID, nil
+}
+
+func createEhrWithID(userID, ehrSystemID, accessToken, baseURL, ehrID string, client *http.Client) (ehr *model.EHR, requestID string, err error) {
+	request, err := http.NewRequest(http.MethodPut, baseURL+"/v1/ehr/"+ehrID, ehrCreateBodyRequest())
 	if err != nil {
 		return nil, "", err
 	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", userID)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	request.Header.Set("EhrSystemId", ehrSystemID)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, "", err
+	}
+	defer response.Body.Close()
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, "", errors.New(response.Status)
+	}
+
+	if err = json.Unmarshal(data, &ehr); err != nil {
+		return nil, "", err
+	}
+
+	requestID = response.Header.Get("RequestId")
 
 	return ehr, requestID, nil
 }
