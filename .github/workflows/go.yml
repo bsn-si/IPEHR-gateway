@@ -13,7 +13,10 @@ defaults:
 jobs:
 
   hardhat:
+      runs-on: self-hosted
+      steps:
       - uses: actions/checkout@v3
+      
       - name: Install packages
         uses: actions/setup-node@v3
         with:
