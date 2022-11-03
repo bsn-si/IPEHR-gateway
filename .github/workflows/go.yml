@@ -12,20 +12,6 @@ defaults:
 
 jobs:
 
-  hardhat:
-      - uses: actions/checkout@v3
-      - name: Install packages
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      - name: Create local node and deploy contract
-        run: |
-          git clone https://github.com/bsn-si/IPEHR-blockchain-indexes.git ./IPEHR-blockchain-indexes
-          cd ./IPEHR-blockchain-indexes
-          npm i
-          npx hardhat node --hostname 0.0.0.0 &
-          npx hardhat run scripts/deploy.ts --network localhost
-
   build:
     runs-on: self-hosted
     # Service containers to run with `runner-job`
@@ -36,12 +22,28 @@ jobs:
       uses: actions/setup-go@v3
       with:
         go-version: 1.18
+    
+    - name: Set up Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+          
+    - name: Create local node and deploy contract
+      run: |
+        git clone https://github.com/bsn-si/IPEHR-blockchain-indexes.git ./IPEHR-blockchain-indexes
+        cd ./IPEHR-blockchain-indexes
+        npm i
+        npx hardhat node --hostname 0.0.0.0 &
+        npx hardhat run scripts/deploy.ts --network localhost
 
     - name: Set the config path
       run: echo "IPEHR_CONFIG_PATH=/srv/IPEHR-gateway/config.json" >> $GITHUB_ENV
 
     - name: Build
-      run: go build -v ./...
+      run: | 
+        go run ./utils/ehrIndexerSetAllowed
+        go run ./utils/defaultUserRegister
+        go run ./utils/defaultGroupAccessRegister
 
     - name: Test
       run: go test -v ./...
