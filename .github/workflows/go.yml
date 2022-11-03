@@ -30,6 +30,7 @@ jobs:
           npx hardhat run scripts/deploy.ts --network localhost
 
   build:
+    needs: hardhat
     runs-on: self-hosted
     # Service containers to run with `runner-job`
     steps:
