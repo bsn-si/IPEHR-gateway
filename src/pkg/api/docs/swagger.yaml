@@ -1214,6 +1214,45 @@ paths:
       summary: Execute ad-hoc (non-stored) AQL query
       tags:
       - QUERY
+  /request/{request_id}:
+    get:
+      consumes:
+      - application/json
+      description: |
+        It's returning only transactions which in progress
+      parameters:
+      - description: Bearer <JWT>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: Unique id of request
+        in: path
+        name: request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/processing.RequestResult'
+        "400":
+          description: Is returned when userId or request_id is empty
+        "404":
+          description: Is returned when requests not exist
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get list of transactions by certain request id for authorized user
+      tags:
+      - REQUEST
   /requests/:
     get:
       consumes:
@@ -1256,45 +1295,6 @@ paths:
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: Get list of transactions requests by authorized user
-      tags:
-      - REQUEST
-  /requests/{request_id}:
-    get:
-      consumes:
-      - application/json
-      description: |
-        It's returning only transactions which in progress
-      parameters:
-      - description: Bearer <JWT>
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: UserId UUID
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      - description: Unique id of request
-        in: path
-        name: request_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/processing.RequestResult'
-        "400":
-          description: Is returned when userId or request_id is empty
-        "404":
-          description: Is returned when requests not exist
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Get list of transactions by certain request id for authorized user
       tags:
       - REQUEST
   /user/login/:

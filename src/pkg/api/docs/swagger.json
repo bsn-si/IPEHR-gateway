@@ -1107,6 +1107,61 @@
                 }
             }
         },
+        "/request/{request_id}": {
+            "get": {
+                "description": "It's returning only transactions which in progress\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "REQUEST"
+                ],
+                "summary": "Get list of transactions by certain request id for authorized user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer \u003cJWT\u003e",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique id of request",
+                        "name": "request_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/processing.RequestResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when userId or request_id is empty"
+                    },
+                    "404": {
+                        "description": "Is returned when requests not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/requests/": {
             "get": {
                 "description": "It is returning only transactions which in progress\n",
@@ -1159,61 +1214,6 @@
                     },
                     "400": {
                         "description": "Is returned when userId is empty"
-                    },
-                    "404": {
-                        "description": "Is returned when requests not exist"
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
-        "/requests/{request_id}": {
-            "get": {
-                "description": "It's returning only transactions which in progress\n",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "REQUEST"
-                ],
-                "summary": "Get list of transactions by certain request id for authorized user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "UserId UUID",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique id of request",
-                        "name": "request_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/processing.RequestResult"
-                        }
-                    },
-                    "400": {
-                        "description": "Is returned when userId or request_id is empty"
                     },
                     "404": {
                         "description": "Is returned when requests not exist"
