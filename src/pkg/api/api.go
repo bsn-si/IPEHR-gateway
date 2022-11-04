@@ -62,8 +62,6 @@ func (a *API) Build() *gin.Engine {
 		c.AbortWithStatus(404)
 	})
 
-	r.Use(requestID)
-
 	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		// your custom format
 		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
@@ -79,18 +77,23 @@ func (a *API) Build() *gin.Engine {
 	}))
 
 	v1 := r.Group("v1")
+	v1.Use(requestID)
+
+	user := v1.Group("user")
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
 	query := v1.Group("query")
-	requests := v1.Group("requests")
-	user := v1.Group("user")
+
+	v1AndRequests := r.Group("v1")
+	requests := v1AndRequests.Group("requests")
+	request := v1AndRequests.Group("request")
 
 	a.setRedirections(r).
 		buildUserAPI(user).
 		buildEhrAPI(ehr).
 		buildGroupAccessAPI(access).
 		buildQueryAPI(query).
-		buildRequestsAPI(requests)
+		buildRequestsAPI(requests, request)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -132,10 +135,15 @@ func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 	return a
 }
 
-func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
-	r.GET("/", a.Request.GetAll)
-	r.GET("/:reqId", a.Request.GetByID)
+func (a *API) buildRequestsAPI(rs, r *gin.RouterGroup) *API {
+	r.
+		Use(requestIDFromParam).
+		Use(authWithExceptions(a, "register")).
+		GET("/:reqId", a.Request.GetByID)
+
+	rs.
+		Use(auth(a)).
+		GET("", a.Request.GetAll)
 
 	return a
 }

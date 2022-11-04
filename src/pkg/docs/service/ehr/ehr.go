@@ -83,7 +83,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return &ehr, nil
@@ -410,7 +410,7 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return nil

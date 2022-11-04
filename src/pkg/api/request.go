@@ -85,7 +85,7 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 // @Failure  400            "Is returned when userId or request_id is empty"
 // @Failure  404            "Is returned when requests not exist"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /requests/{request_id} [get]
+// @Router   /request/{request_id} [get]
 func (h RequestHandler) GetByID(c *gin.Context) {
 	userID := c.GetString("userId")
 	if userID == "" {

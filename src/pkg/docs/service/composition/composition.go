@@ -63,7 +63,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return composition, nil
@@ -98,7 +98,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	// TODO what we should do with prev composition?
@@ -330,7 +330,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash, false)
+	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
 
 	// Waiting for tx processed and pending nonce increased
 	//time.Sleep(common.BlockchainTxProcAwaitTime)

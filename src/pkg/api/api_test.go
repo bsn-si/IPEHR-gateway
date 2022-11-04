@@ -166,7 +166,7 @@ func (testWrap *testWrap) requests(testData *testData) func(t *testing.T) {
 			t.Fatal("Can not test because requestID is empty")
 		}
 
-		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/"+requestID, nil)
+		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/request/"+requestID, nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -1452,7 +1452,7 @@ func (testWrap *testWrap) accessGroupGetting(testData *testData) func(t *testing
 }
 
 func requestWait(userID, accessToken, requestID string, tw *testWrap) error {
-	request, err := http.NewRequest(http.MethodGet, tw.server.URL+"/v1/requests/"+requestID, nil)
+	request, err := http.NewRequest(http.MethodGet, tw.server.URL+"/v1/request/"+requestID, nil)
 	if err != nil {
 		return err
 	}
@@ -1721,12 +1721,26 @@ func (testWrap *testWrap) registerUser(userID, userPassword, ehrSystemID string)
 		return err
 	}
 
+	content, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
 	err = response.Body.Close()
 	if err != nil {
 		return err
 	}
 
 	if response.StatusCode != http.StatusCreated {
+		return fmt.Errorf("%w, expected %d, received %d body: %s", errors.ErrCustom, http.StatusCreated, response.StatusCode, content)
+	}
+
+	requestID := response.Header.Get("RequestId")
+
+	fmt.Printf("Waiting for request %s done", requestID)
+
+	err = requestWait(userID, "", requestID, testWrap)
+	if err != nil {
 		return err
 	}
 
