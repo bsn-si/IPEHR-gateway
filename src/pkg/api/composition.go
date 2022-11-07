@@ -96,13 +96,12 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	decoder := json.NewDecoder(c.Request.Body)
 	defer c.Request.Body.Close()
 
-	var composition model.Composition
-	if err = decoder.Decode(&composition); err != nil {
+	composition := &model.Composition{}
+	if err := json.NewDecoder(c.Request.Body).Decode(composition); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body parsing error"})
 		return
 	}
 
@@ -158,7 +157,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(c, userID, &ehrUUID, groupAccessUUID, ehrSystemID, &composition, procRequest)
+	doc, err := h.service.Create(c, userID, &ehrUUID, groupAccessUUID, ehrSystemID, composition, procRequest)
 	if err != nil {
 		log.Println("Composition creating error:", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})

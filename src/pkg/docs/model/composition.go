@@ -1,11 +1,10 @@
 package model
 
 import (
-	"bytes"
 	"encoding/json"
 	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/types"
-	"io"
+
+	"github.com/pkg/errors"
 )
 
 // Composition Content of one version in a VERSIONED_COMPOSITION. A Composition is considered the unit
@@ -19,31 +18,48 @@ type Composition struct {
 	Category  base.DvCodedText `json:"category"`
 	Context   *EventContext    `json:"context,omitempty"`
 	Composer  base.PartyProxy  `json:"composer"`
-	Content   interface{}      `json:"content,omitempty"`
+	Content   []base.Section   `json:"content,omitempty"`
 	base.Locatable
 }
 
 func (c *Composition) Validate() bool {
 	validation := true
-	if c.Type != types.Composition.String() {
+	if c.Type != base.CompositionContentItemType {
 		validation = false
 	}
 
 	return validation
 }
 
-func (c *Composition) FromJSON(reader *bytes.Reader) (err error) {
-	data, err := io.ReadAll(reader)
-	if err == nil {
-		err = json.Unmarshal(data, &c)
-	}
-
-	//c.prepare()
-	return
+type composition struct {
+	Language  base.CodePhrase  `json:"language"`
+	Territory base.CodePhrase  `json:"territory"`
+	Category  base.DvCodedText `json:"category"`
+	Context   *EventContext    `json:"context,omitempty"`
+	Composer  base.PartyProxy  `json:"composer"`
+	Content   []base.Section   `json:"content,omitempty"`
+	base.Locatable
 }
 
-//func (c *Composition) prepare() {
-// TODO we can move logic here like initialization, e.g.:
-//	c.ObjectVersionID.New(c.UID.Value, cfg.CreatingSystemID)
-// TODO but in what case we need global variables and its look like bad arch
-//}
+func (c *Composition) UnmarshalJSON(data []byte) error {
+	cc := composition{}
+	if err := json.Unmarshal(data, &cc); err != nil {
+		return errors.Wrap(err, "cannot unmarshal 'composition' struct from json bytes")
+	}
+
+	c.Type = cc.Type
+	c.Name = cc.Name
+	c.ArchetypeNodeID = cc.ArchetypeNodeID
+	c.ObjectVersionID = cc.ObjectVersionID
+	c.Composer = cc.Composer
+	c.Context = cc.Context
+	c.Category = cc.Category
+	c.Territory = cc.Territory
+	c.Language = cc.Language
+	c.Pathable = cc.Pathable
+	c.ArchetypeDetails = cc.ArchetypeDetails
+	c.Links = cc.Links
+	c.Content = cc.Content
+
+	return nil
+}

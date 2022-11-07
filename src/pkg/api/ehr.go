@@ -166,17 +166,11 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 
 	ehrSystemID := c.GetString("ehrSystemID")
 
-	data, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-		return
-	}
 	defer c.Request.Body.Close()
 
-	var request model.EhrCreateRequest
-
-	if err = json.Unmarshal(data, &request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+	request := model.EhrCreateRequest{}
+	if err = json.NewDecoder(c.Request.Body).Decode(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body parsing error"})
 		return
 	}
 

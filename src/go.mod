@@ -13,9 +13,11 @@ require (
 	github.com/gin-contrib/gzip v0.0.5
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/ipfs/go-cid v0.2.0
 	github.com/multiformats/go-multihash v0.1.0
+	github.com/pkg/errors v0.9.1
 	github.com/swaggo/gin-swagger v1.4.3
 	github.com/swaggo/swag v1.8.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
@@ -146,7 +148,6 @@ require (
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/nkovacs/streamquote v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/polydawn/refmt v0.0.0-20201211092308-30ac6d18308e // indirect
 	github.com/raulk/clock v1.1.0 // indirect
 	github.com/rjeczalik/notify v0.9.1 // indirect
