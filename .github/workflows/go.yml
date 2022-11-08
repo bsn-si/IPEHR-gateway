@@ -37,15 +37,15 @@ jobs:
         go-version: 1.18
 
     - name: Set the config path
-      run: echo "IPEHR_CONFIG_PATH=/srv/IPEHR-gateway/config.json" >> $GITHUB_ENV
+      run: echo "IPEHR_CONFIG_PATH=/srv/IPEHR-gateway/config.json.example" >> $GITHUB_ENV
 
     - name: Set contract allowed
       run: |
         cd ./src
-        go run ./utils/ehrIndexerSetAllowed -config=../config.json.example
+        go run ./utils/ehrIndexerSetAllowed
     
     - name: Contract register default user
-      run: go run ./utils/defaultUserRegister -config=../config.json.example
+      run: go run ./utils/defaultUserRegister
 
     - name: Test
       run: go test -v ./...
