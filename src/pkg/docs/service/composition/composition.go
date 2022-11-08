@@ -54,12 +54,14 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
 	}
 
-	if groupAccessUUID != nil {
-		groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
-		if err != nil {
-			return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
+	/*
+		if groupAccessUUID != nil {
+			groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
+			if err != nil {
+				return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
+			}
 		}
-	}
+	*/
 
 	err = s.save(ctx, multiCallTx, procRequest, userID, ehrUUID, groupAccess, ehrSystemID, composition)
 	if err != nil {
@@ -94,12 +96,14 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
 	}
 
-	if groupAccessUUID != nil {
-		groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
-		if err != nil {
-			return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
+	/*
+		if groupAccessUUID != nil {
+			groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
+			if err != nil {
+				return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
+			}
 		}
-	}
+	*/
 
 	if err = s.increaseVersion(composition, ehrSystemID); err != nil {
 		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
@@ -222,12 +226,17 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncrypted, userPrivKey, multiCallTx.Nonce())
+		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}

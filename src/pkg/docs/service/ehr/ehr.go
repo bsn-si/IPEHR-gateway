@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -134,6 +135,8 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
+	log.Printf("EHR CID: %x", CID.Bytes())
+
 	// Filecoin saving
 	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
 	if err != nil {
@@ -173,12 +176,17 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ctx, &ehrUUID, docMeta, keyEncrypted, userPrivKey, multiCallTx.Nonce())
+		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, &ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -331,6 +339,8 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
+	log.Printf("EHR_STATUS CID: %x", CID.Bytes())
+
 	// Filecoin saving
 	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))
 	if err != nil {
@@ -374,12 +384,17 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		keyEncrypted, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncrypted, userPrivKey, multiCallTx.Nonce())
+		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}

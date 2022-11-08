@@ -40,7 +40,7 @@ func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Pro
 // @Failure  409          "User with that userID already exist"
 // @Failure  422          "Password, systemID or role incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/register/ [post]
+// @Router   /user/register [post]
 func (h UserHandler) Register(c *gin.Context) {
 	// TODO can users register by themselves, or does it have to be an already authorized user?
 	data, err := io.ReadAll(c.Request.Body)
@@ -116,7 +116,7 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Failure  400          "Password, EhrSystemId or userID incorrect"
 // @Failure  401          "Password or userID incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/login/ [post]
+// @Router   /user/login [post]
 func (h UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
 	var u model.UserAuthRequest

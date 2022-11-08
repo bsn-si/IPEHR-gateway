@@ -110,7 +110,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 }
 
 func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID string, CID *cid.Cid) (*chachaPoly.Key, error) {
-	docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID)
+	docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
 	}

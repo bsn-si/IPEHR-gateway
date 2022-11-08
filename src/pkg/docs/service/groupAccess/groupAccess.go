@@ -1,21 +1,12 @@
 package groupAccess
 
 import (
-	"context"
-	"crypto/rand"
-	"fmt"
 	"log"
 
 	"github.com/google/uuid"
-	"github.com/vmihailenco/msgpack/v5"
-	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/errors"
 )
 
 type Service struct {
@@ -40,18 +31,20 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 		log.Fatal(err)
 	}
 
-	ctx := context.Background()
+	/*
+		ctx := context.Background()
 
-	groupAccess, err := service.Get(ctx, defaultUserID, &groupUUID)
-	if err != nil {
-		if errors.Is(err, errors.ErrIsNotExist) {
-			log.Println("Default access group is not registered.")
-		} else {
-			log.Fatal(err)
+		groupAccess, err := service.Get(ctx, defaultUserID, &groupUUID)
+		if err != nil {
+			if errors.Is(err, errors.ErrIsNotExist) {
+				log.Println("Default access group is not registered.")
+			} else {
+				log.Fatal(err)
+			}
 		}
-	}
 
-	service.defaultGroupAccess = groupAccess
+		service.defaultGroupAccess = groupAccess
+	*/
 
 	return service
 }
@@ -60,6 +53,7 @@ func (s *Service) Default() *model.GroupAccess {
 	return s.defaultGroupAccess
 }
 
+/*
 func (s *Service) Create(ctx context.Context, userID string, c *model.GroupAccessCreateRequest) (*model.GroupAccess, error) {
 	groupAccessUUID := uuid.New()
 	groupAccess := &model.GroupAccess{
@@ -103,18 +97,6 @@ func (s *Service) save(ctx context.Context, userID string, groupAccess *model.Gr
 		return fmt.Errorf("Index.SetGroupAccess error: %w", err)
 	}
 
-	/*
-		txStatus, err := s.Infra.Index.TxWait(ctx, txHash)
-		if err != nil {
-			return fmt.Errorf("index.TxWait error: %w txHash %s", err, txHash)
-		}
-
-		if txStatus == 1 {
-			return nil
-		}
-
-		return fmt.Errorf("%w: tx %s Failed", errors.ErrCustom, txHash)
-	*/
 	return nil
 }
 
@@ -141,3 +123,4 @@ func (s *Service) Get(ctx context.Context, userID string, groupAccessUUID *uuid.
 
 	return &groupAccess, nil
 }
+*/

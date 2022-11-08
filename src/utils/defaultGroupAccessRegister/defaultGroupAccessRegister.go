@@ -65,6 +65,7 @@ func main() {
 
 	ctx := context.Background()
 
+	//nolint
 	txHash, err := infra.Index.SetGroupAccess(ctx, &h, groupAccessEncrypted, uint8(access.Owner), userPrivKey, nil)
 	if err != nil {
 		log.Fatalf("Index.SetGroupAccess error: %v", err)

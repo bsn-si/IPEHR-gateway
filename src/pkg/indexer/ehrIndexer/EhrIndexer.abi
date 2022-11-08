@@ -21,110 +21,98 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "accessStore",
-      "outputs": [
-        {
-          "internalType": "enum EhrAccess.AccessLevel",
-          "name": "level",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes",
-          "name": "keyEncrypted",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "ehrId",
-          "type": "bytes32"
-        },
-        {
           "components": [
             {
-              "internalType": "enum EhrDocs.DocType",
-              "name": "docType",
-              "type": "uint8"
-            },
-            {
-              "internalType": "enum EhrDocs.DocStatus",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bytes",
-              "name": "CID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "dealCID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "minerAddress",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "docUIDEncrypted",
-              "type": "bytes"
-            },
-            {
               "internalType": "bytes32",
-              "name": "docBaseUIDHash",
+              "name": "ehrId",
               "type": "bytes32"
             },
             {
-              "internalType": "bytes32",
-              "name": "version",
-              "type": "bytes32"
+              "components": [
+                {
+                  "internalType": "enum EhrDocs.DocType",
+                  "name": "docType",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "enum EhrDocs.DocStatus",
+                  "name": "status",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "CID",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "dealCID",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "minerAddress",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "docUIDEncrypted",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "docBaseUIDHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "version",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "isLast",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "timestamp",
+                  "type": "uint32"
+                }
+              ],
+              "internalType": "struct EhrDocs.DocumentMeta",
+              "name": "docMeta",
+              "type": "tuple"
             },
             {
-              "internalType": "bool",
-              "name": "isLast",
-              "type": "bool"
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
             },
             {
-              "internalType": "uint32",
-              "name": "timestamp",
-              "type": "uint32"
+              "internalType": "bytes",
+              "name": "CIDEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
             }
           ],
-          "internalType": "struct EhrDocs.DocumentMeta",
-          "name": "docMeta",
+          "internalType": "struct EhrDocs.AddEhrDocParams",
+          "name": "p",
           "type": "tuple"
-        },
-        {
-          "internalType": "bytes",
-          "name": "keyEncrypted",
-          "type": "bytes"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
         }
       ],
       "name": "addEhrDoc",
@@ -230,6 +218,52 @@
           "internalType": "bytes32",
           "name": "",
           "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userIdHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "objectIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAccessByIdHash",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct Access.Object",
+          "name": "",
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -638,6 +672,47 @@
     {
       "inputs": [
         {
+          "internalType": "bytes32",
+          "name": "userIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getUserAccessList",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct Access.Object[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "userAddr",
           "type": "address"
@@ -657,39 +732,51 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "groupID",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "addingUserAddr",
-          "type": "address"
-        },
-        {
-          "internalType": "enum EhrAccess.AccessLevel",
-          "name": "level",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes",
-          "name": "keyEncrypted",
-          "type": "bytes"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "groupIdHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "addingUserAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Users.GroupAddUserParams",
+          "name": "p",
+          "type": "tuple"
         }
       ],
       "name": "groupAddUser",
@@ -701,40 +788,7 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "groupID",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes",
-          "name": "description",
-          "type": "bytes"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        }
-      ],
-      "name": "groupCreate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "groupID",
+          "name": "groupIdHash",
           "type": "bytes32"
         },
         {
@@ -842,11 +896,6 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "accessID",
-          "type": "bytes32"
-        },
-        {
           "internalType": "bytes",
           "name": "CID",
           "type": "bytes"
@@ -854,19 +903,34 @@
         {
           "components": [
             {
-              "internalType": "enum EhrAccess.AccessLevel",
-              "name": "level",
-              "type": "uint8"
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
             },
             {
               "internalType": "bytes",
-              "name": "keyEncrypted",
+              "name": "idEncr",
               "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
             }
           ],
-          "internalType": "struct EhrAccess.Access",
-          "name": "access",
+          "internalType": "struct Access.Object",
+          "name": "accessObj",
           "type": "tuple"
+        },
+        {
+          "internalType": "address",
+          "name": "userAddr",
+          "type": "address"
         },
         {
           "internalType": "uint256",
@@ -958,44 +1022,12 @@
     {
       "inputs": [
         {
-          "internalType": "bytes32",
-          "name": "accessID",
-          "type": "bytes32"
-        },
-        {
-          "components": [
-            {
-              "internalType": "enum EhrAccess.AccessLevel",
-              "name": "level",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncrypted",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct EhrAccess.Access",
-          "name": "access",
-          "type": "tuple"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
           "internalType": "address",
-          "name": "signer",
+          "name": "newOwner",
           "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
         }
       ],
-      "name": "setGroupAccess",
+      "name": "transferOwnership",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1003,12 +1035,61 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "newOwner",
-          "type": "address"
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "groupIdHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "groupIdEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "groupKeyEncr",
+              "type": "bytes"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "key",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Users.KeyValue[]",
+              "name": "params",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Users.UserGroupCreateParams",
+          "name": "p",
+          "type": "tuple"
         }
       ],
-      "name": "transferOwnership",
+      "name": "userGroupCreate",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1031,7 +1112,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrUsers.Role",
+          "internalType": "enum Users.Role",
           "name": "role",
           "type": "uint8"
         },
@@ -1056,28 +1137,9 @@
           "type": "bytes"
         }
       ],
-      "name": "userAdd",
+      "name": "userNew",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "userGroups",
-      "outputs": [
-        {
-          "internalType": "bytes",
-          "name": "description",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1101,7 +1163,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrUsers.Role",
+          "internalType": "enum Users.Role",
           "name": "role",
           "type": "uint8"
         },

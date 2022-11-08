@@ -1,7 +1,7 @@
 package model
 
-type DocAccessManageRequest struct {
-	ToUserID    string
+type DocAccessSetRequest struct {
+	UserID      string
 	CID         string
-	AccessLevel uint8
+	AccessLevel string
 }

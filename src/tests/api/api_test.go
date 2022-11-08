@@ -17,7 +17,6 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/api"
-	"hms/gateway/pkg/api/testhelpers"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/common/utils"
@@ -29,6 +28,7 @@ import (
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 	userRoles "hms/gateway/pkg/user/roles"
+	"hms/gateway/tests/api/testhelpers"
 )
 
 const (
@@ -126,6 +126,9 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	//if !t.Run("EHR grant access to another User", testWrap.docGrantAccessSuccess(testData)) {
+	//}
+
 	if !t.Run("EHR_STATUS getting", testWrap.ehrStatusGet(testData)) {
 		t.Fatal()
 	}
@@ -138,17 +141,19 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
-	if !t.Run("Access group create", testWrap.accessGroupCreate(testData)) {
-		t.Fatal()
-	}
+	/*
+		if !t.Run("Access group create", testWrap.accessGroupCreate(testData)) {
+			t.Fatal()
+		}
 
-	if !t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData)) {
-		t.Fatal()
-	}
+		if !t.Run("Wrong access group getting", testWrap.wrongAccessGroupGetting(testData)) {
+			t.Fatal()
+		}
 
-	if !t.Run("Access group getting", testWrap.accessGroupGetting(testData)) {
-		t.Fatal()
-	}
+		if !t.Run("Access group getting", testWrap.accessGroupGetting(testData)) {
+			t.Fatal()
+		}
+	*/
 
 	if !t.Run("COMPOSITION create Expected fail with wrong EhrId", testWrap.compositionCreateFail(testData)) {
 		t.Fatal()
@@ -950,7 +955,9 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 		user := testData.users[0]
 
 		if len(testData.groupsAccess) == 0 {
-			t.Fatal("GroupAccess required")
+			uuid := uuid.New()
+
+			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{GroupUUID: &uuid})
 		}
 
 		ga := testData.groupsAccess[0]
@@ -980,7 +987,9 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 		user := testData.users[0]
 
 		if len(testData.groupsAccess) == 0 {
-			t.Fatal("GroupAccess required")
+			uuid := uuid.New()
+
+			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{GroupUUID: &uuid})
 		}
 
 		ga := testData.groupsAccess[0]
@@ -1071,7 +1080,9 @@ func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.
 		user := testData.users[0]
 
 		if len(testData.groupsAccess) == 0 {
-			t.Fatal("GroupAccess required")
+			uuid := uuid.New()
+
+			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{GroupUUID: &uuid})
 		}
 
 		ga := testData.groupsAccess[0]
@@ -1357,6 +1368,7 @@ func compositionCreateBodyRequest(ehrSystemID string) (*bytes.Reader, error) {
 	return bytes.NewReader(data), nil
 }
 
+/*
 func (testWrap *testWrap) accessGroupCreate(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.users) == 0 {
@@ -1463,6 +1475,7 @@ func (testWrap *testWrap) accessGroupGetting(testData *TestData) func(t *testing
 		}
 	}
 }
+*/
 
 func requestWait(userID, accessToken, requestID, baseURL string, client *http.Client) error {
 	request, err := http.NewRequest(http.MethodGet, baseURL+"/v1/requests/"+requestID, nil)
@@ -1625,6 +1638,7 @@ func createEhrWithID(userID, ehrSystemID, accessToken, baseURL, ehrID string, cl
 	return ehr, requestID, nil
 }
 
+/*
 func createGroupAccess(userID, accessToken, baseURL string, client *http.Client) (*model.GroupAccess, error) {
 	description := fakeData.GetRandomStringWithLength(50)
 
@@ -1665,7 +1679,9 @@ func createGroupAccess(userID, accessToken, baseURL string, client *http.Client)
 
 	return &groupAccess, nil
 }
+*/
 
+// nolint
 func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, baseURL string, client *http.Client) (*model.Composition, string, error) {
 	body, err := compositionCreateBodyRequest(ehrSystemID)
 	if err != nil {
@@ -1682,7 +1698,7 @@ func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, b
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("AuthUserId", userID)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
-	request.Header.Set("GroupAccessId", groupAccessID)
+	//request.Header.Set("GroupAccessId", groupAccessID)
 	request.Header.Set("Prefer", "return=representation")
 	request.Header.Set("EhrSystemId", ehrSystemID)
 

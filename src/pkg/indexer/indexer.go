@@ -18,10 +18,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
-	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
@@ -55,8 +55,10 @@ var (
 	Uint256, _ = abi.NewType("uint256", "", nil)
 	Address, _ = abi.NewType("address", "", nil)
 	Access, _  = abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{Name: "level", Type: "uint8"},
-		{Name: "keyEncrypted", Type: "bytes"},
+		{Name: "IdHash", Type: "bytes32"},
+		{Name: "IdEncr", Type: "bytes"},
+		{Name: "KeyEncr", Type: "bytes"},
+		{Name: "Level", Type: "uint8"},
 	})
 	DocMeta, _ = abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{Name: "docType", Type: "uint8"},
@@ -186,7 +188,7 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	return &ehrUUID, nil
 }
 
-func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta, keyEncrypted []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta, keyEncrypted, CIDEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -207,14 +209,24 @@ func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *mode
 
 	sig, err := makeSignature(
 		userKey,
-		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: DocMeta}, {Type: Bytes}, {Type: Uint256}},
-		"addEhrDoc", eID, *docMeta, keyEncrypted, nonce,
+		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: DocMeta}, {Type: Bytes}, {Type: Bytes}, {Type: Uint256}},
+		"addEhrDoc", eID, *docMeta, keyEncrypted, CIDEncr, nonce,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err := i.pack("addEhrDoc", eID, *docMeta, keyEncrypted, nonce, userAddress, sig)
+	params := ehrIndexer.EhrDocsAddEhrDocParams{
+		EhrId:     eID,
+		DocMeta:   (ehrIndexer.EhrDocsDocumentMeta)(*docMeta),
+		KeyEncr:   keyEncrypted,
+		CIDEncr:   CIDEncr,
+		Nonce:     nonce,
+		Signer:    userAddress,
+		Signature: sig,
+	}
+
+	data, err := i.pack("addEhrDoc", params)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.AddEhrDoc error: %w", err)
 	}
@@ -304,36 +316,42 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID *cid.Cid) ([]byte, error) {
+func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID []byte) ([]byte, error) {
 	var uID [32]byte
 
 	copy(uID[:], []byte(userID))
 
-	args := abi.Arguments{{Type: Bytes32}, {Type: Bytes}}
-
-	data, err := args.Pack(uID, CID.Bytes())
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(uID, access.Doc)
 	if err != nil {
 		return nil, fmt.Errorf("args.Pack error: %w", err)
 	}
 
 	accessID := crypto.Keccak256Hash(data)
 
+	data, err = abi.Arguments{{Type: Bytes}}.Pack(CID)
+	if err != nil {
+		return nil, fmt.Errorf("args.Pack error: %w", err)
+	}
+
+	CIDHash := crypto.Keccak256Hash(data)
+
 	callOpts := &bind.CallOpts{
 		Context: ctx,
 	}
 
-	access, err := i.ehrIndex.AccessStore(callOpts, accessID)
+	accessObj, err := i.ehrIndex.GetAccessByIdHash(callOpts, accessID, CIDHash)
 	if err != nil {
+		if strings.Contains(err.Error(), "NFD") {
+			return nil, errors.ErrNotFound
+		}
+
 		return nil, fmt.Errorf("ehrIndex.DocAccess error: %w", err)
 	}
 
-	if len(access.KeyEncrypted) == 0 {
-		return nil, errors.ErrNotFound
-	}
-
-	return access.KeyEncrypted, nil
+	return accessObj.KeyEncr, nil
 }
 
+/*
 func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, privKey *[32]byte, nonce *big.Int) (string, error) {
 	i.Lock()
 	defer i.Unlock()
@@ -388,6 +406,7 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 
 	return access.KeyEncrypted, nil
 }
+*/
 
 func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface{}) ([]byte, error) {
 	data, err := args.Pack(values...)
@@ -675,4 +694,10 @@ func (i *Index) Delete(itemID string) error {
 	}
 
 	return nil
+}
+
+func Keccak256(data []byte) []byte {
+	data, _ = abi.Arguments{{Type: Bytes}}.Pack(data)
+
+	return crypto.Keccak256Hash(data).Bytes()
 }

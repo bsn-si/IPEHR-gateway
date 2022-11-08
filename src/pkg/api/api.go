@@ -35,10 +35,10 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
-	GroupAccess *GroupAccessHandler
-	DocAccess   *DocAccessHandler
-	Request     *RequestHandler
-	User        *UserHandler
+	//GroupAccess *GroupAccessHandler
+	DocAccess *DocAccessHandler
+	Request   *RequestHandler
+	User      *UserHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -50,10 +50,10 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
 		Query:       NewQueryHandler(docService),
-		GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
-		DocAccess:   NewDocAccessHandler(docService),
-		Request:     NewRequestHandler(docService),
-		User:        NewUserHandler(cfg, infra, docService.Proc),
+		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
+		DocAccess: NewDocAccessHandler(docService),
+		Request:   NewRequestHandler(docService),
+		User:      NewUserHandler(cfg, infra, docService.Proc),
 	}
 }
 
@@ -121,10 +121,11 @@ func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
 
 func (a *API) buildAccessAPI(r *gin.RouterGroup) *API {
 	r.Use(auth(a))
-	r.GET("/group/:group_id", a.GroupAccess.Get)
-	r.POST("/group", a.GroupAccess.Create)
+	//r.GET("/group/:group_id", a.GroupAccess.Get)
+	//r.POST("/group", a.GroupAccess.Create)
 
-	r.POST("/document/manage", a.DocAccess.Manage)
+	r.POST("/document", a.DocAccess.Set)
+	r.GET("/document/", a.DocAccess.List)
 
 	return a
 }

@@ -14,7 +14,7 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func (i *Index) UserAdd(ctx context.Context, userID string, systemID string, role uint8, pwdHash []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserNew(ctx context.Context, userID string, systemID string, role uint8, pwdHash []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -47,7 +47,7 @@ func (i *Index) UserAdd(ctx context.Context, userID string, systemID string, rol
 	}
 
 	//TODO remove userAddr arg, its same as signer
-	tx, err := i.ehrIndex.UserAdd(i.transactOpts, userAddress, uID, sID, role, pwdHash, nonce, userAddress, sig)
+	tx, err := i.ehrIndex.UserNew(i.transactOpts, userAddress, uID, sID, role, pwdHash, nonce, userAddress, sig)
 	if err != nil {
 		switch err.Error() {
 		case ExecutionRevertedAEX:
