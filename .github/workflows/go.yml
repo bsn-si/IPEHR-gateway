@@ -25,6 +25,7 @@ jobs:
       with:
         repository: bsn-si/IPEHR-blockchain-indexes.git
         path: './IPEHR-blockchain-indexes'
+        ref: 'develop'
     - name: Install deps and run
       run: |
         cd ./IPEHR-blockchain-indexes
