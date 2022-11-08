@@ -37,7 +37,7 @@ jobs:
         go-version: 1.18
 
     - name: Set the config path
-      run: echo "IPEHR_CONFIG_PATH=./config.json.example" >> $GITHUB_ENV
+      run: echo "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example" >> $GITHUB_ENV
 
     - name: Set contract allowed
       run: |
