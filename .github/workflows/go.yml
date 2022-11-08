@@ -28,6 +28,7 @@ jobs:
         ref: 'develop'
     - name: Install deps and run
       run: |
+        ls -l
         cd ../IPEHR-blockchain-indexes
         npm install
         npx hardhat node &
