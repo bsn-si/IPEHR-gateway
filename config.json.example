@@ -7,7 +7,7 @@
     "compressionEnabled": true,
     "compressionLevel": 5,
     "defaultUserId": "8dc598d2-a3fa-462b-a513-a69a32c5ab4f",
-    "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b"
+    "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
     "storage": {
         "localfile": {
             "path": "../data/storage"
