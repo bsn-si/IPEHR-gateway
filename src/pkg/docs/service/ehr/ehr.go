@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -134,8 +133,6 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
-
-	log.Printf("EHR CID: %x", CID.Bytes())
 
 	// Filecoin saving
 	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
@@ -338,8 +335,6 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
-
-	log.Printf("EHR_STATUS CID: %x", CID.Bytes())
 
 	// Filecoin saving
 	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(statusEncrypted)))

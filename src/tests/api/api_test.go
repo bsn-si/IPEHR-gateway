@@ -370,14 +370,6 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 			},
 			{
-				name:   "Incorrect userID",
-				action: "login",
-				request: userHelper.UserAuthRequest(
-					userHelper.WithUserID("incorrect format"),
-					userHelper.WithPassword("password")),
-				statusCode: http.StatusBadRequest,
-			},
-			{
 				name:       "Empty password",
 				action:     "login",
 				request:    userHelper.UserAuthRequest(userHelper.WithUserID(uuid.New().String())),

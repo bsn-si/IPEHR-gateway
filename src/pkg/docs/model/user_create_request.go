@@ -2,23 +2,12 @@ package model
 
 import (
 	"hms/gateway/pkg/errors"
-
-	"github.com/google/uuid"
 )
 
 type UserCreateRequest struct {
 	UserID   string `json:"userID"`
 	Password string `json:"password"`
 	Role     uint8  `json:"role"`
-}
-
-func (u *UserCreateRequest) userUUID() (*uuid.UUID, error) {
-	userUUID, err := uuid.Parse(u.UserID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &userUUID, nil
 }
 
 func (u *UserCreateRequest) Validate() (bool, error) {
