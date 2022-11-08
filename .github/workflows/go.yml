@@ -42,10 +42,10 @@ jobs:
     - name: Set contract allowed
       run: |
         cd ./src
-        go run ./utils/ehrIndexerSetAllowed
+        go run ./utils/ehrIndexerSetAllowed -config=config.json.example
     
     - name: Contract register default user
-      run: go run ./utils/defaultUserRegister
+      run: go run ./utils/defaultUserRegister -config=config.json.example
 
     - name: Test
       run: go test -v ./...
