@@ -15,8 +15,8 @@
         "ipfs": {
             "endpointURLs": [
                 "http://lotus.dev.bsn.si:5001/api/v0",
-                "http://lotus2.dev.bsn.si:5001/api/v0",
-                "http://lotus3.dev.bsn.si:5001/api/v0"
+                "http://lotus.dev.bsn.si:5001/api/v0",
+                "http://lotus.dev.bsn.si:5001/api/v0"
             ]
         },
         "filecoin": {
