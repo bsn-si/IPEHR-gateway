@@ -37,7 +37,7 @@ func New(cfg *config.Config) *Infra {
 
 	db, err := localDB.New(cfg.DB.FilePath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err, "DB path:", cfg.DB.FilePath)
 	}
 
 	if err = db.AutoMigrate(&processing.Request{}); err != nil {
