@@ -13,7 +13,7 @@ import (
 // https://specifications.openehr.org/releases/RM/Release-1.0.2/ehr.html#_section_class
 type Section struct {
 	Locatable
-	Items []ContentItem `json:"items,omitempty"`
+	Items []Root `json:"items,omitempty"`
 }
 
 func (s *Section) UnmarshalJSON(data []byte) error {
@@ -23,7 +23,7 @@ func (s *Section) UnmarshalJSON(data []byte) error {
 	}
 
 	s.Locatable = ss.Locatable
-	s.Items = make([]ContentItem, 0, len(ss.Items))
+	s.Items = make([]Root, 0, len(ss.Items))
 
 	for _, item := range ss.Items {
 		s.Items = append(s.Items, item.contentItem)
@@ -38,22 +38,26 @@ type sectionWrapper struct {
 }
 
 type sectionItemWrapper struct {
-	contentItem ContentItem `json:"-"`
+	contentItem Root `json:"-"`
 }
 
 func (item *sectionItemWrapper) UnmarshalJSON(data []byte) error {
 	str := struct {
-		Type ContentItemType `json:"_type"`
+		Type ItemType `json:"_type"`
 	}{}
 	if err := json.Unmarshal(data, &str); err != nil {
 		return errors.Wrap(err, "cannot unmarshal section item wrapper")
 	}
 
 	switch str.Type {
-	case ActionContentItemType:
+	case ActionItemType:
 		item.contentItem = &Action{}
-	case EvaluationContentItemType:
+	case EvaluationItemType:
 		item.contentItem = &Evaluation{}
+	case ObservationItemType:
+		item.contentItem = &Observation{}
+	case InstructionItemType:
+		item.contentItem = &Instruction{}
 	default:
 		return errors.Errorf("unexpected section item type: '%v'", str.Type)
 	}

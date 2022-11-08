@@ -6,6 +6,6 @@ package base
 // object.
 // https://specifications.openehr.org/releases/BASE/latest/base_types.html#_object_id_class
 type ObjectID struct {
-	Type  ContentItemType `json:"_type,omitempty"`
-	Value string          `json:"value"`
+	Type  ItemType `json:"_type,omitempty"`
+	Value string   `json:"value"`
 }

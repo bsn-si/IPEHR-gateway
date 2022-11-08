@@ -51,10 +51,7 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 			model.Composition{
 				Locatable: base.Locatable{
 					Type: "COMPOSITION",
-					Name: base.DvText{
-						Type:  "DV_TEXT",
-						Value: "International Patient Summary",
-					},
+					Name: base.NewDvText("International Patient Summary"),
 					ObjectVersionID: base.ObjectVersionID{
 						UID: &base.UIDBasedID{
 							ObjectID: base.ObjectID{
@@ -79,7 +76,7 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			"3. read data from file",
+			"3. parse json",
 			[]byte(compositionJSON),
 			false,
 			expectedComposition,
@@ -99,6 +96,10 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func toRef[T any](v T) *T {
+	return &v
+}
+
 var expectedComposition = model.Composition{
 	Language: base.CodePhrase{
 		TerminologyID: base.ObjectID{
@@ -114,36 +115,35 @@ var expectedComposition = model.Composition{
 		},
 		CodeString: "US",
 	},
-	Category: base.DvCodedText{
-		DefiningCode: base.CodePhrase{
+	Category: base.NewDvCodedText(
+		"event",
+		base.CodePhrase{
 			TerminologyID: base.ObjectID{
 				Type:  "TERMINOLOGY_ID",
 				Value: "openehr",
 			},
 			CodeString: "433",
 		},
-		DvText: base.DvText{
-			Type:  "DV_CODED_TEXT",
-			Value: "event",
-		},
-	},
+	),
 	Context: &model.EventContext{
 		StartTime: base.DvDateTime{
+			DvTemporal: base.DvTemporal{
+				DvValueBase: base.DvValueBase{
+					Type: base.DvDateTimeItemType,
+				},
+			},
 			Value: "2021-12-03T17:34:06.849379+01:00",
 		},
-		Setting: base.DvCodedText{
-			DefiningCode: base.CodePhrase{
+		Setting: base.NewDvCodedText(
+			"other care",
+			base.CodePhrase{
 				TerminologyID: base.ObjectID{
 					Type:  "TERMINOLOGY_ID",
 					Value: "openehr",
 				},
 				CodeString: "238",
 			},
-			DvText: base.DvText{
-				Type:  "DV_CODED_TEXT",
-				Value: "other care",
-			},
-		},
+		),
 		HealthCareFacility: &base.PartyIdentified{
 			Name: "Hospital",
 			PartyProxy: base.PartyProxy{
@@ -153,29 +153,23 @@ var expectedComposition = model.Composition{
 						Value: "9091",
 					},
 					Namespace: "HOSPITAL-NS",
-					Type:      "PARTY",
+					Type:      "PARTY_REF",
 				},
 			},
 		},
 		Participations: &[]base.Participation{
 			{
-				Function: base.DvText{
-					Type:  "DV_TEXT",
-					Value: "requester",
-				},
-				Mode: &base.DvCodedText{
-					DefiningCode: base.CodePhrase{
+				Function: base.NewDvText("requester"),
+				Mode: toRef(base.NewDvCodedText(
+					"face-to-face communication",
+					base.CodePhrase{
 						TerminologyID: base.ObjectID{
 							Type:  "TERMINOLOGY_ID",
 							Value: "openehr",
 						},
 						CodeString: "216",
 					},
-					DvText: base.DvText{
-						Type:  "DV_CODED_TEXT",
-						Value: "face-to-face communication",
-					},
-				},
+				)),
 				Performer: base.PartyProxy{
 					ExternalRef: base.ObjectRef{
 						ID: base.ObjectID{
@@ -183,28 +177,22 @@ var expectedComposition = model.Composition{
 							Value: "199",
 						},
 						Namespace: "HOSPITAL-NS",
-						Type:      "PERSON",
+						Type:      "PARTY_REF",
 					},
 				},
 			},
 			{
-				Function: base.DvText{
-					Type:  "DV_TEXT",
-					Value: "performer",
-				},
-				Mode: &base.DvCodedText{
-					DefiningCode: base.CodePhrase{
+				Function: base.NewDvText("performer"),
+				Mode: toRef(base.NewDvCodedText(
+					"not specified",
+					base.CodePhrase{
 						TerminologyID: base.ObjectID{
 							Type:  "TERMINOLOGY_ID",
 							Value: "openehr",
 						},
 						CodeString: "193",
 					},
-					DvText: base.DvText{
-						Type:  "DV_CODED_TEXT",
-						Value: "not specified",
-					},
-				},
+				)),
 				Performer: base.PartyProxy{
 					ExternalRef: base.ObjectRef{
 						ID: base.ObjectID{
@@ -212,18 +200,15 @@ var expectedComposition = model.Composition{
 							Value: "198",
 						},
 						Namespace: "HOSPITAL-NS",
-						Type:      "PERSON",
+						Type:      "PARTY_REF",
 					},
 				},
 			},
 		},
 	},
 	Locatable: base.Locatable{
-		Type: "COMPOSITION",
-		Name: base.DvText{
-			Type:  "DV_TEXT",
-			Value: "International Patient Summary",
-		},
+		Type:            "COMPOSITION",
+		Name:            base.NewDvText("International Patient Summary"),
 		ArchetypeNodeID: "openEHR-EHR-COMPOSITION.health_summary.v1",
 		ObjectVersionID: base.ObjectVersionID{
 			UID: &base.UIDBasedID{
@@ -258,7 +243,7 @@ var expectedComposition = model.Composition{
 					RmVersion: "1.0.4",
 				},
 			},
-			Items: []base.ContentItem{},
+			Items: []base.Root{},
 		},
 	},
 }

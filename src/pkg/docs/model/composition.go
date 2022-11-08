@@ -24,7 +24,7 @@ type Composition struct {
 
 func (c *Composition) Validate() bool {
 	validation := true
-	if c.Type != base.CompositionContentItemType {
+	if c.Type != base.CompositionItemType {
 		validation = false
 	}
 
