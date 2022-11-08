@@ -10,7 +10,7 @@
     "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
     "storage": {
         "localfile": {
-            "path": "../data/storage"
+            "path": "/home/runner/work/IPEHR-gateway/IPEHR-gateway/data/storage"
         },
         "ipfs": {
             "endpointURLs": [
@@ -31,10 +31,10 @@
         "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
         "endpoint": "http://127.0.0.1:8545",
         "endpoint2": "https://goerli.infura.io/v3/<API-KEY>",
-        "privKeyPath": "../.blockchain.key",
+        "privKeyPath": "/home/runner/work/IPEHR-gateway/IPEHR-gateway/.blockchain.key",
         "gasTipCap" : 100000
     },
     "db": {
-        "filePath": "local.db"
+        "filePath": "/home/runner/work/IPEHR-gateway/IPEHR-gateway/data/local.db"
     }
 }
