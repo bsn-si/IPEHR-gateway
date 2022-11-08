@@ -23,11 +23,11 @@ jobs:
     - name: Install external repo
       uses: actions/checkout@v3
       with:
-        repository: bsn-si/IPEHR-blockchain-indexes
-        path: '/IPEHR-blockchain-indexes'
+        repository: bsn-si/IPEHR-blockchain-indexes.git
+        path: './IPEHR-blockchain-indexes'
     - name: Install deps and run
       run: |
-        cd /IPEHR-blockchain-indexes
+        cd ./IPEHR-blockchain-indexes
         npm install
         npx hardhat node &
         npx hardhat run scripts/deploy.ts --network localhost
