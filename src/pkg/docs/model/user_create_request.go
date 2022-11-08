@@ -26,9 +26,7 @@ func (u *UserCreateRequest) Validate() (bool, error) {
 		return false, errors.ErrFieldIsEmpty("UserId")
 	}
 
-	if _, err := u.userUUID(); err != nil {
-		return false, errors.ErrFieldIsIncorrect("UserId")
-	}
+	//TODO format validate
 
 	// TODO Check Password (min max other conds)
 	if len(u.Password) == 0 {
