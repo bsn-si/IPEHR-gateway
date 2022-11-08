@@ -28,10 +28,7 @@ jobs:
         ref: 'develop'
     - name: Install deps and run
       run: |
-        cd /home/runner/work/IPEHR-gateway/IPEHR-gateway/IPEHR-blockchain-indexes
-        npm install
-        npx hardhat node &
-        npx hardhat run scripts/deploy.ts --network localhost
+        ls -la
           
     - uses: actions/checkout@v3
 
