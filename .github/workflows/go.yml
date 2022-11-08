@@ -44,7 +44,7 @@ jobs:
     - name: Set contract allowed
       run: |
         cd ./src
-        go run ./utils/ehrIndexerSetAllowed
+        go run ./utils/ehrIndexerSetAllowed -config=$GITHUB_WORKSPACE/config.json.example
     
     - name: Contract register default user
       run: go run ./utils/defaultUserRegister
