@@ -23,7 +23,7 @@ jobs:
     - name: Install external repo
       uses: actions/checkout@v3
       with:
-        repository: https://github.com/bsn-si/IPEHR-blockchain-indexes
+        repository: bsn-si/IPEHR-blockchain-indexes
         path: '/IPEHR-blockchain-indexes'
     - name: Install deps and run
       run: |
