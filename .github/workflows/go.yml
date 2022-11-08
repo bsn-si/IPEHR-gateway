@@ -41,13 +41,16 @@ jobs:
         cat $GITHUB_WORKSPACE/config.json.example
         echo "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example" >> $GITHUB_ENV
 
-    - name: Set contract allowed
+    - name: Prepare
       run: |
         cd ./src
-        go run ./utils/ehrIndexerSetAllowed -config=$GITHUB_WORKSPACE/config.json.example
+        go build -o ../bin/ehrIndexerSetAllowed ./utils/ehrIndexerSetAllowed/.
+        go build -o ../bin/defaultUserRegister ./utils/defaultUserRegister/.
+        cd ..
+        ./bin/ehrIndexerSetAllowed
+        ./bin/defaultUserRegister
     
-    - name: Contract register default user
-      run: go run ./utils/defaultUserRegister
-
     - name: Test
-      run: go test -v ./...
+      run: |
+        cd ./src
+        go test -v ./...
