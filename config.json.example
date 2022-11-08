@@ -29,7 +29,7 @@
     },
     "contract": {
         "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-        "endpoint": "http://7.7.7.30:8545",
+        "endpoint": "http://127.0.0.1:8545",
         "endpoint2": "https://goerli.infura.io/v3/<API-KEY>",
         "privKeyPath": "../.blockchain.key",
         "gasTipCap" : 100000
