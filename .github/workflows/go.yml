@@ -38,7 +38,7 @@ jobs:
 
     - name: Set the config path
       run: |
-        echo "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example"
+        cat "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example"
         echo "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example" >> $GITHUB_ENV
 
     - name: Set contract allowed
