@@ -35,6 +35,6 @@
         "gasTipCap" : 100000
     },
     "db": {
-        "filePath": "../data/local.db"
+        "filePath": "local.db"
     }
 }
