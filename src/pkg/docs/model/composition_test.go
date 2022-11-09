@@ -230,7 +230,7 @@ var expectedComposition = model.Composition{
 		},
 	},
 	Content: []base.Root{
-		base.Section{
+		&base.Section{
 			Locatable: base.Locatable{
 				Type:            "SECTION",
 				Name:            base.NewDvText("Medication Summary"),
