@@ -40,7 +40,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Accept       json
 // @Produce      json
 // @Param        ehr_id         path      string                 true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        Authorization  header    string                 true  "Bearer <JWT>"
+// @Param        Authorization  header    string                 true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string                 true  "UserId UUID"
 // @Param        EhrSystemId    header    string                 true  "The identifier of the system, typically a reverse domain identifier"
 // @Param        If-Match       header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`) must be specified."
@@ -61,7 +61,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 func (h *EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 	ehrSystemID := c.GetString("ehrSystemID")
-	reqID := c.GetString("reqId")
+	reqID := c.GetString("reqID")
 
 	//TODO validate ehrID
 
@@ -159,7 +159,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 // @Produce      json
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_at_time  query     string  true  "A given time in the extended ISO 8601 format. Example: 2015-01-20T19:30:22.765+01:00"
-// @Param        Authorization    header    string  true  "Bearer <JWT>"
+// @Param        Authorization    header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true  "UserId UUID"
 // @Param        EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrStatusUpdate
@@ -223,7 +223,7 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Produce      json
 // @Param        ehr_id           path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid    path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Param        Authorization  header    string  true  "Bearer <JWT>"
+// @Param        Authorization  header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId       header    string  true  "UserId UUID"
 // @Param        EhrSystemId      header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200              {object}  model.EhrStatusUpdate

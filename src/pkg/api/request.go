@@ -29,7 +29,7 @@ func NewRequestHandler(docService *service.DefaultDocumentService) *RequestHandl
 // @Tags     REQUEST
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header    string  true  "Bearer <JWT>"
+// @Param    Authorization  header    string  true  "Bearer AccessToken"
 // @Param    AuthUserId     header    string  true  "UserId UUID"
 // @Param    limit          query     string  true  "default: 10"
 // @Param    offset         query     string  true  "id namespace. Example: examples"
@@ -79,7 +79,7 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 // @Tags     REQUEST
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header    string  true  "Bearer <JWT>"
+// @Param    Authorization  header    string  true  "Bearer AccessToken"
 // @Param    AuthUserId     header    string  true  "UserId UUID"
 // @Param    request_id     path      string  true  "Unique id of request"
 // @Success  200            {object}  processing.RequestResult
@@ -94,7 +94,7 @@ func (h RequestHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	reqID := c.Param("reqId")
+	reqID := c.Param("reqID")
 	if reqID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "requestId is empty"})
 		return

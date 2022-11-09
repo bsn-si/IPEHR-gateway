@@ -32,7 +32,7 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 // @Tags         ACCESS
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header  string  true  "Bearer <JWT>"
+// @Param        Authorization  header  string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string  true  "UserId UUID"
 // @Success      200            ""
 // @Failure      400            "Is returned when the request has invalid content."
@@ -91,7 +91,7 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 // @Tags         ACCESS
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header  string                     true  "Bearer <JWT>"
+// @Param        Authorization  header  string                     true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string                     true  "UserId UUID"
 // @Param        Request        body    model.DocAccessSetRequest  true  "DTO with data to create group access"
 // @Success      200            "Indicates that the request to change the level of access to the document was successfully created"
@@ -131,7 +131,7 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 		return
 	}
 
-	reqID := c.GetString("reqId")
+	reqID := c.GetString("reqID")
 	if reqID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "requestId is empty"})
 		return

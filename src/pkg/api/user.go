@@ -50,11 +50,16 @@ func (h UserHandler) Register(c *gin.Context) {
 	}
 	defer c.Request.Body.Close()
 
-	reqID := c.GetString("reqId")
+	reqID := c.GetString("reqID")
 	if reqID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "requestId is empty"})
 		return
 	}
+
+	// Label 'register' to allow the status of a user registration request without auth
+	// Used in auth exceptions middleware
+	reqID += "_register"
+	c.Header("RequestId", reqID)
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
@@ -169,7 +174,7 @@ func (h UserHandler) Login(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header  string     true  "Bearer <JWT>"
+// @Param    Authorization  header  string     true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string     true  "UserId - UUID"
 // @Param    Request        body    model.JWT  true  "JWT"
 // @Success  200            "Successfully logged out"
@@ -212,7 +217,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    Authorization  header    string  true  "Bearer <JWT>" "Refresh token"
+// @Param    Authorization  header    string  true  "Bearer RefreshToken"
 // @Param    AuthUserId     header    string  true  "UserId - UUID"
 // @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success  201            {object}  model.JWT

@@ -42,7 +42,7 @@ func NewEhrHandler(docService *service.DefaultDocumentService, baseURL string) *
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header    string                  true  "Bearer <JWT>"
+// @Param        Authorization  header    string                  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string                  true  "UserId UUID"
 // @Param        EhrSystemId    header    string                  true  "The identifier of the system, typically a reverse domain identifier"
 // @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
@@ -97,7 +97,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 
 	ehrUUIDnew := uuid.New()
 	ehrSystemID := c.GetString("ehrSystemID")
-	reqID := c.GetString("reqId")
+	reqID := c.GetString("reqID")
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
@@ -141,7 +141,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header    string                  true  "Bearer <JWT>"
+// @Param        Authorization  header    string                  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string                  true  "UserId UUID"
 // @Param        EhrSystemId    header    string                  true  "The identifier of the system, typically a reverse domain identifier"
 // @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
@@ -204,7 +204,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	reqID := c.GetString("reqId")
+	reqID := c.GetString("reqID")
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
@@ -243,7 +243,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        Authorization  header    string  true  "Bearer <JWT>"
+// @Param        Authorization  header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true  "UserId UUID"
 // @Param        EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrSummary
@@ -300,7 +300,7 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 // @Produce      json
 // @Param        subject_id         query     string  true  "subject id. Example: ins01"
 // @Param        subject_namespace  query     string  true  "id namespace. Example: examples"
-// @Param        Authorization      header    string  true  "Bearer <JWT>"
+// @Param        Authorization      header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId         header    string  true  "UserId UUID"
 // @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary

@@ -86,9 +86,14 @@ func Test_API(t *testing.T) {
 	}
 
 	for _, user := range testData.users {
-		err := registerUser(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := registerUser(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Can not register user, err: %v", err)
+		}
+
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal("registerUser requestWait error: ", err)
 		}
 	}
 
@@ -1719,15 +1724,15 @@ func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, b
 	return &c, requestID, nil
 }
 
-func registerUser(user *User, systemID, baseURL string, client *http.Client) error {
+func registerUser(user *User, systemID, baseURL string, client *http.Client) (string, error) {
 	userRegisterRequest, err := userCreateBodyRequest(user.id, user.password)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	request, err := http.NewRequest(http.MethodPost, baseURL+"/v1/user/register", userRegisterRequest)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	request.Header.Set("Content-type", "application/json")
@@ -1736,17 +1741,19 @@ func registerUser(user *User, systemID, baseURL string, client *http.Client) err
 
 	response, err := client.Do(request)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = response.Body.Close()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if response.StatusCode != http.StatusCreated {
-		return err
+		return "", err
 	}
 
-	return nil
+	requestID := response.Header.Get("RequestId")
+
+	return requestID, nil
 }
