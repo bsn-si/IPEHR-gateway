@@ -176,7 +176,7 @@ type RequestsResult map[string]*RequestResult
 func (p *Proc) requests(userID, reqID string, limit, offset int) (RequestsResult, error) {
 	var (
 		requests    []*Request
-		reqIds      []string
+		reqIDs      []string
 		ethTxs      []*EthereumTx
 		filecoinTxs []*FileCoinTx
 		result      = make(RequestsResult)
@@ -195,17 +195,17 @@ func (p *Proc) requests(userID, reqID string, limit, offset int) (RequestsResult
 	}
 
 	for _, r := range requests {
-		reqIds = append(reqIds, r.ReqID)
+		reqIDs = append(reqIDs, r.ReqID)
 	}
 
 	// ethereum transactions
-	err = p.db.Model(&EthereumTx{}).Where("req_id IN ?", reqIds).Find(&ethTxs).Error
+	err = p.db.Model(&EthereumTx{}).Where("req_id IN ?", reqIDs).Find(&ethTxs).Error
 	if err != nil {
 		return nil, fmt.Errorf("Ethereum transactions select error: %w userID: %s reqID: %s limit: %d offset: %d", err, userID, reqID, limit, offset)
 	}
 
 	// filecoin transactions
-	err = p.db.Model(&FileCoinTx{}).Where("req_id IN ?", reqIds).Find(&filecoinTxs).Error
+	err = p.db.Model(&FileCoinTx{}).Where("req_id IN ?", reqIDs).Find(&filecoinTxs).Error
 	if err != nil {
 		return nil, fmt.Errorf("Ethereum transactions select error: %w userID: %s reqID: %s limit: %d offset: %d", err, userID, reqID, limit, offset)
 	}

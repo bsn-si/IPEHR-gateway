@@ -70,7 +70,7 @@ func (a *API) Build() *gin.Engine {
 		// your custom format
 		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
 			param.TimeStamp.Format("2006-01-02 15:04:05"),
-			param.Keys["reqId"],
+			param.Keys["reqID"],
 			param.StatusCode,
 			param.Latency,
 			param.ClientIP,
@@ -138,9 +138,9 @@ func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
 }
 
 func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
+	r.Use(auth(a, "userRegister"))
+	r.GET("/:reqID", a.Request.GetByID)
 	r.GET("/", a.Request.GetAll)
-	r.GET("/:reqId", a.Request.GetByID)
 
 	return a
 }

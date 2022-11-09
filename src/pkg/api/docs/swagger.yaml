@@ -385,7 +385,7 @@ paths:
         Sets access to the document with the specified CID for the user with the userID.
         Possible access levels: `owner`, `admin`, `read`, `noAccess`
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -409,6 +409,9 @@ paths:
             the document was successfully created
         "400":
           description: Is returned when the request has invalid content.
+        "404":
+          description: 'Is returned when the userID for which access is set is not
+            found '
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
@@ -421,7 +424,7 @@ paths:
       - application/json
       description: Returns the list of documents available to the user
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -463,7 +466,7 @@ paths:
         name: subject_namespace
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -506,7 +509,7 @@ paths:
 
         All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -574,7 +577,7 @@ paths:
         name: ehr_id
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -621,7 +624,7 @@ paths:
 
         All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -697,7 +700,7 @@ paths:
         name: ehr_id
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -780,7 +783,7 @@ paths:
         name: preceding_version_uid
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -837,7 +840,7 @@ paths:
         name: version_uid
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -894,7 +897,7 @@ paths:
         name: versioned_object_uid
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -987,7 +990,7 @@ paths:
         name: version_at_time
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -1033,7 +1036,7 @@ paths:
         name: ehr_id
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -1123,7 +1126,7 @@ paths:
         name: version_uid
         required: true
         type: string
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -1211,7 +1214,7 @@ paths:
       description: |
         It is returning only transactions which in progress
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -1255,7 +1258,7 @@ paths:
       description: |
         It's returning only transactions which in progress
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -1335,7 +1338,7 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
@@ -1372,7 +1375,7 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer RefreshToken
         in: header
         name: Authorization
         required: true

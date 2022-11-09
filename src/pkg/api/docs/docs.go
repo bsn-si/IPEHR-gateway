@@ -40,7 +40,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -69,6 +69,9 @@ const docTemplate = `{
                     "400": {
                         "description": "Is returned when the request has invalid content."
                     },
+                    "404": {
+                        "description": "Is returned when the userID for which access is set is not found "
+                    },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
                     }
@@ -91,7 +94,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -147,7 +150,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -200,7 +203,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -292,7 +295,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -348,7 +351,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -447,7 +450,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -555,7 +558,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -630,7 +633,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -705,7 +708,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -817,7 +820,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -880,7 +883,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1002,7 +1005,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1117,7 +1120,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1179,7 +1182,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1295,7 +1298,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1348,7 +1351,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer RefreshToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true

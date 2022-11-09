@@ -10,7 +10,7 @@ import (
 
 func requestID(c *gin.Context) {
 	id := make([]byte, 6)
-	reqID := c.Request.Header.Get("reqId")
+	reqID := c.Request.Header.Get("reqID")
 
 	if reqID == "" {
 		if _, err := rand.Read(id); err != nil {
@@ -20,7 +20,7 @@ func requestID(c *gin.Context) {
 		reqID = hex.EncodeToString(id)
 	}
 
-	c.Set("reqId", reqID)
+	c.Set("reqID", reqID)
 	c.Header("RequestId", reqID)
 	c.Next()
 }

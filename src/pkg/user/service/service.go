@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -89,8 +88,6 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)
 	}
 
-	log.Println("GetUserPasswordHash start")
-
 	pwdHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
@@ -98,8 +95,6 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 		}
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
-
-	log.Println("GetUserPasswordHash finish")
 
 	match, err := verifyPassphrase(userID+systemID+password, pwdHash)
 	if err != nil {

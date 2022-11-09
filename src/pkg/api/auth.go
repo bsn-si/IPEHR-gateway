@@ -3,14 +3,32 @@ package api
 import (
 	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 
 	"hms/gateway/pkg/errors"
 )
 
-func auth(a *API) func(*gin.Context) {
+func auth(a *API, exceptions ...string) func(*gin.Context) {
+	reCheckRegister := regexp.MustCompile("^[0-9a-f]{12}_register$")
+
 	return func(c *gin.Context) {
+		// Exception strings
+		for _, ex := range exceptions {
+			switch ex {
+			case "userRegister":
+				reqID := c.Param("reqID")
+
+				if reCheckRegister.MatchString(reqID) {
+					userID := c.Request.Header.Get("AuthUserId")
+					c.Set("userID", userID)
+					c.Next()
+					return
+				}
+			}
+		}
+
 		tokenString := c.Request.Header.Get("Authorization")
 		userID := c.Request.Header.Get("AuthUserId")
 
@@ -20,8 +38,8 @@ func auth(a *API) func(*gin.Context) {
 		}
 
 		userService := a.User.service
-		err := userService.VerifyAccess(userID, tokenString)
 
+		err := userService.VerifyAccess(userID, tokenString)
 		if err != nil {
 			log.Println(err)
 
