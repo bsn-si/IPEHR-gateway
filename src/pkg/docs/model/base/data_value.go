@@ -160,7 +160,7 @@ type DvIdentifier struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_interval_class
 type DvInterval[T any] struct {
 	DvValueBase
-	Interval
+	Interval[T]
 }
 
 func (interval *DvInterval[T]) GetType() ItemType {
@@ -173,9 +173,9 @@ func (interval *DvInterval[T]) GetType() ItemType {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_ordered_class
 type DvOrdered[T any] struct {
 	DvValueBase
-	NormalStatus         *CodePhrase       `json:"normal_status,omitempty"`
-	NormalRange          *DvInterval[T]    `json:"normal_range,omitempty"`
-	OtherReferenceRanges *[]ReferenceRange `json:"other_reference_ranges,omitempty"`
+	NormalStatus         *CodePhrase         `json:"normal_status,omitempty"`
+	NormalRange          *DvInterval[T]      `json:"normal_range,omitempty"`
+	OtherReferenceRanges []ReferenceRange[T] `json:"other_reference_ranges,omitempty"`
 }
 
 // DvQuantified
@@ -183,8 +183,8 @@ type DvOrdered[T any] struct {
 // but which have a precise magnitude.
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_quantified_class
 type DvQuantified[T any] struct {
-	MagnitudeStatus bool        `json:"magnitude_status,omitempty"`
-	Accuracy        interface{} `json:"accuracy,omitempty"`
+	MagnitudeStatus bool `json:"magnitude_status,omitempty"`
+	Accuracy        any  `json:"accuracy,omitempty"`
 	DvOrdered[T]
 }
 
@@ -211,13 +211,13 @@ type DvAmount[T any] struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_quantity_class
 type DvQuantity struct {
 	DvAmount[float64]
-	Magnitude            float64                 `json:"magnitude"`
-	Precision            *int                    `json:"precision,omitempty"`
-	Units                *string                 `json:"units,omitempty"`
-	UnitsSystem          *string                 `json:"units_system,omitempty"`
-	UnitsDisplayName     *string                 `json:"units_display_name,omitempty"`
-	NormalRange          *DvInterval[DvQuantity] `json:"normal_range,omitempty"`
-	OtherReferenceRanges *[]ReferenceRange       `json:"other_reference_ranges,omitempty"`
+	Magnitude            float64                      `json:"magnitude"`
+	Precision            *int                         `json:"precision,omitempty"`
+	Units                *string                      `json:"units,omitempty"`
+	UnitsSystem          *string                      `json:"units_system,omitempty"`
+	UnitsDisplayName     *string                      `json:"units_display_name,omitempty"`
+	NormalRange          *DvInterval[DvQuantity]      `json:"normal_range,omitempty"`
+	OtherReferenceRanges []ReferenceRange[DvQuantity] `json:"other_reference_ranges,omitempty"`
 }
 
 // DvCount
@@ -229,9 +229,9 @@ type DvQuantity struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_count_class
 type DvCount struct {
 	DvAmount[int64]
-	Magnitude            int64                `json:"magnitude"`
-	NormalRange          *DvInterval[DvCount] `json:"normal_range,omitempty"`
-	OtherReferenceRanges *[]ReferenceRange    `json:"other_reference_ranges,omitempty"`
+	Magnitude            int64                     `json:"magnitude"`
+	NormalRange          *DvInterval[DvCount]      `json:"normal_range,omitempty"`
+	OtherReferenceRanges []ReferenceRange[DvCount] `json:"other_reference_ranges,omitempty"`
 }
 
 // DvProportion
@@ -239,7 +239,7 @@ type DvCount struct {
 // The valid_proportion_kind property of the PROPORTION_KIND class is used to control the type attribute to be one of a defined set.
 //
 // Used for recording titers (e.g. 1:128), concentration ratios, e.g. Na:K (unitary denominator),
-// albumin:creatinine ratio, and percentages, e.g. red cell distirbution width (RDW).
+// albumin:creatinine ratio, and percentages, e.g. red cell distribution width (RDW).
 //
 // Misuse: Should not be used to represent things like blood pressure which are often written using a '/' character,
 // giving the misleading impression that the item is a ratio, when in fact it is a structured value.
@@ -249,12 +249,12 @@ type DvCount struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_proportion_class
 type DvProportion struct {
 	DvAmount[interface{}]
-	Numeration           float64                   `json:"numeration"`
-	Denomination         float64                   `json:"denomination"`
-	Type                 int                       `json:"type"`
-	Precision            *int                      `json:"precision,omitempty"`
-	NormalRange          *DvInterval[DvProportion] `json:"normal_range,omitempty"`
-	OtherReferenceRanges *[]ReferenceRange         `json:"other_reference_ranges,omitempty"`
+	Numeration           float64                        `json:"numeration"`
+	Denomination         float64                        `json:"denomination"`
+	Type                 int                            `json:"type"`
+	Precision            *int                           `json:"precision,omitempty"`
+	NormalRange          *DvInterval[DvProportion]      `json:"normal_range,omitempty"`
+	OtherReferenceRanges []ReferenceRange[DvProportion] `json:"other_reference_ranges,omitempty"`
 }
 
 // DvDuration

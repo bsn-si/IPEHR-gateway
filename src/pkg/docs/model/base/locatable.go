@@ -20,8 +20,8 @@ type Locatable struct {
 	Pathable         `json:"-"`
 }
 
-func (l Locatable) GetType() string {
-	return l.Type.ToString()
+func (l Locatable) GetType() ItemType {
+	return l.Type
 }
 
 func (l Locatable) GetLocatable() Locatable {

@@ -229,8 +229,8 @@ var expectedComposition = model.Composition{
 			RmVersion: "1.0.4",
 		},
 	},
-	Content: []base.Section{
-		{
+	Content: []base.Root{
+		base.Section{
 			Locatable: base.Locatable{
 				Type:            "SECTION",
 				Name:            base.NewDvText("Medication Summary"),
