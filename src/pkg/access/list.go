@@ -4,4 +4,4 @@ type Item struct {
 	Fields map[string][]byte
 }
 
-type List []*Item
+type List []Item

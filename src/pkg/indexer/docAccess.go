@@ -18,7 +18,7 @@ import (
 func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, error) {
 	var uID [32]byte
 
-	copy(uID[:], []byte(userID))
+	copy(uID[:], userID)
 
 	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(uID, access.Doc)
 	if err != nil {
@@ -44,7 +44,7 @@ func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, 
 
 		level := []byte{a.Level}
 
-		l = append(l, &access.Item{
+		l = append(l, access.Item{
 			Fields: map[string][]byte{
 				"idHash":  idHash,
 				"idEncr":  a.IdEncr,

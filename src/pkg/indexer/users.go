@@ -20,8 +20,8 @@ func (i *Index) UserNew(ctx context.Context, userID string, systemID string, rol
 
 	var uID, sID [32]byte
 
-	copy(uID[:], []byte(userID)[:])
-	copy(sID[:], []byte(systemID)[:])
+	copy(uID[:], userID)
+	copy(sID[:], systemID)
 
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {

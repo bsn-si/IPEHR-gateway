@@ -129,7 +129,7 @@ func (i *Index) pack(name string, args ...interface{}) ([]byte, error) {
 func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUID, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	var uID, eID [32]byte
 
-	copy(uID[:], []byte(userID))
+	copy(uID[:], userID)
 	copy(eID[:], ehrUUID[:])
 
 	userKey, err := crypto.ToECDSA(privKey[:])
@@ -169,7 +169,7 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 		uID      [32]byte
 	)
 
-	copy(uID[:], []byte(userID))
+	copy(uID[:], userID)
 
 	ehrUUIDRaw, err := i.ehrIndex.EhrUsers(callOpts, uID)
 	if err != nil {
@@ -319,7 +319,7 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID []byte) ([]byte, error) {
 	var uID [32]byte
 
-	copy(uID[:], []byte(userID))
+	copy(uID[:], userID)
 
 	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(uID, access.Doc)
 	if err != nil {
