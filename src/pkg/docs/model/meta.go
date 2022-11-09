@@ -6,7 +6,7 @@ import (
 	"github.com/ipfs/go-cid"
 )
 
-type DocumentMeta ehrIndexer.EhrIndexerDocumentMeta
+type DocumentMeta ehrIndexer.EhrDocsDocumentMeta
 
 func (m *DocumentMeta) Cid() *cid.Cid {
 	CID, err := cid.Parse(m.CID)

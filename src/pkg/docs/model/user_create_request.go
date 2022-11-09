@@ -2,8 +2,6 @@ package model
 
 import (
 	"hms/gateway/pkg/errors"
-
-	"github.com/google/uuid"
 )
 
 type UserCreateRequest struct {
@@ -12,23 +10,12 @@ type UserCreateRequest struct {
 	Role     uint8  `json:"role"`
 }
 
-func (u *UserCreateRequest) userUUID() (*uuid.UUID, error) {
-	userUUID, err := uuid.Parse(u.UserID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &userUUID, nil
-}
-
 func (u *UserCreateRequest) Validate() (bool, error) {
 	if len(u.UserID) == 0 {
 		return false, errors.ErrFieldIsEmpty("UserId")
 	}
 
-	if _, err := u.userUUID(); err != nil {
-		return false, errors.ErrFieldIsIncorrect("UserId")
-	}
+	//TODO format validate
 
 	// TODO Check Password (min max other conds)
 	if len(u.Password) == 0 {

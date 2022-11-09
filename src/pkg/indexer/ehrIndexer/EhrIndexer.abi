@@ -1,1 +1,1179 @@
-[{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"key","type":"bytes32"},{"indexed":false,"internalType":"bytes","name":"access","type":"bytes"}],"name":"DocAccessChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"indexed":false,"internalType":"bytes","name":"CID","type":"bytes"}],"name":"EhrDocAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"subjectKey","type":"bytes32"},{"indexed":false,"internalType":"bytes32","name":"ehrId","type":"bytes32"}],"name":"EhrSubjectSet","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"bytes32","name":"key","type":"bytes32"},{"indeed":false,"internalType":"bytes","name":"access","type":"bytes"}],"name":"GroupAccessChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"components":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"internalType":"struct EhrIndexer.DocumentMeta","name":"docMeta","type":"tuple"}],"name":"addEhrDoc","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"allowedChange","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"dataSearch","outputs":[{"internalType":"bytes32","name":"nodeType","type":"bytes32"},{"internalType":"bytes32","name":"nodeID","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"}],"name":"deleteDoc","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"docAccess","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"","type":"uint8"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"ehrDocs","outputs":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"ehrSubject","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"ehrUsers","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"name":"getDocByTime","outputs":[{"components":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"internalType":"struct EhrIndexer.DocumentMeta","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"}],"name":"getDocByVersion","outputs":[{"components":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"internalType":"struct EhrIndexer.DocumentMeta","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"}],"name":"getDocLastByBaseID","outputs":[{"components":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"internalType":"struct EhrIndexer.DocumentMeta","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"}],"name":"getEhrDocs","outputs":[{"components":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"internalType":"struct EhrIndexer.DocumentMeta[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"ehrId","type":"bytes32"},{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"}],"name":"getLastEhrDocByType","outputs":[{"components":[{"internalType":"enum EhrIndexer.DocType","name":"docType","type":"uint8"},{"internalType":"enum EhrIndexer.DocStatus","name":"status","type":"uint8"},{"internalType":"bytes","name":"CID","type":"bytes"},{"internalType":"bytes","name":"dealCID","type":"bytes"},{"internalType":"bytes","name":"minerAddress","type":"bytes"},{"internalType":"bytes","name":"docUIDEncrypted","type":"bytes"},{"internalType":"bytes32","name":"docBaseUIDHash","type":"bytes32"},{"internalType":"bytes32","name":"version","type":"bytes32"},{"internalType":"bool","name":"isLast","type":"bool"},{"internalType":"uint32","name":"timestamp","type":"uint32"}],"internalType":"struct EhrIndexer.DocumentMeta","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddr","type":"address"}],"name":"getUserPasswordHash","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"groupAccess","outputs":[{"internalType":"enum EhrUsers.AccessLevel","name":"level","type":"uint8"},{"internalType":"bytes","name":"keyEncrypted","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"groupID","type":"bytes32"},{"internalType":"address","name":"addingUserAddr","type":"address"},{"internalType":"enum EhrUsers.AccessLevel","name":"level","type":"uint8"},{"internalType":"bytes","name":"keyEncrypted","type":"bytes"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"signer","type":"address"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"groupAddUser","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"groupID","type":"bytes32"},{"internalType":"bytes","name":"description","type":"bytes"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"signer","type":"address"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"groupCreate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"groupID","type":"bytes32"},{"internalType":"address","name":"removingUserAddr","type":"address"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"signer","type":"address"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"groupRemoveUser","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes[]","name":"data","type":"bytes[]"}],"name":"multicall","outputs":[{"internalType":"bytes[]","name":"results","type":"bytes[]"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nonces","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"addr","type":"address"},{"internalType":"bool","name":"allowed","type":"bool"}],"name":"setAllowed","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"internalType":"bytes","name":"access","type":"bytes"}],"name":"setDocAccess","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"subjectKey","type":"bytes32"},{"internalType":"bytes32","name":"ehrId","type":"bytes32"}],"name":"setEhrSubject","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"userId","type":"bytes32"},{"internalType":"bytes32","name":"ehrId","type":"bytes32"}],"name":"setEhrUser","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"key","type":"bytes32"},{"components":[{"internalType":"enum EhrUsers.AccessLevel","name":"level","type":"uint8"},{"internalType":"bytes","name":"keyEncrypted","type":"bytes"}],"internalType":"struct EhrUsers.Access","name":"access","type":"tuple"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"signer","type":"address"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"setGroupAccess","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"userAddr","type":"address"},{"internalType":"bytes32","name":"id","type":"bytes32"},{"internalType":"bytes32","name":"systemID","type":"bytes32"},{"internalType":"enum EhrUsers.Role","name":"role","type":"uint8"},{"internalType":"bytes","name":"pwdHash","type":"bytes"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"address","name":"signer","type":"address"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"userAdd","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"userGroups","outputs":[{"internalType":"bytes","name":"description","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"users","outputs":[{"internalType":"bytes32","name":"id","type":"bytes32"},{"internalType":"bytes32","name":"systemID","type":"bytes32"},{"internalType":"enum EhrUsers.Role","name":"role","type":"uint8"},{"internalType":"bytes","name":"pwdHash","type":"bytes"}],"stateMutability":"view","type":"function"}]x
+[
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "ehrId",
+              "type": "bytes32"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum EhrDocs.DocType",
+                  "name": "docType",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "enum EhrDocs.DocStatus",
+                  "name": "status",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "CID",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "dealCID",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "minerAddress",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "docUIDEncrypted",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "docBaseUIDHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes32",
+                  "name": "version",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bool",
+                  "name": "isLast",
+                  "type": "bool"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "timestamp",
+                  "type": "uint32"
+                }
+              ],
+              "internalType": "struct EhrDocs.DocumentMeta",
+              "name": "docMeta",
+              "type": "tuple"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "CIDEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct EhrDocs.AddEhrDocParams",
+          "name": "p",
+          "type": "tuple"
+        }
+      ],
+      "name": "addEhrDoc",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "allowedChange",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "dataSearch",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "nodeType",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "nodeID",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum EhrDocs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "docBaseUIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "version",
+          "type": "bytes32"
+        }
+      ],
+      "name": "deleteDoc",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ehrSubject",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ehrUsers",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userIdHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "objectIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAccessByIdHash",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct Access.Object",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum EhrDocs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint32",
+          "name": "timestamp",
+          "type": "uint32"
+        }
+      ],
+      "name": "getDocByTime",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum EhrDocs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum EhrDocs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "CID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "dealCID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "minerAddress",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "docUIDEncrypted",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "docBaseUIDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "version",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct EhrDocs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum EhrDocs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "docBaseUIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "version",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getDocByVersion",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum EhrDocs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum EhrDocs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "CID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "dealCID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "minerAddress",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "docUIDEncrypted",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "docBaseUIDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "version",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct EhrDocs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum EhrDocs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "docBaseUIDHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getDocLastByBaseID",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum EhrDocs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum EhrDocs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "CID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "dealCID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "minerAddress",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "docUIDEncrypted",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "docBaseUIDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "version",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct EhrDocs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum EhrDocs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        }
+      ],
+      "name": "getEhrDocs",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum EhrDocs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum EhrDocs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "CID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "dealCID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "minerAddress",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "docUIDEncrypted",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "docBaseUIDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "version",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct EhrDocs.DocumentMeta[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum EhrDocs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        }
+      ],
+      "name": "getLastEhrDocByType",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum EhrDocs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "enum EhrDocs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "CID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "dealCID",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "minerAddress",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "docUIDEncrypted",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "docBaseUIDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "version",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct EhrDocs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getUserAccessList",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct Access.Object[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "userAddr",
+          "type": "address"
+        }
+      ],
+      "name": "getUserPasswordHash",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "groupIdHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "addingUserAddr",
+              "type": "address"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Users.GroupAddUserParams",
+          "name": "p",
+          "type": "tuple"
+        }
+      ],
+      "name": "groupAddUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "removingUserAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "groupRemoveUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "data",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "multicall",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "results",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nonces",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "name": "setAllowed",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "CID",
+          "type": "bytes"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum Access.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct Access.Object",
+          "name": "accessObj",
+          "type": "tuple"
+        },
+        {
+          "internalType": "address",
+          "name": "userAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setDocAccess",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "subjectKey",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setEhrSubject",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setEhrUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "groupIdHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "groupIdEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "groupKeyEncr",
+              "type": "bytes"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "key",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Users.KeyValue[]",
+              "name": "params",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Users.UserGroupCreateParams",
+          "name": "p",
+          "type": "tuple"
+        }
+      ],
+      "name": "userGroupCreate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "userAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "systemID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Users.Role",
+          "name": "role",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes",
+          "name": "pwdHash",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "userNew",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "users",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "systemID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Users.Role",
+          "name": "role",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes",
+          "name": "pwdHash",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]

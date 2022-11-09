@@ -24,9 +24,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/access/group": {
+        "/access/document": {
             "post": {
-                "description": "Creates new access group for use with part of users data and return this group",
+                "description": "Sets access to the document with the specified CID for the user with the userID.\nPossible access levels: ` + "`" + `owner` + "`" + `, ` + "`" + `admin` + "`" + `, ` + "`" + `read` + "`" + `, ` + "`" + `noAccess` + "`" + `",
                 "consumes": [
                     "application/json"
                 ],
@@ -34,9 +34,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "GROUP_ACCESS"
+                    "ACCESS"
                 ],
-                "summary": "Create new access group",
+                "summary": "Set user access to the document",
                 "parameters": [
                     {
                         "type": "string",
@@ -58,16 +58,13 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.GroupAccessCreateRequest"
+                            "$ref": "#/definitions/model.DocAccessSetRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.GroupAccess"
-                        }
+                        "description": "Indicates that the request to change the level of access to the document was successfully created"
                     },
                     "400": {
                         "description": "Is returned when the request has invalid content."
@@ -78,9 +75,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/access/group/{group_id}": {
+        "/access/document/": {
             "get": {
-                "description": "Return access group object",
+                "description": "Returns the list of documents available to the user",
                 "consumes": [
                     "application/json"
                 ],
@@ -88,17 +85,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "GROUP_ACCESS"
+                    "ACCESS"
                 ],
-                "summary": "Get access group",
+                "summary": "Get a document access list",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "access group id (UUID). Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
-                        "name": "group_id",
-                        "in": "path",
-                        "required": true
-                    },
                     {
                         "type": "string",
                         "description": "Bearer \u003cJWT\u003e",
@@ -116,10 +106,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.GroupAccess"
-                        }
+                        "description": ""
                     },
                     "400": {
                         "description": "Is returned when the request has invalid content."
@@ -191,7 +178,7 @@ const docTemplate = `{
                         "description": "Is returned when the request is still being processed"
                     },
                     "400": {
-                        "description": "Is returned when userId is empty"
+                        "description": "Is returned when userID is empty"
                     },
                     "404": {
                         "description": "Is returned when an EHR with ehr_id does not exist."
@@ -336,7 +323,7 @@ const docTemplate = `{
                         "description": "Is returned when the request is still being processed"
                     },
                     "400": {
-                        "description": "Is returned when userId is empty"
+                        "description": "Is returned when userID is empty"
                     },
                     "404": {
                         "description": "Is returned when an EHR with ehr_id does not exist."
@@ -1165,7 +1152,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Is returned when userId is empty"
+                        "description": "Is returned when userID is empty"
                     },
                     "404": {
                         "description": "Is returned when requests not exist"
@@ -1220,7 +1207,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Is returned when userId or request_id is empty"
+                        "description": "Is returned when userID or request_id is empty"
                     },
                     "404": {
                         "description": "Is returned when requests not exist"
@@ -1231,7 +1218,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/login/": {
+        "/user/login": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -1403,7 +1390,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/register/": {
+        "/user/register": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -1447,7 +1434,7 @@ const docTemplate = `{
                         "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
                     },
                     "409": {
-                        "description": "User with that userId already exist"
+                        "description": "User with that userID already exist"
                     },
                     "422": {
                         "description": "Password, systemID or role incorrect"
@@ -1659,6 +1646,20 @@ const docTemplate = `{
                 }
             }
         },
+        "model.DocAccessSetRequest": {
+            "type": "object",
+            "properties": {
+                "accessLevel": {
+                    "type": "string"
+                },
+                "cid": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
+                }
+            }
+        },
         "model.EhrCreateRequest": {
             "type": "object",
             "properties": {
@@ -1830,25 +1831,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.GroupAccess": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "group_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.GroupAccessCreateRequest": {
-            "type": "object",
-            "properties": {
-                "description": {
                     "type": "string"
                 }
             }

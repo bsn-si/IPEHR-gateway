@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+
+	"hms/gateway/pkg/errors"
 )
 
 type (
@@ -26,12 +28,13 @@ type (
 	}
 
 	Tx struct {
-		ReqID     string `gorm:"req_id" json:"-"`
-		Kind      TxKind `gorm:"kind" json:"-"`
-		KindStr   string `gorm:"-" json:"Kind"`
-		Status    Status `gorm:"status" json:"-"`
-		StatusStr string `gorm:"-" json:"Status"`
-		Comment   string
+		ReqID       string `gorm:"req_id" json:"-"`
+		Kind        TxKind `gorm:"kind" json:"-"`
+		KindStr     string `gorm:"-" json:"Kind"`
+		Status      Status `gorm:"status" json:"-"`
+		StatusStr   string `gorm:"-" json:"Status"`
+		Prioritized bool   `gorm:"prioritized" json:"-"`
+		Comment     string
 	}
 
 	EthereumTx struct {
@@ -63,9 +66,14 @@ const (
 	RequestCompositionGetByID
 	RequestCompositionDelete
 	RequestUserRegister
+	RequestDocAccessSet
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("%w userID is empty", errors.ErrIncorrectRequest)
+	}
+
 	req := &Request{
 		ReqID:   reqID,
 		Kind:    kind,
@@ -113,12 +121,13 @@ func (r *Request) Commit() error {
 	return nil
 }
 
-func (r *Request) AddEthereumTx(kind TxKind, hash string) {
+func (r *Request) AddEthereumTx(kind TxKind, hash string, prioritized bool) {
 	tx := &EthereumTx{
 		Tx: Tx{
-			ReqID:  r.ReqID,
-			Kind:   kind,
-			Status: StatusPending,
+			ReqID:       r.ReqID,
+			Kind:        kind,
+			Status:      StatusPending,
+			Prioritized: prioritized,
 		},
 		Hash: hash,
 	}

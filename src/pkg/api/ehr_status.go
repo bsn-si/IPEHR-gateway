@@ -71,9 +71,9 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -177,9 +177,9 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -246,9 +246,9 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 
 	//TODO validate versionUID
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 

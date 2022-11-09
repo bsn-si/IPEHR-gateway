@@ -1,6 +1,8 @@
 package access
 
-type Level uint8
+import "strings"
+
+type Level = uint8
 
 const (
 	NoAccess Level = iota
@@ -16,6 +18,19 @@ var levelNames = map[Level]string{
 	Read:     "Read",
 }
 
-func (l Level) String() string {
+func LevelFromString(str string) Level {
+	switch strings.ToLower(str) {
+	case "owner":
+		return Owner
+	case "admin":
+		return Admin
+	case "read":
+		return Read
+	default:
+		return Unknown
+	}
+}
+
+func LevelToString(l Level) string {
 	return levelNames[l]
 }

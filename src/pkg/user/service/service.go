@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -68,7 +69,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 		return fmt.Errorf("generateHashFromPassword error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.UserAdd(ctx, user.UserID, systemID, user.Role, pwdHash, userPrivateKey)
+	txHash, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, userPrivateKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			return err
@@ -77,7 +78,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 		return fmt.Errorf("Index.UserAdd error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
+	procRequest.AddEthereumTx(proc.TxUserRegister, txHash, true)
 
 	return nil
 }
@@ -88,6 +89,8 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)
 	}
 
+	log.Println("GetUserPasswordHash start")
+
 	pwdHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
@@ -95,6 +98,8 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 		}
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
+
+	log.Println("GetUserPasswordHash finish")
 
 	match, err := verifyPassphrase(userID+systemID+password, pwdHash)
 	if err != nil {

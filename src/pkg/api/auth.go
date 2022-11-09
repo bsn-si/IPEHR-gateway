@@ -14,27 +14,23 @@ func auth(a *API) func(*gin.Context) {
 		tokenString := c.Request.Header.Get("Authorization")
 		userID := c.Request.Header.Get("AuthUserId")
 
-		if a.IsTestMode() {
-			if userID == "" {
-				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
-				return
-			}
-		} else {
-			if tokenString == "" || userID == "" {
-				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
-				return
-			}
-
-			userService := a.User.service
-			err := userService.VerifyAccess(userID, tokenString)
-			if err != nil {
-				log.Println(err)
-				_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
-				return
-			}
+		if tokenString == "" || userID == "" {
+			_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
+			return
 		}
 
-		c.Set("userId", userID)
+		userService := a.User.service
+		err := userService.VerifyAccess(userID, tokenString)
+
+		if err != nil {
+			log.Println(err)
+
+			_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
+
+			return
+		}
+
+		c.Set("userID", userID)
 
 		c.Next()
 	}

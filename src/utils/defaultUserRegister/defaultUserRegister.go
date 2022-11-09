@@ -11,6 +11,7 @@ import (
 	"hms/gateway/pkg/user/roles"
 	"log"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/scrypt"
 )
@@ -39,14 +40,12 @@ func main() {
 		log.Fatalf("generateHashFromPassword error: %v", err)
 	}
 
-	txHash, err := infra.Index.UserAdd(context.Background(), cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, userPrivKey)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	txHash, err := infra.Index.UserNew(ctx, cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, userPrivKey, nil)
 	if err != nil {
 		log.Fatalf("Index.UserAdd error: %v", err)
-	}
-
-	_, err = infra.Index.TxWait(context.Background(), txHash)
-	if err != nil {
-		log.Fatalf("index.TxWait error: %v txHash %s", err, txHash)
 	}
 
 	log.Println("txHash:", txHash)

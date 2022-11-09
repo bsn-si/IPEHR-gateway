@@ -86,13 +86,13 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
-	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -101,6 +101,11 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		log.Println("GetEhrIDByUser error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
+	}
+
+	if userEhrUUID.String() != ehrUUID.String() {
+		log.Printf("userEhrUUID and ehrUUID is not equal: %s != %s", userEhrUUID, ehrUUID)
+		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
 	var (
@@ -177,14 +182,14 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 
 	//TODO validate versionUID
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
 	// Checking EHR does not exist
-	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -193,6 +198,11 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		log.Println("GetEhrIDByUser error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
+	}
+
+	if userEhrUUID.String() != ehrUUID.String() {
+		log.Printf("userEhrUUID and ehrUUID is not equal: %s != %s", userEhrUUID, ehrUUID)
+		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
 	data, err := h.service.GetByID(c, userID, &ehrUUID, versionUID, ehrSystemID)
@@ -248,13 +258,13 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 
 	//TODO validate versionUID
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
-	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -263,6 +273,11 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		}
 
 		return
+	}
+
+	if userEhrUUID.String() != ehrUUID.String() {
+		log.Printf("userEhrUUID and ehrUUID is not equal: %s != %s", userEhrUUID, ehrUUID)
+		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
 	reqID := c.GetString("reqId")
@@ -348,13 +363,13 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
-	_, err = h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	userEhrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
 	switch {
 	case err != nil && errors.Is(err, errors.ErrIsNotExist):
 		c.AbortWithStatus(http.StatusNotFound)
@@ -363,6 +378,11 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		log.Println("GetEhrIDByUser error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
+	}
+
+	if userEhrUUID.String() != ehrUUID.String() {
+		log.Printf("userEhrUUID and ehrUUID is not equal: %s != %s", userEhrUUID, ehrUUID)
+		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
 	var (

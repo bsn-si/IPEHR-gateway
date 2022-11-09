@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -33,7 +34,7 @@ func NewRequestHandler(docService *service.DefaultDocumentService) *RequestHandl
 // @Param    limit          query     string  true  "default: 10"
 // @Param    offset         query     string  true  "id namespace. Example: examples"
 // @Success  200            {object}  processing.RequestsResult
-// @Failure  400            "Is returned when userId is empty"
+// @Failure  400            "Is returned when userID is empty"
 // @Failure  404            "Is returned when requests not exist"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /requests/ [get]
@@ -51,9 +52,9 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 		offset = 0
 	}
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -82,14 +83,14 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 // @Param    AuthUserId     header    string  true  "UserId UUID"
 // @Param    request_id     path      string  true  "Unique id of request"
 // @Success  200            {object}  processing.RequestResult
-// @Failure  400            "Is returned when userId or request_id is empty"
+// @Failure  400            "Is returned when userID or request_id is empty"
 // @Failure  404            "Is returned when requests not exist"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /requests/{request_id} [get]
 func (h RequestHandler) GetByID(c *gin.Context) {
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
 
@@ -101,6 +102,7 @@ func (h RequestHandler) GetByID(c *gin.Context) {
 
 	data, err := h.service.Doc.Proc.GetRequest(userID, reqID)
 	if err != nil {
+		log.Println("Proc.GetRequest error: ", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request error"})
 		return
 	}

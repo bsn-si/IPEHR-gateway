@@ -41,16 +41,27 @@ func NewCompositionService(docService *service.DefaultDocumentService, groupAcce
 func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
 	var (
 		groupAccess = s.groupAccessService.Default()
-		multiCallTx = s.Infra.Index.MultiCallTxNew()
 		err         error
 	)
 
-	if groupAccessUUID != nil {
-		groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
-		if err != nil {
-			return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
-		}
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
+
+	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
+	}
+
+	/*
+		if groupAccessUUID != nil {
+			groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
+			if err != nil {
+				return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
+			}
+		}
+	*/
 
 	err = s.save(ctx, multiCallTx, procRequest, userID, ehrUUID, groupAccess, ehrSystemID, composition)
 	if err != nil {
@@ -63,7 +74,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
 	}
 
 	return composition, nil
@@ -72,16 +83,27 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition) (*model.Composition, error) {
 	var (
 		groupAccess = s.groupAccessService.Default()
-		multiCallTx = s.Infra.Index.MultiCallTxNew()
 		err         error
 	)
 
-	if groupAccessUUID != nil {
-		groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
-		if err != nil {
-			return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
-		}
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
+
+	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
+	}
+
+	/*
+		if groupAccessUUID != nil {
+			groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
+			if err != nil {
+				return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
+			}
+		}
+	*/
 
 	if err = s.increaseVersion(composition, ehrSystemID); err != nil {
 		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
@@ -98,7 +120,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
 	}
 
 	// TODO what we should do with prev composition?
@@ -125,6 +147,11 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID string) erro
 }
 
 func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID string, doc *model.Composition) error {
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID, ehrSystemID)
@@ -199,7 +226,17 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			Timestamp:       uint32(time.Now().Unix()),
 		}
 
-		packed, err := s.Infra.Index.AddEhrDoc(ehrUUID, docMeta)
+		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -221,26 +258,18 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	*/
 
 	// Index Access
-	{
-		userPubKey, _, err := s.Infra.Keystore.Get(userID)
-		if err != nil {
-			return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	/*
+		{
+			accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
+
+			packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
+			if err != nil {
+				return fmt.Errorf("Index.SetDocAccess error: %w", err)
+			}
+
+			multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
 		}
-
-		docAccessValue, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		}
-
-		docAccessKey := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
-
-		packed, err := s.Infra.Index.SetDocKeyEncrypted(&docAccessKey, docAccessValue)
-		if err != nil {
-			return fmt.Errorf("Index.SetDocAccess error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
-	}
+	*/
 
 	return nil
 }
@@ -330,7 +359,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
+	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash, false)
 
 	// Waiting for tx processed and pending nonce increased
 	//time.Sleep(common.BlockchainTxProcAwaitTime)
