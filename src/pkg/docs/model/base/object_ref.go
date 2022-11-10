@@ -7,5 +7,5 @@ package base
 type ObjectRef struct {
 	ID        ObjectID `json:"id"`
 	Namespace string   `json:"namespace"`
-	Type      string   `json:"type"`
+	Type      string   `json:"_type"`
 }

@@ -68,7 +68,7 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	filecoinCfg := (filecoin.Config)(cfg.Storage.Filecoin)
+	filecoinCfg := filecoin.Config(cfg.Storage.Filecoin)
 
 	filecoinClient, err := filecoin.NewClient(&filecoinCfg)
 	if err != nil {

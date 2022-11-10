@@ -15,12 +15,14 @@ jobs:
       uses: actions/setup-node@v3.5.1
       with:
         node-version: '16'
+
     - name: Install external repo
       uses: actions/checkout@v3
       with:
         repository: bsn-si/IPEHR-blockchain-indexes.git
         path: './IPEHR-blockchain-indexes'
         ref: 'develop'
+
     - name: Install deps and run
       run: |
         cd ./IPEHR-blockchain-indexes
@@ -45,7 +47,13 @@ jobs:
         go run ./utils/ehrIndexerSetAllowed/
         go run ./utils/defaultUserRegister/
     
-    - name: Test
+    - name: Unit Test
       run: |
         cd ./src
-        go test -v ./...
+        go test -v ./pkg/...
+
+    - name: Integration Tests
+      run: |
+        cd ./src
+        go test -v ./tests/...
+

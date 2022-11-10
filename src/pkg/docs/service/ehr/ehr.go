@@ -249,20 +249,25 @@ func (s *Service) CreateSubject(subjectID, subjectNamespace, subType string) (su
 }
 
 func (s *Service) CreateStatus(ehrStatusID string, subject base.PartySelf) (doc *model.EhrStatus, err error) {
-	doc = &model.EhrStatus{}
-	doc.Type = types.EhrStatus.String()
-	doc.ArchetypeNodeID = "openEHR-EHR-EHR_STATUS.generic.v1"
-	doc.Name = base.DvText{Value: "EHR Status"}
-
-	// todo FIXIT
-	doc.UID = &base.UIDBasedID{ObjectID: base.ObjectID{
-		Type:  "OBJECT_VERSION_ID",
-		Value: ehrStatusID,
-	}}
-
-	doc.Subject = subject
-	doc.IsQueryable = true
-	doc.IsModifable = true
+	doc = &model.EhrStatus{
+		Locatable: base.Locatable{
+			Type:            base.EHRStatusItemType,
+			ArchetypeNodeID: "openEHR-EHR-EHR_STATUS.generic.v1",
+			Name:            base.NewDvText("EHR Status"),
+			ObjectVersionID: base.ObjectVersionID{
+				// todo FIXIT
+				UID: &base.UIDBasedID{
+					ObjectID: base.ObjectID{
+						Type:  "OBJECT_VERSION_ID",
+						Value: ehrStatusID,
+					},
+				},
+			},
+		},
+		Subject:     subject,
+		IsQueryable: true,
+		IsModifable: true,
+	}
 
 	return doc, nil
 }
