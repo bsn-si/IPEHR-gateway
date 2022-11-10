@@ -216,9 +216,9 @@ func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *mode
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	params := ehrIndexer.EhrDocsAddEhrDocParams{
+	params := ehrIndexer.DocsAddEhrDocParams{
 		EhrId:     eID,
-		DocMeta:   (ehrIndexer.EhrDocsDocumentMeta)(*docMeta),
+		DocMeta:   (ehrIndexer.DocsDocumentMeta)(*docMeta),
 		KeyEncr:   keyEncrypted,
 		CIDEncr:   CIDEncr,
 		Nonce:     nonce,

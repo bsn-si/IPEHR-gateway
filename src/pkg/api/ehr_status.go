@@ -43,7 +43,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Param        Authorization  header    string                 true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string                 true  "UserId UUID"
 // @Param        EhrSystemId    header    string                 true  "The identifier of the system, typically a reverse domain identifier"
-// @Param        If-Match       header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`) must be specified."
+// @Param        If-Match       header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`)  must  be  specified."
 // @Param        Prefer         header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request        body      model.EhrStatusUpdate  true  "EHR_STATUS"
 // @Success      200            {object}  model.EhrStatusUpdate

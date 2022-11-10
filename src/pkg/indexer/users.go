@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -61,13 +60,14 @@ func (i *Index) UserNew(ctx context.Context, userID string, systemID string, rol
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
-	userPasswordHash, err := i.ehrIndex.GetUserPasswordHash(&bind.CallOpts{Context: ctx}, userAddr)
+	user, err := i.ehrIndex.Users(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, errors.ErrNotFound
-		}
-		return nil, fmt.Errorf("ehrIndex.GetUserPasswordHash error: %w userAddr %s", err, userAddr.String())
+		return nil, fmt.Errorf("ehrIndex.Users error: %w userAddr %s", err, userAddr.String())
 	}
 
-	return userPasswordHash, nil
+	if user.Id == [32]byte{} {
+		return nil, errors.ErrNotFound
+	}
+
+	return user.PwdHash, nil
 }
