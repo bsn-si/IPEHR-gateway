@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/akyoto/cache v1.0.6
+	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20220911224424-aa1f1f12a846
 	github.com/ethereum/go-ethereum v1.10.21
 	github.com/filecoin-project/go-address v1.0.0
 	github.com/filecoin-project/go-fil-markets v1.23.2
@@ -174,6 +175,7 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect

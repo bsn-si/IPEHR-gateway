@@ -210,7 +210,7 @@ type DvAmount[T any] struct {
 //
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_quantity_class
 type DvQuantity struct {
-	DvAmount[float64]
+	DvAmount[int64]
 	Magnitude            float64                      `json:"magnitude"`
 	Precision            *int                         `json:"precision,omitempty"`
 	Units                *string                      `json:"units,omitempty"`
@@ -248,7 +248,7 @@ type DvCount struct {
 //
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_proportion_class
 type DvProportion struct {
-	DvAmount[interface{}]
+	DvAmount[int64]
 	Numeration           float64                        `json:"numeration"`
 	Denomination         float64                        `json:"denomination"`
 	Type                 int                            `json:"type"`
@@ -263,7 +263,7 @@ type DvProportion struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_duration_class
 type DvDuration struct {
 	Value string `json:"value"`
-	DvAmount[interface{}]
+	DvAmount[int64]
 }
 
 // DvTemporal
