@@ -41,6 +41,10 @@ type API struct {
 	User      *UserHandler
 }
 
+const (
+	apiVersion = "v1"
+)
+
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
@@ -64,8 +68,6 @@ func (a *API) Build() *gin.Engine {
 		c.AbortWithStatus(404)
 	})
 
-	r.Use(requestID)
-
 	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		// your custom format
 		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
@@ -80,11 +82,14 @@ func (a *API) Build() *gin.Engine {
 		)
 	}))
 
-	v1 := r.Group("v1")
+	v1 := r.Group(apiVersion)
+	requests := v1.Group("requests")
+
+	r.Use(requestID)
+	v1 = r.Group(apiVersion)
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
 	query := v1.Group("query")
-	requests := v1.Group("requests")
 	user := v1.Group("user")
 
 	a.setRedirections(r).
