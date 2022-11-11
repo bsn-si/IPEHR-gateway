@@ -422,8 +422,9 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				statusCode: http.StatusOK,
 			},
 			{
-				name:   "Successfully logout",
-				action: "logout",
+				name:           "Successfully logout",
+				action:         "logout",
+				useAuthHeaders: true,
 				request: userHelper.UserAuthRequest(
 					userHelper.WithUserID(user.id)),
 				statusCode: http.StatusOK,
@@ -493,7 +494,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				continue
 			}
 
-			if response.StatusCode == http.StatusCreated {
+			if data.action == "login" && response.StatusCode == http.StatusOK {
 				if err = json.Unmarshal(content, &jwt); err != nil {
 					t.Fatal(err)
 				}
