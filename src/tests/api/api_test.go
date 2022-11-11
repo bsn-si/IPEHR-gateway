@@ -494,7 +494,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				continue
 			}
 
-			if data.action == "login" && response.StatusCode == http.StatusOK {
+			if (data.action == "login" || data.action == "refresh") && response.StatusCode == http.StatusOK {
 				if err = json.Unmarshal(content, &jwt); err != nil {
 					t.Fatal(err)
 				}

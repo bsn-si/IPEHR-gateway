@@ -185,11 +185,9 @@ func (h UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
 
-	log.Println(111, tokenString, userID)
 	tokenString = h.service.ExtractToken(tokenString)
 
 	if tokenString == "" || userID == "" {
-		log.Println(222, tokenString, userID)
 		c.JSON(http.StatusUnauthorized, "unauthorized")
 		return
 	}
@@ -200,7 +198,6 @@ func (h UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	log.Println(333, tokenString, jwt)
 	td, err := h.service.VerifyAndGetTokenDetails(userID, tokenString, jwt.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, err)
