@@ -83,7 +83,6 @@ func (a *API) Build() *gin.Engine {
 	}))
 
 	v1 := r.Group(apiVersion)
-	requests := v1.Group("requests")
 
 	r.Use(requestID)
 	v1 = r.Group(apiVersion)
@@ -91,6 +90,7 @@ func (a *API) Build() *gin.Engine {
 	access := v1.Group("access")
 	query := v1.Group("query")
 	user := v1.Group("user")
+	requests := v1.Group("requests")
 
 	a.setRedirections(r).
 		buildUserAPI(user).
