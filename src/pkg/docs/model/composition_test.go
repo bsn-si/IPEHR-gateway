@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -93,6 +94,27 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 				t.Errorf("Composition.UnmarshalJSON() mismatch{-want;+got}\n\t%s", diff)
 			}
 		})
+	}
+}
+
+func TestParseComposition(t *testing.T) {
+	wd, _ := os.Getwd()
+	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+
+	inJSON, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatal("Can't open composition.json file", filePath)
+	}
+
+	res := model.Composition{}
+
+	if err := json.Unmarshal(inJSON, &res); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if res.UID.Value == "" {
+		t.Error("Composition is not parsed correctly")
 	}
 }
 
