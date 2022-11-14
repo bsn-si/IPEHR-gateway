@@ -6,37 +6,38 @@ From the point of view of a smart contract, a document is a structure that conta
 
 ```
 struct DocumentMeta {
-    CID         []byte
-    ...
-    docGroups   [][32]byte
-    userGroups  [][32]byte
+    DocType   docType;
+    DocStatus status;
+    bytes     CID;
+    bytes     dealCID;
+    bytes     minerAddress;
+    bytes     docUIDEncrypted;
+    bytes32   docBaseUIDHash;
+    bytes32   version;
+    bool      isLast;
+    uint32    timestamp;
 }
 ```
-
-`docGroups` is a list of identifiers of document groups that include this document.  
-`userGroups` is a list of identifiers of user groups that have access to this document.
 
 ### Document groups
 
 Documents can be grouped by arbitrary criteria. From medical classification to geographical location.
 
+Each group has unique access key which encrypts data within the group and which users who have access to this group of documents must keep in secret.
+
 ```
 struct DocumentGroup {
-	ID           [32]byte
-	owner        [32]byte
-	description  string
-	docs    [][]byte
-	userGroups   [][32]byte
+    mapping(bytes32 => bool)   CIDHashes;
+    mapping(bytes32 => bytes)  params;
+    bytes[]                    CIDEncrs;   // CIDs encrypted with the group access key 
+    bytes32[]                  userGroups;
 }
 ```
-
-`documents ` is a list of documents contained in this group.  
-`userGroups` is a list of user groups that have acces to this document group.
 
 Document groups are stored in [IPEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes)
 
 ```
-mapping (bytes32 => DocumentGroup) docGroups;
+mapping (bytes32 => DocumentGroup) docGroups;   // groupIdHash => DocumentGroup
 ```
 
 ### Access level
@@ -55,13 +56,13 @@ Access to documents is managed according to the following access matrix:
 
 List of methods:  
 
-- userGroupAddUser - Add a user to a group
-- userGroupGetUsers - Get a list of users included to the group
+- userGroupCreate - Creates a group of users
+- groupAddUser - Adds a user to a group
+- groupRemoveUser - Removes a user from a group
+- docGroupCreate - Creates a group of documents
 - docGroupAddDoc - Add a document to a group
 - docGroupGetDocs - Get a list of documents included in the group
-- grantAccessUserToDoc - Allow the user to access the document
-- grantAccessUserToDocGroup - Allow user access to a group of documents
-- grantAccessUserGroupToDoc - Allow a group of users to access the document
-- grantAccessUserGroupToDocGroup - Allow a group of users access to a group of documents
-- getDocPermissions - Get a list of users and groups that have access to the document
-- getUserPermissions - Get a list of documents to which the user has access
+- setDocAccess - Sets the level of user access to the specified document
+- getUserAccessList - Get a list of documents to which the user has access
+
+
