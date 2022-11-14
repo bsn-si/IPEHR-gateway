@@ -112,7 +112,7 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    AuthUserId   header    string                 true  "UserId UUID"
+// @Param    AuthUserId   header    string                 true  "UserId"
 // @Param    EhrSystemId  header    string                 true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request      body      model.UserAuthRequest  true  "User authentication request"
 // @Success  201          {object}  model.JWT
@@ -175,13 +175,14 @@ func (h UserHandler) Login(c *gin.Context) {
 // @Accept   json
 // @Produce  json
 // @Param    Authorization  header  string     true  "Bearer AccessToken"
-// @Param    AuthUserId     header  string     true  "UserId - UUID"
+// @Param    AuthUserId     header  string     true  "UserId"
+// @Param    EhrSystemId    header  string     true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request        body    model.JWT  true  "JWT"
 // @Success  200            "Successfully logged out"
 // @Failure  401            "User unauthorized"
 // @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/logout/ [post]
+// @Router   /user/logout [post]
 func (h UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
@@ -218,7 +219,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 // @Accept   json
 // @Produce  json
 // @Param    Authorization  header    string  true  "Bearer RefreshToken"
-// @Param    AuthUserId     header    string  true  "UserId - UUID"
+// @Param    AuthUserId     header    string  true  "UserId"
 // @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success  201            {object}  model.JWT
 // @Failure  401            "User unauthorized"

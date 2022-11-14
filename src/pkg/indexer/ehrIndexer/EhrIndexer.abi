@@ -30,12 +30,12 @@
             {
               "components": [
                 {
-                  "internalType": "enum EhrDocs.DocType",
+                  "internalType": "enum Docs.DocType",
                   "name": "docType",
                   "type": "uint8"
                 },
                 {
-                  "internalType": "enum EhrDocs.DocStatus",
+                  "internalType": "enum Docs.DocStatus",
                   "name": "status",
                   "type": "uint8"
                 },
@@ -80,7 +80,7 @@
                   "type": "uint32"
                 }
               ],
-              "internalType": "struct EhrDocs.DocumentMeta",
+              "internalType": "struct Docs.DocumentMeta",
               "name": "docMeta",
               "type": "tuple"
             },
@@ -110,7 +110,7 @@
               "type": "bytes"
             }
           ],
-          "internalType": "struct EhrDocs.AddEhrDocParams",
+          "internalType": "struct Docs.AddEhrDocParams",
           "name": "p",
           "type": "tuple"
         }
@@ -140,24 +140,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "dataSearch",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "nodeType",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "nodeID",
-          "type": "bytes32"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "bytes32",
@@ -165,7 +147,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrDocs.DocType",
+          "internalType": "enum Docs.DocType",
           "name": "docType",
           "type": "uint8"
         },
@@ -183,6 +165,140 @@
       "name": "deleteDoc",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "CIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "CIDEncr",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nonce",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "docGroupAddDoc",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "groupIdHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "groupIdEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "userIdEncr",
+              "type": "bytes"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "key",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Users.KeyValue[]",
+              "name": "params",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct DocGroups.DocGroupCreateParams",
+          "name": "p",
+          "type": "tuple"
+        }
+      ],
+      "name": "docGroupCreate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "docGroupGetDocs",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -227,7 +343,7 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "userIdHash",
+          "name": "accessID",
           "type": "bytes32"
         },
         {
@@ -277,7 +393,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrDocs.DocType",
+          "internalType": "enum Docs.DocType",
           "name": "docType",
           "type": "uint8"
         },
@@ -292,12 +408,12 @@
         {
           "components": [
             {
-              "internalType": "enum EhrDocs.DocType",
+              "internalType": "enum Docs.DocType",
               "name": "docType",
               "type": "uint8"
             },
             {
-              "internalType": "enum EhrDocs.DocStatus",
+              "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
@@ -342,7 +458,7 @@
               "type": "uint32"
             }
           ],
-          "internalType": "struct EhrDocs.DocumentMeta",
+          "internalType": "struct Docs.DocumentMeta",
           "name": "",
           "type": "tuple"
         }
@@ -358,7 +474,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrDocs.DocType",
+          "internalType": "enum Docs.DocType",
           "name": "docType",
           "type": "uint8"
         },
@@ -378,12 +494,12 @@
         {
           "components": [
             {
-              "internalType": "enum EhrDocs.DocType",
+              "internalType": "enum Docs.DocType",
               "name": "docType",
               "type": "uint8"
             },
             {
-              "internalType": "enum EhrDocs.DocStatus",
+              "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
@@ -428,7 +544,7 @@
               "type": "uint32"
             }
           ],
-          "internalType": "struct EhrDocs.DocumentMeta",
+          "internalType": "struct Docs.DocumentMeta",
           "name": "",
           "type": "tuple"
         }
@@ -444,7 +560,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrDocs.DocType",
+          "internalType": "enum Docs.DocType",
           "name": "docType",
           "type": "uint8"
         },
@@ -459,12 +575,12 @@
         {
           "components": [
             {
-              "internalType": "enum EhrDocs.DocType",
+              "internalType": "enum Docs.DocType",
               "name": "docType",
               "type": "uint8"
             },
             {
-              "internalType": "enum EhrDocs.DocStatus",
+              "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
@@ -509,7 +625,7 @@
               "type": "uint32"
             }
           ],
-          "internalType": "struct EhrDocs.DocumentMeta",
+          "internalType": "struct Docs.DocumentMeta",
           "name": "",
           "type": "tuple"
         }
@@ -525,7 +641,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrDocs.DocType",
+          "internalType": "enum Docs.DocType",
           "name": "docType",
           "type": "uint8"
         }
@@ -535,12 +651,12 @@
         {
           "components": [
             {
-              "internalType": "enum EhrDocs.DocType",
+              "internalType": "enum Docs.DocType",
               "name": "docType",
               "type": "uint8"
             },
             {
-              "internalType": "enum EhrDocs.DocStatus",
+              "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
@@ -585,7 +701,7 @@
               "type": "uint32"
             }
           ],
-          "internalType": "struct EhrDocs.DocumentMeta[]",
+          "internalType": "struct Docs.DocumentMeta[]",
           "name": "",
           "type": "tuple[]"
         }
@@ -601,7 +717,7 @@
           "type": "bytes32"
         },
         {
-          "internalType": "enum EhrDocs.DocType",
+          "internalType": "enum Docs.DocType",
           "name": "docType",
           "type": "uint8"
         }
@@ -611,12 +727,12 @@
         {
           "components": [
             {
-              "internalType": "enum EhrDocs.DocType",
+              "internalType": "enum Docs.DocType",
               "name": "docType",
               "type": "uint8"
             },
             {
-              "internalType": "enum EhrDocs.DocStatus",
+              "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
@@ -661,7 +777,7 @@
               "type": "uint32"
             }
           ],
-          "internalType": "struct EhrDocs.DocumentMeta",
+          "internalType": "struct Docs.DocumentMeta",
           "name": "",
           "type": "tuple"
         }
@@ -673,7 +789,7 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "userIdHash",
+          "name": "accessID",
           "type": "bytes32"
         }
       ],
