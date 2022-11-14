@@ -3,3 +3,5 @@ config.json
 /.vscode
 /bin
 *.antlr
+.env
+!dev.env

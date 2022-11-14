@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  hardhat:
+    build: ./hardhat
+    ports:
+      - 8545:8545
+    networks:
+      project-network:
+        aliases:
+          - hardhat.ipehr.project-network
+
+networks:
+  project-network:
+    driver: bridge
