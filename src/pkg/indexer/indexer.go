@@ -146,16 +146,12 @@ func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUI
 		}
 	}
 
-	sig, err := makeSignature(
-		userKey,
-		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}},
-		"setEhrUser", uID, eID, nonce,
-	)
+	sig, err := makeSignature(userKey, nonce, "setEhrUser", uID, eID)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err := i.pack("setEhrUser", uID, eID, nonce, userAddress, sig)
+	data, err := i.pack("setEhrUser", uID, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
 	}
@@ -207,11 +203,7 @@ func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *mode
 		}
 	}
 
-	sig, err := makeSignature(
-		userKey,
-		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: DocMeta}, {Type: Bytes}, {Type: Bytes}, {Type: Uint256}},
-		"addEhrDoc", eID, *docMeta, keyEncrypted, CIDEncr, nonce,
-	)
+	sig, err := makeSignature(userKey, nonce, "addEhrDoc", eID, *docMeta, keyEncrypted, CIDEncr)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
@@ -221,7 +213,6 @@ func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *mode
 		DocMeta:   (ehrIndexer.DocsDocumentMeta)(*docMeta),
 		KeyEncr:   keyEncrypted,
 		CIDEncr:   CIDEncr,
-		Nonce:     nonce,
 		Signer:    userAddress,
 		Signature: sig,
 	}
@@ -408,18 +399,45 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 }
 */
 
-func makeSignature(pk *ecdsa.PrivateKey, args abi.Arguments, values ...interface{}) ([]byte, error) {
+func makeSignature(pk *ecdsa.PrivateKey, nonce *big.Int, values ...interface{}) ([]byte, error) {
+	var args abi.Arguments
+
+	for i, a := range values {
+		switch a.(type) {
+		case string:
+			args = append(args, abi.Argument{Type: String})
+		case [32]byte:
+			args = append(args, abi.Argument{Type: Bytes32})
+		case []byte:
+			args = append(args, abi.Argument{Type: Bytes})
+		case uint8:
+			args = append(args, abi.Argument{Type: Uint8})
+		case *big.Int:
+			args = append(args, abi.Argument{Type: Uint256})
+		case common.Address:
+			args = append(args, abi.Argument{Type: Address})
+		case ehrIndexer.AccessObject:
+			args = append(args, abi.Argument{Type: Access})
+		case model.DocumentMeta, ehrIndexer.DocsDocumentMeta:
+			args = append(args, abi.Argument{Type: DocMeta})
+		default:
+			return nil, fmt.Errorf("%w: makeSignature unknown %d argument type: %v", errors.ErrIncorrectFormat, i, a)
+		}
+	}
+
 	data, err := args.Pack(values...)
 	if err != nil {
-		fmt.Println("len", len(values))
-		return nil, fmt.Errorf("args.Pack error: %w", err)
+		return nil, fmt.Errorf("args.Pack error: %w args: %v values: %v", err, args, values)
 	}
 
 	hash := crypto.Keccak256Hash(data)
 
+	nonceBytes, _ := abi.Arguments{{Type: Uint256}}.Pack(nonce)
+
 	prefixedHash := crypto.Keccak256Hash(
 		[]byte("\x19Ethereum Signed Message:\n32"),
 		hash.Bytes(),
+		nonceBytes,
 	)
 
 	sig, err := crypto.Sign(prefixedHash.Bytes(), pk)
@@ -453,16 +471,12 @@ func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID
 		}
 	}
 
-	sig, err := makeSignature(
-		userKey,
-		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}},
-		"setEhrSubject", subjectKey, eID, nonce,
-	)
+	sig, err := makeSignature(userKey, nonce, "setEhrSubject", subjectKey, eID)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err := i.pack("setEhrSubject", subjectKey, eID, nonce, userAddress, sig)
+	data, err := i.pack("setEhrSubject", subjectKey, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.SetSubject error: %w", err)
 	}

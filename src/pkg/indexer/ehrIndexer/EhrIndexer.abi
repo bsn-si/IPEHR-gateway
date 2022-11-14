@@ -95,11 +95,6 @@
               "type": "bytes"
             },
             {
-              "internalType": "uint256",
-              "name": "nonce",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
               "name": "signer",
               "type": "address"
@@ -185,11 +180,6 @@
           "type": "bytes"
         },
         {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
           "internalType": "address",
           "name": "signer",
           "type": "address"
@@ -247,11 +237,6 @@
               "type": "tuple[]"
             },
             {
-              "internalType": "uint256",
-              "name": "nonce",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
               "name": "signer",
               "type": "address"
@@ -278,16 +263,6 @@
           "internalType": "bytes32",
           "name": "groupIdHash",
           "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
         }
       ],
       "name": "docGroupGetDocs",
@@ -829,25 +804,6 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "userAddr",
-          "type": "address"
-        }
-      ],
-      "name": "getUserPasswordHash",
-      "outputs": [
-        {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "components": [
             {
               "internalType": "bytes32",
@@ -873,11 +829,6 @@
               "internalType": "bytes",
               "name": "keyEncr",
               "type": "bytes"
-            },
-            {
-              "internalType": "uint256",
-              "name": "nonce",
-              "type": "uint256"
             },
             {
               "internalType": "address",
@@ -911,11 +862,6 @@
           "internalType": "address",
           "name": "removingUserAddr",
           "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
         },
         {
           "internalType": "address",
@@ -1049,11 +995,6 @@
           "type": "address"
         },
         {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
           "internalType": "address",
           "name": "signer",
           "type": "address"
@@ -1082,11 +1023,6 @@
           "type": "bytes32"
         },
         {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
-        },
-        {
           "internalType": "address",
           "name": "signer",
           "type": "address"
@@ -1113,11 +1049,6 @@
           "internalType": "bytes32",
           "name": "ehrId",
           "type": "bytes32"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
         },
         {
           "internalType": "address",
@@ -1185,11 +1116,6 @@
               "type": "tuple[]"
             },
             {
-              "internalType": "uint256",
-              "name": "nonce",
-              "type": "uint256"
-            },
-            {
               "internalType": "address",
               "name": "signer",
               "type": "address"
@@ -1236,11 +1162,6 @@
           "internalType": "bytes",
           "name": "pwdHash",
           "type": "bytes"
-        },
-        {
-          "internalType": "uint256",
-          "name": "nonce",
-          "type": "uint256"
         },
         {
           "internalType": "address",

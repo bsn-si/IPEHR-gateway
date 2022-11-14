@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -36,23 +35,19 @@ func (i *Index) UserNew(ctx context.Context, userID string, systemID string, rol
 		}
 	}
 
-	sig, err := makeSignature(
-		userKey,
-		abi.Arguments{{Type: String}, {Type: Address}, {Type: Bytes32}, {Type: Bytes32}, {Type: Uint256}, {Type: Bytes}, {Type: Uint256}},
-		"userAdd", userAddress, uID, sID, big.NewInt(int64(role)), pwdHash, nonce,
-	)
+	sig, err := makeSignature(userKey, nonce, "userNew", userAddress, uID, sID, role, pwdHash)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
 	//TODO remove userAddr arg, its same as signer
-	tx, err := i.ehrIndex.UserNew(i.transactOpts, userAddress, uID, sID, role, pwdHash, nonce, userAddress, sig)
+	tx, err := i.ehrIndex.UserNew(i.transactOpts, userAddress, uID, sID, role, pwdHash, userAddress, sig)
 	if err != nil {
 		switch err.Error() {
 		case ExecutionRevertedAEX:
 			return "", errors.ErrAlreadyExist
 		default:
-			return "", fmt.Errorf("ehrIndex.UserAdd error: %w", err)
+			return "", fmt.Errorf("ehrIndex.UserNew error: %w", err)
 		}
 	}
 
