@@ -10,22 +10,20 @@ In IPEHR the `user` is the following structure:
 
 ```
 struct User {
-	userID   [32]byte
-	systemID [32]byte
-	role     Role
-	groups   [][32]byte
-	pwdHash  []byte
-}
+    bytes32   id;
+    bytes32   systemID;
+    Role      role;
+    bytes     pwdHash;
+  }
 ```
 
 ### User groups:
 
 ```
 struct UserGroup {
-	groupID     [32]byte
-	owner       [32]byte
-	description string
-	members     map[string]Access
+    mapping(bytes32 => bytes) params;
+    mapping(address => AccessLevel) members;
+    uint membersCount;
 }
 ```
 
@@ -50,13 +48,15 @@ Pre-registration is required to work with the IPEHR system. When registering, th
 
 User account information is written to a smart contract.  
 Before saving, the password is hashed using a special function [scrypt](https://en.wikipedia.org/wiki/Scrypt)  
-The API specification of the registration method can be found [here]()
+The API specification of the registration method can be found [here](https://gateway.ipehr.org/swagger/index.html#/USER/post_user_register)
 
 ## Authentication
 
-The authorization of requests to the IPEHR gateway API is done via the JWT token.
+The authorization of requests to the IPEHR gateway API is done via the JWT access token.
 
-To get a JWT token, the user performs an authentication procedure using the API method described [here]().
+To get a JWT tokens, the user performs an authentication procedure using the API method described [here](https://gateway.ipehr.org/swagger/index.html#/USER/post_user_login).
+
+The refresh token is used to extend the validity of a user session.
 
 The validity period of the tokens is set in the IPEHR gateway configuration file.
 
