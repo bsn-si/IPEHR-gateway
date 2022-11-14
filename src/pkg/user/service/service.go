@@ -74,7 +74,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 			return err
 		}
 
-		return fmt.Errorf("Index.UserAdd error: %w", err)
+		return fmt.Errorf("Index.UserNew error: %w", err)
 	}
 
 	procRequest.AddEthereumTx(proc.TxUserRegister, txHash, true)

@@ -44,7 +44,7 @@ func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, 
 
 		level := []byte{a.Level}
 
-		l = append(l, access.Item{
+		l = append(l, &access.Item{
 			Fields: map[string][]byte{
 				"idHash":  idHash,
 				"idEncr":  a.IdEncr,
@@ -92,16 +92,12 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 		}
 	}
 
-	sig, err := makeSignature(
-		userKey,
-		abi.Arguments{{Type: String}, {Type: Bytes}, {Type: Access}, {Type: Address}, {Type: Uint256}},
-		"setDocAccess", CID, accessObj, toUserAddress, nonce,
-	)
+	sig, err := makeSignature(userKey, nonce, "setDocAccess", CID, accessObj, toUserAddress)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.abi.Pack("setDocAccess", CID, accessObj, toUserAddress, nonce, userAddress, sig)
+	data, err = i.abi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack error: %w", err)
 	}
