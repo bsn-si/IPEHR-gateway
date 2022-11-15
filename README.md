@@ -174,6 +174,9 @@ The following methods are based on the [standard specification of OpenEHR](https
 You can use [this](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project#workflow-example) instruction and try to create, update or get EHR
 For now we have the following methods:
 
+- Register a user
+- Log in under the or log out
+- Refresh JWT token
 - Create an EHR (also with exact id or different parameters)
 - Getting info on created summary EHR by subject id 
 - Getting info on created summary EHR by summary id 
@@ -188,6 +191,8 @@ For now we have the following methods:
 - Create group access
 - Get group access
 - Execute AQL request
+- Get a document access list
+- Set user access to the document
 
 ## Docker
 You can start a project in Docker
