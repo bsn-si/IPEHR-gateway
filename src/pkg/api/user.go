@@ -115,7 +115,7 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Param    AuthUserId   header    string                 true  "UserId"
 // @Param    EhrSystemId  header    string                 true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request      body      model.UserAuthRequest  true  "User authentication request"
-// @Success  201          {object}  model.JWT
+// @Success  200          {object}  model.JWT
 // @Failure  404          "User with ID not exist"
 // @Failure  422          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  400          "Password, EhrSystemId or userID incorrect"
@@ -151,7 +151,6 @@ func (h UserHandler) Login(c *gin.Context) {
 			return
 		}
 
-		log.Println(err)
 		c.JSON(http.StatusUnauthorized, err.Error())
 		return
 	}
@@ -162,7 +161,7 @@ func (h UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, &model.JWT{
+	c.JSON(http.StatusOK, &model.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
@@ -221,7 +220,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 // @Param    Authorization  header    string  true  "Bearer RefreshToken"
 // @Param    AuthUserId     header    string  true  "UserId"
 // @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
-// @Success  201            {object}  model.JWT
+// @Success  200            {object}  model.JWT
 // @Failure  401            "User unauthorized"
 // @Failure  404            "User with ID not exist"
 // @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
@@ -252,7 +251,7 @@ func (h UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, &model.JWT{
+	c.JSON(http.StatusOK, &model.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})

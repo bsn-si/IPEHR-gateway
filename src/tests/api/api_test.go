@@ -226,7 +226,7 @@ func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
 		return err
 	}
 
-	if response.StatusCode != http.StatusCreated {
+	if response.StatusCode != http.StatusOK {
 		return err
 	}
 
@@ -402,7 +402,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				request: userHelper.UserAuthRequest(
 					userHelper.WithUserID(user.id),
 					userHelper.WithPassword(user.password)),
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusOK,
 			},
 			{
 				name:           "Fail if already logged",
@@ -419,11 +419,12 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				method: http.MethodGet,
 				request: userHelper.UserAuthRequest(
 					userHelper.WithUserID(user.id)),
-				statusCode: http.StatusCreated,
+				statusCode: http.StatusOK,
 			},
 			{
-				name:   "Successfully logout",
-				action: "logout",
+				name:           "Successfully logout",
+				action:         "logout",
+				useAuthHeaders: true,
 				request: userHelper.UserAuthRequest(
 					userHelper.WithUserID(user.id)),
 				statusCode: http.StatusOK,
@@ -493,7 +494,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				continue
 			}
 
-			if response.StatusCode == http.StatusCreated {
+			if (data.action == "login" || data.action == "refresh") && response.StatusCode == http.StatusOK {
 				if err = json.Unmarshal(content, &jwt); err != nil {
 					t.Fatal(err)
 				}

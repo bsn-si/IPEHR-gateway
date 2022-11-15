@@ -64,8 +64,6 @@ func (a *API) Build() *gin.Engine {
 		c.AbortWithStatus(404)
 	})
 
-	r.Use(requestID)
-
 	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		// your custom format
 		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
@@ -80,12 +78,14 @@ func (a *API) Build() *gin.Engine {
 		)
 	}))
 
+	r.Use(requestID)
+
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
 	query := v1.Group("query")
-	requests := v1.Group("requests")
 	user := v1.Group("user")
+	requests := v1.Group("requests")
 
 	a.setRedirections(r).
 		buildUserAPI(user).

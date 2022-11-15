@@ -194,6 +194,10 @@ func (p *Proc) requests(userID, reqID string, limit, offset int) (RequestsResult
 		return nil, fmt.Errorf("Requests select error: %w userID: %s reqID: %s limit: %d offset: %d", err, userID, reqID, limit, offset)
 	}
 
+	if len(requests) == 0 {
+		return nil, errors.ErrNotFound
+	}
+
 	for _, r := range requests {
 		reqIDs = append(reqIDs, r.ReqID)
 	}
