@@ -3,7 +3,8 @@
 
 ### Current state
 
-To deploy smart contracts our solution uses [EVM](https://ethereum.org/en/developers/docs/evm/).
+To deploy smart contracts our solution uses [EVM](https://ethereum.org/en/developers/docs/evm/). To interact with the EVM contract we use the [Go-Ethereum library](https://github.com/ethereum/go-ethereum).
+We are currently using [Goerli](https://goerli.net/), the testnet of the Ethereum network, in the development of IPEHR. The native token of the network is test Ether.
 
 Pros:
 
@@ -13,18 +14,10 @@ Pros:
 
 Cons:
 
-- it is less convenient due to the need for two types of coins since we are working with Filecoin and Ethereum networks,
-- It imposes additional costs.
+- One of the notable drawbacks of placing the ipEHR smart-contract on the Ethereum network is the need to use assets in separate networks to ensure interaction. Since we are working with Filecoin and Ethereum networks, it imposes additional costs and management complications.
 
 ### Possible solution
 
-To eliminate these drawbacks, our team is looking forward to using [FVM](https://fvm.filecoin.io/).
+To eliminate described drawbacks, our team is looking forward to deploying on [FVM](https://fvm.filecoin.io/). This task will require, first of all, creation of a library similar to Go-Ethereum in order to ensure correct interaction with the contract in the FEVM.
 
-It is a promising solution since EVM compatibility is announced in Milestone 2 but it can't be used at the moment because:
-
-- the libraries used in the project to interact with the EVM contract proved to be incompatible with FEVM and require modification.
-- due to a list of limitations, our team has failed to deploy a smart contract into FVM right now.
-
-### Possible future steps
-
-Our team is considering the possibility of developing tools that will help us and other developers to deploy smart contracts to FVM.
+Our team is considering possibility of developing tools that will help us and other developers to deploy smart contracts to FVM.
