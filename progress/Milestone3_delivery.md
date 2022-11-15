@@ -31,7 +31,7 @@ The following methods are based on the [standard specification of OpenEHR](https
 
 P.S. For creating a UUID you can use a generator (e.g [uuidgenerator](https://www.uuidgenerator.net/version1))
 
-## Hou to create and work with a user
+## How to create and work with a user
 `Disclaimer: you have to register a user and must log in under your credentials before doing any actions. We recommend saving all essential information such as userID, tokens, EhrSystem, and the other data in a separate file for easy access to copy-paste it`
 
 ### How to register a user
@@ -43,7 +43,7 @@ Precondition: Open [swagger](https://gateway.ipehr.org/swagger/index.html)
 
 [Watch video instruction](https://media.bsn.si/ipehr/v2/register_user.mp4) 📹 
 
-### Hou to login under the user
+### How to login under the user
 Precondition: Open [swagger](https://gateway.ipehr.org/swagger/index.html) and [register](https://github.com/bsn-si/IPEHR-gateway/wiki/IPEHR-project#how-to-register-a-user) under registered user OR use exciting user
 1. Choose [Login user](https://gateway.ipehr.org/swagger/index.html#/USER/post_user_login) method and click **Try it out**
 1. Fill in **AuthUserId** (userID that you got before), **EhrSystemId** (that you put when register). In **Request** form put your userID and password that you registered before and click **Execute**
@@ -52,7 +52,7 @@ Precondition: Open [swagger](https://gateway.ipehr.org/swagger/index.html) and [
 
 [Watch video instruction](https://media.bsn.si/ipehr/v2/login.mp4) 📹 
 
-### Hou to refresh JWT token
+### How to refresh JWT token
 Precondition: Open [swagger](https://gateway.ipehr.org/swagger/index.html) and [login](https://gateway.ipehr.org/swagger/index.html#/USER/post_user_login) under registered user
 1. Choose [Refresh JWT](https://gateway.ipehr.org/swagger/index.html#/USER/get_user_refresh_) method and click **Try it out**
 1. Fill in **AuthUserId** (it is your REFRESH token in the format "Bearer XXX" where XXX is your refresh token), **AuthUserId** (that you are logged in) and **EhrSystemId**, click **Execute**
