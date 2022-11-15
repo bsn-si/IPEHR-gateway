@@ -41,10 +41,6 @@ type API struct {
 	User      *UserHandler
 }
 
-const (
-	apiVersion = "v1"
-)
-
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
@@ -82,10 +78,9 @@ func (a *API) Build() *gin.Engine {
 		)
 	}))
 
-	v1 := r.Group(apiVersion)
-
 	r.Use(requestID)
-	v1 = r.Group(apiVersion)
+
+	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")
 	access := v1.Group("access")
 	query := v1.Group("query")
