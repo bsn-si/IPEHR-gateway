@@ -261,7 +261,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Is returned when the request body (if provided) could not be parsed."
+                        "description": "Is returned when the request body (if provided)  could      not  be  parsed."
                     },
                     "409": {
                         "description": "Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
@@ -416,7 +416,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Is returned when the request body (if provided) could not be parsed."
+                        "description": "Is returned when the request body (if provided)  could      not  be  parsed."
                     },
                     "409": {
                         "description": "Unable to create a new EHR due to a conflict with an already existing EHR. Can happen when the supplied ehr_id is already used by an existing EHR."
@@ -551,7 +551,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent) version. Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1` + "`" + `",
+                        "description": "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent)  version.  Example:  ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1` + "`" + `",
                         "name": "preceding_version_uid",
                         "in": "path",
                         "required": true
@@ -736,7 +736,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid). Example: ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1` + "`" + `",
+                        "description": "The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid).  Example:  ` + "`" + `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1` + "`" + `",
                         "name": "If-Match",
                         "in": "header",
                         "required": true
@@ -779,7 +779,7 @@ const docTemplate = `{
                         "description": "` + "`" + `Not Found` + "`" + ` is returned when an EHR with ehr_id does not exist or when a COMPOSITION with version_object_uid does not exist."
                     },
                     "412": {
-                        "description": "` + "`" + `Version conflict` + "`" + ` is returned when ` + "`" + `If-Match` + "`" + ` request header doesn’t match the latest version (of this versioned object) on the service side. Returns also latest ` + "`" + `version_uid` + "`" + ` in the ` + "`" + `Location` + "`" + ` and ` + "`" + `ETag` + "`" + ` headers."
+                        "description": "` + "`" + `Version conflict` + "`" + ` is returned when ` + "`" + `If-Match` + "`" + ` request header doesn’t match the latest version (of this versioned object)  on  the  service  side.  Returns  also  latest  ` + "`" + `version_uid` + "`" + `  in  the  ` + "`" + `Location` + "`" + `  and  ` + "`" + `ETag` + "`" + `  headers."
                     },
                     "422": {
                         "description": "` + "`" + `Unprocessable Entity` + "`" + ` is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
@@ -904,7 +904,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "The existing latest ` + "`" + `version_uid` + "`" + ` of EHR_STATUS resource (i.e. the ` + "`" + `preceding_version_uid` + "`" + `) must be specified.",
+                        "description": "The existing latest ` + "`" + `version_uid` + "`" + ` of EHR_STATUS resource (i.e. the ` + "`" + `preceding_version_uid` + "`" + `)  must  be  specified.",
                         "name": "If-Match",
                         "in": "header",
                         "required": true
@@ -1236,7 +1236,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1283,7 +1283,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/logout/": {
+        "/user/logout": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -1305,8 +1305,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId - UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     },
@@ -1358,7 +1365,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId - UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
