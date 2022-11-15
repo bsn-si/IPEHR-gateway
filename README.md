@@ -38,11 +38,11 @@ This work is being done under the FileCoin development grant program RFP. See ou
 
 The solution is being developed with 7 milestones:
 * Development of MH-ORM and structure of storage of medical data
-* The functionality of encryption and saving/reading personal data to/from Filecoin - **we are here**
-* Access rights management on a blockchain
-* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM
-* Public data publishing features using the Chainlink network
-* Application to manage your own medical data and access
+* The functionality of encryption and saving/reading personal data to/from Filecoin
+* Access rights management on a blockchain - **delivery**
+* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **work in progress**
+* Public data publishing features using the Chainlink network - **work in progress**
+* Application to manage your own medical data and access - **work in progress**
 * Testing, documentation and deployment
 
 ### Milestone 1
@@ -90,6 +90,48 @@ For more information see [here](https://github.com/bsn-si/IPEHR-gateway/blob/dev
 To grant access to a document, the document access key is asymmetrically encrypted with the public key of the user (or group) being granted access and added to the IPEHR smart contract table.
 
 For more information see [here](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_2/3_Revoking_access.md).
+
+### Milestone 3
+
+From the point of view of a smart contract, a document is a structure that contains a certain set of attributes:
+
+```
+struct DocumentMeta {
+    DocType   docType;
+    DocStatus status;
+    bytes     CID;
+    bytes     dealCID;
+    bytes     minerAddress;
+    bytes     docUIDEncrypted;
+    bytes32   docBaseUIDHash;
+    bytes32   version;
+    bool      isLast;
+    uint32    timestamp;
+}
+```
+
+At this point we will distinguish three levels of access: **Owner**, **Admin**, **Read**
+
+Access to documents is managed according to the following access matrix:
+
+|  Who \ Whom  | Owner |       Admin       |       Read        |
+|     :---:    | :---: |       :---:       |      :---:        |  
+|     Owner    |   no  | grant<br>restrict | grant<br>restrict |
+|     Admin    |   no  |        grant      | grant<br>restrict |
+|     Read     |   no  |        no         |        no         |
+
+List of methods:  
+
+- userGroupCreate - Creates a group of users
+- groupAddUser - Adds a user to a group
+- groupRemoveUser - Removes a user from a group
+- docGroupCreate - Creates a group of documents
+- docGroupAddDoc - Add a document to a group
+- docGroupGetDocs - Get a list of documents included in the group
+- setDocAccess - Sets the level of user access to the specified document
+- getUserAccessList - Get a list of documents to which the user has access
+
+For more information see [Milestone 3 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_3)
 
 ## How to
 
