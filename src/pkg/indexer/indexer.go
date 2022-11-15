@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"log"
 	"math/big"
 	"os"
 	"strings"
@@ -26,6 +25,7 @@ import (
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/ehrIndexer"
+	log "hms/gateway/pkg/logger"
 	"hms/gateway/pkg/storage"
 )
 
