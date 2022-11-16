@@ -43,7 +43,7 @@ func (k *KeyStore) Get(userID string) (publicKey, privateKey *[32]byte, err erro
 	keysEncrypted, err := k.storage.Get(storeID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
-			log.Println("Generete new keys for userID", userID)
+			log.Println("Generate new keys for userID", userID)
 
 			publicKey, privateKey, err = k.generateAndStoreKeys(userID)
 			if err != nil {

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -13,6 +12,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/infrastructure"
+	"hms/gateway/pkg/logger"
 )
 
 // @title        IPEHR Gateway API
@@ -64,21 +64,8 @@ func (a *API) Build() *gin.Engine {
 		c.AbortWithStatus(404)
 	})
 
-	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		// your custom format
-		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
-			param.TimeStamp.Format("2006-01-02 15:04:05"),
-			param.Keys["reqID"],
-			param.StatusCode,
-			param.Latency,
-			param.ClientIP,
-			param.Method,
-			param.Path,
-			param.ErrorMessage,
-		)
-	}))
-
 	r.Use(requestID)
+	r.Use(logger.HttpMiddleware(logger.DefaultLogger))
 
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")

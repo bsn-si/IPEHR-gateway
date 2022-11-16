@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +12,7 @@ import (
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
+	log "hms/gateway/pkg/logger"
 	"hms/gateway/pkg/user/service"
 )
 
@@ -80,7 +80,7 @@ func (h UserHandler) Register(c *gin.Context) {
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userCreateRequest.UserID, "", proc.RequestUserRegister)
 	if err != nil {
-		log.Println("User register NewRequest error:", err)
+		log.Info("User register NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -146,6 +146,11 @@ func (h UserHandler) Login(c *gin.Context) {
 
 	err := h.service.Login(c, u.UserID, systemID, u.Password)
 	if err != nil {
+		log.WithFields(log.Fields{"reqId": c.GetString("reqID")}).Error("error with fields")
+		log.WithError(err).Error("with error")
+		log.Error("stack handler inside error: ", errors.WithStack(err))
+		log.Error("just error")
+
 		if errors.Is(err, errors.ErrNotFound) {
 			c.JSON(http.StatusNotFound, err.Error())
 			return

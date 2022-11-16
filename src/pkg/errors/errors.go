@@ -1,8 +1,9 @@
 package errors
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -33,10 +34,39 @@ var (
 	ErrAccessDenied     = errors.New("Access denied")
 )
 
+func Eq(e error, target error) bool {
+	// TODO тупо, но я не знаю лучшего варианта
+	return e.Error() == target.Error()
+}
+
+func ErrNotFoundFn() error {
+	// TODO мы не можем использовать ErrNotFound потому что стек будет другой
+	return errors.New("Not found")
+}
+
 func ErrFieldIsEmpty(name string) error {
 	return fmt.Errorf("%w: %s", ErrIsEmpty, name)
 }
 
 func ErrFieldIsIncorrect(name string) error {
 	return fmt.Errorf("%w: %s", ErrIncorrectFormat, name)
+}
+
+func WithStack(e error) error {
+	type stackTracer interface {
+		StackTrace() errors.StackTrace
+	}
+
+	err, ok := errors.Cause(e).(stackTracer)
+	if !ok {
+		panic("oops, err does not implement stackTracer")
+	}
+
+	st := err.StackTrace()
+	maxStEl := len(st)
+	if maxStEl > 128 {
+		maxStEl = 127
+	}
+
+	return errors.WithMessagef(e, "%s, stack: %+v\n", e, st[:maxStEl])
 }

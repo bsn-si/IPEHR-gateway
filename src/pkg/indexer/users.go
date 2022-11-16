@@ -61,7 +61,7 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 	}
 
 	if user.Id == [32]byte{} {
-		return nil, errors.ErrNotFound
+		return nil, errors.ErrNotFoundFn()
 	}
 
 	return user.PwdHash, nil

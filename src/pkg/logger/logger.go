@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/onrik/logrus/filename"
@@ -12,27 +13,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func main() {
-	// TODO запихать в мидлваре, чтобы при вызове лога можно было поля вытащить
-	ctx := ContextWithField(context.Background(), "user_id", "some_user_id")
-	// TODO errors.WithStack(err) при логировании ошибки, дергать ее так мы сможем лог получить
+var once sync.Once
 
-	//ctx = ContextWithField(ctx, "user_id2", "some_user_id")
-	//ctx = ContextWithFields()
-	//
-	err := errors.New("some error")
-	log := DefaultLogger
-	log.Info("ok1", "ok2")
-	//log.WithContext(ctx).WithError(err).WithFields().Info("some message")
-	log.WithContext(ctx).WithError(err).Warn("some message warn")
-	//	log.WithContext(ctx).WithError(err).Error("some message error")
-	//	time.Sleep(time.Second * 3)
-	//	log.WithContext(ctx).WithError(err).Info("some message")
-	//	log.WithContext(ctx).WithError(err).Info("some message")
-	//	log.WithContext(ctx).WithError(err).Info("some message")
+var instanceLogger *ServiceLogger
+
+func getInstance() *ServiceLogger {
+	if instanceLogger == nil {
+		once.Do(
+			func() {
+				instanceLogger = newServiceLogger()
+			})
+	}
+
+	return instanceLogger
 }
 
-var DefaultLogger = newServiceLogger()
+var DefaultLogger = getInstance()
 
 type Formatter string
 
@@ -90,13 +86,14 @@ type ServiceLogger struct{ entry *logrus.Entry }
 func newServiceLogger() *ServiceLogger {
 	logger := logrus.New()
 	fnHook := filename.NewHook()
-	fnHook.Field = "line_number"
+	fnHook.Field = "file"
 	fnHook.Skip = 8
-
-	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/")
+	
+	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/", "logrus/", "logrus@", "gin@v1.7.7/")
 	logger.AddHook(fnHook)
 	ret := &ServiceLogger{entry: logger.WithFields(nil)}
-	level, err := ParseLevel(os.Getenv(envLogLevel))
+	ret.SetFormatter(FormatterText)
+	level, err := ParseLevel(os.Getenv(envLogLevel)) // TODO replace it
 	if err == nil {
 		ret.SetLevel(level)
 	}
@@ -115,7 +112,7 @@ func (l *ServiceLogger) SetLevel(level Level) {
 func (l *ServiceLogger) SetFormatter(ftype Formatter) {
 	switch ftype {
 	case FormatterText:
-		l.entry.Logger.SetFormatter(&logrus.TextFormatter{ForceColors: true})
+		l.entry.Logger.SetFormatter(&logrus.TextFormatter{ForceColors: true, FullTimestamp: true})
 	case FormatterJSON:
 		l.entry.Logger.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339Nano,
@@ -169,16 +166,20 @@ func (l *ServiceLogger) WithContext(ctx context.Context) *ServiceLogger {
 }
 
 func Printf(format string, args ...interface{}) { DefaultLogger.Printf(format, args...) }
+func Println(args ...interface{})               { DefaultLogger.Println(args...) }
 func Debug(args ...interface{})                 { DefaultLogger.Debug(args...) }
 func Info(args ...interface{})                  { DefaultLogger.Info(args...) }
 func Print(args ...interface{})                 { DefaultLogger.Print(args...) }
 func Warn(args ...interface{})                  { DefaultLogger.Warn(args...) }
-func Error(args ...interface{})                 { DefaultLogger.Error(args...) }
+func Error(args ...interface{})                 { func() { DefaultLogger.Error(args...) }() }
 func Fatal(args ...interface{})                 { DefaultLogger.Fatal(args...) }
 func Panic(args ...interface{})                 { DefaultLogger.Panic(args...) }
 func Log(logLevel Level, args ...interface{}) {
 	DefaultLogger.Log(Level(logLevel), args...)
 }
+func WithError(err error) *ServiceLogger             { return DefaultLogger.WithError(err) }
+func WithContext(ctx context.Context) *ServiceLogger { return DefaultLogger.WithContext(ctx) }
+func WithFields(fields Fields) *ServiceLogger        { return DefaultLogger.WithFields(fields) }
 
 func (l *ServiceLogger) Printf(format string, args ...interface{}) { l.entry.Printf(format, args...) }
 func (l *ServiceLogger) Debug(args ...interface{})                 { l.entry.Debug(args...) }
@@ -209,6 +210,10 @@ var _ Logger = (*ServiceLogger)(nil)
 // -----
 
 type fieldsKey struct{}
+
+func (l *ServiceLogger) ContextWithFields(c context.Context, fields Fields) context.Context {
+	return ContextWithFields(c, fields)
+}
 
 // ContextWithFields adds logger fields to fields in context
 func ContextWithFields(parent context.Context, fields Fields) context.Context {

@@ -82,7 +82,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 	return nil
 }
 
-func (s *Service) Login(ctx context.Context, userID, systemID, password string) (err error) {
+func (s *Service) Login(ctx context.Context, userID, systemID, password string) error {
 	address, err := s.getUserAddress(userID)
 	if err != nil {
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)
@@ -90,7 +90,7 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 
 	pwdHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
 	if err != nil {
-		if errors.Is(err, errors.ErrNotFound) {
+		if errors.Eq(err, errors.ErrNotFoundFn()) {
 			return err
 		}
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
