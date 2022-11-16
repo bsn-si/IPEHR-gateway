@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
-	"github.com/onrik/logrus/filename"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -34,8 +32,6 @@ const (
 	WarnLevel  = Level(logrus.WarnLevel)
 	InfoLevel  = Level(logrus.InfoLevel)
 	DebugLevel = Level(logrus.DebugLevel)
-
-	envLogLevel = "LOG_LEVEL"
 )
 
 type Logger interface {
@@ -64,22 +60,6 @@ type Logger interface {
 }
 
 type ServiceLogger struct{ entry *logrus.Entry }
-
-func newServiceLogger() *ServiceLogger {
-	logger := logrus.New()
-	fnHook := filename.NewHook()
-	fnHook.Field = "line_number"
-	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/")
-	logger.AddHook(fnHook)
-
-	ret := &ServiceLogger{entry: logger.WithFields(nil)}
-
-	level, err := ParseLevel(os.Getenv(envLogLevel)) // TODO replace it
-	if err == nil {
-		ret.SetLevel(level)
-	}
-	return ret
-}
 
 func (l *ServiceLogger) SetLevel(level Level) {
 	l.entry.Logger.SetLevel(logrus.Level(level))

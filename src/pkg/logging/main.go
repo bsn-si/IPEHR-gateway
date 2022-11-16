@@ -5,12 +5,48 @@ import (
 	"io"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
-var DefaultLogger = newServiceLogger()
+type Config struct {
+	LogLevel  string    `json:"log_level" mapstructure:"log_level" default:"debug"`
+	Formatter Formatter `json:"formatter,omitempty" mapstructure:"formatter" default:"text"`
+}
+
+var DefaultLogger *ServiceLogger
 
 func init() {
-	DefaultLogger.SetFormatter(FormatterJSON)
+	pflag.String("log_level", "debug", "set up logger level")
+	pflag.String("formatter", "text", "set up logger messages format")
+
+	pflag.Parse()
+	_ = viper.BindPFlags(pflag.CommandLine)
+	viper.AutomaticEnv()
+
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		Panic(err)
+	}
+
+	DefaultLogger = NewLoggerWithConfig(cfg)
+}
+
+func NewLoggerWithConfig(cfg Config) *ServiceLogger {
+	logger := logrus.New()
+
+	srvLogger := &ServiceLogger{
+		entry: logger.WithFields(nil),
+	}
+
+	srvLogger.SetFormatter(cfg.Formatter)
+
+	level, err := ParseLevel(cfg.LogLevel)
+	if err == nil {
+		srvLogger.SetLevel(level)
+	}
+
+	return srvLogger
 }
 
 func SetLevel(level Level) {
