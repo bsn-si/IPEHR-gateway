@@ -12,7 +12,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/infrastructure"
-	"hms/gateway/pkg/logger"
+	"hms/gateway/pkg/logging"
 )
 
 // @title        IPEHR Gateway API
@@ -65,7 +65,7 @@ func (a *API) Build() *gin.Engine {
 	})
 
 	r.Use(requestID)
-	r.Use(logger.HttpMiddleware(logger.DefaultLogger))
+	r.Use(logging.Middleware(logging.DefaultLogger))
 
 	v1 := r.Group("v1")
 	ehr := v1.Group("ehr")

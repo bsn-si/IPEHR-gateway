@@ -1,14 +1,13 @@
-package logger
+package logging
 
 import (
-	"math"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func HttpMiddleware(logger *ServiceLogger) gin.HandlerFunc {
+func Middleware(logger *ServiceLogger) gin.HandlerFunc {
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "unknown"
@@ -18,32 +17,30 @@ func HttpMiddleware(logger *ServiceLogger) gin.HandlerFunc {
 		path := c.Request.URL.Path
 		start := time.Now()
 
+		fields := Fields{
+			"path":      path,
+			"method":    c.Request.Method,
+			"requestId": c.GetString("reqID"),
+			"hostname":  hostname,
+			"clientIP":  c.Request.Referer(),
+			"referer":   c.Request.Referer(),
+			"userAgent": c.Request.UserAgent(),
+			"headers":   c.Request.Header,
+		}
+		ctx := ContextWithFields(c.Request.Context(), fields)
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 
-		stop := time.Since(start)
-		latency := int(math.Ceil(float64(stop.Nanoseconds()) / 1000000.0))
 		statusCode := c.Writer.Status()
-		clientIP := c.ClientIP()
-		clientUserAgent := c.Request.UserAgent()
-		referer := c.Request.Referer()
+
 		dataLength := c.Writer.Size()
 		if dataLength < 0 {
 			dataLength = 0
 		}
 
-		fields := Fields{
-			"path":       path,
-			"method":     c.Request.Method,
-			"requestId":  c.GetString("reqID"),
-			"hostname":   hostname,
-			"statusCode": statusCode,
-			"latency":    latency, // time to process
-			"clientIP":   clientIP,
-			"referer":    referer,
-			"dataLength": dataLength,
-			"userAgent":  clientUserAgent,
-			"headers":    c.Request.Header,
-		}
+		fields["statusCode"] = statusCode
+		fields["dataLength"] = dataLength
+		fields["latency"] = time.Since(start).Seconds()
 
 		switch {
 		case statusCode >= 500:

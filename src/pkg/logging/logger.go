@@ -1,4 +1,4 @@
-package logger
+package logging
 
 import (
 	"context"
@@ -11,12 +11,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
-
-var DefaultLogger *ServiceLogger
-
-func init() {
-	DefaultLogger = newServiceLogger()
-}
 
 type Formatter string
 
@@ -74,23 +68,15 @@ type ServiceLogger struct{ entry *logrus.Entry }
 func newServiceLogger() *ServiceLogger {
 	logger := logrus.New()
 	fnHook := filename.NewHook()
-	fnHook.Field = "file"
-	fnHook.Skip = 8
-
-	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/", "logrus/", "logrus@", "gin@v1.7.7/")
+	fnHook.Field = "line_number"
+	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/")
 	logger.AddHook(fnHook)
 	ret := &ServiceLogger{entry: logger.WithFields(nil)}
-	ret.SetFormatter(FormatterText)
 	level, err := ParseLevel(os.Getenv(envLogLevel)) // TODO replace it
 	if err == nil {
 		ret.SetLevel(level)
 	}
 	return ret
-}
-
-func ParseLevel(lvl string) (Level, error) {
-	level, err := logrus.ParseLevel(lvl)
-	return Level(level), err
 }
 
 func (l *ServiceLogger) SetLevel(level Level) {
@@ -100,7 +86,7 @@ func (l *ServiceLogger) SetLevel(level Level) {
 func (l *ServiceLogger) SetFormatter(ftype Formatter) {
 	switch ftype {
 	case FormatterText:
-		l.entry.Logger.SetFormatter(&logrus.TextFormatter{ForceColors: true, FullTimestamp: true})
+		l.entry.Logger.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 	case FormatterJSON:
 		l.entry.Logger.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: time.RFC3339Nano,
@@ -152,23 +138,6 @@ func (l *ServiceLogger) WithContext(ctx context.Context) *ServiceLogger {
 	fields, _ := ctx.Value(fieldsKey{}).(Fields)
 	return &ServiceLogger{entry: l.entry.WithFields(logrus.Fields(fields))}
 }
-
-func Printf(format string, args ...interface{}) { DefaultLogger.Printf(format, args...) }
-func Println(args ...interface{})               { DefaultLogger.Println(args...) }
-func Debug(args ...interface{})                 { DefaultLogger.Debug(args...) }
-func Info(args ...interface{})                  { DefaultLogger.Info(args...) }
-func Print(args ...interface{})                 { DefaultLogger.Print(args...) }
-func Warn(args ...interface{})                  { DefaultLogger.Warn(args...) }
-func Error(args ...interface{})                 { func() { DefaultLogger.Error(args...) }() }
-func Fatal(args ...interface{})                 { DefaultLogger.Fatal(args...) }
-func Panic(args ...interface{})                 { DefaultLogger.Panic(args...) }
-func Log(logLevel Level, args ...interface{}) {
-	DefaultLogger.Log(Level(logLevel), args...)
-}
-func WithError(err error) *ServiceLogger             { return DefaultLogger.WithError(err) }
-func WithContext(ctx context.Context) *ServiceLogger { return DefaultLogger.WithContext(ctx) }
-func WithFields(fields Fields) *ServiceLogger        { return DefaultLogger.WithFields(fields) }
-
 func (l *ServiceLogger) Printf(format string, args ...interface{}) { l.entry.Printf(format, args...) }
 func (l *ServiceLogger) Debug(args ...interface{})                 { l.entry.Debug(args...) }
 func (l *ServiceLogger) Info(args ...interface{})                  { l.entry.Info(args...) }
@@ -194,45 +163,3 @@ func (l *ServiceLogger) Logln(logLevel Level, args ...interface{}) {
 
 // Assert that ServiceLogger implements the Logger interface.
 var _ Logger = (*ServiceLogger)(nil)
-
-// -----
-
-type fieldsKey struct{}
-
-func (l *ServiceLogger) ContextWithFields(c context.Context, fields Fields) context.Context {
-	return ContextWithFields(c, fields)
-}
-
-// ContextWithFields adds logger fields to fields in context
-func ContextWithFields(parent context.Context, fields Fields) context.Context {
-	var newFields Fields
-	val := parent.Value(fieldsKey{})
-	if val == nil {
-		newFields = fields
-	} else {
-		newFields = make(Fields)
-		oldFields, _ := val.(Fields)
-		for k, v := range oldFields {
-			newFields[k] = v
-		}
-		for k, v := range fields {
-			newFields[k] = v
-		}
-	}
-
-	return context.WithValue(parent, fieldsKey{}, newFields)
-}
-
-// ContextWithField is like ContextWithFields but adds only one field
-func ContextWithField(ctx context.Context, key string, value interface{}) context.Context {
-	return ContextWithFields(ctx, Fields{key: value})
-}
-
-// FieldsFromContext returns logging fields from the context
-func FieldsFromContext(ctx context.Context) Fields {
-	if ctx == nil {
-		return nil
-	}
-	fields, _ := ctx.Value(fieldsKey{}).(Fields)
-	return fields
-}
