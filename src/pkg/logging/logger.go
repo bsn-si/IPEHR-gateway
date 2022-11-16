@@ -2,11 +2,9 @@ package logging
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -97,14 +95,7 @@ func (l *ServiceLogger) WithFields(fields Fields) *ServiceLogger {
 }
 
 func (l *ServiceLogger) WithError(err error) *ServiceLogger {
-	type stackTracer interface {
-		StackTrace() errors.StackTrace
-	}
-
 	log := &ServiceLogger{entry: l.entry.WithError(err)}
-	if stackErr, ok := err.(stackTracer); ok {
-		log.entry = log.entry.WithField("stacktrace", fmt.Sprintf("%+v", stackErr.StackTrace()))
-	}
 
 	return log
 }
