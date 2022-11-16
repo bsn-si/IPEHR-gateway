@@ -85,17 +85,17 @@ func Test_API(t *testing.T) {
 		},
 	}
 
-	//for _, user := range testData.users {
-	//	reqID, err := registerUser(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
-	//	if err != nil {
-	//		t.Fatalf("Can not register user, err: %v", err)
-	//	}
-	//
-	//	err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
-	//	if err != nil {
-	//		t.Fatal("registerUser requestWait error: ", err)
-	//	}
-	//}
+	for _, user := range testData.users {
+		reqID, err := registerUser(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatalf("Can not register user, err: %v", err)
+		}
+
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal("registerUser requestWait error: ", err)
+		}
+	}
 
 	// TODO user register incorrect input data
 	// TODO user register duplicate registration request
@@ -362,24 +362,24 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 			request        *model.UserAuthRequest
 			statusCode     int
 		}{
-			//{
-			//	name:       "Empty userID and password",
-			//	action:     "login",
-			//	request:    userHelper.UserAuthRequest(),
-			//	statusCode: http.StatusBadRequest,
-			//},
-			//{
-			//	name:       "Empty userID",
-			//	action:     "login",
-			//	request:    userHelper.UserAuthRequest(userHelper.WithPassword("password")),
-			//	statusCode: http.StatusBadRequest,
-			//},
-			//{
-			//	name:       "Empty password",
-			//	action:     "login",
-			//	request:    userHelper.UserAuthRequest(userHelper.WithUserID(uuid.New().String())),
-			//	statusCode: http.StatusBadRequest,
-			//},
+			{
+				name:       "Empty userID and password",
+				action:     "login",
+				request:    userHelper.UserAuthRequest(),
+				statusCode: http.StatusBadRequest,
+			},
+			{
+				name:       "Empty userID",
+				action:     "login",
+				request:    userHelper.UserAuthRequest(userHelper.WithPassword("password")),
+				statusCode: http.StatusBadRequest,
+			},
+			{
+				name:       "Empty password",
+				action:     "login",
+				request:    userHelper.UserAuthRequest(userHelper.WithUserID(uuid.New().String())),
+				statusCode: http.StatusBadRequest,
+			},
 			{
 				name:   "UserID not exist",
 				action: "login",
@@ -388,47 +388,47 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 					userHelper.WithPassword("password")),
 				statusCode: http.StatusNotFound,
 			},
-			//{
-			//	name:   "Password incorrect",
-			//	action: "login",
-			//	request: userHelper.UserAuthRequest(
-			//		userHelper.WithUserID(user.id),
-			//		userHelper.WithPassword("incorrect")),
-			//	statusCode: http.StatusUnauthorized,
-			//},
-			//{
-			//	name:   "Successfully auth",
-			//	action: "login",
-			//	request: userHelper.UserAuthRequest(
-			//		userHelper.WithUserID(user.id),
-			//		userHelper.WithPassword(user.password)),
-			//	statusCode: http.StatusOK,
-			//},
-			//{
-			//	name:           "Fail if already logged",
-			//	action:         "login",
-			//	useAuthHeaders: true,
-			//	request: userHelper.UserAuthRequest(
-			//		userHelper.WithUserID(user.id),
-			//		userHelper.WithPassword(user.password)),
-			//	statusCode: http.StatusUnprocessableEntity,
-			//},
-			//{
-			//	name:   "Refresh token",
-			//	action: "refresh",
-			//	method: http.MethodGet,
-			//	request: userHelper.UserAuthRequest(
-			//		userHelper.WithUserID(user.id)),
-			//	statusCode: http.StatusOK,
-			//},
-			//{
-			//	name:           "Successfully logout",
-			//	action:         "logout",
-			//	useAuthHeaders: true,
-			//	request: userHelper.UserAuthRequest(
-			//		userHelper.WithUserID(user.id)),
-			//	statusCode: http.StatusOK,
-			//},
+			{
+				name:   "Password incorrect",
+				action: "login",
+				request: userHelper.UserAuthRequest(
+					userHelper.WithUserID(user.id),
+					userHelper.WithPassword("incorrect")),
+				statusCode: http.StatusUnauthorized,
+			},
+			{
+				name:   "Successfully auth",
+				action: "login",
+				request: userHelper.UserAuthRequest(
+					userHelper.WithUserID(user.id),
+					userHelper.WithPassword(user.password)),
+				statusCode: http.StatusOK,
+			},
+			{
+				name:           "Fail if already logged",
+				action:         "login",
+				useAuthHeaders: true,
+				request: userHelper.UserAuthRequest(
+					userHelper.WithUserID(user.id),
+					userHelper.WithPassword(user.password)),
+				statusCode: http.StatusUnprocessableEntity,
+			},
+			{
+				name:   "Refresh token",
+				action: "refresh",
+				method: http.MethodGet,
+				request: userHelper.UserAuthRequest(
+					userHelper.WithUserID(user.id)),
+				statusCode: http.StatusOK,
+			},
+			{
+				name:           "Successfully logout",
+				action:         "logout",
+				useAuthHeaders: true,
+				request: userHelper.UserAuthRequest(
+					userHelper.WithUserID(user.id)),
+				statusCode: http.StatusOK,
+			},
 		}
 
 		var (
