@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/onrik/logrus/filename"
@@ -13,22 +12,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var once sync.Once
+var DefaultLogger *ServiceLogger
 
-var instanceLogger *ServiceLogger
-
-func getInstance() *ServiceLogger {
-	if instanceLogger == nil {
-		once.Do(
-			func() {
-				instanceLogger = newServiceLogger()
-			})
-	}
-
-	return instanceLogger
+func init() {
+	DefaultLogger = newServiceLogger()
 }
-
-var DefaultLogger = getInstance()
 
 type Formatter string
 
@@ -88,7 +76,7 @@ func newServiceLogger() *ServiceLogger {
 	fnHook := filename.NewHook()
 	fnHook.Field = "file"
 	fnHook.Skip = 8
-	
+
 	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/", "logrus/", "logrus@", "gin@v1.7.7/")
 	logger.AddHook(fnHook)
 	ret := &ServiceLogger{entry: logger.WithFields(nil)}

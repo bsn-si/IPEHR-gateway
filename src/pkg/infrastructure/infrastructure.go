@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"hms/gateway/pkg/logger"
 	"log"
 	"net/http"
 
@@ -75,8 +74,6 @@ func New(cfg *config.Config) *Infra {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	_ = logger.DefaultLogger
 
 	return &Infra{
 		LocalDB:        db,
