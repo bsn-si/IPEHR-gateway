@@ -146,11 +146,6 @@ func (h UserHandler) Login(c *gin.Context) {
 
 	err := h.service.Login(c, u.UserID, systemID, u.Password)
 	if err != nil {
-		log.WithFields(log.Fields{"reqId": c.GetString("reqID")}).Error("error with fields")
-		log.WithError(err).Error("with error")
-		log.Error("stack handler inside error: ", errors.WithStack(err))
-		log.Error("just error")
-
 		if errors.Is(err, errors.ErrNotFound) {
 			c.JSON(http.StatusNotFound, err.Error())
 			return

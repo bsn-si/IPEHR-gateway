@@ -90,7 +90,7 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 
 	pwdHash, err := s.Infra.Index.GetUserPasswordHash(ctx, address)
 	if err != nil {
-		if errors.Eq(err, errors.ErrNotFoundFn()) {
+		if errors.Is(err, errors.ErrNotFound) {
 			return err
 		}
 		return fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
