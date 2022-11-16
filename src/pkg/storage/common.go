@@ -1,8 +1,8 @@
 package storage
 
 import (
+	log "hms/gateway/pkg/logging"
 	"hms/gateway/pkg/storage/localfile"
-	"log"
 )
 
 var storage Storager

@@ -5,15 +5,16 @@ import (
 	"crypto/rand"
 	"flag"
 	"fmt"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/infrastructure"
-	"hms/gateway/pkg/user/roles"
-	"log"
 	"strings"
 	"time"
 
 	"golang.org/x/crypto/scrypt"
+
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/config"
+	"hms/gateway/pkg/infrastructure"
+	log "hms/gateway/pkg/logging"
+	"hms/gateway/pkg/user/roles"
 )
 
 func main() {

@@ -129,6 +129,7 @@ func (l *ServiceLogger) Print(args ...interface{})                 { l.entry.Pri
 func (l *ServiceLogger) Warn(args ...interface{})                  { l.entry.Warn(args...) }
 func (l *ServiceLogger) Error(args ...interface{})                 { l.entry.Error(args...) }
 func (l *ServiceLogger) Fatal(args ...interface{})                 { l.entry.Fatal(args...) }
+func (l *ServiceLogger) Fatalf(format string, args ...interface{}) { l.entry.Fatalf(format, args...) }
 func (l *ServiceLogger) Panic(args ...interface{})                 { l.entry.Panic(args...) }
 func (l *ServiceLogger) Log(logLevel Level, args ...interface{}) {
 	l.entry.Log(logrus.Level(logLevel), args...)

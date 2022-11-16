@@ -3,11 +3,11 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/errors"
+	log "hms/gateway/pkg/logging"
 )
 
 type Config struct {

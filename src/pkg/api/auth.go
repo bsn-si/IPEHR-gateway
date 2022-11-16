@@ -1,13 +1,13 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
 
 	"hms/gateway/pkg/errors"
+	log "hms/gateway/pkg/logging"
 )
 
 func auth(a *API, exceptions ...string) func(*gin.Context) {

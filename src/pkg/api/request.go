@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -10,6 +9,7 @@ import (
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/request"
+	log "hms/gateway/pkg/logging"
 )
 
 type RequestHandler struct {

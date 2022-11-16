@@ -10,7 +10,7 @@ import (
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/infrastructure"
-	"log"
+	log "hms/gateway/pkg/logging"
 
 	"github.com/google/uuid"
 	"github.com/vmihailenco/msgpack/v5"

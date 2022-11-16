@@ -3,12 +3,12 @@ package localfile
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
 	"os"
 
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/errors"
+	log "hms/gateway/pkg/logging"
 )
 
 type Config struct {

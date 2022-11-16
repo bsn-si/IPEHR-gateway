@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -13,6 +12,7 @@ import (
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/localDB"
+	log "hms/gateway/pkg/logging"
 	"hms/gateway/pkg/storage"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"

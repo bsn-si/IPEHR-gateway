@@ -5,13 +5,13 @@ import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"log"
 
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/errors"
+	log "hms/gateway/pkg/logging"
 	"hms/gateway/pkg/storage"
 )
 

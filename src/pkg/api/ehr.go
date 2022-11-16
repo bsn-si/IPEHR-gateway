@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +15,7 @@ import (
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	log "hms/gateway/pkg/logging"
 )
 
 type EhrHandler struct {

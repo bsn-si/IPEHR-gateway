@@ -3,9 +3,10 @@ package api
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"log"
 
 	"github.com/gin-gonic/gin"
+
+	log "hms/gateway/pkg/logging"
 )
 
 func requestID(c *gin.Context) {

@@ -76,13 +76,14 @@ func ParseLevel(lvl string) (Level, error) {
 
 func Printf(format string, args ...interface{}) { DefaultLogger.Printf(format, args...) }
 
-func Debug(args ...interface{}) { DefaultLogger.Debug(args...) }
-func Info(args ...interface{})  { DefaultLogger.Info(args...) }
-func Print(args ...interface{}) { DefaultLogger.Print(args...) }
-func Warn(args ...interface{})  { DefaultLogger.Warn(args...) }
-func Error(args ...interface{}) { DefaultLogger.Error(args...) }
-func Fatal(args ...interface{}) { DefaultLogger.Fatal(args...) }
-func Panic(args ...interface{}) { DefaultLogger.Panic(args...) }
+func Debug(args ...interface{})                 { DefaultLogger.Debug(args...) }
+func Info(args ...interface{})                  { DefaultLogger.Info(args...) }
+func Print(args ...interface{})                 { DefaultLogger.Print(args...) }
+func Warn(args ...interface{})                  { DefaultLogger.Warn(args...) }
+func Error(args ...interface{})                 { DefaultLogger.Error(args...) }
+func Fatal(args ...interface{})                 { DefaultLogger.Fatal(args...) }
+func Fatalf(format string, args ...interface{}) { DefaultLogger.Fatalf(format, args...) }
+func Panic(args ...interface{})                 { DefaultLogger.Panic(args...) }
 
 func Debugln(args ...interface{}) { DefaultLogger.Debugln(args...) }
 func Infoln(args ...interface{})  { DefaultLogger.Infoln(args...) }
