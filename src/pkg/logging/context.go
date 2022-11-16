@@ -9,6 +9,7 @@ type fieldsKey struct{}
 // ContextWithFields adds logger fields to fields in context
 func ContextWithFields(parent context.Context, fields Fields) context.Context {
 	var newFields Fields
+
 	val := parent.Value(fieldsKey{})
 	if val == nil {
 		newFields = fields
@@ -36,6 +37,7 @@ func FieldsFromContext(ctx context.Context) Fields {
 	if ctx == nil {
 		return nil
 	}
+
 	fields, _ := ctx.Value(fieldsKey{}).(Fields)
 	return fields
 }

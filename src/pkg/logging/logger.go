@@ -71,7 +71,9 @@ func newServiceLogger() *ServiceLogger {
 	fnHook.Field = "line_number"
 	fnHook.SkipPrefixes = append(fnHook.SkipPrefixes, "logging/")
 	logger.AddHook(fnHook)
+
 	ret := &ServiceLogger{entry: logger.WithFields(nil)}
+
 	level, err := ParseLevel(os.Getenv(envLogLevel)) // TODO replace it
 	if err == nil {
 		ret.SetLevel(level)
@@ -131,10 +133,12 @@ func (l *ServiceLogger) WithContext(ctx context.Context) *ServiceLogger {
 	if ctx == nil {
 		return l
 	}
+
 	val := ctx.Value(fieldsKey{})
 	if val == nil {
 		return l
 	}
+
 	fields, _ := ctx.Value(fieldsKey{}).(Fields)
 	return &ServiceLogger{entry: l.entry.WithFields(logrus.Fields(fields))}
 }
