@@ -79,6 +79,10 @@ func (e Element) GetLocatable() Locatable {
 	return Locatable(e.Item)
 }
 
+func (e Element) GetArchetypeNodeID() string {
+	return e.ArchetypeNodeID
+}
+
 func (e *Element) UnmarshalJSON(data []byte) error {
 	wrapper := struct {
 		Item
@@ -117,4 +121,8 @@ func (c Cluster) GetType() ItemType {
 
 func (c Cluster) GetLocatable() Locatable {
 	return Locatable(c.Item)
+}
+
+func (c Cluster) GetArchetypeNodeID() string {
+	return c.ArchetypeNodeID
 }

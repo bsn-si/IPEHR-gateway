@@ -3,6 +3,7 @@ package base
 type Root interface {
 	GetType() ItemType
 	GetLocatable() Locatable
+	GetArchetypeNodeID() string
 }
 
 // Locatable
@@ -26,4 +27,8 @@ func (l Locatable) GetType() ItemType {
 
 func (l Locatable) GetLocatable() Locatable {
 	return l
+}
+
+func (l Locatable) GetArchetypeNodeID() string {
+	return l.ArchetypeNodeID
 }
