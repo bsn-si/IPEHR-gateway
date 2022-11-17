@@ -253,7 +253,7 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 
 	cfg.DefaultUserID = uuid.New().String()
 
-	log.ConfigLog(log.DefaultLogger, cfg.Logger)
+	log.DefaultLogger = log.NewLoggerWithConfig(cfg.Logger)
 
 	infra := infrastructure.New(cfg)
 	apiHandler := api.New(cfg, infra)

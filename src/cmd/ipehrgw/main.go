@@ -27,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	log.ConfigLog(log.DefaultLogger, cfg.Logger)
+	log.DefaultLogger = log.NewLoggerWithConfig(cfg.Logger)
 
 	infra := infrastructure.New(cfg)
 

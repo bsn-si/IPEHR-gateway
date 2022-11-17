@@ -33,10 +33,15 @@ func init() {
 }
 
 func NewLoggerWithConfig(cfg Config) *ServiceLogger {
-	srvLogger := NewLog()
-	ConfigLog(srvLogger, cfg)
+	srvLog := NewLog()
+	srvLog.SetFormatter(cfg.Formatter)
 
-	return srvLogger
+	level, err := ParseLevel(cfg.LogLevel)
+	if err == nil {
+		srvLog.SetLevel(level)
+	}
+
+	return srvLog
 }
 
 func NewLog() *ServiceLogger {
@@ -47,16 +52,6 @@ func NewLog() *ServiceLogger {
 	}
 
 	return srvLog
-}
-
-// ¯\(°_o)/¯
-func ConfigLog(srvLog *ServiceLogger, cfg Config) {
-	srvLog.SetFormatter(cfg.Formatter)
-
-	level, err := ParseLevel(cfg.LogLevel)
-	if err == nil {
-		srvLog.SetLevel(level)
-	}
 }
 
 func SetLevel(level Level) {
