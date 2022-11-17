@@ -16,7 +16,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 type DealStatus = storagemarket.StorageDealStatus

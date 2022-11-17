@@ -1,7 +1,7 @@
 package storage
 
 import (
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage/localfile"
 )
 

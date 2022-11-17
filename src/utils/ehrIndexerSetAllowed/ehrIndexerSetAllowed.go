@@ -11,7 +11,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/indexer"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 func main() {

@@ -13,7 +13,7 @@ import (
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/infrastructure"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 	"hms/gateway/pkg/user/roles"
 )
 

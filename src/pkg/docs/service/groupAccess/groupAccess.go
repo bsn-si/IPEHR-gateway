@@ -5,7 +5,7 @@ import (
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 type Service struct {

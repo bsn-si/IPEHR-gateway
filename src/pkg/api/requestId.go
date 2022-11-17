@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 func requestID(c *gin.Context) {

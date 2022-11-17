@@ -9,7 +9,7 @@ import (
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/request"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 type RequestHandler struct {

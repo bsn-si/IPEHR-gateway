@@ -12,7 +12,7 @@ import (
 	_ "hms/gateway/pkg/api/docs"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/infrastructure"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 func main() {

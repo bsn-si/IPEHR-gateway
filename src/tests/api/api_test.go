@@ -25,7 +25,7 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 	userRoles "hms/gateway/pkg/user/roles"
 	"hms/gateway/tests/api/testhelpers"

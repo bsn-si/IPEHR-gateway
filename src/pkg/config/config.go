@@ -7,7 +7,7 @@ import (
 
 	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 type Config struct {

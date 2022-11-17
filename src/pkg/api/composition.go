@@ -16,7 +16,7 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 type CompositionService interface {

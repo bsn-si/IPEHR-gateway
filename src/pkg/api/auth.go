@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/log"
+	"hms/gateway/pkg/log"
 )
 
 func auth(a *API, exceptions ...string) func(*gin.Context) {
