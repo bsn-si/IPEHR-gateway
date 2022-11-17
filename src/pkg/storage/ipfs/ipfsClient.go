@@ -15,7 +15,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 )
 
 const (

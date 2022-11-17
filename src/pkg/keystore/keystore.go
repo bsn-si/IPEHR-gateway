@@ -11,7 +11,7 @@ import (
 
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 )
 

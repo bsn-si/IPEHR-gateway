@@ -1,4 +1,4 @@
-package logging
+package log
 
 import (
 	"context"
@@ -33,20 +33,30 @@ func init() {
 }
 
 func NewLoggerWithConfig(cfg Config) *ServiceLogger {
-	logger := logrus.New()
+	srvLogger := NewLog()
+	ConfigLog(srvLogger, cfg)
 
-	srvLogger := &ServiceLogger{
-		entry: logger.WithFields(nil),
+	return srvLogger
+}
+
+func NewLog() *ServiceLogger {
+	log := logrus.New()
+
+	srvLog := &ServiceLogger{
+		entry: log.WithFields(nil),
 	}
 
-	srvLogger.SetFormatter(cfg.Formatter)
+	return srvLog
+}
+
+// ¯\(°_o)/¯
+func ConfigLog(srvLog *ServiceLogger, cfg Config) {
+	srvLog.SetFormatter(cfg.Formatter)
 
 	level, err := ParseLevel(cfg.LogLevel)
 	if err == nil {
-		srvLogger.SetLevel(level)
+		srvLog.SetLevel(level)
 	}
-
-	return srvLogger
 }
 
 func SetLevel(level Level) {

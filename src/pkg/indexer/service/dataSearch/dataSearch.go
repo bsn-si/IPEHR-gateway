@@ -15,7 +15,7 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 )
 
 type DataEntry struct {

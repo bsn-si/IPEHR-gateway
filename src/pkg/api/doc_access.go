@@ -13,7 +13,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/docAccess"
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 )
 
 type DocAccessHandler struct {

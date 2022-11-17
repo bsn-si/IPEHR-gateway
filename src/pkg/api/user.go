@@ -12,7 +12,7 @@ import (
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 	"hms/gateway/pkg/user/service"
 )
 

@@ -25,7 +25,7 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 	userRoles "hms/gateway/pkg/user/roles"
 	"hms/gateway/tests/api/testhelpers"
@@ -252,6 +252,8 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	cfg.DefaultUserID = uuid.New().String()
+
+	log.ConfigLog(log.DefaultLogger, cfg.Logger)
 
 	infra := infrastructure.New(cfg)
 	apiHandler := api.New(cfg, infra)

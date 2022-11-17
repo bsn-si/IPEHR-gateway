@@ -12,7 +12,7 @@ import (
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/keystore"
 	"hms/gateway/pkg/localDB"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 	"hms/gateway/pkg/storage/filecoin"
 	"hms/gateway/pkg/storage/ipfs"

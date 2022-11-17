@@ -8,7 +8,7 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 )
 
 type Config struct {

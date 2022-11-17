@@ -7,7 +7,7 @@ import (
 
 	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/errors"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 )
 
 type Config struct {
@@ -44,6 +44,8 @@ type Config struct {
 	DB struct {
 		FilePath string `json:"filePath"`
 	} `json:"db"`
+
+	Logger log.Config
 
 	path string
 }

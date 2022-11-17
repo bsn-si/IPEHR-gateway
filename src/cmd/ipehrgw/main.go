@@ -12,6 +12,7 @@ import (
 	_ "hms/gateway/pkg/api/docs"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/infrastructure"
+	log "hms/gateway/pkg/log"
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	log.ConfigLog(log.DefaultLogger, cfg.Logger)
 
 	infra := infrastructure.New(cfg)
 

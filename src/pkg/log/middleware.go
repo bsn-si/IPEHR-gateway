@@ -1,4 +1,4 @@
-package logging
+package log
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Middleware(logger *ServiceLogger) gin.HandlerFunc {
+func Middleware(log *ServiceLogger) gin.HandlerFunc {
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "unknown"
@@ -44,11 +44,11 @@ func Middleware(logger *ServiceLogger) gin.HandlerFunc {
 
 		switch {
 		case statusCode >= 500:
-			logger.WithFields(fields).Errorln("[GIN]", fields["method"], fields["path"])
+			log.WithFields(fields).Errorln("[GIN]", fields["method"], fields["path"])
 		case statusCode >= 400:
-			logger.WithFields(fields).Warnln("[GIN]", fields["method"], fields["path"])
+			log.WithFields(fields).Warnln("[GIN]", fields["method"], fields["path"])
 		default:
-			logger.WithFields(fields).Debugln("[GIN]", fields["method"], fields["path"])
+			log.WithFields(fields).Debugln("[GIN]", fields["method"], fields["path"])
 		}
 	}
 }

@@ -25,7 +25,7 @@ import (
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/ehrIndexer"
-	log "hms/gateway/pkg/logging"
+	log "hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 )
 
