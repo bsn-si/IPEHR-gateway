@@ -1,14 +1,16 @@
 package errors
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 var (
-	New = errors.New
-	Is  = errors.Is
-	As  = errors.As
+	New  = errors.New
+	Is   = errors.Is
+	As   = errors.As
+	Wrap = errors.Wrap
 
 	ErrAuthorization    = errors.New("Authorization error")
 	ErrIsNotExist       = errors.New("Object is not exist")
