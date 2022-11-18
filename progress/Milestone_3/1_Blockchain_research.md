@@ -6,6 +6,8 @@
 To deploy smart contracts our solution uses [EVM](https://ethereum.org/en/developers/docs/evm/). To interact with the EVM contract we use the [Go-Ethereum library](https://github.com/ethereum/go-ethereum).
 We are currently using [Goerli](https://goerli.net/), the testnet of the Ethereum network, in the development of IPEHR. The native token of the network is test Ether.
 
+Current contracts may be found [here](https://goerli.etherscan.io/address/0x3fcEa11C70A205CF2610807b0F0cdA774079fAf3).
+
 Pros:
 
 - it works with [Solidity](https://docs.soliditylang.org/en/v0.8.17/),
