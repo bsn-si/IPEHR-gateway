@@ -32,6 +32,14 @@ func (q *StoredQuery) Validate() error {
 		errs = append(errs, errors.ErrFieldIsEmpty("query"))
 	}
 
+	if q.Version == "" {
+		errs = append(errs, errors.ErrFieldIsEmpty("version"))
+	}
+
+	if q.TimeCreated == "" {
+		errs = append(errs, errors.ErrFieldIsEmpty("timeCreated"))
+	}
+
 	for i, e := range errs {
 		if i == 0 {
 			err = e
