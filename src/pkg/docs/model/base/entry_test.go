@@ -25,7 +25,6 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 			"2. valid json",
 			[]byte(actionJSON),
 			base.Action{
-
 				Time: base.DvDateTime{
 					DvTemporal: base.DvTemporal{
 						DvValueBase: base.DvValueBase{Type: base.DvDateTimeItemType},
@@ -42,19 +41,28 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 					},
 				},
 				Description: base.ItemTree{
-					ItemStructure: base.ItemStructure{base.DataStructure{base.Locatable{
-						Type:            base.ItemTreeItemType,
-						Name:            base.NewDvText("Tree"),
-						ArchetypeNodeID: "at0017",
-					}}},
+					DataStructure: base.DataStructure{
+						Locatable: base.Locatable{
+							Type:            base.ItemTreeItemType,
+							Name:            base.NewDvText("Tree"),
+							ArchetypeNodeID: "at0017",
+						},
+					},
 					Items: base.Items{},
 				},
 				CareEntry: base.CareEntry{
-					Protocol: base.ItemStructure{base.DataStructure{base.Locatable{
-						Type:            base.ItemTreeItemType,
-						Name:            base.NewDvText("Tree"),
-						ArchetypeNodeID: "at0030",
-					}}},
+					Protocol: base.ItemStructure{
+						Data: &base.ItemTree{
+							DataStructure: base.DataStructure{
+								Locatable: base.Locatable{
+									Type:            base.ItemTreeItemType,
+									Name:            base.NewDvText("Tree"),
+									ArchetypeNodeID: "at0030",
+								},
+							},
+							Items: base.Items{},
+						},
+					},
 					Entry: base.Entry{
 						ContentItem: base.ContentItem{
 							Locatable: base.Locatable{

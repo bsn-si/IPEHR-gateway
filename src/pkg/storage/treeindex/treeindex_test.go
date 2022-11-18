@@ -1,22 +1,38 @@
 package treeindex
 
 import (
+	"encoding/json"
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
+	"os"
 	"testing"
 )
 
 func TestTree_walk(t *testing.T) {
-	c := model.Composition{
-		Locatable: base.Locatable{
-			ArchetypeNodeID: "some_composition_node_id",
-		},
+	wd, _ := os.Getwd()
+	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+
+	inJSON, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatal("Can't open composition.json file", filePath)
+	}
+
+	c := model.Composition{}
+
+	if err := json.Unmarshal(inJSON, &c); err != nil {
+		t.Error(err)
+		return
 	}
 
 	tree := NewTree()
-	tree.AddComposition(c)
-
-	if !tree.ContainsComposition(c.ArchetypeNodeID) {
-		t.Fail()
+	if err := tree.AddComposition(c); err != nil {
+		t.Error(err)
 	}
+
+	// root, ok := tree.root..Children["openEHR-EHR-COMPOSITION.health_summary.v1"]
+	// assert.Equal(t, ok, true)
+	// assert.Equal(t, len(root.Children), 14)
+
+	// t.Logf("%+v", tree.root.Children)
+	t.Logf("tree:\n%s", tree.Print())
+	t.Error("hello")
 }
