@@ -17,6 +17,7 @@ type StoredQuery struct {
 
 func (q *StoredQuery) Validate() error {
 	var err error
+
 	var errs []error
 
 	if q.Name == "" {
@@ -36,6 +37,7 @@ func (q *StoredQuery) Validate() error {
 			err = e
 			continue
 		}
+
 		err = errors.Wrap(err, e.Error())
 	}
 
