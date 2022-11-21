@@ -1,28 +1,43 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"hms/gateway/pkg/docs/service/user"
 	"io"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/infrastructure"
-	"hms/gateway/pkg/user/service"
 )
 
-type UserHandler struct {
-	service *service.Service
+type UserHandlerService interface {
+	NewProcRequest(reqID, userID string) (*proc.Request, error)
+	Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error)
+	Login(ctx context.Context, userID, systemID, password string) (err error)
+	CreateToken(userID string) (*user.TokenDetails, error)
+	ExtractToken(bearToken string) string
+	VerifyAccess(userID, tokenString string) error
+	VerifyToken(userID, tokenString string, tokenType user.TokenType) (*jwt.Token, error)
+	ExtractTokenMetadata(token *jwt.Token) (*user.TokenClaims, error)
+	IsTokenInBlackList(tokenRaw string) bool
+	AddTokenInBlackList(tokenRaw string, expires int64)
+	GetTokenHash(tokenRaw string) [32]byte
+	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*user.TokenDetails, error)
 }
 
-func NewUserHandler(cfg *config.Config, infra *infrastructure.Infra, p *proc.Proc) *UserHandler {
+type UserHandler struct {
+	service UserHandlerService
+}
+
+func NewUserHandler(handlerService UserHandlerService) *UserHandler {
 	return &UserHandler{
-		service: service.NewUserService(cfg, infra, p),
+		service: handlerService,
 	}
 }
 
@@ -78,7 +93,7 @@ func (h UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userCreateRequest.UserID, "", proc.RequestUserRegister)
+	procRequest, err := h.service.NewProcRequest(reqID, userCreateRequest.UserID)
 	if err != nil {
 		log.Println("User register NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

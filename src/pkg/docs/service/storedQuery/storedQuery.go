@@ -8,7 +8,6 @@ import (
 
 type Service struct {
 	*service.DefaultDocumentService
-	defaultGroupAccess *model.GroupAccess
 }
 
 func NewService(docService *service.DefaultDocumentService) *Service {

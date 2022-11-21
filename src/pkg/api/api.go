@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"hms/gateway/pkg/docs/service/storedQuery"
+	"hms/gateway/pkg/docs/service/user"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -47,6 +48,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	storedQueryService := storedQuery.NewService(docService)
+	userService := user.NewUserService(infra, docService.Proc)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
@@ -57,7 +59,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess: NewDocAccessHandler(docService),
 		Request:   NewRequestHandler(docService),
-		User:      NewUserHandler(cfg, infra, docService.Proc),
+		User:      NewUserHandler(userService),
 	}
 }
 
@@ -129,8 +131,8 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
 	}
 }
-
 func (a *API) buildAccessAPI() handlerBuilder {
+	// TODO is it using in master?
 	return func(r *gin.RouterGroup) {
 		r = r.Group("access")
 		r.Use(auth(a))
@@ -147,18 +149,15 @@ func (a *API) buildQueryAPI() handlerBuilder {
 		r = r.Group("query")
 		r.Use(auth(a))
 		r.POST("/aql", a.Query.ExecPost)
-
 	}
 }
 
 func (a *API) buildStoredQueryAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
-		//r = r.Group("definition").Group("query")
-		r = r.Group("definition")
-		r = r.Group("query")
+		r = r.Group("definition").Group("query")
 		r.Use(auth(a))
 		r.GET(":qualifiedQueryName", a.StoredQuery.Get)
-
+		r.GET("/", a.StoredQuery.Get) // this need because GIN breaking API tests if qualifiedQueryName not set
 	}
 }
 
@@ -168,7 +167,6 @@ func (a *API) buildRequestsAPI() handlerBuilder {
 		r.Use(auth(a, "userRegister"))
 		r.GET("/:reqID", a.Request.GetByID)
 		r.GET("/", a.Request.GetAll)
-
 	}
 }
 

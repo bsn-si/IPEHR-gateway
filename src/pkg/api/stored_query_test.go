@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"hms/gateway/pkg/api/mocks"
 	"hms/gateway/pkg/docs/model"
@@ -11,27 +12,29 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 )
 
 //
 //go:generate mockgen -source stored_query.go -package mocks -destination mocks/stored_query_mock.go
+//go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
 //
 
 func TestStoredQueryHandler_Get(t *testing.T) {
 	var (
-		//userID = uuid.New().String()
-		sqM = make([]model.StoredQuery, 1)
+		userID = uuid.New().String()
+		sqM    = make([]*model.StoredQuery, 1)
 	)
 
-	sqM[0] = model.StoredQuery{
-		Name:        "",
-		Type:        "",
-		Version:     "",
-		TimeCreated: "",
-		Query:       "",
+	sqM[0] = &model.StoredQuery{
+		Name:        "org.openehr::compositions",
+		Type:        "aql",
+		Version:     "1.0.1",
+		TimeCreated: "2017-07-16T19:20:30.450+01:00",
+		Query:       "SELECT 1",
 	}
 
-	//sqJson, _ := json.Marshal(sqM)
+	sqJson, _ := json.Marshal(sqM)
 
 	tests := []struct {
 		name               string
@@ -40,7 +43,6 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 		wantStatus         int
 		wantResp           string
 	}{
-		// TODO repair tests
 		{
 			"1. empty result because no qualifiedQueryName",
 			"",
@@ -48,24 +50,24 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			http.StatusNotFound,
 			"",
 		},
-		//{
-		//	"2. error on get access group",
-		//	groupID.String(),
-		//	func(gaSvc *mocks.MockGroupAccessService) {
-		//		gaSvc.EXPECT().Get(gomock.Any(), userID, &groupID).Return(nil, errors.New("some error"))
-		//	},
-		//	http.StatusNotFound,
-		//	`{"error":"Group access not found"}`,
-		//},
-		//{
-		//	"3. success get access group",
-		//	groupID.String(),
-		//	func(gaSvc *mocks.MockGroupAccessService) {
-		//		gaSvc.EXPECT().Get(gomock.Any(), userID, &groupID).Return(ga, nil)
-		//	},
-		//	http.StatusOK,
-		//	string(sqJson),
-		//},
+		{
+			"2. empty result because qualifiedQueryName was not found",
+			"notexist",
+			func(gaSvc *mocks.MockStoredQueryService) {
+				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any())
+			},
+			http.StatusOK,
+			`[]`,
+		},
+		{
+			"3. success result",
+			"exist",
+			func(gaSvc *mocks.MockStoredQueryService) {
+				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+			},
+			http.StatusOK,
+			string(sqJson),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -75,15 +77,20 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			sqSvc := mocks.NewMockStoredQueryService(ctrl)
 			tt.prepare(sqSvc)
 
+			// Mock for auth user service
+			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
+
 			api := API{
 				StoredQuery: NewStoredQueryHandler(sqSvc),
+				User:        NewUserHandler(userSvc),
 			}
 
-			// TODO add auth mock
 			router := api.setupRouter(api.buildStoredQueryAPI())
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/definition/query/%s", tt.qualifiedQueryName), nil)
-			//req.Header.Set("AuthUserId", userID) // TODO ???
+			req.Header.Set("Authorization", "Bearer emptyJWTkey")
+			req.Header.Set("AuthUserId", userID)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)
@@ -91,6 +98,10 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			resp := recorder.Result()
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
 				t.Errorf("StoredQueryHandler.Get() status code mismatch {-want;+got}\n\t%s", diff)
+			}
+
+			if tt.wantStatus == http.StatusNotFound {
+				return
 			}
 
 			respBody, _ := io.ReadAll(resp.Body)

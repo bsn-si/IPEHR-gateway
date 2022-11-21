@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"hms/gateway/pkg/docs/model"
 
 	"github.com/gin-gonic/gin"
-	"github.com/opentracing/opentracing-go/log"
 )
 
 type StoredQueryService interface {
@@ -38,19 +38,29 @@ func NewStoredQueryHandler(storedQueryService StoredQueryService) *StoredQueryHa
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /access/group/{group_id} [get]
 func (h *StoredQueryHandler) Get(c *gin.Context) {
-	qName := c.Param("qualified_query_name")
+	qName := c.Param("qualifiedQueryName")
 
-	userID := c.GetString("userId")
+	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
 		return
 	}
 
+	if qName == "" {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
 	queryList, err := h.service.Get(c, userID, qName)
 	if err != nil {
-		log.Error(err) // TODO replace to ErrorF after merge IPEHR-32
+		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
+	}
+
+	if len(queryList) == 0 {
+		queryList = make([]*model.StoredQuery, 0)
 	}
 
 	c.JSON(http.StatusOK, queryList)
