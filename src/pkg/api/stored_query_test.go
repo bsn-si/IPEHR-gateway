@@ -23,10 +23,10 @@ import (
 func TestStoredQueryHandler_Get(t *testing.T) {
 	var (
 		userID = uuid.New().String()
-		sqM    = make([]*model.StoredQuery, 1)
+		sqM    = make([]model.StoredQuery, 1)
 	)
 
-	sqM[0] = &model.StoredQuery{
+	sqM[0] = model.StoredQuery{
 		Name:        "org.openehr::compositions",
 		Type:        "aql",
 		Version:     "1.0.1",

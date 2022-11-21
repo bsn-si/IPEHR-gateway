@@ -11,7 +11,7 @@ import (
 )
 
 type StoredQueryService interface {
-	Get(ctx context.Context, userID string, qualifiedQueryName string) ([]*model.StoredQuery, error)
+	Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error)
 }
 
 type StoredQueryHandler struct {
@@ -60,7 +60,7 @@ func (h *StoredQueryHandler) Get(c *gin.Context) {
 	}
 
 	if len(queryList) == 0 {
-		queryList = make([]*model.StoredQuery, 0)
+		queryList = make([]model.StoredQuery, 0)
 	}
 
 	c.JSON(http.StatusOK, queryList)

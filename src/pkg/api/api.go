@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"hms/gateway/pkg/docs/service/storedQuery"
+	"hms/gateway/pkg/docs/service/storedquery"
 	"hms/gateway/pkg/docs/service/user"
 	"net/http"
 
@@ -47,7 +47,7 @@ type API struct {
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
-	storedQueryService := storedQuery.NewService(docService)
+	storedQueryService := storedquery.NewService(docService)
 	userService := user.NewUserService(infra, docService.Proc)
 
 	return &API{

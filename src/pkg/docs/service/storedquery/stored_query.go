@@ -1,4 +1,4 @@
-package storedQuery
+package storedquery
 
 import (
 	"context"
@@ -18,6 +18,6 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	return s
 }
 
-func (*Service) Get(ctx context.Context, userID string, qualifiedQueryName string) ([]*model.StoredQuery, error) {
+func (*Service) Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error) {
 	return nil, nil
 }

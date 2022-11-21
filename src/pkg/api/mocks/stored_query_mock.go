@@ -36,10 +36,10 @@ func (m *MockStoredQueryService) EXPECT() *MockStoredQueryServiceMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockStoredQueryService) Get(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
+func (m *MockStoredQueryService) Get(ctx context.Context, userID, qualifiedQueryName string) ([]model.StoredQuery, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, userID, qualifiedQueryName)
-	ret0, _ := ret[0].([]*model.StoredQuery)
+	ret0, _ := ret[0].([]model.StoredQuery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
