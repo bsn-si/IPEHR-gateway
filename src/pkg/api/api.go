@@ -67,6 +67,7 @@ func (a *API) Build() *gin.Engine {
 	return a.setupRouter(
 		a.buildUserAPI(),
 		a.buildEhrAPI(),
+		a.buildAccessAPI(),
 		//a.buildGroupAccessAPI(),
 		a.buildQueryAPI(),
 		a.buildStoredQueryAPI(),
@@ -132,7 +133,6 @@ func (a *API) buildEhrAPI() handlerBuilder {
 	}
 }
 func (a *API) buildAccessAPI() handlerBuilder {
-	// TODO is it using in master?
 	return func(r *gin.RouterGroup) {
 		r = r.Group("access")
 		r.Use(auth(a))

@@ -34,7 +34,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 		Query:       "SELECT 1",
 	}
 
-	sqJson, _ := json.Marshal(sqM)
+	sqJSON, _ := json.Marshal(sqM)
 
 	tests := []struct {
 		name               string
@@ -66,7 +66,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
 			},
 			http.StatusOK,
-			string(sqJson),
+			string(sqJSON),
 		},
 	}
 	for _, tt := range tests {
