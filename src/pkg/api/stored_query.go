@@ -32,11 +32,11 @@ func NewStoredQueryHandler(storedQueryService StoredQueryService) *StoredQueryHa
 // @Accept       json
 // @Produce      json
 // @Param        qualified_query_name    path      string  true  "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as "wildcard" in the search."
-// @Param        Authorization           header    string  true  "Bearer <JWT>"
+// @Param        Authorization           header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId              header    string  true  "UserId UUID"
 // @Success      200            {object}  []model.StoredQuery
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /access/group/{group_id} [get]
+// @Router       /definition/query/{qualifiedQueryName} [get]
 func (h *StoredQueryHandler) Get(c *gin.Context) {
 	qName := c.Param("qualifiedQueryName")
 

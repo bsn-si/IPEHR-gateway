@@ -120,6 +120,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/definition/query/{qualifiedQueryName}": {
+            "get": {
+                "description": "Retrieves list of all stored queries on the system matched by qualified_query_name as pattern.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "STORED_QUERY"
+                ],
+                "summary": "Get list stored queries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as ",
+                        "name": "qualified_query_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.StoredQuery"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/ehr": {
             "get": {
                 "description": "Retrieve the EHR with the specified subject_id and subject_namespace.\nThese subject parameters will be matched against EHR’s\nEHR_STATUS.subject.external_ref.id.value and EHR_STATUS.subject.external_ref.namespace values.",
@@ -1063,7 +1115,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Bearer \u003cJWT\u003e",
+                        "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
                         "required": true
@@ -1923,6 +1975,26 @@ const docTemplate = `{
                 "rows": {
                     "type": "array",
                     "items": {}
+                }
+            }
+        },
+        "model.StoredQuery": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "q": {
+                    "type": "string"
+                },
+                "saved": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         },

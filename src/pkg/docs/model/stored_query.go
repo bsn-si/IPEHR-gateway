@@ -10,8 +10,8 @@ import (
 type StoredQuery struct {
 	Name        QueryName `json:"name"`
 	Type        QueryType `json:"type"`
-	Version     string    `json:"version,omitempty"`
-	TimeCreated string    `json:"saved,omitempty"`
+	Version     string    `json:"version"`
+	TimeCreated string    `json:"saved"`
 	Query       string    `json:"q"`
 }
 
