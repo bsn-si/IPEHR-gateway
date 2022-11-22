@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"hms/gateway/pkg/docs/service/query"
+	userService "hms/gateway/pkg/user/service"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -44,21 +46,39 @@ type API struct {
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
+	queryService := query.NewService(docService)
+	user := userService.NewService(infra, docService.Proc)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
-		Query:       NewQueryHandler(docService),
+		Query:       NewQueryHandler(queryService),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess: NewDocAccessHandler(docService),
 		Request:   NewRequestHandler(docService),
-		User:      NewUserHandler(cfg, infra, docService.Proc),
+		User:      NewUserHandler(user),
 	}
 }
 
 func (a *API) Build() *gin.Engine {
+	return a.setupRouter(
+		a.buildUserAPI(),
+		a.buildEhrAPI(),
+		a.buildAccessAPI(),
+		//a.buildGroupAccessAPI(),
+		a.buildQueryAPI(),
+		a.buildDefinitionAPI(),
+		a.buildRequestsAPI(),
+	)
+}
+
+type handlerBuilder func(r *gin.RouterGroup)
+
+func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	r := gin.New()
+
+	setRedirections(r)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.AbortWithStatus(404)
@@ -81,83 +101,89 @@ func (a *API) Build() *gin.Engine {
 	r.Use(requestID)
 
 	v1 := r.Group("v1")
-	ehr := v1.Group("ehr")
-	access := v1.Group("access")
-	query := v1.Group("query")
-	user := v1.Group("user")
-	requests := v1.Group("requests")
-
-	a.setRedirections(r).
-		buildUserAPI(user).
-		buildEhrAPI(ehr).
-		buildAccessAPI(access).
-		buildQueryAPI(query).
-		buildRequestsAPI(requests)
+	for _, b := range apiHandlers {
+		b(v1)
+	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
 }
 
-func (a *API) buildEhrAPI(r *gin.RouterGroup) *API {
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	//r.Use(Recovery, app_errors.ErrHandler)
-	r.Use(auth(a))
-	r.Use(ehrSystemID)
-	r.POST("", a.Ehr.Create)
-	r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
-	r.PUT("/:ehrid", a.Ehr.CreateWithID)
-	r.GET("/:ehrid", a.Ehr.GetByID)
-	r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
-	r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
-	r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
-	r.POST("/:ehrid/composition", a.Composition.Create)
-	r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
-	r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
-	r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
+func (a *API) buildEhrAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("ehr")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		//r.Use(Recovery, app_errors.ErrHandler)
+		r.Use(auth(a))
+		r.Use(ehrSystemID)
+		r.POST("", a.Ehr.Create)
+		r.GET("", a.Ehr.GetBySubjectIDAndNamespace)
+		r.PUT("/:ehrid", a.Ehr.CreateWithID)
+		r.GET("/:ehrid", a.Ehr.GetByID)
+		r.PUT("/:ehrid/ehr_status", a.EhrStatus.Update)
+		r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
+		r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
+		r.POST("/:ehrid/composition", a.Composition.Create)
+		r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
+		r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
+		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
+	}
+}
+func (a *API) buildAccessAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("access")
+		r.Use(auth(a))
+		//r.GET("/group/:group_id", a.GroupAccess.Get)
+		//r.POST("/group", a.GroupAccess.Create)
 
-	return a
+		r.POST("/document", a.DocAccess.Set)
+		r.GET("/document/", a.DocAccess.List)
+	}
 }
 
-func (a *API) buildAccessAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
-	//r.GET("/group/:group_id", a.GroupAccess.Get)
-	//r.POST("/group", a.GroupAccess.Create)
-
-	r.POST("/document", a.DocAccess.Set)
-	r.GET("/document/", a.DocAccess.List)
-
-	return a
+func (a *API) buildQueryAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("query")
+		r.Use(auth(a))
+		r.POST("/aql", a.Query.ExecPost)
+	}
 }
 
-func (a *API) buildQueryAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a))
-	r.POST("/aql", a.Query.ExecPost)
+func (a *API) buildDefinitionAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("definition")
+		r.Use(auth(a))
 
-	return a
+		query := r.Group("query")
+		query.GET("/:qualifiedQueryName", a.Query.ListStored)
+	}
 }
 
-func (a *API) buildRequestsAPI(r *gin.RouterGroup) *API {
-	r.Use(auth(a, "userRegister"))
-	r.GET("/:reqID", a.Request.GetByID)
-	r.GET("/", a.Request.GetAll)
-
-	return a
+func (a *API) buildRequestsAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("requests")
+		r.Use(auth(a, "userRegister"))
+		r.GET("/:reqID", a.Request.GetByID)
+		r.GET("/", a.Request.GetAll)
+	}
 }
 
-func (a *API) buildUserAPI(r *gin.RouterGroup) *API {
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
-	r.Use(ehrSystemID)
-	r.POST("/register", a.User.Register)
-	r.POST("/login", a.User.Login)
-	r.GET("/refresh", a.User.RefreshToken)
+func (a *API) buildUserAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("user")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		r.Use(ehrSystemID)
+		r.POST("/register", a.User.Register)
+		r.POST("/login", a.User.Login)
+		r.GET("/refresh", a.User.RefreshToken)
 
-	r.Use(auth(a))
-	r.POST("/logout", a.User.Logout)
-	return a
+		r.Use(auth(a))
+		r.POST("/logout", a.User.Logout)
+	}
 }
 
-func (a *API) setRedirections(r *gin.Engine) *API {
+func setRedirections(r *gin.Engine) *gin.Engine {
 	redirect := func(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "v1/")
 	}
@@ -165,5 +191,5 @@ func (a *API) setRedirections(r *gin.Engine) *API {
 	r.GET("/", redirect)
 	r.HEAD("/", redirect)
 
-	return a
+	return r
 }

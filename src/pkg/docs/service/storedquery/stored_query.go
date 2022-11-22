@@ -1,20 +1,21 @@
-package query
+package storedquery
 
 import (
 	"context"
-
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 )
 
 type Service struct {
-	DefaultDocumentService *service.DefaultDocumentService
+	*service.DefaultDocumentService
 }
 
 func NewService(docService *service.DefaultDocumentService) *Service {
-	return &Service{
+	s := &Service{
 		DefaultDocumentService: docService,
 	}
+
+	return s
 }
 
 func (*Service) Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error) {
