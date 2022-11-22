@@ -21,6 +21,7 @@ import (
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
+	"hms/gateway/pkg/indexer/ehrIndexer"
 )
 
 type GroupAccessService interface {
@@ -30,9 +31,9 @@ type GroupAccessService interface {
 type Indexer interface {
 	MultiCallTxNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
 	GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (*model.DocumentMeta, error)
-	AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta, keyEncrypted, CIDEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error)
+	AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
 	GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
-	DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (string, error)
+	DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte, privKey *[32]byte, nonce *big.Int) (string, error)
 }
 
 type IpfsService interface {
@@ -260,19 +261,6 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 
 	// Index Docs ehr_id -> doc_meta
 	{
-		docMeta := &model.DocumentMeta{
-			DocType:         uint8(types.Composition),
-			Status:          uint8(status.ACTIVE),
-			CID:             CID.Bytes(),
-			DealCID:         dealCID.Bytes(),
-			MinerAddress:    []byte(minerAddr),
-			DocUIDEncrypted: docIDEncrypted,
-			DocBaseUIDHash:  baseDocumentUIDHash,
-			Version:         *objectVersionID.VersionBytes(),
-			IsLast:          true,
-			Timestamp:       uint32(time.Now().Unix()),
-		}
-
 		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 		if err != nil {
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
@@ -283,7 +271,24 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		packed, err := s.indexer.AddEhrDoc(ctx, ehrUUID, docMeta, keyEncr, CIDEncr, userPrivKey, multiCallTx.Nonce())
+		docMeta := &model.DocumentMeta{
+			Status:    uint8(status.ACTIVE),
+			Id:        baseDocumentUIDHash,
+			Version:   *objectVersionID.VersionBytes(),
+			Timestamp: uint32(time.Now().Unix()),
+			IsLast:    true,
+			Attrs: []ehrIndexer.AttributesAttribute{
+				{Code: model.AttributeCID, Value: CID.Bytes()},
+				{Code: model.AttributeCIDEncr, Value: CIDEncr},
+				{Code: model.AttributeKeyEncr, Value: keyEncr},
+				{Code: model.AttributeDocBaseUIDHash, Value: baseDocumentUIDHash[:]},
+				{Code: model.AttributeDocUIDEncrypted, Value: docIDEncrypted},
+				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
+				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
+			},
+		}
+
+		packed, err := s.indexer.AddEhrDoc(ctx, types.Composition, docMeta, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 		}
@@ -339,11 +344,21 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("GetLastByBaseID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
+	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	if err != nil {
+		return nil, fmt.Errorf("cid.Parse error: %w", err)
+	}
+
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	if docUIDEncrypted == nil {
+		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
+	}
+
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
-		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s storageID %s", err, userID, docMeta.CID)
+		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s storageID %s", err, userID, &CID)
 	}
 
 	var composition *model.Composition
@@ -374,11 +389,21 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("GetCompositionByID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
+	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	if err != nil {
+		return nil, fmt.Errorf("cid.Parse error: %w", err)
+	}
+
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	if docUIDEncrypted == nil {
+		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
+	}
+
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
-		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s CID %x", err, userID, docMeta.Cid().String())
+		return nil, fmt.Errorf("GetDocFromStorageByID error: %w userID %s CID %x", err, userID, CID.String())
 	}
 
 	var composition model.Composition
@@ -389,16 +414,21 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 	return &composition, nil
 }
 
-func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (string, error) {
+func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, ehrSystemID, userID string) (string, error) {
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
 		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID)
 	}
 
+	_, userPrivKey, err := s.keyStore.Get(userID)
+	if err != nil {
+		return "", fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
+	txHash, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err

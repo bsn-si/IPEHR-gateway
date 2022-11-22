@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
@@ -17,7 +16,6 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
 	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
@@ -193,26 +191,23 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	docMeta, err := h.service.Infra.Index.GetDocByTime(c, &ehrUUID, types.EhrStatus, uint32(statusTime.Unix()))
+	docDecrypted, err := h.service.GetStatusByNearestTime(c, userID, &ehrUUID, statusTime)
 	if err != nil {
-		log.Printf("GetDocIndexByTime userID: %s ehrID: %x time %d error: %v", userID, ehrUUID[:], uint32(statusTime.Unix()), err)
-		c.AbortWithStatus(http.StatusNotFound)
+		if errors.Is(err, errors.ErrIsInProcessing) {
+			c.AbortWithStatus(http.StatusAccepted)
+			return
+		} else if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		log.Printf("service.GetStatusByNearestTime error: %v userID: %s ehrID: %s", err, userID, ehrID)
+		c.AbortWithStatus(http.StatusInternalServerError)
 
 		return
 	}
 
-	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
-	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
-		c.AbortWithStatus(http.StatusAccepted)
-		return
-	} else if err != nil {
-		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s error: %v", userID, ehrID, err)
-		c.AbortWithStatus(http.StatusNotFound)
-
-		return
-	}
-
-	c.JSON(http.StatusOK, data)
+	c.JSON(http.StatusOK, docDecrypted)
 }
 
 // GetByID
@@ -242,15 +237,13 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	versionUID := c.Param("versionid")
-
-	//TODO validate versionUID
-
 	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
 		return
 	}
+
+	versionUID := c.Param("versionid")
 
 	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
 	if err != nil {
@@ -258,29 +251,22 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	baseDocumentUID := objectVersionID.BasedID()
-	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
-
-	docMeta, err := h.service.Infra.Index.GetDocByVersion(c, &ehrUUID, types.EhrStatus, &baseDocumentUIDHash, objectVersionID.VersionBytes())
+	docDecrypted, err := h.service.GetStatusByVersionID(c, userID, &ehrUUID, objectVersionID)
 	if err != nil {
-		log.Printf("Index.GetDocByVersion userID: %s ehrID: %x baseDocumentUIDHash: %x error: %v", userID, ehrUUID[:], baseDocumentUIDHash, err)
-		c.AbortWithStatus(http.StatusNotFound)
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else if errors.Is(err, errors.ErrIsInProcessing) {
+			c.AbortWithStatus(http.StatusAccepted)
+			return
+		}
 
+		log.Printf("service.GetStatusByVersionID error: %v", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	data, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
-	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
-		c.AbortWithStatus(http.StatusAccepted)
-		return
-	} else if err != nil {
-		log.Printf("GetDocFromStorageByID userID: %s ehrID: %s versionID: %s error: %v", userID, ehrID, versionUID, err)
-		c.AbortWithStatus(http.StatusNotFound)
-
-		return
-	}
-
-	c.Data(http.StatusOK, "application/json", data)
+	c.Data(http.StatusOK, "application/json", docDecrypted)
 }
 
 func (h *EhrStatusHandler) setLocationAndETagHeaders(ehrID string, ehrStatusID string, c *gin.Context) {

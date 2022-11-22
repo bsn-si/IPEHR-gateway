@@ -2,39 +2,27 @@ package indexer
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"math/big"
 	"os"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
-	"github.com/vmihailenco/msgpack/v5"
-	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/ehrIndexer"
-	"hms/gateway/pkg/storage"
 )
 
 type Index struct {
 	sync.RWMutex
-	id           *[32]byte
-	name         string
-	cache        map[string][]byte
-	storage      storage.Storager
 	client       *ethclient.Client
 	ehrIndex     *ehrIndexer.EhrIndexer
 	transactOpts *bind.TransactOpts
@@ -118,14 +106,6 @@ func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64
 	}
 }
 
-func (i *Index) pack(name string, args ...interface{}) ([]byte, error) {
-	result, err := i.abi.Pack(name, args...)
-	if err != nil {
-		return nil, fmt.Errorf("abi.Pack error: %w", err)
-	}
-	return result, nil
-}
-
 func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUID, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	var uID, eID [32]byte
 
@@ -146,14 +126,21 @@ func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUI
 		}
 	}
 
-	sig, err := makeSignature(userKey, nonce, "setEhrUser", uID, eID)
+	sig := make([]byte, 65)
+
+	data, err := i.abi.Pack("setEhrUser", uID, eID, userAddress, sig)
+	if err != nil {
+		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
+	}
+
+	sig, err = makeSignature(data, nonce, userKey)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err := i.pack("setEhrUser", uID, eID, userAddress, sig)
+	data, err = i.abi.Pack("setEhrUser", uID, eID, userAddress, sig)
 	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.SetEhrUser error: %w", err)
+		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
 
 	return data, err
@@ -184,129 +171,6 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	return &ehrUUID, nil
 }
 
-func (i *Index) AddEhrDoc(ctx context.Context, ehrUUID *uuid.UUID, docMeta *model.DocumentMeta, keyEncrypted, CIDEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
-	var eID [32]byte
-
-	copy(eID[:], ehrUUID[:])
-
-	userKey, err := crypto.ToECDSA(privKey[:])
-	if err != nil {
-		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
-	}
-
-	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	sig, err := makeSignature(userKey, nonce, "addEhrDoc", eID, *docMeta, keyEncrypted, CIDEncr)
-	if err != nil {
-		return nil, fmt.Errorf("makeSignature error: %w", err)
-	}
-
-	params := ehrIndexer.DocsAddEhrDocParams{
-		EhrId:     eID,
-		DocMeta:   (ehrIndexer.DocsDocumentMeta)(*docMeta),
-		KeyEncr:   keyEncrypted,
-		CIDEncr:   CIDEncr,
-		Signer:    userAddress,
-		Signature: sig,
-	}
-
-	data, err := i.pack("addEhrDoc", params)
-	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.AddEhrDoc error: %w", err)
-	}
-
-	/*
-		log.Printf("signature: %x", sig)
-		log.Printf("userAddress: %x", userAddress.Bytes())
-		log.Printf("data: %x", data)
-	*/
-
-	return data, nil
-}
-
-func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType) (*model.DocumentMeta, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		eID      [32]byte
-	)
-
-	copy(eID[:], ehrUUID[:])
-
-	docMeta, err := i.ehrIndex.GetLastEhrDocByType(callOpts, eID, uint8(docType))
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w", errors.ErrNotFound)
-		}
-		return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
-	}
-
-	return (*model.DocumentMeta)(&docMeta), nil
-}
-
-func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		eID      [32]byte
-	)
-
-	copy(eID[:], ehrUUID[:])
-
-	docMeta, err := i.ehrIndex.GetDocLastByBaseID(callOpts, eID, uint8(docType), *docBaseUIDHash)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w", errors.ErrNotFound)
-		}
-		return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w ehrUUID %s docType %s docBaseUIDHash %x", err, ehrUUID.String(), docType.String(), docBaseUIDHash)
-	}
-
-	return (*model.DocumentMeta)(&docMeta), nil
-}
-
-func (i *Index) GetDocByTime(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, timestamp uint32) (*model.DocumentMeta, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		eID      [32]byte
-	)
-
-	copy(eID[:], ehrUUID[:])
-
-	docMeta, err := i.ehrIndex.GetDocByTime(callOpts, eID, uint8(docType), timestamp)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w", errors.ErrNotFound)
-		}
-		return nil, fmt.Errorf("ehrIndex.GetDocByTime error: %w ehrUUID %s docType %s timestamp %d", err, ehrUUID.String(), docType.String(), timestamp)
-	}
-
-	return (*model.DocumentMeta)(&docMeta), nil
-}
-
-func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (*model.DocumentMeta, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		eID      [32]byte
-	)
-
-	copy(eID[:], ehrUUID[:])
-
-	docMeta, err := i.ehrIndex.GetDocByVersion(callOpts, eID, uint8(docType), *docBaseUIDHash, *version)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, errors.ErrNotFound
-		}
-		return nil, fmt.Errorf("ehrIndex.GetDocByVersion error: %w ehrUUID %s docType %s docBaseUIDHash %x version %s", err, ehrUUID.String(), docType.String(), docBaseUIDHash, version)
-	}
-
-	return (*model.DocumentMeta)(&docMeta), nil
-}
-
 func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID []byte) ([]byte, error) {
 	var uID [32]byte
 
@@ -319,12 +183,7 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID []byt
 
 	accessID := crypto.Keccak256Hash(data)
 
-	data, err = abi.Arguments{{Type: Bytes}}.Pack(CID)
-	if err != nil {
-		return nil, fmt.Errorf("args.Pack error: %w", err)
-	}
-
-	CIDHash := crypto.Keccak256Hash(data)
+	CIDHash := crypto.Keccak256Hash(CID)
 
 	callOpts := &bind.CallOpts{
 		Context: ctx,
@@ -399,132 +258,6 @@ func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uu
 }
 */
 
-func makeSignature(pk *ecdsa.PrivateKey, nonce *big.Int, values ...interface{}) ([]byte, error) {
-	var args abi.Arguments
-
-	for i, a := range values {
-		switch a.(type) {
-		case string:
-			args = append(args, abi.Argument{Type: String})
-		case [32]byte:
-			args = append(args, abi.Argument{Type: Bytes32})
-		case []byte:
-			args = append(args, abi.Argument{Type: Bytes})
-		case uint8:
-			args = append(args, abi.Argument{Type: Uint8})
-		case *big.Int:
-			args = append(args, abi.Argument{Type: Uint256})
-		case common.Address:
-			args = append(args, abi.Argument{Type: Address})
-		case ehrIndexer.AccessObject:
-			args = append(args, abi.Argument{Type: Access})
-		case model.DocumentMeta, ehrIndexer.DocsDocumentMeta:
-			args = append(args, abi.Argument{Type: DocMeta})
-		default:
-			return nil, fmt.Errorf("%w: makeSignature unknown %d argument type: %v", errors.ErrIncorrectFormat, i, a)
-		}
-	}
-
-	data, err := args.Pack(values...)
-	if err != nil {
-		return nil, fmt.Errorf("args.Pack error: %w args: %v values: %v", err, args, values)
-	}
-
-	hash := crypto.Keccak256Hash(data)
-
-	nonceBytes, _ := abi.Arguments{{Type: Uint256}}.Pack(nonce)
-
-	prefixedHash := crypto.Keccak256Hash(
-		[]byte("\x19Ethereum Signed Message:\n32"),
-		hash.Bytes(),
-		nonceBytes,
-	)
-
-	sig, err := crypto.Sign(prefixedHash.Bytes(), pk)
-	if err != nil {
-		return nil, fmt.Errorf("crypto.Sign error: %w", err)
-	}
-
-	sig[64] += 27
-
-	return sig, nil
-}
-
-func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
-	var eID [32]byte
-
-	copy(eID[:], ehrUUID[:])
-
-	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
-
-	userKey, err := crypto.ToECDSA(privKey[:])
-	if err != nil {
-		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
-	}
-
-	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	sig, err := makeSignature(userKey, nonce, "setEhrSubject", subjectKey, eID)
-	if err != nil {
-		return nil, fmt.Errorf("makeSignature error: %w", err)
-	}
-
-	data, err := i.pack("setEhrSubject", subjectKey, eID, userAddress, sig)
-	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.SetSubject error: %w", err)
-	}
-
-	return data, nil
-}
-
-func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNamespace string) (*uuid.UUID, error) {
-	subjectKey := sha3.Sum256([]byte(subjectID + subjectNamespace))
-
-	callOpts := &bind.CallOpts{
-		Context: ctx,
-	}
-
-	ehrUUIDRaw, err := i.ehrIndex.EhrSubject(callOpts, subjectKey)
-	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.EhrSubjec error: %w", err)
-	}
-
-	ehrUUID, err := uuid.FromBytes(ehrUUIDRaw[:16])
-	if err != nil {
-		return nil, fmt.Errorf("ehrUUID FromBytes error: %w ehrUUIDRaw %x", err, ehrUUIDRaw)
-	}
-
-	return &ehrUUID, nil
-}
-
-func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (string, error) {
-	var eID [32]byte
-
-	copy(eID[:], ehrUUID[:])
-
-	i.Lock()
-	defer i.Unlock()
-
-	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return "", errors.ErrNotFound
-		} else if strings.Contains(err.Error(), "ADL") {
-			return "", errors.ErrAlreadyDeleted
-		}
-		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
-	}
-
-	return tx.Hash().Hex(), nil
-}
-
 func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) {
 	i.Lock()
 	defer i.Unlock()
@@ -537,44 +270,7 @@ func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) 
 	return tx.Hash().Hex(), nil
 }
 
-func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {
-	h := common.HexToHash(hash)
-
-	ticker := time.NewTicker(5 * time.Second)
-
-	for {
-		select {
-		case <-ticker.C:
-			receipt, err := i.client.TransactionReceipt(ctx, h)
-
-			switch {
-			case err != nil && !errors.Is(err, ethereum.NotFound):
-				return 0, err
-			case err == nil:
-				return receipt.Status, nil
-			default:
-			}
-		case <-ctx.Done():
-			return 0, errors.ErrTimeout
-		}
-	}
-}
-
-func (i *Index) GetTxStatus(ctx context.Context, hash string) (uint64, error) {
-	h := common.HexToHash(hash)
-
-	receipt, err := i.client.TransactionReceipt(ctx, h)
-	if err != nil {
-		if errors.Is(err, ethereum.NotFound) {
-			return 0, errors.ErrIsNotExist
-		}
-
-		return 0, fmt.Errorf("GetTxStatus error: %w hash %s", err, hash)
-	}
-
-	return receipt.Status, nil
-}
-
+/*
 func Init(name string) *Index {
 	if name == "" {
 		log.Fatal("name is empty")
@@ -709,9 +405,4 @@ func (i *Index) Delete(itemID string) error {
 
 	return nil
 }
-
-func Keccak256(data []byte) []byte {
-	data, _ = abi.Arguments{{Type: Bytes}}.Pack(data)
-
-	return crypto.Keccak256Hash(data).Bytes()
-}
+*/
