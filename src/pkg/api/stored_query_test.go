@@ -16,7 +16,7 @@ import (
 )
 
 //
-//go:generate mockgen -source stored_query.go -package mocks -destination mocks/stored_query_mock.go
+//go:generate mockgen -source query.go -package mocks -destination mocks/query_mock.go
 //go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
 //
 
@@ -39,21 +39,21 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 	tests := []struct {
 		name               string
 		qualifiedQueryName string
-		prepare            func(gaSvc *mocks.MockStoredQueryService)
+		prepare            func(gaSvc *mocks.MockQueryService)
 		wantStatus         int
 		wantResp           string
 	}{
 		{
 			"1. empty result because no qualifiedQueryName",
 			"",
-			func(gaSvc *mocks.MockStoredQueryService) {},
+			func(gaSvc *mocks.MockQueryService) {},
 			http.StatusNotFound,
 			"",
 		},
 		{
 			"2. empty result because qualifiedQueryName was not found",
 			"notexist",
-			func(gaSvc *mocks.MockStoredQueryService) {
+			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any())
 			},
 			http.StatusOK,
@@ -62,7 +62,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 		{
 			"3. success result",
 			"exist",
-			func(gaSvc *mocks.MockStoredQueryService) {
+			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
 			},
 			http.StatusOK,
@@ -74,7 +74,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			sqSvc := mocks.NewMockStoredQueryService(ctrl)
+			sqSvc := mocks.NewMockQueryService(ctrl)
 			tt.prepare(sqSvc)
 
 			// Mock for auth user service
@@ -82,8 +82,8 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
-				StoredQuery: NewStoredQueryHandler(sqSvc),
-				User:        NewUserHandler(userSvc),
+				Query: NewQueryHandler(sqSvc),
+				User:  NewUserHandler(userSvc),
 			}
 
 			router := api.setupRouter(api.buildStoredQueryAPI())

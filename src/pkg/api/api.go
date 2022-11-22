@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"hms/gateway/pkg/docs/service/storedquery"
+	"hms/gateway/pkg/docs/service/query"
 	userService "hms/gateway/pkg/user/service"
 	"net/http"
 
@@ -37,7 +37,7 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
-	StoredQuery *StoredQueryHandler
+	//StoredQuery *QueryHandler
 	//GroupAccess *GroupAccessHandler
 	DocAccess *DocAccessHandler
 	Request   *RequestHandler
@@ -47,19 +47,19 @@ type API struct {
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
-	storedQueryService := storedquery.NewService(docService)
-	userService := userService.NewService(infra, docService.Proc)
+	queryService := query.NewQueryService(docService)
+	user := userService.NewService(infra, docService.Proc)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
-		Query:       NewQueryHandler(docService),
-		StoredQuery: NewStoredQueryHandler(storedQueryService),
+		Query:       NewQueryHandler(queryService),
+		//StoredQuery: NewQueryHandler(queryService),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess: NewDocAccessHandler(docService),
 		Request:   NewRequestHandler(docService),
-		User:      NewUserHandler(userService),
+		User:      NewUserHandler(user),
 	}
 }
 
@@ -156,8 +156,8 @@ func (a *API) buildStoredQueryAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("definition").Group("query")
 		r.Use(auth(a))
-		r.GET(":qualifiedQueryName", a.StoredQuery.Get)
-		r.GET("/", a.StoredQuery.Get) // this need because GIN breaking API tests if qualifiedQueryName not set
+		r.GET(":qualifiedQueryName", a.Query.Get)
+		r.GET("/", a.Query.Get) // this need because GIN breaking API tests if qualifiedQueryName not set
 	}
 }
 

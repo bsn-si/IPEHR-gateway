@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,17 +10,19 @@ import (
 
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/query"
 )
 
-type QueryHandler struct {
-	service *query.Service
+type QueryService interface {
+	Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error)
 }
 
-func NewQueryHandler(docService *service.DefaultDocumentService) *QueryHandler {
+type QueryHandler struct {
+	service QueryService
+}
+
+func NewQueryHandler(queryService QueryService) *QueryHandler {
 	return &QueryHandler{
-		service: query.NewQueryService(docService),
+		service: queryService,
 	}
 }
 

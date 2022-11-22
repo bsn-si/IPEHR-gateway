@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -10,21 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type StoredQueryService interface {
-	Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error)
-}
-
-type StoredQueryHandler struct {
-	service StoredQueryService
-}
-
-func NewStoredQueryHandler(storedQueryService StoredQueryService) *StoredQueryHandler {
-	return &StoredQueryHandler{
-		service: storedQueryService,
-	}
-}
-
-// Get TODO
+// Get
 // @Summary      Get list stored queries
 // @Description  Retrieves list of all stored queries on the system matched by qualified_query_name as pattern.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
@@ -37,7 +22,7 @@ func NewStoredQueryHandler(storedQueryService StoredQueryService) *StoredQueryHa
 // @Success      200            {object}  []model.StoredQuery
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /definition/query/{qualifiedQueryName} [get]
-func (h *StoredQueryHandler) Get(c *gin.Context) {
+func (h *QueryHandler) Get(c *gin.Context) {
 	qName := c.Param("qualifiedQueryName")
 
 	userID := c.GetString("userID")
