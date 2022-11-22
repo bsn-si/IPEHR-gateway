@@ -37,7 +37,6 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
-	//StoredQuery *QueryHandler
 	//GroupAccess *GroupAccessHandler
 	DocAccess *DocAccessHandler
 	Request   *RequestHandler
@@ -47,7 +46,7 @@ type API struct {
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
-	queryService := query.NewQueryService(docService)
+	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
 
 	return &API{
@@ -55,7 +54,6 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
 		Query:       NewQueryHandler(queryService),
-		//StoredQuery: NewQueryHandler(queryService),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess: NewDocAccessHandler(docService),
 		Request:   NewRequestHandler(docService),
@@ -70,7 +68,7 @@ func (a *API) Build() *gin.Engine {
 		a.buildAccessAPI(),
 		//a.buildGroupAccessAPI(),
 		a.buildQueryAPI(),
-		a.buildStoredQueryAPI(),
+		a.buildDefinitionAPI(),
 		a.buildRequestsAPI(),
 	)
 }
@@ -152,12 +150,13 @@ func (a *API) buildQueryAPI() handlerBuilder {
 	}
 }
 
-func (a *API) buildStoredQueryAPI() handlerBuilder {
+func (a *API) buildDefinitionAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
-		r = r.Group("definition").Group("query")
+		r = r.Group("definition")
 		r.Use(auth(a))
-		r.GET(":qualifiedQueryName", a.Query.Get)
-		r.GET("/", a.Query.Get) // this need because GIN breaking API tests if qualifiedQueryName not set
+
+		query := r.Group("query")
+		query.GET("/:qualifiedQueryName", a.Query.ListStored)
 	}
 }
 

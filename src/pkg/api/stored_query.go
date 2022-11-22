@@ -13,7 +13,7 @@ import (
 // @Summary      Get list stored queries
 // @Description  Retrieves list of all stored queries on the system matched by qualified_query_name as pattern.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
-// @Tags         STORED_QUERY
+// @Tags         QUERY
 // @Accept       json
 // @Produce      json
 // @Param        qualified_query_name    path      string  true  "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as "wildcard" in the search."
@@ -22,7 +22,7 @@ import (
 // @Success      200            {object}  []model.StoredQuery
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /definition/query/{qualifiedQueryName} [get]
-func (h *QueryHandler) Get(c *gin.Context) {
+func (h *QueryHandler) ListStored(c *gin.Context) {
 	qName := c.Param("qualifiedQueryName")
 
 	userID := c.GetString("userID")

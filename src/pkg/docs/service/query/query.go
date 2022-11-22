@@ -11,7 +11,7 @@ type Service struct {
 	DefaultDocumentService *service.DefaultDocumentService
 }
 
-func NewQueryService(docService *service.DefaultDocumentService) *Service {
+func NewService(docService *service.DefaultDocumentService) *Service {
 	return &Service{
 		DefaultDocumentService: docService,
 	}

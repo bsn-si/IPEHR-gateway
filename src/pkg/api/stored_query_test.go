@@ -3,8 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/docs/model"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +11,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+
+	"hms/gateway/pkg/api/mocks"
+	"hms/gateway/pkg/docs/model"
 )
 
 //
@@ -44,14 +45,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 		wantResp           string
 	}{
 		{
-			"1. empty result because no qualifiedQueryName",
-			"",
-			func(gaSvc *mocks.MockQueryService) {},
-			http.StatusNotFound,
-			"",
-		},
-		{
-			"2. empty result because qualifiedQueryName was not found",
+			"1. empty result because qualifiedQueryName was not found",
 			"notexist",
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any())
@@ -60,7 +54,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			`[]`,
 		},
 		{
-			"3. success result",
+			"2. success result",
 			"exist",
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
@@ -86,7 +80,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 				User:  NewUserHandler(userSvc),
 			}
 
-			router := api.setupRouter(api.buildStoredQueryAPI())
+			router := api.setupRouter(api.buildDefinitionAPI())
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/definition/query/%s", tt.qualifiedQueryName), nil)
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
@@ -96,6 +90,8 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			router.ServeHTTP(recorder, req)
 
 			resp := recorder.Result()
+			defer resp.Body.Close()
+
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
 				t.Errorf("StoredQueryHandler.Get() status code mismatch {-want;+got}\n\t%s", diff)
 			}
