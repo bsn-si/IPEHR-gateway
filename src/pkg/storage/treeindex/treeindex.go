@@ -32,12 +32,11 @@ func NewTree() *Tree {
 type Container map[string][]*Node
 
 type Node struct {
-	ID      string
-	Type    base.ItemType
-	IsArray bool
+	ID   string
+	Type base.ItemType
 
 	Attributes Attributes
-	Value      base.Root
+	Value      map[string]interface{}
 }
 
 type Attributes map[string]map[string]*Node
@@ -58,8 +57,32 @@ func NewNode(obj base.Root) *Node {
 	return &Node{
 		ID:         l.ArchetypeNodeID,
 		Type:       l.Type,
-		IsArray:    false,
 		Attributes: map[string]map[string]*Node{},
+	}
+}
+
+func NewNodeForCodePhrase(mt base.CodePhrase) *Node {
+	return &Node{
+		Type: mt.Type,
+		Value: map[string]interface{}{
+			"terminology_id": &Node{
+				Type: mt.TerminologyID.Type,
+				Value: map[string]interface{}{
+					"value": mt.TerminologyID.Value,
+				},
+			},
+			"code_string":    mt.CodeString,
+			"preferred_term": mt.PreferredTerm,
+		},
+	}
+}
+
+func NewNodeForData(dv base.DataValue) *Node {
+	return &Node{
+		ID:         "",
+		Type:       dv.GetType(),
+		Attributes: nil,
+		Value:      map[string]interface{}{},
 	}
 }
 
@@ -110,6 +133,18 @@ func (t *Tree) processSection(section *base.Section) error {
 }
 
 func (t *Tree) processAction(action *base.Action) error {
+	container, ok := t.actions[action.ArchetypeNodeID]
+	if !ok {
+		container = Container{}
+	}
+
+	node, err := walk(action)
+	if err != nil {
+		return errors.Wrap(err, "cannot get node for ACTION")
+	}
+
+	container[node.ID] = append(container[node.ID], node)
+	t.actions[action.ArchetypeNodeID] = container
 	return nil
 }
 
@@ -129,7 +164,7 @@ func (t *Tree) processObservation(observation *base.Observation) error {
 
 	node, err := walk(observation)
 	if err != nil {
-		return errors.Wrap(err, "cannot get node for observation")
+		return errors.Wrap(err, "cannot get node for OBSERVATION")
 	}
 
 	container[node.ID] = append(container[node.ID], node)

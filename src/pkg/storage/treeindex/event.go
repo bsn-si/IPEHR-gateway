@@ -13,8 +13,10 @@ func processHistoryItemStructure(node *Node, obj base.History[base.ItemStructure
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot process HISTORY.Events item")
 		}
+
 		node.Attributes.add("events", eventsNode)
 	}
+
 	return node, nil
 }
 

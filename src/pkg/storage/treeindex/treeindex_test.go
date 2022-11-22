@@ -34,5 +34,5 @@ func TestTree_walk(t *testing.T) {
 
 	// t.Logf("%+v", tree.root.Children)
 	t.Logf("tree:\n%s", tree.Print())
-	t.Error("hello")
+	t.Error("do error every time")
 }

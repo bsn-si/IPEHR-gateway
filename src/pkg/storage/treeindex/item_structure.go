@@ -1,9 +1,9 @@
 package treeindex
 
 import (
-	"errors"
 	"fmt"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/errors"
 )
 
 func processItemStructure(node *Node, obj base.ItemStructure) (*Node, error) {
@@ -42,17 +42,27 @@ func processItemStructure(node *Node, obj base.ItemStructure) (*Node, error) {
 }
 
 func processItemSingle(node *Node, obj *base.ItemSingle) (*Node, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New("item single not implemented")
 }
 
 func processItemList(node *Node, obj *base.ItemList) (*Node, error) {
-	return nil, errors.New("not implemented")
+	fmt.Println("some text ")
+	return nil, errors.New("item list not implemented")
 }
 
 func processItemTable(node *Node, obj *base.ItemTable) (*Node, error) {
-	return nil, errors.New("not implemented")
+	return nil, errors.New("item table not implemented")
 }
 
 func processItemTree(node *Node, obj *base.ItemTree) (*Node, error) {
-	return nil, errors.New("not implemented")
+	for _, item := range obj.Items {
+		itemsNode, err := walk(item)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot process ItemTree.items")
+		}
+		node.Attributes.add("items", itemsNode)
+
+	}
+
+	return node, nil
 }

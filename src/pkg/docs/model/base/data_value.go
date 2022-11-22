@@ -27,8 +27,6 @@ func (dvw *dataValueWrapper) UnmarshalJSON(data []byte) error {
 		dvw.dv = &DvURI{}
 	case DvTimeItemType:
 		dvw.dv = &DvTime{}
-	case DvTextItemType:
-		dvw.dv = &DvText{}
 	case DvQuantityItemType:
 		dvw.dv = &DvQuantity{}
 	case DvStateItemType:
@@ -53,6 +51,8 @@ func (dvw *dataValueWrapper) UnmarshalJSON(data []byte) error {
 		dvw.dv = &DvCount{}
 	case DvCodedTextItemType:
 		dvw.dv = &DvCodedText{}
+	case DvTextItemType:
+		dvw.dv = &DvText{}
 	case DvBooleanItemType:
 		dvw.dv = &DvBoolean{}
 	}
@@ -311,12 +311,12 @@ type DvDateTime struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_text_class
 type DvText struct {
 	DvValueBase
-	Value      string         `json:"value"`
-	Hyperlink  *DvURI         `json:"hyperlink,omitempty"`
-	Formatting string         `json:"formatting,omitempty"`
-	Mappings   *[]TermMapping `json:"mappings,omitempty"`
-	Language   *CodePhrase    `json:"language,omitempty"`
-	Encoding   *CodePhrase    `json:"encoding,omitempty"`
+	Value      string        `json:"value"`
+	Hyperlink  *DvURI        `json:"hyperlink,omitempty"`
+	Formatting string        `json:"formatting,omitempty"`
+	Mappings   []TermMapping `json:"mappings,omitempty"`
+	Language   *CodePhrase   `json:"language,omitempty"`
+	Encoding   *CodePhrase   `json:"encoding,omitempty"`
 }
 
 func NewDvText(value string) DvText {

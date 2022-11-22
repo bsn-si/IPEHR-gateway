@@ -11,17 +11,15 @@ func (t *Tree) Print() string {
 		result += fmt.Sprintf("\t[%s]\n", key)
 		result += container.print(2)
 	}
+
 	return result
 }
 
 func (c Container) print(offset int) string {
 	builder := &strings.Builder{}
-	// fmt.Fprintln(v, a ...any)
-	// offsetStr := strings.Repeat("\t", offset)§
 	for _, nodes := range c {
-		// fmt.Fprintf(builder, "%slen nodes = %d\n", offsetStr, len(nodes))
 		for _, node := range nodes {
-			fmt.Fprintln(builder, node.print(offset+1))
+			fmt.Fprint(builder, node.print(offset+1))
 		}
 	}
 
@@ -33,7 +31,17 @@ func (node *Node) print(offset int) string {
 
 	builder := &strings.Builder{}
 	fmt.Fprintf(builder, "%s[%s]-[%v]\n", offsetStr, node.Type, node.ID)
-	fmt.Fprintln(builder, node.Attributes.print(offset+1))
+
+	if len(node.Attributes) > 0 {
+		fmt.Fprint(builder, node.Attributes.print(offset+1))
+	}
+
+	if len(node.Value) > 0 {
+		offsetStr := strings.Repeat("\t", offset+1)
+		for key, val := range node.Value {
+			fmt.Fprintf(builder, "%s%s: %v\n", offsetStr, key, val)
+		}
+	}
 
 	return builder.String()
 }
@@ -46,8 +54,9 @@ func (a Attributes) print(offset int) string {
 	for attrName, attr := range a {
 		fmt.Fprintf(builder, "%s%s\n", offsetStr, attrName)
 		for _, node := range attr {
-			fmt.Fprintln(builder, node.print(offset+1))
+			fmt.Fprint(builder, node.print(offset+1))
 		}
 	}
+
 	return builder.String()
 }
