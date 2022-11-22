@@ -48,7 +48,7 @@ const (
 	TokenRefreshType
 )
 
-func NewUserService(infra *infrastructure.Infra, p *processing.Proc) *Service {
+func NewService(infra *infrastructure.Infra, p *processing.Proc) *Service {
 	return &Service{
 		Infra: infra,
 		Cache: cache.New(common.CacheCleanerTimeout),

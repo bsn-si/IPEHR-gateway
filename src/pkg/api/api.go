@@ -48,7 +48,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	storedQueryService := storedquery.NewService(docService)
-	userService := userService.NewUserService(infra, docService.Proc)
+	userService := userService.NewService(infra, docService.Proc)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
