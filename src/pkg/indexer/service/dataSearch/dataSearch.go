@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
+	"hms/gateway/pkg/log"
 )
 
 type DataEntry struct {
@@ -61,7 +61,7 @@ func (i *Index) Add(key string, value interface{}) error {
 	return nil
 }
 
-//nolint
+// nolint
 func (n *Node) dump() {
 	data, err := json.MarshalIndent(n, "", "    ")
 	if err != nil {

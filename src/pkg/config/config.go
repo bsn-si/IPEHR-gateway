@@ -3,11 +3,11 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/log"
 )
 
 type Config struct {
@@ -44,6 +44,8 @@ type Config struct {
 	DB struct {
 		FilePath string `json:"filePath"`
 	} `json:"db"`
+
+	Logger log.Config
 
 	path string
 }

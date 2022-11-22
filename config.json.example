@@ -36,5 +36,9 @@
     },
     "db": {
         "filePath": "/home/runner/work/IPEHR-gateway/IPEHR-gateway/data/local.db"
+    },
+    "logger": {
+        "log_level": "debug",
+        "formatter": "text"
     }
 }

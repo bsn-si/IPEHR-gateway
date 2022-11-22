@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/log"
 )
 
 const (

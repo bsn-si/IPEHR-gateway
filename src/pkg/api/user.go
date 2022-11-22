@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +12,7 @@ import (
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
+	"hms/gateway/pkg/log"
 	"hms/gateway/pkg/user/service"
 )
 
@@ -80,7 +80,7 @@ func (h UserHandler) Register(c *gin.Context) {
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userCreateRequest.UserID, "", proc.RequestUserRegister)
 	if err != nil {
-		log.Println("User register NewRequest error:", err)
+		log.Info("User register NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

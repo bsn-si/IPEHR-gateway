@@ -1,12 +1,11 @@
 package groupAccess
 
 import (
-	"log"
-
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/log"
 )
 
 type Service struct {

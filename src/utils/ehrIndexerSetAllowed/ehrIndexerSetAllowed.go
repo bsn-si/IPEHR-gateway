@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"os"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/indexer"
+	"hms/gateway/pkg/log"
 )
 
 func main() {

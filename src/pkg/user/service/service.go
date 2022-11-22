@@ -82,7 +82,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 	return nil
 }
 
-func (s *Service) Login(ctx context.Context, userID, systemID, password string) (err error) {
+func (s *Service) Login(ctx context.Context, userID, systemID, password string) error {
 	address, err := s.getUserAddress(userID)
 	if err != nil {
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)

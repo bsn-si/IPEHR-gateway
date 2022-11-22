@@ -2,12 +2,12 @@ package storage
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/log"
 )
 
 type Config struct {

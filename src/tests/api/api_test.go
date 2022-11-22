@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -26,6 +25,7 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
+	"hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 	userRoles "hms/gateway/pkg/user/roles"
 	"hms/gateway/tests/api/testhelpers"
@@ -252,6 +252,8 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 
 	cfg.DefaultUserID = uuid.New().String()
+
+	log.DefaultLogger = log.NewLoggerWithConfig(cfg.Logger)
 
 	infra := infrastructure.New(cfg)
 	apiHandler := api.New(cfg, infra)

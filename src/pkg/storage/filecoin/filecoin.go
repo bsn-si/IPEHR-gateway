@@ -3,7 +3,6 @@ package filecoin
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/log"
 )
 
 type DealStatus = storagemarket.StorageDealStatus

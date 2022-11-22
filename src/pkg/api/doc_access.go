@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +13,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/docAccess"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/log"
 )
 
 type DocAccessHandler struct {

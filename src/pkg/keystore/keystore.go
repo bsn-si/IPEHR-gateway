@@ -5,13 +5,13 @@ import (
 	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"log"
 
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/log"
 	"hms/gateway/pkg/storage"
 )
 
@@ -43,7 +43,7 @@ func (k *KeyStore) Get(userID string) (publicKey, privateKey *[32]byte, err erro
 	keysEncrypted, err := k.storage.Get(storeID)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsNotExist) {
-			log.Println("Generete new keys for userID", userID)
+			log.Println("Generate new keys for userID", userID)
 
 			publicKey, privateKey, err = k.generateAndStoreKeys(userID)
 			if err != nil {
