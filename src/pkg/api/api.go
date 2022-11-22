@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 	"hms/gateway/pkg/docs/service/storedquery"
-	"hms/gateway/pkg/docs/service/user"
+	userService "hms/gateway/pkg/user/service"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -48,7 +48,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	storedQueryService := storedquery.NewService(docService)
-	userService := user.NewUserService(infra, docService.Proc)
+	userService := userService.NewUserService(infra, docService.Proc)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),

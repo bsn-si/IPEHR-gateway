@@ -8,7 +8,7 @@ import (
 	context "context"
 	model "hms/gateway/pkg/docs/model"
 	processing "hms/gateway/pkg/docs/service/processing"
-	user "hms/gateway/pkg/docs/service/user"
+	service "hms/gateway/pkg/user/service"
 	reflect "reflect"
 
 	jwt "github.com/golang-jwt/jwt"
@@ -51,10 +51,10 @@ func (mr *MockUserHandlerServiceMockRecorder) AddTokenInBlackList(tokenRaw, expi
 }
 
 // CreateToken mocks base method.
-func (m *MockUserHandlerService) CreateToken(userID string) (*user.TokenDetails, error) {
+func (m *MockUserHandlerService) CreateToken(userID string) (*service.TokenDetails, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateToken", userID)
-	ret0, _ := ret[0].(*user.TokenDetails)
+	ret0, _ := ret[0].(*service.TokenDetails)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -80,10 +80,10 @@ func (mr *MockUserHandlerServiceMockRecorder) ExtractToken(bearToken interface{}
 }
 
 // ExtractTokenMetadata mocks base method.
-func (m *MockUserHandlerService) ExtractTokenMetadata(token *jwt.Token) (*user.TokenClaims, error) {
+func (m *MockUserHandlerService) ExtractTokenMetadata(token *jwt.Token) (*service.TokenClaims, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExtractTokenMetadata", token)
-	ret0, _ := ret[0].(*user.TokenClaims)
+	ret0, _ := ret[0].(*service.TokenClaims)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -180,10 +180,10 @@ func (mr *MockUserHandlerServiceMockRecorder) VerifyAccess(userID, tokenString i
 }
 
 // VerifyAndGetTokenDetails mocks base method.
-func (m *MockUserHandlerService) VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*user.TokenDetails, error) {
+func (m *MockUserHandlerService) VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*service.TokenDetails, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyAndGetTokenDetails", userID, accessToken, refreshToken)
-	ret0, _ := ret[0].(*user.TokenDetails)
+	ret0, _ := ret[0].(*service.TokenDetails)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -195,7 +195,7 @@ func (mr *MockUserHandlerServiceMockRecorder) VerifyAndGetTokenDetails(userID, a
 }
 
 // VerifyToken mocks base method.
-func (m *MockUserHandlerService) VerifyToken(userID, tokenString string, tokenType user.TokenType) (*jwt.Token, error) {
+func (m *MockUserHandlerService) VerifyToken(userID, tokenString string, tokenType service.TokenType) (*jwt.Token, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyToken", userID, tokenString, tokenType)
 	ret0, _ := ret[0].(*jwt.Token)

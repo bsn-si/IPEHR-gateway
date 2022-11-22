@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"hms/gateway/pkg/docs/service/user"
+	userService "hms/gateway/pkg/user/service"
 	"io"
 	"log"
 	"net/http"
@@ -20,15 +20,15 @@ type UserHandlerService interface {
 	NewProcRequest(reqID, userID string) (*proc.Request, error)
 	Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
-	CreateToken(userID string) (*user.TokenDetails, error)
+	CreateToken(userID string) (*userService.TokenDetails, error)
 	ExtractToken(bearToken string) string
 	VerifyAccess(userID, tokenString string) error
-	VerifyToken(userID, tokenString string, tokenType user.TokenType) (*jwt.Token, error)
-	ExtractTokenMetadata(token *jwt.Token) (*user.TokenClaims, error)
+	VerifyToken(userID, tokenString string, tokenType userService.TokenType) (*jwt.Token, error)
+	ExtractTokenMetadata(token *jwt.Token) (*userService.TokenClaims, error)
 	IsTokenInBlackList(tokenRaw string) bool
 	AddTokenInBlackList(tokenRaw string, expires int64)
 	GetTokenHash(tokenRaw string) [32]byte
-	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*user.TokenDetails, error)
+	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
 }
 
 type UserHandler struct {
