@@ -6,7 +6,7 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func processItemStructure(node *Node, obj base.ItemStructure) (*Node, error) {
+func processItemStructure(node noder, obj base.ItemStructure) (noder, error) {
 	switch obj.GetType() {
 	case base.ItemSingleItemType:
 		item, ok := obj.Data.(*base.ItemSingle)
@@ -41,27 +41,27 @@ func processItemStructure(node *Node, obj base.ItemStructure) (*Node, error) {
 	}
 }
 
-func processItemSingle(node *Node, obj *base.ItemSingle) (*Node, error) {
+func processItemSingle(node noder, obj *base.ItemSingle) (noder, error) {
 	return nil, errors.New("item single not implemented")
 }
 
-func processItemList(node *Node, obj *base.ItemList) (*Node, error) {
+func processItemList(node noder, obj *base.ItemList) (noder, error) {
 	fmt.Println("some text ")
 	return nil, errors.New("item list not implemented")
 }
 
-func processItemTable(node *Node, obj *base.ItemTable) (*Node, error) {
+func processItemTable(node noder, obj *base.ItemTable) (noder, error) {
 	return nil, errors.New("item table not implemented")
 }
 
-func processItemTree(node *Node, obj *base.ItemTree) (*Node, error) {
+func processItemTree(node noder, obj *base.ItemTree) (noder, error) {
 	for _, item := range obj.Items {
 		itemsNode, err := walk(item)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot process ItemTree.items")
 		}
-		node.Attributes.add("items", itemsNode)
 
+		node.addAttribute("items", itemsNode)
 	}
 
 	return node, nil

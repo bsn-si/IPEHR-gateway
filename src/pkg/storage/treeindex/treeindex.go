@@ -10,7 +10,7 @@ import (
 )
 
 type Tree struct {
-	root map[string]*Node
+	root map[string]noder
 
 	actions       map[string]Container
 	evaluations   map[string]Container
@@ -20,7 +20,7 @@ type Tree struct {
 
 func NewTree() *Tree {
 	return &Tree{
-		root: make(map[string]*Node),
+		root: make(map[string]noder),
 
 		actions:       make(map[string]Container),
 		evaluations:   make(map[string]Container),
@@ -29,62 +29,7 @@ func NewTree() *Tree {
 	}
 }
 
-type Container map[string][]*Node
-
-type Node struct {
-	ID   string
-	Type base.ItemType
-
-	Attributes Attributes
-	Value      map[string]interface{}
-}
-
-type Attributes map[string]map[string]*Node
-
-func (a Attributes) add(name string, node *Node) {
-	m, ok := a[name]
-	if !ok {
-		m = map[string]*Node{}
-		a[name] = m
-	}
-
-	m[node.ID] = node
-}
-
-func NewNode(obj base.Root) *Node {
-	l := obj.GetLocatable()
-
-	return &Node{
-		ID:         l.ArchetypeNodeID,
-		Type:       l.Type,
-		Attributes: map[string]map[string]*Node{},
-	}
-}
-
-func NewNodeForCodePhrase(mt base.CodePhrase) *Node {
-	return &Node{
-		Type: mt.Type,
-		Value: map[string]interface{}{
-			"terminology_id": &Node{
-				Type: mt.TerminologyID.Type,
-				Value: map[string]interface{}{
-					"value": mt.TerminologyID.Value,
-				},
-			},
-			"code_string":    mt.CodeString,
-			"preferred_term": mt.PreferredTerm,
-		},
-	}
-}
-
-func NewNodeForData(dv base.DataValue) *Node {
-	return &Node{
-		ID:         "",
-		Type:       dv.GetType(),
-		Attributes: nil,
-		Value:      map[string]interface{}{},
-	}
-}
+type Container map[string][]noder
 
 func (t *Tree) AddComposition(com model.Composition) error {
 	return t.processCompositionContent(com.Content)
@@ -143,31 +88,65 @@ func (t *Tree) processAction(action *base.Action) error {
 		return errors.Wrap(err, "cannot get node for ACTION")
 	}
 
-	container[node.ID] = append(container[node.ID], node)
+	container[node.getID()] = append(container[node.getID()], node)
 	t.actions[action.ArchetypeNodeID] = container
 	return nil
 }
 
 func (t *Tree) processEvaluation(evaluation *base.Evaluation) error {
-	return nil
-}
-
-func (t *Tree) processInstruction(instruction *base.Instruction) error {
-	return nil
-}
-
-func (t *Tree) processObservation(observation *base.Observation) error {
-	container, ok := t.obeservations[observation.ArchetypeNodeID]
+	container, ok := t.evaluations[evaluation.ArchetypeNodeID]
 	if !ok {
 		container = Container{}
 	}
 
-	node, err := walk(observation)
+	node, err := walk(evaluation)
 	if err != nil {
-		return errors.Wrap(err, "cannot get node for OBSERVATION")
+		return errors.Wrap(err, "cannot get node for EVALUATION")
 	}
 
-	container[node.ID] = append(container[node.ID], node)
-	t.obeservations[observation.ArchetypeNodeID] = container
+	container[node.getID()] = append(container[node.getID()], node)
+	t.evaluations[evaluation.ArchetypeNodeID] = container
+
+	return nil
+}
+
+func (t *Tree) processInstruction(instruction *base.Instruction) error {
+	container, ok := t.instructions[instruction.ArchetypeNodeID]
+	if !ok {
+		container = Container{}
+	}
+
+	node, err := walk(instruction)
+	if err != nil {
+		return errors.Wrap(err, "cannot get node for INSTRUCTION")
+	}
+
+	container[node.getID()] = append(container[node.getID()], node)
+	t.instructions[instruction.ArchetypeNodeID] = container
+
+	return nil
+}
+
+func (t *Tree) processObservation(observation *base.Observation) error {
+	if err := addObjectIntoCollection(t.obeservations, observation); err != nil {
+		return errors.Wrap(err, "cannot add OBSERVATION object")
+	}
+	return nil
+}
+
+func addObjectIntoCollection(collection map[string]Container, obj base.Root) error {
+	container, ok := collection[obj.GetArchetypeNodeID()]
+	if !ok {
+		container = Container{}
+	}
+
+	node, err := walk(obj)
+	if err != nil {
+		return errors.Wrap(err, "cannot get node for collection")
+	}
+
+	container[node.getID()] = append(container[node.getID()], node)
+	collection[obj.GetArchetypeNodeID()] = container
+
 	return nil
 }
