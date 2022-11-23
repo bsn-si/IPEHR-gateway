@@ -43,10 +43,7 @@ type API struct {
 	User      *UserHandler
 }
 
-var gCfg *config.Config
-
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
-	gCfg = cfg
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	queryService := query.NewService(docService)
@@ -56,7 +53,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
-		Query:       NewQueryHandler(queryService),
+		Query:       NewQueryHandler(queryService, cfg.BaseURL),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess: NewDocAccessHandler(docService),
 		Request:   NewRequestHandler(docService),
@@ -160,7 +157,7 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 
 		query := r.Group("query")
 		query.GET("/:qualifiedQueryName", a.Query.ListStored)
-		query.PUT("/:qualifiedQueryName", a.Query.StoreQuery)
+		query.PUT("/:qualifiedQueryName", a.Query.Store)
 	}
 }
 

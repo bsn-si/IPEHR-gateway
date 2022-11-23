@@ -77,7 +77,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
-				Query: NewQueryHandler(sqSvc),
+				Query: NewQueryHandler(sqSvc, ""),
 				User:  NewUserHandler(userSvc),
 			}
 
@@ -164,7 +164,7 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
-				Query: NewQueryHandler(sqSvc),
+				Query: NewQueryHandler(sqSvc, ""),
 				User:  NewUserHandler(userSvc),
 			}
 

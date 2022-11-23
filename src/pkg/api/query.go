@@ -20,11 +20,13 @@ type QueryService interface {
 
 type QueryHandler struct {
 	service QueryService
+	baseURL string
 }
 
-func NewQueryHandler(queryService QueryService) *QueryHandler {
+func NewQueryHandler(queryService QueryService, baseURL string) *QueryHandler {
 	return &QueryHandler{
 		service: queryService,
+		baseURL: baseURL,
 	}
 }
 

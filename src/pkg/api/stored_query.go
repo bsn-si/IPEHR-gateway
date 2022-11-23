@@ -68,7 +68,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 // @Failure      400            "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /definition/query/{qualifiedQueryName} [put]
-func (h *QueryHandler) StoreQuery(c *gin.Context) {
+func (h *QueryHandler) Store(c *gin.Context) {
 	qName := c.Param("qualifiedQueryName")
 
 	userID := c.GetString("userID")
@@ -113,7 +113,7 @@ func (h *QueryHandler) StoreQuery(c *gin.Context) {
 		return
 	}
 
-	c.Header("Location", "/v1/definition/query/"+sQ.Name.String()+"/"+sQ.Version)
+	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name.String()+"/"+sQ.Version)
 
 	c.Status(http.StatusOK)
 }
