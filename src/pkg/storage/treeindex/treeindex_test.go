@@ -26,7 +26,7 @@ func TestTree_walk(t *testing.T) {
 	}
 
 	tree := NewTree()
-	tree.AddComposition(c)
+	err = tree.AddComposition(c)
 	assert.Nil(t, err)
 
 	assert.Equal(t, 4, tree.actions.Len())
