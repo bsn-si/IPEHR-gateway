@@ -86,20 +86,12 @@ func (t *Tree) processSection(section *base.Section) error {
 }
 
 func addObjectIntoCollection(container Container, obj base.Root) error {
-	// container, ok := collection[obj.GetArchetypeNodeID()]
-	// if !ok {
-	// 	container = Container{}
-	// } else if obj.GetType() == base.ActionItemType {
-	// 	fmt.Println("ACTION DUBLICATES", obj.GetLocatable().ArchetypeNodeID)
-	// }
-
 	node, err := walk(obj)
 	if err != nil {
 		return errors.Wrap(err, "cannot get node for collection")
 	}
 
 	container[node.getID()] = append(container[node.getID()], node)
-	// collection[obj.GetArchetypeNodeID()] = container
 
 	return nil
 }
