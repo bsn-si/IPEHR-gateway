@@ -20,3 +20,11 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 func (*Service) Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error) {
 	return nil, nil
 }
+
+func (*Service) Validate(data []byte) bool {
+	return false
+}
+
+func (*Service) Store(ctx context.Context, userID string, qType string, qualifiedQueryName string, q []byte) (model.StoredQuery, error) {
+	return model.StoredQuery{}, nil
+}

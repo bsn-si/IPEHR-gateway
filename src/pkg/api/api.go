@@ -43,7 +43,10 @@ type API struct {
 	User      *UserHandler
 }
 
+var gCfg *config.Config
+
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
+	gCfg = cfg
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	queryService := query.NewService(docService)
@@ -99,6 +102,7 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}))
 
 	r.Use(requestID)
+	r.Use(baseURL(gCfg))
 
 	v1 := r.Group("v1")
 	for _, b := range apiHandlers {
@@ -157,6 +161,7 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 
 		query := r.Group("query")
 		query.GET("/:qualifiedQueryName", a.Query.ListStored)
+		query.PUT("/:qualifiedQueryName", a.Query.StoreQuery)
 	}
 }
 

@@ -49,3 +49,32 @@ func (mr *MockQueryServiceMockRecorder) Get(ctx, userID, qualifiedQueryName inte
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockQueryService)(nil).Get), ctx, userID, qualifiedQueryName)
 }
+
+// Store mocks base method.
+func (m *MockQueryService) Store(ctx context.Context, userID, qType, qualifiedQueryName string, q []byte) (model.StoredQuery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Store", ctx, userID, qType, qualifiedQueryName, q)
+	ret0, _ := ret[0].(model.StoredQuery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Store indicates an expected call of Store.
+func (mr *MockQueryServiceMockRecorder) Store(ctx, userID, qType, qualifiedQueryName, q interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockQueryService)(nil).Store), ctx, userID, qType, qualifiedQueryName, q)
+}
+
+// Validate mocks base method.
+func (m *MockQueryService) Validate(data []byte) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validate", data)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// Validate indicates an expected call of Validate.
+func (mr *MockQueryServiceMockRecorder) Validate(data interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockQueryService)(nil).Validate), data)
+}

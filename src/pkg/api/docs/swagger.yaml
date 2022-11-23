@@ -498,7 +498,48 @@ paths:
             a request
       summary: Get list stored queries
       tags:
-      - STORED_QUERY
+      - QUERY
+    put:
+      consumes:
+      - application/json
+      description: https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
+      parameters:
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
+          and when is empty, it will be treated as '
+        in: path
+        name: qualified_query_name
+        required: true
+        type: string
+      - description: Parameter indicating the query language/type
+        in: query
+        name: query_type
+        required: true
+        type: string
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Is returned when the query was successfully stored.
+        "400":
+          description: Is returned when the server was unable to store the query.
+            This could be due to incorrect request body (could not be parsed, etc),
+            unknown query type, etc.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Stores a new query, or updates an existing query on the system
+      tags:
+      - QUERY
   /ehr:
     get:
       consumes:
