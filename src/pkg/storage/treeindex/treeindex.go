@@ -10,8 +10,6 @@ import (
 )
 
 type Tree struct {
-	root map[string]noder
-
 	actions       Container
 	evaluations   Container
 	instructions  Container
@@ -20,8 +18,6 @@ type Tree struct {
 
 func NewTree() *Tree {
 	return &Tree{
-		root: make(map[string]noder),
-
 		actions:       Container{},
 		evaluations:   Container{},
 		instructions:  Container{},
