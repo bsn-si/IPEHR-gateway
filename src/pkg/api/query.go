@@ -14,15 +14,19 @@ import (
 
 type QueryService interface {
 	Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error)
+	Validate(data []byte) bool
+	Store(ctx context.Context, userID string, qType string, qualifiedQueryName string, q []byte) (model.StoredQuery, error)
 }
 
 type QueryHandler struct {
 	service QueryService
+	baseURL string
 }
 
-func NewQueryHandler(queryService QueryService) *QueryHandler {
+func NewQueryHandler(queryService QueryService, baseURL string) *QueryHandler {
 	return &QueryHandler{
 		service: queryService,
+		baseURL: baseURL,
 	}
 }
 

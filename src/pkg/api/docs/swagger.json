@@ -123,7 +123,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "STORED_QUERY"
+                    "QUERY"
                 ],
                 "summary": "Get list stored queries",
                 "parameters": [
@@ -158,6 +158,60 @@
                                 "$ref": "#/definitions/model.StoredQuery"
                             }
                         }
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            },
+            "put": {
+                "description": "https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "QUERY"
+                ],
+                "summary": "Stores a new query, or updates an existing query on the system",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as ",
+                        "name": "qualified_query_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Parameter indicating the query language/type",
+                        "name": "query_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Is returned when the query was successfully stored."
+                    },
+                    "400": {
+                        "description": "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
