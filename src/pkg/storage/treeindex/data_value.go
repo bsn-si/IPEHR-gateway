@@ -16,11 +16,11 @@ func processDvEncapsulated(node noder, value *base.DvEncapsulated) (noder, error
 	}
 
 	if value.Charset != nil {
-		node.addAttribute("charset", NewNodeForCodePhrase(*value.Charset))
+		node.addAttribute("charset", newNode(*value.Charset))
 	}
 
 	if value.Language != nil {
-		node.addAttribute("language", NewNodeForCodePhrase(*value.Language))
+		node.addAttribute("language", newNode(*value.Language))
 	}
 
 	return node, nil
@@ -32,7 +32,7 @@ func processDvURI(node noder, value *base.DvURI) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_URI.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 
 	return node, nil
 }
@@ -61,7 +61,7 @@ func processDvTime(node noder, value *base.DvTime) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_TIME.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 
 	return node, nil
 }
@@ -72,21 +72,21 @@ func processDvQuantity(node noder, value *base.DvQuantity) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_QUANTITY.base")
 	}
 
-	node.addAttribute("magnitude", NewValueNode(value.Magnitude))
+	node.addAttribute("magnitude", newNode(value.Magnitude))
 	if value.Precision != nil {
-		node.addAttribute("precision", NewValueNode(value.Precision))
+		node.addAttribute("precision", newNode(value.Precision))
 	}
 
 	if value.Units != nil {
-		node.addAttribute("units", NewValueNode(value.Units))
+		node.addAttribute("units", newNode(value.Units))
 	}
 
 	if value.UnitsSystem != nil {
-		node.addAttribute("units_system", NewValueNode(value.UnitsSystem))
+		node.addAttribute("units_system", newNode(value.UnitsSystem))
 	}
 
 	if value.UnitsDisplayName != nil {
-		node.addAttribute("units_display_name", NewValueNode(value.UnitsDisplayName))
+		node.addAttribute("units_display_name", newNode(value.UnitsDisplayName))
 	}
 
 	//todo: add processing for DvQuantity.NormalRange and DvQuantity.OtherReferenceRanges fields
@@ -100,13 +100,13 @@ func processDvState(node noder, value *base.DvState) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_STATE.base")
 	}
 
-	valueNode, err := walkDataValue(value.Value)
+	valueNode, err := walk(value.Value)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_STATE.value")
 	}
 
 	node.addAttribute("value", valueNode)
-	node.addAttribute("is_terminal", NewValueNode(value.IsTerminal))
+	node.addAttribute("is_terminal", newNode(value.IsTerminal))
 
 	return node, nil
 }
@@ -118,7 +118,7 @@ func processDvOrdered[T any](node noder, value *base.DvOrdered[T]) (noder, error
 	}
 
 	if value.NormalStatus != nil {
-		node.addAttribute("norma_status", NewNodeForCodePhrase(*value.NormalStatus))
+		node.addAttribute("norma_status", newNode(*value.NormalStatus))
 	}
 
 	//todo: add processing for DvOrdered.NormalRange and DvOrdered.OtherReferenceRanges fields
@@ -132,7 +132,7 @@ func processDvQuantified[T any](node noder, value *base.DvQuantified[T]) (noder,
 		return nil, errors.Wrap(err, "cannot process DV_QUANTIFIED.base")
 	}
 
-	node.addAttribute("magnitude_status", NewValueNode(value.MagnitudeStatus))
+	node.addAttribute("magnitude_status", newNode(value.MagnitudeStatus))
 
 	//todo: add processing for value.Accuracy field
 
@@ -145,8 +145,8 @@ func processDvAmount[T any](node noder, value *base.DvAmount[T]) (noder, error) 
 		return nil, errors.Wrap(err, "cannot process DV_AMOUNT.base")
 	}
 
-	node.addAttribute("accuracy_is_percent", NewValueNode(value.AccuracyIsPercent))
-	node.addAttribute("accuracy", NewValueNode(value.Accuracy))
+	node.addAttribute("accuracy_is_percent", newNode(value.AccuracyIsPercent))
+	node.addAttribute("accuracy", newNode(value.Accuracy))
 
 	return node, nil
 }
@@ -157,11 +157,11 @@ func processDvProportion(node noder, value *base.DvProportion) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_PROPORTION.base")
 	}
 
-	node.addAttribute("numeration", NewValueNode(value.Numeration))
-	node.addAttribute("denomination", NewValueNode(value.Denomination))
-	node.addAttribute("type", NewValueNode(value.Type))
+	node.addAttribute("numeration", newNode(value.Numeration))
+	node.addAttribute("denomination", newNode(value.Denomination))
+	node.addAttribute("type", newNode(value.Type))
 	if value.Precision != nil {
-		node.addAttribute("precision", NewValueNode(value.Precision))
+		node.addAttribute("precision", newNode(value.Precision))
 	}
 
 	//todo: add processing for value.NormalRange and value.OtherReferenceRanges
@@ -186,7 +186,7 @@ func processDvMultimedia(node noder, value *base.DvMultimedia) (noder, error) {
 	}
 
 	if value.URI != nil {
-		uriNode, err := walkDataValue(value.URI)
+		uriNode, err := walk(value.URI)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get node for DV_MULTIMEDIA.uri")
 		}
@@ -194,23 +194,23 @@ func processDvMultimedia(node noder, value *base.DvMultimedia) (noder, error) {
 		node.addAttribute("uri", uriNode)
 	}
 
-	node.addAttribute("alternate_text", NewValueNode(value.AlternativeText))
-	node.addAttribute("size", NewValueNode(value.Size))
-	node.addAttribute("media_type", NewNodeForCodePhrase(value.MediaType))
+	node.addAttribute("alternate_text", newNode(value.AlternativeText))
+	node.addAttribute("size", newNode(value.Size))
+	node.addAttribute("media_type", newNode(value.MediaType))
 	if value.CompressionAlgorithm != nil {
-		node.addAttribute("compression_algorithm", NewNodeForCodePhrase(*value.CompressionAlgorithm))
+		node.addAttribute("compression_algorithm", newNode(*value.CompressionAlgorithm))
 	}
 
 	if value.IntegrityCheckAlgorithm != nil {
-		node.addAttribute("integrity_check_algorithm", NewNodeForCodePhrase(*value.IntegrityCheckAlgorithm))
+		node.addAttribute("integrity_check_algorithm", newNode(*value.IntegrityCheckAlgorithm))
 	}
 
 	if value.IntegrityCheck != nil {
-		node.addAttribute("integrity_check", NewValueNode(value.IntegrityCheck))
+		node.addAttribute("integrity_check", newNode(value.IntegrityCheck))
 	}
 
 	if value.Thumbnail != nil {
-		thumbnailNode, err := walkDataValue(value.Thumbnail)
+		thumbnailNode, err := walk(value.Thumbnail)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get node for DV_MULTIMEDIA.thumbnail")
 		}
@@ -227,10 +227,10 @@ func processDvIdentifier(node noder, value *base.DvIdentifier) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_IDENTIFIER.base")
 	}
 
-	node.addAttribute("issuser", NewValueNode(value.Issuer))
-	node.addAttribute("assigner", NewValueNode(value.Assigner))
-	node.addAttribute("id", NewValueNode(value.ID))
-	node.addAttribute("type", NewValueNode(value.Type))
+	node.addAttribute("issuser", newNode(value.Issuer))
+	node.addAttribute("assigner", newNode(value.Assigner))
+	node.addAttribute("id", newNode(value.ID))
+	node.addAttribute("type", newNode(value.Type))
 
 	return node, nil
 }
@@ -241,7 +241,7 @@ func processDvDuration(node noder, value *base.DvDuration) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_DURATION.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 
 	return node, nil
 }
@@ -252,7 +252,7 @@ func processDvDateTime(node noder, value *base.DvDateTime) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_DATE_TIME.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 
 	return node, nil
 }
@@ -263,7 +263,7 @@ func processDvDate(node noder, value *base.DvDate) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_DATE.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 
 	return node, nil
 }
@@ -274,7 +274,7 @@ func processDvCount(node noder, value *base.DvCount) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_COUNT.base")
 	}
 
-	node.addAttribute("magnitude", NewValueNode(value.Magnitude))
+	node.addAttribute("magnitude", newNode(value.Magnitude))
 
 	//todo: add processing for DV_COUNT.normal_range and DV_COUNT.other_reference_ranges fields
 
@@ -287,7 +287,7 @@ func processDvCodedText(node noder, value *base.DvCodedText) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_CODED_TEXT.DV_TEXT")
 	}
 
-	node.addAttribute("defining_code", NewNodeForCodePhrase(value.DefiningCode))
+	node.addAttribute("defining_code", newNode(value.DefiningCode))
 
 	return node, nil
 }
@@ -298,9 +298,9 @@ func processDvText(node noder, value *base.DvText) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_TEXT.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 	if value.Formatting != "" {
-		node.addAttribute("formatting", NewValueNode(value.Formatting))
+		node.addAttribute("formatting", newNode(value.Formatting))
 	}
 
 	if value.Hyperlink != nil {
@@ -315,11 +315,11 @@ func processDvText(node noder, value *base.DvText) (noder, error) {
 	//todo: add processing for mappings filed
 
 	if value.Language != nil {
-		node.addAttribute("language", NewNodeForCodePhrase(*value.Language))
+		node.addAttribute("language", newNode(*value.Language))
 	}
 
 	if value.Encoding != nil {
-		node.addAttribute("encoding", NewNodeForCodePhrase(*value.Encoding))
+		node.addAttribute("encoding", newNode(*value.Encoding))
 	}
 
 	return node, nil
@@ -331,7 +331,7 @@ func processDvBoolean(node noder, value *base.DvBoolean) (noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_BOLLEAN.base")
 	}
 
-	node.addAttribute("value", NewValueNode(value.Value))
+	node.addAttribute("value", newNode(value.Value))
 
 	return node, nil
 }

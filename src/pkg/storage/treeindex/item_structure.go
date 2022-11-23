@@ -41,28 +41,70 @@ func processItemStructure(node noder, obj base.ItemStructure) (noder, error) {
 	}
 }
 
+func processDataStructure(node noder, obj *base.DataStructure) (noder, error) {
+	return node, nil
+}
+
 func processItemSingle(node noder, obj *base.ItemSingle) (noder, error) {
+	node, err := processDataStructure(node, &obj.DataStructure)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_SINGLE.base")
+	}
+
+	itemNode, err := walk(obj.Item)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_SINGLE.item")
+	}
+
+	node.addAttribute("item", itemNode)
+
 	return nil, errors.New("item single not implemented")
 }
 
 func processItemList(node noder, obj *base.ItemList) (noder, error) {
-	fmt.Println("some text ")
+	node, err := processDataStructure(node, &obj.DataStructure)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_LIST.base")
+	}
+
+	itemsNode, err := walk(obj.Items)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_LIST.items")
+	}
+
+	node.addAttribute("items", itemsNode)
+
 	return nil, errors.New("item list not implemented")
 }
 
 func processItemTable(node noder, obj *base.ItemTable) (noder, error) {
+	node, err := processDataStructure(node, &obj.DataStructure)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_TABLE.base")
+	}
+
+	rowsNode, err := walk(obj.Rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_TABLE.rows")
+	}
+
+	node.addAttribute("rows", rowsNode)
+
 	return nil, errors.New("item table not implemented")
 }
 
 func processItemTree(node noder, obj *base.ItemTree) (noder, error) {
-	for _, item := range obj.Items {
-		itemsNode, err := walk(item)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot process ItemTree.items")
-		}
-
-		node.addAttribute("items", itemsNode)
+	node, err := processDataStructure(node, &obj.DataStructure)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_TREE.base")
 	}
+
+	itemsNode, err := walk(obj.Items)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process ITEM_TREE.items")
+	}
+
+	node.addAttribute("items", itemsNode)
 
 	return node, nil
 }

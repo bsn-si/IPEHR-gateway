@@ -7,7 +7,7 @@ import (
 
 func processElement(node noder, obj *base.Element) (noder, error) {
 	if obj.Value != nil {
-		valueNode, err := walkDataValue(*obj.Value)
+		valueNode, err := walk(*obj.Value)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot handle ELEMENT.Value object")
 		}
@@ -19,14 +19,11 @@ func processElement(node noder, obj *base.Element) (noder, error) {
 }
 
 func processCluster(node noder, obj *base.Cluster) (noder, error) {
-	for _, item := range obj.Items {
-		itemNode, err := walk(item)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot handle CLUSTER.Items item object")
-		}
-
-		node.addAttribute("items", itemNode)
+	itemsNode, err := walk(obj.Items)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot handle CLUSTER.Items")
 	}
 
+	node.addAttribute("items", itemsNode)
 	return node, nil
 }

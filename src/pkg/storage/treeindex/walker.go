@@ -3,13 +3,23 @@ package treeindex
 import (
 	"fmt"
 	"hms/gateway/pkg/docs/model/base"
-
-	"github.com/pkg/errors"
+	"hms/gateway/pkg/errors"
 )
 
-func walk(obj base.Root) (noder, error) {
+func walk(obj any) (noder, error) {
+	switch obj := obj.(type) {
+	case base.Root:
+		return walkRoot(obj)
+	case base.DataValue:
+		return walkDataValue(obj)
+	default:
+		return walkBySlice(obj)
+	}
+}
+
+func walkRoot(obj base.Root) (noder, error) {
 	var err error
-	node := NewNode(obj) //nolint
+	node := newNode(obj) //nolint
 
 	switch obj := obj.(type) {
 	case *base.Action:
@@ -43,9 +53,46 @@ func walk(obj base.Root) (noder, error) {
 	return node, nil
 }
 
+func walkBySlice(slice any) (noder, error) {
+	sliceNode := newSliceNode()
+	switch ss := slice.(type) {
+	case []base.Root:
+		for _, item := range ss {
+			node, err := walk(item)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot process slice ITEM")
+			}
+
+			sliceNode.addAttribute(node.getID(), node)
+		}
+	case base.Items:
+		for _, item := range ss {
+			node, err := walk(item)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot process ITEMS")
+			}
+
+			sliceNode.addAttribute(node.getID(), node)
+		}
+	case []base.Event[base.ItemStructure]:
+		for _, item := range ss {
+			node, err := walk(item)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot process EVENTS slice")
+			}
+
+			sliceNode.addAttribute(node.getID(), node)
+		}
+	default:
+		return nil, fmt.Errorf("unexpected slice type: %T", slice) //nolint
+	}
+
+	return sliceNode, nil
+}
+
 func walkDataValue(dv base.DataValue) (noder, error) {
 	var err error
-	node := NewNodeForData(dv) //nolint
+	node := newNode(dv) //nolint
 
 	switch value := dv.(type) {
 	case *base.DvURI:
@@ -85,88 +132,4 @@ func walkDataValue(dv base.DataValue) (noder, error) {
 	}
 
 	return node, err
-}
-
-func processCareEntry(node noder, entry *base.CareEntry) (noder, error) {
-	// todo: add processing for CareEntry struct fields
-	return node, nil
-}
-
-func processAction(node noder, act *base.Action) (noder, error) {
-	node, err := processCareEntry(node, &act.CareEntry)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process ACTION.base")
-	}
-
-	descriptionNode, err := walk(act.Description)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process ACTION.description")
-	}
-
-	node.addAttribute("description", descriptionNode)
-
-	//todo: add processing for ACTION struct fields
-
-	return node, nil
-}
-
-func processEvaluation(node noder, evaluation *base.Evaluation) (noder, error) {
-	node, err := processCareEntry(node, &evaluation.CareEntry)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process EVALUATION.base")
-	}
-
-	dataNode, err := walk(evaluation.Data)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannon process EVALUATION.Data")
-	}
-
-	node.addAttribute("data", dataNode)
-
-	//todo: add processing for ACTION struct fields
-
-	return node, nil
-}
-
-func processInstruction(node noder, instr *base.Instruction) (noder, error) {
-	node, err := processCareEntry(node, &instr.CareEntry)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process INSTRUCTION.base")
-	}
-
-	//todo: add processing for INSTRUCTION struct fields
-
-	return node, nil
-}
-
-func processObservation(node noder, obs *base.Observation) (noder, error) {
-	node, err := processCareEntry(node, &obs.CareEntry)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process OBSERVATION.base")
-	}
-
-	dataNode, err := walk(obs.Data)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannon process OBSERVATION.Data")
-	}
-
-	node.addAttribute("data", dataNode)
-
-	stateNode, err := walk(obs.State)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process OBSERVATION.state")
-	}
-
-	node.addAttribute("state", stateNode)
-
-	if obs.Protocol.Data != nil {
-		protocolNode, err := walk(obs.Protocol)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannon process OBSERVATION.Protocol")
-		}
-
-		node.addAttribute("protocol", protocolNode)
-	}
-
-	return node, nil
 }

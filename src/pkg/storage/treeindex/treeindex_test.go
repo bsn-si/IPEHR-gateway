@@ -5,6 +5,8 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTree_walk(t *testing.T) {
@@ -24,15 +26,18 @@ func TestTree_walk(t *testing.T) {
 	}
 
 	tree := NewTree()
-	if err := tree.AddComposition(c); err != nil {
-		t.Error(err)
+	tree.AddComposition(c)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 4, tree.actions.Len())
+	assert.Equal(t, 21, tree.evaluations.Len())
+	assert.Equal(t, 1, tree.instructions.Len())
+	assert.Equal(t, 12, tree.obeservations.Len())
+
+	treeStr := tree.Print()
+	// uncomment next string tp view tre string
+	// t.Error(treeStr)
+	if treeStr == "" {
+		t.Fail()
 	}
-
-	// root, ok := tree.root..Children["openEHR-EHR-COMPOSITION.health_summary.v1"]
-	// assert.Equal(t, ok, true)
-	// assert.Equal(t, len(root.Children), 14)
-
-	// t.Logf("%+v", tree.root.Children)
-	t.Logf("tree:\n%s", tree.Print())
-	t.Error("do error every time")
 }

@@ -12,27 +12,35 @@ import (
 type Tree struct {
 	root map[string]noder
 
-	actions       map[string]Container
-	evaluations   map[string]Container
-	instructions  map[string]Container
-	obeservations map[string]Container
+	actions       Container
+	evaluations   Container
+	instructions  Container
+	obeservations Container
 }
 
 func NewTree() *Tree {
 	return &Tree{
 		root: make(map[string]noder),
 
-		actions:       make(map[string]Container),
-		evaluations:   make(map[string]Container),
-		instructions:  make(map[string]Container),
-		obeservations: make(map[string]Container),
+		actions:       Container{},
+		evaluations:   Container{},
+		instructions:  Container{},
+		obeservations: Container{},
 	}
+}
+func (t *Tree) AddComposition(com model.Composition) error {
+	return t.processCompositionContent(com.Content)
 }
 
 type Container map[string][]noder
 
-func (t *Tree) AddComposition(com model.Composition) error {
-	return t.processCompositionContent(com.Content)
+func (c Container) Len() int {
+	count := 0
+	for _, v := range c {
+		count += len(v)
+	}
+
+	return count
 }
 
 func (t *Tree) processCompositionContent(objects []base.Root) error {
@@ -77,11 +85,13 @@ func (t *Tree) processSection(section *base.Section) error {
 	return nil
 }
 
-func addObjectIntoCollection(collection map[string]Container, obj base.Root) error {
-	container, ok := collection[obj.GetArchetypeNodeID()]
-	if !ok {
-		container = Container{}
-	}
+func addObjectIntoCollection(container Container, obj base.Root) error {
+	// container, ok := collection[obj.GetArchetypeNodeID()]
+	// if !ok {
+	// 	container = Container{}
+	// } else if obj.GetType() == base.ActionItemType {
+	// 	fmt.Println("ACTION DUBLICATES", obj.GetLocatable().ArchetypeNodeID)
+	// }
 
 	node, err := walk(obj)
 	if err != nil {
@@ -89,7 +99,7 @@ func addObjectIntoCollection(collection map[string]Container, obj base.Root) err
 	}
 
 	container[node.getID()] = append(container[node.getID()], node)
-	collection[obj.GetArchetypeNodeID()] = container
+	// collection[obj.GetArchetypeNodeID()] = container
 
 	return nil
 }

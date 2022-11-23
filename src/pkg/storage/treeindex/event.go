@@ -8,14 +8,12 @@ import (
 )
 
 func processHistoryItemStructure(node noder, obj base.History[base.ItemStructure]) (noder, error) {
-	for _, e := range obj.Events {
-		eventsNode, err := walk(e)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot process HISTORY.Events item")
-		}
-
-		node.addAttribute("events", eventsNode)
+	eventsNode, err := walk(obj.Events)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot process HISTORY.Events item")
 	}
+
+	node.addAttribute("events", eventsNode)
 
 	return node, nil
 }

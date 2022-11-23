@@ -1,7 +1,9 @@
 package treeindex
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"hms/gateway/pkg/docs/model/base"
 )
 
@@ -23,16 +25,16 @@ type noder interface {
 }
 
 type baseNode struct {
-	ID   string
-	Type base.ItemType
-	Name string
+	ID   string        `json:"id,omitempty"`
+	Type base.ItemType `json:"type,omitempty"`
+	Name string        `json:"name,omitempty"`
 }
 
 type objectNode struct {
 	baseNode
 
-	Attributes Attributes
-	Value      map[string]interface{}
+	attributesOrder []string
+	attributes      map[string]noder `json:"-"`
 }
 
 func (node objectNode) getNodeType() nodeType {
@@ -44,20 +46,51 @@ func (node objectNode) getID() string {
 }
 
 func (node *objectNode) addAttribute(key string, val noder) {
-	node.Attributes.add(key, val)
+	node.attributesOrder = append(node.attributesOrder, key)
+	node.attributes[key] = val
+}
+
+func (node objectNode) MarshalJSON() ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	fmt.Fprintf(buffer, "{")
+	fmt.Fprintf(buffer, `"id":"%s",`, node.ID)
+	fmt.Fprintf(buffer, `"name":"%s",`, node.Name)
+	fmt.Fprintf(buffer, `"type":"%s"`, node.Type)
+	for _, k := range node.attributesOrder {
+		data, err := json.Marshal(node.attributes[k])
+		if err != nil {
+			return nil, err
+		}
+		fmt.Fprintf(buffer, `,"%s":%s`, k, string(data))
+	}
+
+	fmt.Fprintf(buffer, "}")
+	return buffer.Bytes(), nil
 }
 
 type sliceNode struct {
-	Data []noder
+	data map[string]noder
 }
 
 func (node sliceNode) getNodeType() nodeType {
 	return sliceNodeType
 }
 
+func (node sliceNode) getID() string {
+	return ""
+}
+
+func (node sliceNode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(node.data)
+}
+
+func (node *sliceNode) addAttribute(key string, val noder) {
+	node.data[val.getID()] = val
+}
+
 type dataValueNode struct {
 	baseNode
-	Values map[string]noder
+	Values map[string]noder `json:"values,omitempty"`
 }
 
 func (node dataValueNode) getNodeType() nodeType {
@@ -73,6 +106,7 @@ func (node *dataValueNode) addAttribute(key string, val noder) {
 }
 
 type valueNode struct {
+	baseNode
 	data any
 }
 
@@ -97,7 +131,20 @@ func (node valueNode) MarshalJSON() ([]byte, error) {
 	return json.Marshal(node.data)
 }
 
-func NewNode(obj base.Root) noder {
+func newNode(obj any) noder {
+	switch obj := obj.(type) {
+	case base.Root:
+		return newObjectNode(obj)
+	case base.DataValue:
+		return newDataValueNode(obj)
+	case base.CodePhrase:
+		return nodeForCodePhrase(obj)
+	default:
+		return newValueNode(obj)
+	}
+}
+
+func newObjectNode(obj base.Root) noder {
 	l := obj.GetLocatable()
 
 	return &objectNode{
@@ -106,31 +153,17 @@ func NewNode(obj base.Root) noder {
 			Type: l.Type,
 			Name: l.Name.Value,
 		},
-		Attributes: map[string]map[string]noder{},
+		attributes: map[string]noder{},
 	}
 }
 
-func NewNodeForCodePhrase(mt base.CodePhrase) noder {
-	return &objectNode{
-		baseNode: baseNode{
-			Type: mt.Type,
-		},
-		Value: map[string]interface{}{
-			"terminology_id": &objectNode{
-				baseNode: baseNode{
-					Type: mt.TerminologyID.Type,
-				},
-				Value: map[string]interface{}{
-					"value": mt.TerminologyID.Value,
-				},
-			},
-			"code_string":    mt.CodeString,
-			"preferred_term": mt.PreferredTerm,
-		},
+func newSliceNode() noder {
+	return &sliceNode{
+		data: make(map[string]noder),
 	}
 }
 
-func NewNodeForData(dv base.DataValue) noder {
+func newDataValueNode(dv base.DataValue) noder {
 	return &dataValueNode{
 		baseNode: baseNode{
 			ID:   "",
@@ -140,20 +173,28 @@ func NewNodeForData(dv base.DataValue) noder {
 	}
 }
 
-func NewValueNode(val any) noder {
+func nodeForCodePhrase(cp base.CodePhrase) noder {
 	return &valueNode{
-		data: val,
+		baseNode: baseNode{
+			Type: cp.Type,
+		},
+		data: map[string]interface{}{
+			"terminology_id": &valueNode{
+				baseNode: baseNode{
+					Type: cp.TerminologyID.Type,
+				},
+				data: map[string]interface{}{
+					"value": cp.TerminologyID.Value,
+				},
+			},
+			"code_string":    cp.CodeString,
+			"preferred_term": cp.PreferredTerm,
+		},
 	}
 }
 
-type Attributes map[string]map[string]noder
-
-func (a Attributes) add(name string, node noder) {
-	m, ok := a[name]
-	if !ok {
-		m = map[string]noder{}
-		a[name] = m
+func newValueNode(val any) noder {
+	return &valueNode{
+		data: val,
 	}
-
-	m[node.getID()] = node
 }
