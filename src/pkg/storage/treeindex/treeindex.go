@@ -54,19 +54,19 @@ func (t *Tree) processSection(section *base.Section) error {
 	for _, item := range section.Items {
 		switch obj := item.(type) {
 		case *base.Action:
-			if err := t.processAction(obj); err != nil {
+			if err := addObjectIntoCollection(t.actions, obj); err != nil {
 				return errors.Wrap(err, "cannot process ACTION in section")
 			}
 		case *base.Evaluation:
-			if err := t.processEvaluation(obj); err != nil {
+			if err := addObjectIntoCollection(t.evaluations, obj); err != nil {
 				return errors.Wrap(err, "cannot process EVALUATION in section")
 			}
 		case *base.Instruction:
-			if err := t.processInstruction(obj); err != nil {
+			if err := addObjectIntoCollection(t.instructions, obj); err != nil {
 				return errors.Wrap(err, "cannot process INSTRUCTION in section")
 			}
 		case *base.Observation:
-			if err := t.processObservation(obj); err != nil {
+			if err := addObjectIntoCollection(t.obeservations, obj); err != nil {
 				return errors.Wrap(err, "cannot process OBSERVATION in section")
 			}
 		default:
@@ -74,63 +74,6 @@ func (t *Tree) processSection(section *base.Section) error {
 		}
 	}
 
-	return nil
-}
-
-func (t *Tree) processAction(action *base.Action) error {
-	container, ok := t.actions[action.ArchetypeNodeID]
-	if !ok {
-		container = Container{}
-	}
-
-	node, err := walk(action)
-	if err != nil {
-		return errors.Wrap(err, "cannot get node for ACTION")
-	}
-
-	container[node.getID()] = append(container[node.getID()], node)
-	t.actions[action.ArchetypeNodeID] = container
-	return nil
-}
-
-func (t *Tree) processEvaluation(evaluation *base.Evaluation) error {
-	container, ok := t.evaluations[evaluation.ArchetypeNodeID]
-	if !ok {
-		container = Container{}
-	}
-
-	node, err := walk(evaluation)
-	if err != nil {
-		return errors.Wrap(err, "cannot get node for EVALUATION")
-	}
-
-	container[node.getID()] = append(container[node.getID()], node)
-	t.evaluations[evaluation.ArchetypeNodeID] = container
-
-	return nil
-}
-
-func (t *Tree) processInstruction(instruction *base.Instruction) error {
-	container, ok := t.instructions[instruction.ArchetypeNodeID]
-	if !ok {
-		container = Container{}
-	}
-
-	node, err := walk(instruction)
-	if err != nil {
-		return errors.Wrap(err, "cannot get node for INSTRUCTION")
-	}
-
-	container[node.getID()] = append(container[node.getID()], node)
-	t.instructions[instruction.ArchetypeNodeID] = container
-
-	return nil
-}
-
-func (t *Tree) processObservation(observation *base.Observation) error {
-	if err := addObjectIntoCollection(t.obeservations, observation); err != nil {
-		return errors.Wrap(err, "cannot add OBSERVATION object")
-	}
 	return nil
 }
 
