@@ -102,7 +102,6 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}))
 
 	r.Use(requestID)
-	r.Use(baseURL(gCfg))
 
 	v1 := r.Group("v1")
 	for _, b := range apiHandlers {

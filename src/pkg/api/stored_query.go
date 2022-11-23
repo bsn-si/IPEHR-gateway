@@ -113,7 +113,7 @@ func (h *QueryHandler) StoreQuery(c *gin.Context) {
 		return
 	}
 
-	c.Header("Location", c.GetString("baseURL")+"/v1/definition/query/"+sQ.Name.String()+"/"+sQ.Version)
+	c.Header("Location", "/v1/definition/query/"+sQ.Name.String()+"/"+sQ.Version)
 
 	c.Status(http.StatusOK)
 }
