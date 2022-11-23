@@ -16,7 +16,6 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
@@ -49,12 +48,16 @@ const (
 	TokenRefreshType
 )
 
-func NewUserService(cfg *config.Config, infra *infrastructure.Infra, p *processing.Proc) *Service {
+func NewService(infra *infrastructure.Infra, p *processing.Proc) *Service {
 	return &Service{
 		Infra: infra,
-		Proc:  p,
 		Cache: cache.New(common.CacheCleanerTimeout),
+		Proc:  p,
 	}
+}
+
+func (s *Service) NewProcRequest(reqID, userID string) (*proc.Request, error) {
+	return s.Proc.NewRequest(reqID, userID, "", proc.RequestUserRegister)
 }
 
 func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error) {

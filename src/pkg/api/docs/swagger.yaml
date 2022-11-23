@@ -300,6 +300,19 @@ definitions:
         items: {}
         type: array
     type: object
+  model.StoredQuery:
+    properties:
+      name:
+        type: string
+      q:
+        type: string
+      saved:
+        type: string
+      type:
+        type: string
+      version:
+        type: string
+    type: object
   model.UserAuthRequest:
     properties:
       password:
@@ -447,6 +460,45 @@ paths:
       summary: Get a document access list
       tags:
       - ACCESS
+  /definition/query/{qualifiedQueryName}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Retrieves list of all stored queries on the system matched by qualified_query_name as pattern.
+        https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
+      parameters:
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
+          and when is empty, it will be treated as '
+        in: path
+        name: qualified_query_name
+        required: true
+        type: string
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.StoredQuery'
+            type: array
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get list stored queries
+      tags:
+      - STORED_QUERY
   /ehr:
     get:
       consumes:
@@ -1167,7 +1219,7 @@ paths:
         Execute ad-hoc query, supplied by q attribute, fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.
         See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
       parameters:
-      - description: Bearer <JWT>
+      - description: Bearer AccessToken
         in: header
         name: Authorization
         required: true
