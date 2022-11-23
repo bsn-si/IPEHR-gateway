@@ -12,10 +12,7 @@ import (
 const signatureLength = 65
 
 func makeSignature(data []byte, nonce *big.Int, pk *ecdsa.PrivateKey) ([]byte, error) {
-	data = data[:len(data)-97]
-
-	paddingLength := 32 - (len(data) % 32)
-	data = append(data, make([]byte, paddingLength)...)
+	data = data[:len(data)-(signatureLength+32)]
 
 	hash := crypto.Keccak256Hash(data)
 
@@ -32,7 +29,8 @@ func makeSignature(data []byte, nonce *big.Int, pk *ecdsa.PrivateKey) ([]byte, e
 		return nil, fmt.Errorf("crypto.Sign error: %w", err)
 	}
 
-	sig[64] += 27
+	// https://ethereum.stackexchange.com/questions/78929/whats-the-magic-numbers-meaning-of-27-or-28-in-vrs-use-to-ecrover-the-sender
+	sig[signatureLength-1] += 27
 
 	return sig, nil
 }
