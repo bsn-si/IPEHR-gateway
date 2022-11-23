@@ -28,7 +28,7 @@
         }
     },
     "contract": {
-        "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        "address": "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512",
         "endpoint": "http://127.0.0.1:8545",
         "endpoint2": "https://goerli.infura.io/v3/<API-KEY>",
         "privKeyPath": "/home/runner/work/IPEHR-gateway/IPEHR-gateway/.blockchain.key",

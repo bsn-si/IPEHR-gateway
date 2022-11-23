@@ -23,76 +23,41 @@
         {
           "components": [
             {
+              "internalType": "enum Docs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
               "internalType": "bytes32",
-              "name": "ehrId",
+              "name": "id",
               "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "version",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
             },
             {
               "components": [
                 {
-                  "internalType": "enum Docs.DocType",
-                  "name": "docType",
-                  "type": "uint8"
-                },
-                {
-                  "internalType": "enum Docs.DocStatus",
-                  "name": "status",
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
                   "type": "uint8"
                 },
                 {
                   "internalType": "bytes",
-                  "name": "CID",
+                  "name": "value",
                   "type": "bytes"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "dealCID",
-                  "type": "bytes"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "minerAddress",
-                  "type": "bytes"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "docUIDEncrypted",
-                  "type": "bytes"
-                },
-                {
-                  "internalType": "bytes32",
-                  "name": "docBaseUIDHash",
-                  "type": "bytes32"
-                },
-                {
-                  "internalType": "bytes32",
-                  "name": "version",
-                  "type": "bytes32"
-                },
-                {
-                  "internalType": "bool",
-                  "name": "isLast",
-                  "type": "bool"
-                },
-                {
-                  "internalType": "uint32",
-                  "name": "timestamp",
-                  "type": "uint32"
                 }
               ],
-              "internalType": "struct Docs.DocumentMeta",
-              "name": "docMeta",
-              "type": "tuple"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "CIDEncr",
-              "type": "bytes"
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
             },
             {
               "internalType": "address",
@@ -155,6 +120,16 @@
           "internalType": "bytes32",
           "name": "version",
           "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
       "name": "deleteDoc",
@@ -222,9 +197,9 @@
             {
               "components": [
                 {
-                  "internalType": "bytes32",
-                  "name": "key",
-                  "type": "bytes32"
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
                 },
                 {
                   "internalType": "bytes",
@@ -232,8 +207,8 @@
                   "type": "bytes"
                 }
               ],
-              "internalType": "struct Users.KeyValue[]",
-              "name": "params",
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
               "type": "tuple[]"
             },
             {
@@ -383,38 +358,13 @@
         {
           "components": [
             {
-              "internalType": "enum Docs.DocType",
-              "name": "docType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
             {
-              "internalType": "bytes",
-              "name": "CID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "dealCID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "minerAddress",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "docUIDEncrypted",
-              "type": "bytes"
-            },
-            {
               "internalType": "bytes32",
-              "name": "docBaseUIDHash",
+              "name": "id",
               "type": "bytes32"
             },
             {
@@ -423,14 +373,31 @@
               "type": "bytes32"
             },
             {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
               "internalType": "bool",
               "name": "isLast",
               "type": "bool"
             },
             {
-              "internalType": "uint32",
-              "name": "timestamp",
-              "type": "uint32"
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
             }
           ],
           "internalType": "struct Docs.DocumentMeta",
@@ -469,38 +436,13 @@
         {
           "components": [
             {
-              "internalType": "enum Docs.DocType",
-              "name": "docType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
             {
-              "internalType": "bytes",
-              "name": "CID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "dealCID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "minerAddress",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "docUIDEncrypted",
-              "type": "bytes"
-            },
-            {
               "internalType": "bytes32",
-              "name": "docBaseUIDHash",
+              "name": "id",
               "type": "bytes32"
             },
             {
@@ -509,14 +451,31 @@
               "type": "bytes32"
             },
             {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
               "internalType": "bool",
               "name": "isLast",
               "type": "bool"
             },
             {
-              "internalType": "uint32",
-              "name": "timestamp",
-              "type": "uint32"
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
             }
           ],
           "internalType": "struct Docs.DocumentMeta",
@@ -550,38 +509,13 @@
         {
           "components": [
             {
-              "internalType": "enum Docs.DocType",
-              "name": "docType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
             {
-              "internalType": "bytes",
-              "name": "CID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "dealCID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "minerAddress",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "docUIDEncrypted",
-              "type": "bytes"
-            },
-            {
               "internalType": "bytes32",
-              "name": "docBaseUIDHash",
+              "name": "id",
               "type": "bytes32"
             },
             {
@@ -590,14 +524,31 @@
               "type": "bytes32"
             },
             {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
               "internalType": "bool",
               "name": "isLast",
               "type": "bool"
             },
             {
-              "internalType": "uint32",
-              "name": "timestamp",
-              "type": "uint32"
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
             }
           ],
           "internalType": "struct Docs.DocumentMeta",
@@ -626,38 +577,13 @@
         {
           "components": [
             {
-              "internalType": "enum Docs.DocType",
-              "name": "docType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
             {
-              "internalType": "bytes",
-              "name": "CID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "dealCID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "minerAddress",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "docUIDEncrypted",
-              "type": "bytes"
-            },
-            {
               "internalType": "bytes32",
-              "name": "docBaseUIDHash",
+              "name": "id",
               "type": "bytes32"
             },
             {
@@ -666,14 +592,31 @@
               "type": "bytes32"
             },
             {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
               "internalType": "bool",
               "name": "isLast",
               "type": "bool"
             },
             {
-              "internalType": "uint32",
-              "name": "timestamp",
-              "type": "uint32"
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
             }
           ],
           "internalType": "struct Docs.DocumentMeta[]",
@@ -702,38 +645,13 @@
         {
           "components": [
             {
-              "internalType": "enum Docs.DocType",
-              "name": "docType",
-              "type": "uint8"
-            },
-            {
               "internalType": "enum Docs.DocStatus",
               "name": "status",
               "type": "uint8"
             },
             {
-              "internalType": "bytes",
-              "name": "CID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "dealCID",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "minerAddress",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "docUIDEncrypted",
-              "type": "bytes"
-            },
-            {
               "internalType": "bytes32",
-              "name": "docBaseUIDHash",
+              "name": "id",
               "type": "bytes32"
             },
             {
@@ -742,14 +660,31 @@
               "type": "bytes32"
             },
             {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
               "internalType": "bool",
               "name": "isLast",
               "type": "bool"
             },
             {
-              "internalType": "uint32",
-              "name": "timestamp",
-              "type": "uint32"
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
             }
           ],
           "internalType": "struct Docs.DocumentMeta",
@@ -1101,9 +1036,9 @@
             {
               "components": [
                 {
-                  "internalType": "bytes32",
-                  "name": "key",
-                  "type": "bytes32"
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
                 },
                 {
                   "internalType": "bytes",
@@ -1111,8 +1046,8 @@
                   "type": "bytes"
                 }
               ],
-              "internalType": "struct Users.KeyValue[]",
-              "name": "params",
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
               "type": "tuple[]"
             },
             {

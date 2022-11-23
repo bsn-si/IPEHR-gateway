@@ -35,7 +35,14 @@ func (i *Index) UserNew(ctx context.Context, userID string, systemID string, rol
 		}
 	}
 
-	sig, err := makeSignature(userKey, nonce, "userNew", userAddress, uID, sID, role, pwdHash)
+	sig := make([]byte, 65)
+
+	data, err := i.abi.Pack("userNew", userAddress, uID, sID, role, pwdHash, userAddress, sig)
+	if err != nil {
+		return "", fmt.Errorf("abi.Pack error: %w", err)
+	}
+
+	sig, err = makeSignature(data, nonce, userKey)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
