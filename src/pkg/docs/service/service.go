@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
@@ -122,6 +123,7 @@ func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID str
 
 	docKeyBytes, err := keybox.OpenAnonymous(docKeyEncr, userPubKey, userPrivateKey)
 	if err != nil {
+		log.Printf("docKeyBytes: %x", docKeyBytes)
 		return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
 	}
 

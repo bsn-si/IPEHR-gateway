@@ -92,14 +92,21 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 		}
 	}
 
-	sig, err := makeSignature(userKey, nonce, "setDocAccess", CID, accessObj, toUserAddress)
+	sig := make([]byte, 65)
+
+	data, err = i.abi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
+	if err != nil {
+		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
+	}
+
+	sig, err = makeSignature(data, nonce, userKey)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
 	data, err = i.abi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
 	if err != nil {
-		return nil, fmt.Errorf("abi.Pack error: %w", err)
+		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
 
 	return data, nil

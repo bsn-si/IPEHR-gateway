@@ -14,7 +14,6 @@ import (
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 )
 
@@ -261,22 +260,12 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	// Getting docStorageID
-	docMeta, err := h.service.Infra.Index.GetDocLastByType(c, &ehrUUID, types.Ehr)
-	if err != nil {
-		log.Println("GetLastDocIndexByType", "ehrId", ehrID, err)
-		c.AbortWithStatus(http.StatusNotFound)
-
-		return
-	}
-
-	// Getting doc from storage
-	docDecrypted, err := h.service.GetDocFromStorageByID(c, userID, docMeta.Cid(), ehrUUID[:], docMeta.DocUIDEncrypted)
+	docDecrypted, err := h.service.GetByID(c, userID, &ehrUUID)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		c.AbortWithStatus(http.StatusAccepted)
 		return
 	} else if err != nil {
-		log.Printf("GetDocFromStorageByID error: %v\ndocMeta: %+v", err, docMeta)
+		log.Printf("service.GetByID error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
 		return
 	}

@@ -23,9 +23,9 @@ type CompositionService interface {
 	DefaultGroupAccess() *model.GroupAccess
 	Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
 	Update(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition) (*model.Composition, error)
-	GetLastByBaseID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (*model.Composition, error)
-	GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (*model.Composition, error)
-	DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (string, error)
+	GetLastByBaseID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID, ehrSystemID string) (*model.Composition, error)
+	GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID, ehrSystemID string) (*model.Composition, error)
+	DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, ehrSystemID, userID string) (string, error)
 }
 
 type Indexer interface {
@@ -130,6 +130,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	if userEhrUUID.String() != ehrUUID.String() {
 		log.Printf("userEhrUUID and ehrUUID is not equal: %s != %s", userEhrUUID, ehrUUID)
 		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 
 	var (
@@ -313,7 +314,7 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	newUID, err := h.service.DeleteByID(c, procRequest, &ehrUUID, versionUID, ehrSystemID)
+	newUID, err := h.service.DeleteByID(c, procRequest, &ehrUUID, versionUID, ehrSystemID, userID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
