@@ -102,7 +102,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return &ehr, nil
@@ -175,13 +175,12 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 
 		docMeta := &model.DocumentMeta{
 			Status:    uint8(docStatus.ACTIVE),
-			Id:        [32]byte{},
-			Version:   [32]byte{},
+			Id:        CID.Bytes(),
+			Version:   nil,
 			Timestamp: uint32(time.Now().Unix()),
 			IsLast:    true,
 			Attrs: []ehrIndexer.AttributesAttribute{
-				{Code: model.AttributeCID, Value: CID.Bytes()},
-				{Code: model.AttributeCIDEncr, Value: CIDEncr},
+				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
 				{Code: model.AttributeDocBaseUIDHash, Value: make([]byte, 32)},
 				{Code: model.AttributeDocUIDEncrypted, Value: ehrIDEncrypted},
@@ -207,7 +206,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("GetDocLastByType error: %w", err)
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -240,7 +239,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 		return nil, fmt.Errorf("Index.GetLastDocByType error: %w. ehrUUID: %s", err, ehrUUID.String())
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -304,7 +303,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -419,13 +418,12 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 
 		docMeta := &model.DocumentMeta{
 			Status:    uint8(docStatus.ACTIVE),
-			Id:        baseDocumentUIDHash,
-			Version:   *objectVersionID.VersionBytes(),
+			Id:        CID.Bytes(),
+			Version:   objectVersionID.VersionBytes()[:],
 			Timestamp: uint32(time.Now().Unix()),
 			IsLast:    true,
 			Attrs: []ehrIndexer.AttributesAttribute{
-				{Code: model.AttributeCID, Value: CID.Bytes()},
-				{Code: model.AttributeCIDEncr, Value: CIDEncr},
+				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
 				{Code: model.AttributeDocBaseUIDHash, Value: baseDocumentUIDHash[:]},
 				{Code: model.AttributeDocUIDEncrypted, Value: statusIDEncrypted},
@@ -471,7 +469,7 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return nil
@@ -484,7 +482,7 @@ func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UU
 		return nil, fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -522,7 +520,7 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID string, ehrUU
 		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -554,7 +552,7 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehr
 		return nil, fmt.Errorf("Index.GetDocByTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), nearestTime.String(), types.EhrStatus)
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}

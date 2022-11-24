@@ -28,14 +28,14 @@
               "type": "uint8"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "id",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "version",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
               "internalType": "uint32",
@@ -363,14 +363,14 @@
               "type": "uint8"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "id",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "version",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
               "internalType": "uint32",
@@ -441,14 +441,14 @@
               "type": "uint8"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "id",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "version",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
               "internalType": "uint32",
@@ -514,14 +514,14 @@
               "type": "uint8"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "id",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "version",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
               "internalType": "uint32",
@@ -582,14 +582,14 @@
               "type": "uint8"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "id",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "version",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
               "internalType": "uint32",
@@ -650,14 +650,14 @@
               "type": "uint8"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "id",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
-              "internalType": "bytes32",
+              "internalType": "bytes",
               "name": "version",
-              "type": "bytes32"
+              "type": "bytes"
             },
             {
               "internalType": "uint32",
@@ -893,9 +893,9 @@
     {
       "inputs": [
         {
-          "internalType": "bytes",
-          "name": "CID",
-          "type": "bytes"
+          "internalType": "bytes32",
+          "name": "CIDHash",
+          "type": "bytes32"
         },
         {
           "components": [

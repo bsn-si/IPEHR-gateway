@@ -22,13 +22,14 @@ import (
 //go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
 //
 
-func TestStoredQueryHandler_Get(t *testing.T) {
+func TestStoredQueryHandler_List(t *testing.T) {
 	var (
-		userID = uuid.New().String()
-		sqM    = make([]model.StoredQuery, 1)
+		userID   = uuid.New().String()
+		systemID = uuid.New().String()
+		sqM      = make([]*model.StoredQuery, 1)
 	)
 
-	sqM[0] = model.StoredQuery{
+	sqM[0] = &model.StoredQuery{
 		Name:        "org.openehr::compositions",
 		Type:        "aql",
 		Version:     "1.0.1",
@@ -49,7 +50,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			"1. empty result because qualifiedQueryName was not found",
 			"notexist",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any())
+				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any())
 			},
 			http.StatusOK,
 			`[]`,
@@ -58,7 +59,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			"2. success result",
 			"exist",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
 			},
 			http.StatusOK,
 			string(sqJSON),
@@ -86,6 +87,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/definition/query/%s", tt.qualifiedQueryName), nil)
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userID)
+			req.Header.Set("EhrSystemId", systemID)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)
@@ -94,7 +96,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("StoredQueryHandler.Get() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("StoredQueryHandler.List() status code mismatch {-want;+got}\n\t%s", diff)
 			}
 
 			if tt.wantStatus == http.StatusNotFound {
@@ -103,7 +105,7 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 
 			respBody, _ := io.ReadAll(resp.Body)
 			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
-				t.Errorf("StoredQueryHandler.Get() status response {-want;+got}\n%s", diff)
+				t.Errorf("StoredQueryHandler.List() status response {-want;+got}\n%s", diff)
 			}
 		})
 	}
@@ -111,8 +113,9 @@ func TestStoredQueryHandler_Get(t *testing.T) {
 
 func TestStoredQueryHandler_Put(t *testing.T) {
 	var (
-		userID  = uuid.New().String()
-		urlPath = "/v1/definition/query"
+		userID   = uuid.New().String()
+		systemID = uuid.New().String()
+		urlPath  = "/v1/definition/query"
 	)
 
 	sqM := model.StoredQuery{
@@ -133,7 +136,7 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 	}{
 		{
 			"1. bad request because request body is empty",
-			sqM.Name.String(),
+			sqM.Name,
 			"",
 			func(gaSvc *mocks.MockQueryService) {},
 			http.StatusBadRequest,
@@ -141,14 +144,22 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 		},
 		{
 			"2. success result",
-			sqM.Name.String(),
+			sqM.Name,
 			sqM.Query,
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().Validate(gomock.Any()).Return(true)
-				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+				gaSvc.EXPECT().Store(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(&sqM, nil)
 			},
 			http.StatusOK,
-			urlPath + "/" + sqM.Name.String() + "/" + sqM.Version,
+			urlPath + "/" + sqM.Name + "/" + sqM.Version,
 		},
 	}
 	for _, tt := range tests {
@@ -175,6 +186,7 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("%s/%s", urlPath, tt.qualifiedQueryName), reqBody)
 			req.Header.Set("Authorization", "Bearer AccessKey")
 			req.Header.Set("AuthUserId", userID)
+			req.Header.Set("EhrSystemId", systemID)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)

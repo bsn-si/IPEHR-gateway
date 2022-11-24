@@ -153,7 +153,9 @@ func (a *API) buildQueryAPI() handlerBuilder {
 func (a *API) buildDefinitionAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("definition")
+
 		r.Use(auth(a))
+		r.Use(ehrSystemID)
 
 		query := r.Group("query")
 		query.GET("/:qualifiedQueryName", a.Query.ListStored)

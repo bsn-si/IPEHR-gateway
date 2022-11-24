@@ -35,34 +35,49 @@ func (m *MockQueryService) EXPECT() *MockQueryServiceMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method.
-func (m *MockQueryService) Get(ctx context.Context, userID, qualifiedQueryName string) ([]model.StoredQuery, error) {
+// List mocks base method.
+func (m *MockQueryService) List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, userID, qualifiedQueryName)
-	ret0, _ := ret[0].([]model.StoredQuery)
+	ret := m.ctrl.Call(m, "List", ctx, userID, qualifiedQueryName)
+	ret0, _ := ret[0].([]*model.StoredQuery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockQueryServiceMockRecorder) Get(ctx, userID, qualifiedQueryName interface{}) *gomock.Call {
+// List indicates an expected call of List.
+func (mr *MockQueryServiceMockRecorder) List(ctx, userID, qualifiedQueryName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockQueryService)(nil).Get), ctx, userID, qualifiedQueryName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockQueryService)(nil).List), ctx, userID, qualifiedQueryName)
 }
 
 // Store mocks base method.
-func (m *MockQueryService) Store(ctx context.Context, userID, qType, qualifiedQueryName string, q []byte) (model.StoredQuery, error) {
+func (m *MockQueryService) Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Store", ctx, userID, qType, qualifiedQueryName, q)
-	ret0, _ := ret[0].(model.StoredQuery)
+	ret := m.ctrl.Call(m, "Store", ctx, userID, systemID, reqID, qType, name, q)
+	ret0, _ := ret[0].(*model.StoredQuery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Store indicates an expected call of Store.
-func (mr *MockQueryServiceMockRecorder) Store(ctx, userID, qType, qualifiedQueryName, q interface{}) *gomock.Call {
+func (mr *MockQueryServiceMockRecorder) Store(ctx, userID, systemID, reqID, qType, name, q interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockQueryService)(nil).Store), ctx, userID, qType, qualifiedQueryName, q)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockQueryService)(nil).Store), ctx, userID, systemID, reqID, qType, name, q)
+}
+
+// StoreVersion mocks base method.
+func (m *MockQueryService) StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name, version, q string) (*model.StoredQuery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StoreVersion", ctx, userID, systemID, reqID, qType, name, version, q)
+	ret0, _ := ret[0].(*model.StoredQuery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// StoreVersion indicates an expected call of StoreVersion.
+func (mr *MockQueryServiceMockRecorder) StoreVersion(ctx, userID, systemID, reqID, qType, name, version, q interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreVersion", reflect.TypeOf((*MockQueryService)(nil).StoreVersion), ctx, userID, systemID, reqID, qType, name, version, q)
 }
 
 // Validate mocks base method.

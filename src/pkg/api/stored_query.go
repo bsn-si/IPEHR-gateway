@@ -37,7 +37,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 		return
 	}
 
-	queryList, err := h.service.Get(c, userID, qName)
+	queryList, err := h.service.List(c, userID, qName)
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -46,7 +46,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 	}
 
 	if len(queryList) == 0 {
-		queryList = make([]model.StoredQuery, 0)
+		queryList = make([]*model.StoredQuery, 0)
 	}
 
 	c.JSON(http.StatusOK, queryList)
@@ -62,40 +62,46 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 // @Param        qualified_query_name    path      string  true  "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as "wildcard" in the search."
 // @Param        query_type              query     string  true  "Parameter indicating the query language/type"
 // @Param        Authorization           header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId              header    string  true  "UserId UUID"
+// @Param        AuthUserId              header    string  true  "UserId"
+// @Param        EhrSystemId			 header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Header       200  {string}  Location "{baseUrl}/definition/query/org.openehr::compositions/1.0.1"
 // @Success      200            "Is returned when the query was successfully stored."
 // @Failure      400            "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /definition/query/{qualifiedQueryName} [put]
 func (h *QueryHandler) Store(c *gin.Context) {
-	qName := c.Param("qualifiedQueryName")
-
 	userID := c.GetString("userID")
 	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	qName := c.Param("qualifiedQueryName")
 	if qName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "qualifiedQueryName is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "qualified_query_name is empty"})
 		return
 	}
 
 	qType := c.GetString("query_type")
 	if qType == "" {
-		qType = model.AQLQueryType.String()
+		qType = model.QueryTypeAQL
 	}
 
 	data, err := io.ReadAll(c.Request.Body)
-	defer c.Request.Body.Close()
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
 
-	if string(data) == "" {
+	defer c.Request.Body.Close()
+
+	if len(data) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
 		return
 	}
@@ -105,7 +111,9 @@ func (h *QueryHandler) Store(c *gin.Context) {
 		return
 	}
 
-	sQ, err := h.service.Store(c, userID, qType, qName, data)
+	reqID := c.GetString("reqID")
+
+	sQ, err := h.service.Store(c, userID, systemID, reqID, qType, qName, string(data))
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -113,7 +121,7 @@ func (h *QueryHandler) Store(c *gin.Context) {
 		return
 	}
 
-	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name.String()+"/"+sQ.Version)
+	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name+"/"+sQ.Version)
 
 	c.Status(http.StatusOK)
 }

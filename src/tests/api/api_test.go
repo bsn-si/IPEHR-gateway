@@ -53,10 +53,11 @@ type Request struct {
 }
 
 type TestData struct {
-	ehrSystemID  string
-	users        []*User
-	requests     []*Request
-	groupsAccess []*model.GroupAccess
+	ehrSystemID   string
+	users         []*User
+	requests      []*Request
+	groupsAccess  []*model.GroupAccess
+	storedQueries []*model.StoredQuery
 }
 
 type testWrap struct {
@@ -185,6 +186,10 @@ func Test_API(t *testing.T) {
 	}
 
 	if !t.Run("COMPOSITION delete", testWrap.compositionDeleteByID(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("DEFINITION Store a query", testWrap.definitionStoreQuery(testData)) {
 		t.Fatal()
 	}
 

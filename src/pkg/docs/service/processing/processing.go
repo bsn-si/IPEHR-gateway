@@ -243,7 +243,6 @@ func (p *Proc) execEthereum() {
 		Select("req_id, hash, status").
 		Where("status IN ?", statuses).
 		Group("hash").
-		Order("prioritized desc").
 		Find(&txs)
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)

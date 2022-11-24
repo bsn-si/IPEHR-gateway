@@ -79,6 +79,31 @@ func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docTyp
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
+func (i *Index) ListDocByType(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType) ([]model.DocumentMeta, error) {
+	var (
+		callOpts = &bind.CallOpts{Context: ctx}
+		eID      [32]byte
+	)
+
+	copy(eID[:], ehrUUID[:])
+
+	docsMeta, err := i.ehrIndex.GetEhrDocs(callOpts, eID, uint8(docType))
+	if err != nil {
+		if strings.Contains(err.Error(), "NFD") {
+			return nil, fmt.Errorf("ehrIndex.GetEhrDocs error: %w", errors.ErrNotFound)
+		}
+		return nil, fmt.Errorf("ehrIndex.GetEhrDocs error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
+	}
+
+	var list []model.DocumentMeta
+
+	for _, dm := range docsMeta {
+		list = append(list, model.DocumentMeta(dm))
+	}
+
+	return list, nil
+}
+
 func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error) {
 	var (
 		callOpts = &bind.CallOpts{Context: ctx}
@@ -117,7 +142,7 @@ func (i *Index) GetDocByTime(ctx context.Context, ehrUUID *uuid.UUID, docType ty
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (*model.DocumentMeta, error) {
+func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error) {
 	var (
 		callOpts = &bind.CallOpts{Context: ctx}
 		eID      [32]byte
@@ -197,7 +222,7 @@ func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNames
 	return &ehrUUID, nil
 }
 
-func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -221,7 +246,7 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	sig := make([]byte, 65)
 
-	data, err := i.abi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, *version, userAddress, sig)
+	data, err := i.abi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, version, userAddress, sig)
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
