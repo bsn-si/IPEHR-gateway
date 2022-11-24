@@ -34,6 +34,7 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 				IsmTransition: base.IsmTransition{
 					CurrentState: base.DvCodedText{
 						DefiningCode: base.CodePhrase{
+							Type:          base.CodePhraseItemType,
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "openehr"},
 							CodeString:    "245",
 						},
@@ -80,10 +81,12 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						Language: base.CodePhrase{
+							Type:          base.CodePhraseItemType,
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "ISO_639-1"},
 							CodeString:    "en",
 						},
 						Encoding: base.CodePhrase{
+							Type:          base.CodePhraseItemType,
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "IANA_character-sets"},
 							CodeString:    "UTF-8",
 						},

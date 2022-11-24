@@ -124,6 +124,7 @@ func toRef[T any](v T) *T {
 
 var expectedComposition = model.Composition{
 	Language: base.CodePhrase{
+		Type: base.CodePhraseItemType,
 		TerminologyID: base.ObjectID{
 			Type:  "TERMINOLOGY_ID",
 			Value: "ISO_639-1",
@@ -131,6 +132,7 @@ var expectedComposition = model.Composition{
 		CodeString: "en",
 	},
 	Territory: base.CodePhrase{
+		Type: base.CodePhraseItemType,
 		TerminologyID: base.ObjectID{
 			Type:  "TERMINOLOGY_ID",
 			Value: "ISO_3166-1",
@@ -140,6 +142,7 @@ var expectedComposition = model.Composition{
 	Category: base.NewDvCodedText(
 		"event",
 		base.CodePhrase{
+			Type: base.CodePhraseItemType,
 			TerminologyID: base.ObjectID{
 				Type:  "TERMINOLOGY_ID",
 				Value: "openehr",
@@ -159,6 +162,7 @@ var expectedComposition = model.Composition{
 		Setting: base.NewDvCodedText(
 			"other care",
 			base.CodePhrase{
+				Type: base.CodePhraseItemType,
 				TerminologyID: base.ObjectID{
 					Type:  "TERMINOLOGY_ID",
 					Value: "openehr",
@@ -185,6 +189,7 @@ var expectedComposition = model.Composition{
 				Mode: toRef(base.NewDvCodedText(
 					"face-to-face communication",
 					base.CodePhrase{
+						Type: base.CodePhraseItemType,
 						TerminologyID: base.ObjectID{
 							Type:  "TERMINOLOGY_ID",
 							Value: "openehr",
@@ -208,6 +213,7 @@ var expectedComposition = model.Composition{
 				Mode: toRef(base.NewDvCodedText(
 					"not specified",
 					base.CodePhrase{
+						Type: base.CodePhraseItemType,
 						TerminologyID: base.ObjectID{
 							Type:  "TERMINOLOGY_ID",
 							Value: "openehr",
