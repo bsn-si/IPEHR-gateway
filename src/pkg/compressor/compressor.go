@@ -6,20 +6,28 @@ import (
 	"io"
 )
 
+const (
+	NoCompression      = gzip.NoCompression
+	BestSpeed          = gzip.BestSpeed
+	BestCompression    = gzip.BestCompression
+	DefaultCompression = gzip.DefaultCompression
+	HuffmanOnly        = gzip.HuffmanOnly
+)
+
 type Compressor struct {
-	compressionLevel int
+	level int
 }
 
-func New(compressionLevel int) *Compressor {
+func New(level int) *Compressor {
 	return &Compressor{
-		compressionLevel: compressionLevel,
+		level: level,
 	}
 }
 
 func (c *Compressor) Compress(data []byte) (compressedData []byte, err error) {
 	var buf bytes.Buffer
 
-	zw, err := gzip.NewWriterLevel(&buf, c.compressionLevel)
+	zw, err := gzip.NewWriterLevel(&buf, c.level)
 	if err != nil {
 		return
 	}

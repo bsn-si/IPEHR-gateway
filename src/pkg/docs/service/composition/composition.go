@@ -30,10 +30,10 @@ type GroupAccessService interface {
 
 type Indexer interface {
 	MultiCallTxNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
-	GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte) (*model.DocumentMeta, error)
+	GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
 	AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
 	GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
-	DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte, version *[32]byte, privKey *[32]byte, nonce *big.Int) (string, error)
+	DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
 }
 
 type IpfsService interface {
@@ -122,7 +122,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	return composition, nil
@@ -168,7 +168,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, false)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	// TODO what we should do with prev composition?
@@ -273,13 +273,12 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 
 		docMeta := &model.DocumentMeta{
 			Status:    uint8(status.ACTIVE),
-			Id:        baseDocumentUIDHash,
-			Version:   *objectVersionID.VersionBytes(),
+			Id:        CID.Bytes(),
+			Version:   objectVersionID.VersionBytes()[:],
 			Timestamp: uint32(time.Now().Unix()),
 			IsLast:    true,
 			Attrs: []ehrIndexer.AttributesAttribute{
-				{Code: model.AttributeCID, Value: CID.Bytes()},
-				{Code: model.AttributeCIDEncr, Value: CIDEncr},
+				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
 				{Code: model.AttributeDocBaseUIDHash, Value: baseDocumentUIDHash[:]},
 				{Code: model.AttributeDocUIDEncrypted, Value: docIDEncrypted},
@@ -344,7 +343,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("GetLastByBaseID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -389,7 +388,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("GetCompositionByID error: %w", errors.ErrAlreadyDeleted)
 	}
 
-	CID, err := cid.Parse(docMeta.GetAttr(model.AttributeCID))
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
@@ -436,7 +435,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash, false)
+	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
 
 	// Waiting for tx processed and pending nonce increased
 	//time.Sleep(common.BlockchainTxProcAwaitTime)

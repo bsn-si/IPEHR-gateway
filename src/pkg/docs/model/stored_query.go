@@ -24,7 +24,7 @@ func (q *StoredQuery) Validate() error {
 		errs = append(errs, errors.ErrFieldIsEmpty("name"))
 	}
 
-	if q.Type.String() == "" {
+	if q.Type == "" {
 		errs = append(errs, errors.ErrFieldIsEmpty("type"))
 	}
 
@@ -53,25 +53,13 @@ func (q *StoredQuery) Validate() error {
 }
 
 // Query formalism type
-type QueryType string
-
-func (qt QueryType) String() string {
-	return string(qt)
-}
+type QueryType = string
 
 const (
-	AQLQueryType QueryType = "AQL"
+	QueryTypeAQL QueryType = "AQL"
 )
 
 // QueryName
 // The (fully qualified) name of the query (when is registered as a stored query), in a format of [{namespace}::]{query-name}. The namespace prefix is optional, and when used it should be in a form of a reverse domain name.
 // https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/StoredQuery_schema
-type QueryName string
-
-func (qn QueryName) String() string {
-	return string(qn)
-}
-
-func (qn QueryName) Parse(s string) string {
-	return string(qn)
-}
+type QueryName = string

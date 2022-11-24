@@ -13,9 +13,10 @@ import (
 )
 
 type QueryService interface {
-	Get(ctx context.Context, userID string, qualifiedQueryName string) ([]model.StoredQuery, error)
+	List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error)
 	Validate(data []byte) bool
-	Store(ctx context.Context, userID string, qType string, qualifiedQueryName string, q []byte) (model.StoredQuery, error)
+	Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error)
+	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name, version, q string) (*model.StoredQuery, error)
 }
 
 type QueryHandler struct {

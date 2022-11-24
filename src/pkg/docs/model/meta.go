@@ -7,13 +7,14 @@ import (
 type Attribute = uint8
 
 const (
-	AttributeCID             Attribute = 1
-	AttributeCIDEncr         Attribute = 2
+	AttributeID              Attribute = 1
+	AttributeIDEncr          Attribute = 2
 	AttributeKeyEncr         Attribute = 3
 	AttributeDocBaseUIDHash  Attribute = 4
 	AttributeDocUIDEncrypted Attribute = 5
 	AttributeDealCid         Attribute = 6
 	AttributeMinerAddress    Attribute = 7
+	AttributeContentEncr     Attribute = 8
 )
 
 type DocumentMeta ehrIndexer.DocsDocumentMeta

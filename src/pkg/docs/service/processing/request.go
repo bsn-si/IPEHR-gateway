@@ -28,13 +28,12 @@ type (
 	}
 
 	Tx struct {
-		ReqID       string `gorm:"req_id" json:"-"`
-		Kind        TxKind `gorm:"kind" json:"-"`
-		KindStr     string `gorm:"-" json:"Kind"`
-		Status      Status `gorm:"status" json:"-"`
-		StatusStr   string `gorm:"-" json:"Status"`
-		Prioritized bool   `gorm:"prioritized" json:"-"`
-		Comment     string
+		ReqID     string `gorm:"req_id" json:"-"`
+		Kind      TxKind `gorm:"kind" json:"-"`
+		KindStr   string `gorm:"-" json:"Kind"`
+		Status    Status `gorm:"status" json:"-"`
+		StatusStr string `gorm:"-" json:"Status"`
+		Comment   string
 	}
 
 	EthereumTx struct {
@@ -67,6 +66,7 @@ const (
 	RequestCompositionDelete
 	RequestUserRegister
 	RequestDocAccessSet
+	RequestQueryStore
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
@@ -121,13 +121,12 @@ func (r *Request) Commit() error {
 	return nil
 }
 
-func (r *Request) AddEthereumTx(kind TxKind, hash string, prioritized bool) {
+func (r *Request) AddEthereumTx(kind TxKind, hash string) {
 	tx := &EthereumTx{
 		Tx: Tx{
-			ReqID:       r.ReqID,
-			Kind:        kind,
-			Status:      StatusPending,
-			Prioritized: prioritized,
+			ReqID:  r.ReqID,
+			Kind:   kind,
+			Status: StatusPending,
 		},
 		Hash: hash,
 	}

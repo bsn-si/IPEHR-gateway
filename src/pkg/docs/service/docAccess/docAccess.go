@@ -138,7 +138,7 @@ func (s *Service) Set(ctx context.Context, userID, toUserID, reqID string, CID *
 		return fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxSetDocAccess, txHash, false)
+	procRequest.AddEthereumTx(proc.TxSetDocAccess, txHash)
 
 	return nil
 }
