@@ -77,8 +77,8 @@ func processObservation(node noder, obs *base.Observation) (noder, error) {
 
 	node.addAttribute("state", stateNode)
 
-	if obs.Protocol.Data != nil {
-		protocolNode, err := walk(obs.Protocol)
+	if obs.Protocol != nil && obs.Protocol.Data != nil {
+		protocolNode, err := walk(*obs.Protocol)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannon process OBSERVATION.Protocol")
 		}
