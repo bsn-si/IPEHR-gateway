@@ -3,3 +3,4 @@ config.json
 /.vscode
 /bin
 *.antlr
+*.DS_Store
