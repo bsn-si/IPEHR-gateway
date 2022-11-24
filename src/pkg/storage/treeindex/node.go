@@ -56,11 +56,13 @@ func (node objectNode) MarshalJSON() ([]byte, error) {
 	fmt.Fprintf(buffer, `"id":"%s",`, node.ID)
 	fmt.Fprintf(buffer, `"name":"%s",`, node.Name)
 	fmt.Fprintf(buffer, `"type":"%s"`, node.Type)
+
 	for _, k := range node.attributesOrder {
 		data, err := json.Marshal(node.attributes[k])
 		if err != nil {
 			return nil, err
 		}
+
 		fmt.Fprintf(buffer, `,"%s":%s`, k, string(data))
 	}
 

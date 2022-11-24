@@ -98,7 +98,7 @@ linters:
     #- wastedassign
     - whitespace
     #- wrapcheck
-    # - wsl
+    - wsl
   # Enable all available linters.
   # Default: false
   # enable-all: false

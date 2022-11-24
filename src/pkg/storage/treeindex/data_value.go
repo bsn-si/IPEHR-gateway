@@ -73,6 +73,7 @@ func processDvQuantity(node noder, value *base.DvQuantity) (noder, error) {
 	}
 
 	node.addAttribute("magnitude", newNode(value.Magnitude))
+
 	if value.Precision != nil {
 		node.addAttribute("precision", newNode(value.Precision))
 	}
@@ -160,6 +161,7 @@ func processDvProportion(node noder, value *base.DvProportion) (noder, error) {
 	node.addAttribute("numeration", newNode(value.Numeration))
 	node.addAttribute("denomination", newNode(value.Denomination))
 	node.addAttribute("type", newNode(value.Type))
+
 	if value.Precision != nil {
 		node.addAttribute("precision", newNode(value.Precision))
 	}
@@ -197,6 +199,7 @@ func processDvMultimedia(node noder, value *base.DvMultimedia) (noder, error) {
 	node.addAttribute("alternate_text", newNode(value.AlternativeText))
 	node.addAttribute("size", newNode(value.Size))
 	node.addAttribute("media_type", newNode(value.MediaType))
+
 	if value.CompressionAlgorithm != nil {
 		node.addAttribute("compression_algorithm", newNode(*value.CompressionAlgorithm))
 	}
@@ -299,6 +302,7 @@ func processDvText(node noder, value *base.DvText) (noder, error) {
 	}
 
 	node.addAttribute("value", newNode(value.Value))
+
 	if value.Formatting != "" {
 		node.addAttribute("formatting", newNode(value.Formatting))
 	}

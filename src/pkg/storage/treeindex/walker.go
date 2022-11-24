@@ -55,6 +55,7 @@ func walkRoot(obj base.Root) (noder, error) {
 
 func walkBySlice(slice any) (noder, error) {
 	sliceNode := newSliceNode()
+
 	switch ss := slice.(type) {
 	case []base.Root:
 		for _, item := range ss {
