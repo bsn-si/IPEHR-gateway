@@ -70,12 +70,14 @@ func processObservation(node noder, obs *base.Observation) (noder, error) {
 
 	node.addAttribute("data", dataNode)
 
-	stateNode, err := walk(obs.State)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot process OBSERVATION.state")
-	}
+	if obs.State != nil {
+		stateNode, err := walk(*obs.State)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot process OBSERVATION.state")
+		}
 
-	node.addAttribute("state", stateNode)
+		node.addAttribute("state", stateNode)
+	}
 
 	if obs.Protocol != nil && obs.Protocol.Data != nil {
 		protocolNode, err := walk(*obs.Protocol)
