@@ -47,30 +47,33 @@ func (v *VersionTreeID) split(ver string) []string {
 }
 
 func (v *VersionTreeID) parse(parts []string) error {
-	if length := len(parts); length == 1 {
-		v.trunkVersion = strings.Join(parts[:1], "")
-	} else if length == 2 {
-		v.trunkVersion = strings.Join(parts[:1], "")
-		v.branchNumber = strings.Join(parts[1:2], "")
-	} else if length == 3 {
-		v.trunkVersion = strings.Join(parts[:1], "")
-		v.branchNumber = strings.Join(parts[1:2], "")
-		v.branchVersion = strings.Join(parts[2:3], "")
+	for i := 0; i < len(parts) && i < 3; i++ {
+		switch i {
+		case 0:
+			v.trunkVersion = parts[i]
+		case 1:
+			v.branchNumber = parts[i]
+		case 2:
+			v.branchVersion = parts[i]
+		}
 	}
 
 	return nil
 }
 
 func (v *VersionTreeID) String() string {
-	ver := [3]string{v.branchVersion, v.branchNumber, v.trunkVersion}
 	result := []string{}
 
-	for _, p := range ver {
-		if p == "" && len(result) == 0 {
-			continue
-		}
+	if v.trunkVersion != "" {
+		result = append(result, v.trunkVersion)
+	}
 
-		result = append([]string{p}, result...)
+	if v.branchNumber != "" {
+		result = append(result, v.branchNumber)
+	}
+
+	if v.branchVersion != "" {
+		result = append(result, v.branchVersion)
 	}
 
 	return strings.Join(result, v.delimiter)

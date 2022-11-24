@@ -191,12 +191,11 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 	}
 
 	data, err := io.ReadAll(c.Request.Body)
-	defer c.Request.Body.Close()
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
+	defer c.Request.Body.Close()
 
 	if string(data) == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
