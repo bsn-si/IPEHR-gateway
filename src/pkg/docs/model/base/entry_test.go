@@ -52,7 +52,7 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 					Items: base.Items{},
 				},
 				CareEntry: base.CareEntry{
-					Protocol: base.ItemStructure{
+					Protocol: &base.ItemStructure{
 						Data: &base.ItemTree{
 							DataStructure: base.DataStructure{
 								Locatable: base.Locatable{
