@@ -54,7 +54,11 @@ func NewObjectVersionID(UID string, creatingSystemID string) (*ObjectVersionID, 
 }
 
 func (o *ObjectVersionID) String() string {
-	uid := []string{o.ObjectID().String(), o.CreatingSystemID(), o.VersionString()}
+	uid := []string{
+		o.ObjectID().String(),
+		o.CreatingSystemID(),
+		o.VersionString(),
+	}
 	return strings.Join(uid, uidDelimiter)
 }
 
