@@ -174,6 +174,7 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
+		return
 	}
 
 	query, err := h.service.GetByVersion(c, userID, qName, v)
