@@ -160,6 +160,7 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 		query := r.Group("query")
 		query.GET("/:qualifiedQueryName", a.Query.ListStored)
 		query.PUT("/:qualifiedQueryName", a.Query.Store)
+		query.PUT("/:qualifiedQueryName/:version", a.Query.StoreVersion)
 	}
 }
 

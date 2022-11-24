@@ -2,6 +2,8 @@ package query
 
 import (
 	"context"
+	"errors"
+	"hms/gateway/pkg/docs/model/base"
 	"fmt"
 	"log"
 	"strings"
@@ -37,6 +39,10 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 
 func (*Service) List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
 	return nil, nil
+}
+
+func (*Service) GetByVersion(ctx context.Context, userID string, qualifiedQueryName string, version *base.VersionTreeID) (model.StoredQuery, error) {
+	return model.StoredQuery{}, errors.New("not implemented")
 }
 
 func (*Service) Validate(data []byte) bool {
@@ -129,4 +135,8 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 	}
 
 	return storedQuery, nil
+}
+
+func (*Service) StoreVersion(ctx context.Context, userID string, qType string, qualifiedQueryName string, version *base.VersionTreeID, q []byte) (model.StoredQuery, error) {
+	return model.StoredQuery{}, nil
 }
