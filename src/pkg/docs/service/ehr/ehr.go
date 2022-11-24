@@ -261,7 +261,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 }
 
 func (s *Service) CreateSubject(subjectID, subjectNamespace, subType string) (subject base.PartySelf) {
-	subject.ExternalRef = base.ObjectRef{
+	subject.ExternalRef = &base.ObjectRef{
 		ID: base.ObjectID{
 			Type:  "HIER_OBJECT_ID", // TODO is it always eq with "HIER_OBJECT_ID"?
 			Value: subjectID,

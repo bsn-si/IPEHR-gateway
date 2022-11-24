@@ -91,6 +91,13 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 							CodeString:    "UTF-8",
 						},
 						OtherParticipations: []base.Participation{},
+						Subject: base.NewPartyProxy(
+							&base.PartySelf{
+								base.PartyProxyBase{
+									Type: base.PartySelfItemType,
+								},
+							},
+						),
 					},
 				},
 			},
@@ -104,7 +111,11 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 				t.Errorf("Action.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmp.AllowUnexported(base.ObjectVersionID{})); diff != "" {
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+			if diff := cmp.Diff(tt.want, got, opts); diff != "" {
 				t.Errorf("Action.UnmarshalJSON() mismatch {-want;+got}\n\t%s", diff)
 			}
 		})

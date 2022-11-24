@@ -90,7 +90,11 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 				t.Errorf("Composition.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmp.AllowUnexported(base.ObjectVersionID{})); diff != "" {
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+			if diff := cmp.Diff(tt.want, got, opts); diff != "" {
 				t.Errorf("Composition.UnmarshalJSON() mismatch{-want;+got}\n\t%s", diff)
 			}
 		})
@@ -139,6 +143,14 @@ var expectedComposition = model.Composition{
 		},
 		CodeString: "US",
 	},
+	Composer: base.NewPartyProxy(
+		&base.PartyIdentified{
+			Name: "Silvia Blake",
+			PartyProxyBase: base.PartyProxyBase{
+				Type: base.PartyIdentifiedItemType,
+			},
+		},
+	),
 	Category: base.NewDvCodedText(
 		"event",
 		base.CodePhrase{
@@ -172,8 +184,9 @@ var expectedComposition = model.Composition{
 		),
 		HealthCareFacility: &base.PartyIdentified{
 			Name: "Hospital",
-			PartyProxy: base.PartyProxy{
-				ExternalRef: base.ObjectRef{
+			PartyProxyBase: base.PartyProxyBase{
+				Type: base.PartyIdentifiedItemType,
+				ExternalRef: &base.ObjectRef{
 					ID: base.ObjectID{
 						Type:  "GENERIC_ID",
 						Value: "9091",
@@ -197,16 +210,22 @@ var expectedComposition = model.Composition{
 						CodeString: "216",
 					},
 				)),
-				Performer: base.PartyProxy{
-					ExternalRef: base.ObjectRef{
-						ID: base.ObjectID{
-							Type:  "GENERIC_ID",
-							Value: "199",
+				Performer: base.NewPartyProxy(
+					&base.PartyIdentified{
+						Name: "Dr. Marcus Johnson",
+						PartyProxyBase: base.PartyProxyBase{
+							Type: base.PartyIdentifiedItemType,
+							ExternalRef: &base.ObjectRef{
+								ID: base.ObjectID{
+									Type:  "GENERIC_ID",
+									Value: "199",
+								},
+								Namespace: "HOSPITAL-NS",
+								Type:      "PARTY_REF",
+							},
 						},
-						Namespace: "HOSPITAL-NS",
-						Type:      "PARTY_REF",
 					},
-				},
+				),
 			},
 			{
 				Function: base.NewDvText("performer"),
@@ -221,16 +240,22 @@ var expectedComposition = model.Composition{
 						CodeString: "193",
 					},
 				)),
-				Performer: base.PartyProxy{
-					ExternalRef: base.ObjectRef{
-						ID: base.ObjectID{
-							Type:  "GENERIC_ID",
-							Value: "198",
+				Performer: base.NewPartyProxy(
+					&base.PartyIdentified{
+						Name: "Lara Markham",
+						PartyProxyBase: base.PartyProxyBase{
+							Type: base.PartyIdentifiedItemType,
+							ExternalRef: &base.ObjectRef{
+								ID: base.ObjectID{
+									Type:  "GENERIC_ID",
+									Value: "198",
+								},
+								Namespace: "HOSPITAL-NS",
+								Type:      "PARTY_REF",
+							},
 						},
-						Namespace: "HOSPITAL-NS",
-						Type:      "PARTY_REF",
 					},
-				},
+				),
 			},
 		},
 	},

@@ -971,7 +971,7 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 
 		c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, ga.GroupUUID.String(), testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
-			t.Fatalf("Expected composition, received error: %v", err)
+			t.Fatalf("Unexpected composition, received error: %v", err)
 		}
 
 		t.Logf("Waiting for request %s done", reqID)
@@ -1692,7 +1692,7 @@ func createGroupAccess(userID, accessToken, baseURL string, client *http.Client)
 func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, baseURL string, client *http.Client) (*model.Composition, string, error) {
 	body, err := compositionCreateBodyRequest(ehrSystemID)
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrap(err, "cannnot create composition body request")
 	}
 
 	url := baseURL + "/v1/ehr/" + ehrID + "/composition"
@@ -1711,7 +1711,7 @@ func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, b
 
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrap(err, "cannot do create composition request")
 	}
 	defer response.Body.Close()
 
@@ -1721,12 +1721,12 @@ func createComposition(userID, ehrID, ehrSystemID, accessToken, groupAccessID, b
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrap(err, "connot read response body")
 	}
 
 	var c model.Composition
 	if err = json.Unmarshal(data, &c); err != nil {
-		return nil, "", err
+		return nil, "", errors.Wrap(err, "cannot unmarshal COMPOSITION mondel")
 	}
 
 	requestID := response.Header.Get("RequestId")
