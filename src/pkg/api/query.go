@@ -18,8 +18,7 @@ type QueryService interface {
 	GetByVersion(ctx context.Context, userID string, qualifiedQueryName string, version *base.VersionTreeID) (*model.StoredQuery, error)
 	Validate(data []byte) bool
 	Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error)
-	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name, version, q string) (*model.StoredQuery, error)
-	StoreVersion(ctx context.Context, userID string, qType string, qualifiedQueryName string, version *base.VersionTreeID, q []byte) (model.StoredQuery, error)
+	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error)
 }
 
 type QueryHandler struct {

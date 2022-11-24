@@ -52,7 +52,6 @@ func (v *VersionTreeID) parse(parts []string) error {
 	} else if length == 2 {
 		v.trunkVersion = strings.Join(parts[:1], "")
 		v.branchNumber = strings.Join(parts[1:2], "")
-
 	} else if length == 3 {
 		v.trunkVersion = strings.Join(parts[:1], "")
 		v.branchNumber = strings.Join(parts[1:2], "")
@@ -65,10 +64,12 @@ func (v *VersionTreeID) parse(parts []string) error {
 func (v *VersionTreeID) String() string {
 	ver := [3]string{v.branchVersion, v.branchNumber, v.trunkVersion}
 	result := []string{}
+
 	for _, p := range ver {
 		if p == "" && len(result) == 0 {
 			continue
 		}
+
 		result = append([]string{p}, result...)
 	}
 

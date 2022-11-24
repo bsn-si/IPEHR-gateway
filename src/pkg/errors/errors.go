@@ -29,6 +29,7 @@ var (
 	ErrObjectNotInit    = errors.New("Object is not initialized")
 	ErrIsInProcessing   = errors.New("Request is in processing")
 	ErrIsNotValid       = errors.New("Is not valid")
+	ErrNotImplemented   = errors.New("Not implemented")
 	ErrAccessTokenExp   = errors.New("Access token expired")
 	ErrRefreshTokenExp  = errors.New("Refresh token expired")
 	ErrUnauthorized     = errors.New("Unauthorized")

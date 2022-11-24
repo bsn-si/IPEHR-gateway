@@ -152,6 +152,12 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
 	qName := c.Param("qualifiedQueryName")
 	if qName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "qualifiedQueryName is empty"})
@@ -160,11 +166,12 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 
 	qType := c.GetString("query_type")
 	if qType == "" {
-		qType = model.AQLQueryType.String()
+		qType = model.QueryTypeAQL
 	}
 
 	version := c.Param("version")
 	v, err := base.NewVersionTreeID(version)
+
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
@@ -200,7 +207,9 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 		return
 	}
 
-	sQ, err := h.service.StoreVersion(c, userID, qType, qName, v, data)
+	reqID := c.GetString("reqID")
+	sQ, err := h.service.StoreVersion(c, userID, systemID, reqID, qType, qName, v, string(data))
+
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -208,7 +217,7 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 		return
 	}
 
-	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name.String()+"/"+v.String())
+	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name+"/"+v.String())
 
 	c.Status(http.StatusOK)
 }
