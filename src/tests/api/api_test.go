@@ -193,6 +193,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("DEFINITION List stored queries", testWrap.definitionListStoredQueries(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData)) {
 		t.Fatal()
 	}
