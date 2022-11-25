@@ -1,11 +1,5 @@
 package base
 
-import (
-	"encoding/json"
-
-	"github.com/pkg/errors"
-)
-
 // Entry
 // The abstract parent of all ENTRY subtypes. An ENTRY is the root of a logical item of hard clinical
 // information created in the clinical statement context, within a clinical session.
@@ -96,22 +90,4 @@ type Observation struct {
 	Data  History[ItemStructure]  `json:"data"`
 	State *History[ItemStructure] `json:"state,omitempty"`
 	CareEntry
-}
-
-func (o *Observation) UnmarshalJSON(data []byte) error {
-	tmp := struct {
-		Data  History[ItemStructure]  `json:"data"`
-		State *History[ItemStructure] `json:"state,omitempty"`
-		CareEntry
-	}{}
-
-	if err := json.Unmarshal(data, &tmp); err != nil {
-		return errors.Wrapf(err, "cannot unmarshal OBSERVATION: '%s'", string(data))
-	}
-
-	o.CareEntry = tmp.CareEntry
-	o.Data = tmp.Data
-	o.State = tmp.State
-
-	return nil
 }

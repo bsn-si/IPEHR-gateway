@@ -17,11 +17,11 @@ import (
 // https://specifications.openehr.org/releases/RM/latest/data_structures.html#_history_class
 type History[T any] struct {
 	DataStructure
-	Origin   DvDateTime    `json:"origin"`
-	Period   *DvDuration   `json:"period,omitempty"`
-	Duration *DvDuration   `json:"duration,omitempty"`
-	Summary  ItemStructure `json:"summary,omitempty"`
-	Events   []Event[T]    `json:"events,omitempty"`
+	Origin   DvDateTime     `json:"origin"`
+	Period   *DvDuration    `json:"period,omitempty"`
+	Duration *DvDuration    `json:"duration,omitempty"`
+	Summary  *ItemStructure `json:"summary,omitempty"`
+	Events   []Event[T]     `json:"events,omitempty"`
 }
 
 func (h History[T]) GetType() ItemType {

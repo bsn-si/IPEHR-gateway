@@ -49,7 +49,7 @@ func (is *ItemStructure) UnmarshalJSON(data []byte) error {
 	case ItemTreeItemType:
 		is.Data = &ItemTree{}
 	default:
-		return fmt.Errorf("unexpected item struct type: '%v', data: '%s'", tmp.Type, string(data)) // nolint
+		return fmt.Errorf("unexpected item struct type: '%v'", tmp.Type) // nolint
 	}
 
 	if err := json.Unmarshal(data, is.Data); err != nil {

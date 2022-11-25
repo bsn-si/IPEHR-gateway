@@ -53,7 +53,7 @@ func (itemW *itemWrapper) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, itemW.item); err != nil {
-		return errors.Wrapf(err, "cannot unmarshal wrapper item type: '%v', DATA: %v", tmpStr.Type, string(data))
+		return errors.Wrapf(err, "cannot unmarshal wrapper item type: '%v'", tmpStr.Type)
 	}
 
 	return nil

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestComposition_UnmarshalJSON(t *testing.T) {
@@ -120,6 +121,33 @@ func TestParseComposition(t *testing.T) {
 	if res.UID.Value == "" {
 		t.Error("Composition is not parsed correctly")
 	}
+}
+
+func TestMarshalAndUnmarshalComposition(t *testing.T) {
+	wd, _ := os.Getwd()
+	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+
+	inJSON, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatal("Can't open composition.json file", filePath)
+	}
+
+	composition := model.Composition{}
+
+	err = json.Unmarshal(inJSON, &composition)
+	assert.Nil(t, err)
+
+	data, err := json.Marshal(composition)
+	assert.Nil(t, err)
+
+	newComposition := model.Composition{}
+
+	err = json.Unmarshal(data, &newComposition)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.Equal(t, composition, newComposition)
 }
 
 func toRef[T any](v T) *T {
