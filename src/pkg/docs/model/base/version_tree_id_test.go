@@ -54,9 +54,16 @@ func TestVersionTreeID_String(t *testing.T) {
 			"1.1.1",
 			true,
 			"1.1.2",
-		}, {
+		},
+		{
 			"8. ver is incorrect",
 			"incorrect.val",
+			true,
+			"",
+		},
+		{
+			"9. sanitize string",
+			"9999999999999999999.9999999999999999999.9999999999999999999999999999999999",
 			true,
 			"",
 		},
