@@ -181,11 +181,7 @@ func TestVersionTreeID_Increase(t *testing.T) {
 				t.Errorf("NewVersionTreeID() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			inc, err := v.Increase()
-
-			if (err != nil) && !tt.wantErr {
-				t.Errorf("NewVersionTreeID.Increase() err: %s", err)
-			}
+			inc := v.Increase()
 
 			if (inc != tt.want) && !tt.wantErr {
 				t.Errorf("NewVersionTreeID.Increase() mismatch want: %s, got: %s", tt.want, inc)
