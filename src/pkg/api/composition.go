@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -98,8 +99,15 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 
 	defer c.Request.Body.Close()
 
+	buffer := bytes.Buffer{}
+	if _, err := io.Copy(&buffer, c.Request.Body); err != nil {
+		log.Println("Composition Create request body reading error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body reading error"})
+		return
+	}
+
 	composition := &model.Composition{}
-	if err := json.NewDecoder(c.Request.Body).Decode(composition); err != nil {
+	if err := json.NewDecoder(&buffer).Decode(composition); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body parsing error"})
 		return
@@ -171,7 +179,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	h.respondWithDocOrHeaders(ehrID, doc, c)
+	h.respondWithDocOrHeaders(c, ehrID, doc.UID.Value, buffer.Bytes())
 }
 
 // GetByID
@@ -499,14 +507,13 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, compositionUpdated)
 }
 
-func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Composition, c *gin.Context) {
-	uid := doc.UID.Value
-	h.addResponseHeaders(ehrID, uid, c)
+func (h *CompositionHandler) respondWithDocOrHeaders(c *gin.Context, ehrID, cmpID string, cmpRaw []byte) {
+	h.addResponseHeaders(ehrID, cmpID, c)
 
 	prefer := c.Request.Header.Get("Prefer")
 	//nolint:goconst
 	if prefer == "return=representation" {
-		c.JSON(http.StatusCreated, doc)
+		c.JSON(http.StatusCreated, cmpRaw)
 	} else {
 		c.AbortWithStatus(http.StatusCreated)
 	}
