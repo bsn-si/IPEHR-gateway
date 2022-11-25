@@ -513,7 +513,7 @@ func (h *CompositionHandler) respondWithDocOrHeaders(c *gin.Context, ehrID, cmpI
 	prefer := c.Request.Header.Get("Prefer")
 	//nolint:goconst
 	if prefer == "return=representation" {
-		c.JSON(http.StatusCreated, cmpRaw)
+		c.Data(http.StatusOK, "application/json; charset=utf-8", cmpRaw)
 	} else {
 		c.AbortWithStatus(http.StatusCreated)
 	}
