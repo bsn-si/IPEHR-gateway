@@ -53,7 +53,7 @@ func (itemW *itemWrapper) UnmarshalJSON(data []byte) error {
 	}
 
 	if err := json.Unmarshal(data, itemW.item); err != nil {
-		return errors.Wrapf(err, "cannot unmarshal wrapper item type: '%v', DATA: %v", tmpStr.Type, string(data))
+		return errors.Wrapf(err, "cannot unmarshal wrapper item type: '%v'", tmpStr.Type)
 	}
 
 	return nil
@@ -77,6 +77,10 @@ func (e Element) GetType() ItemType {
 
 func (e Element) GetLocatable() Locatable {
 	return Locatable(e.Item)
+}
+
+func (e Element) GetArchetypeNodeID() string {
+	return e.ArchetypeNodeID
 }
 
 func (e *Element) UnmarshalJSON(data []byte) error {
@@ -117,4 +121,8 @@ func (c Cluster) GetType() ItemType {
 
 func (c Cluster) GetLocatable() Locatable {
 	return Locatable(c.Item)
+}
+
+func (c Cluster) GetArchetypeNodeID() string {
+	return c.ArchetypeNodeID
 }

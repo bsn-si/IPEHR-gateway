@@ -25,7 +25,6 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 			"2. valid json",
 			[]byte(actionJSON),
 			base.Action{
-
 				Time: base.DvDateTime{
 					DvTemporal: base.DvTemporal{
 						DvValueBase: base.DvValueBase{Type: base.DvDateTimeItemType},
@@ -35,6 +34,7 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 				IsmTransition: base.IsmTransition{
 					CurrentState: base.DvCodedText{
 						DefiningCode: base.CodePhrase{
+							Type:          base.CodePhraseItemType,
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "openehr"},
 							CodeString:    "245",
 						},
@@ -42,19 +42,28 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 					},
 				},
 				Description: base.ItemTree{
-					ItemStructure: base.ItemStructure{base.DataStructure{base.Locatable{
-						Type:            base.ItemTreeItemType,
-						Name:            base.NewDvText("Tree"),
-						ArchetypeNodeID: "at0017",
-					}}},
+					DataStructure: base.DataStructure{
+						Locatable: base.Locatable{
+							Type:            base.ItemTreeItemType,
+							Name:            base.NewDvText("Tree"),
+							ArchetypeNodeID: "at0017",
+						},
+					},
 					Items: base.Items{},
 				},
 				CareEntry: base.CareEntry{
-					Protocol: base.ItemStructure{base.DataStructure{base.Locatable{
-						Type:            base.ItemTreeItemType,
-						Name:            base.NewDvText("Tree"),
-						ArchetypeNodeID: "at0030",
-					}}},
+					Protocol: &base.ItemStructure{
+						Data: &base.ItemTree{
+							DataStructure: base.DataStructure{
+								Locatable: base.Locatable{
+									Type:            base.ItemTreeItemType,
+									Name:            base.NewDvText("Tree"),
+									ArchetypeNodeID: "at0030",
+								},
+							},
+							Items: base.Items{},
+						},
+					},
 					Entry: base.Entry{
 						ContentItem: base.ContentItem{
 							Locatable: base.Locatable{
@@ -72,14 +81,23 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 							},
 						},
 						Language: base.CodePhrase{
+							Type:          base.CodePhraseItemType,
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "ISO_639-1"},
 							CodeString:    "en",
 						},
 						Encoding: base.CodePhrase{
+							Type:          base.CodePhraseItemType,
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "IANA_character-sets"},
 							CodeString:    "UTF-8",
 						},
 						OtherParticipations: []base.Participation{},
+						Subject: base.NewPartyProxy(
+							&base.PartySelf{
+								base.PartyProxyBase{
+									Type: base.PartySelfItemType,
+								},
+							},
+						),
 					},
 				},
 			},
@@ -93,7 +111,11 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 				t.Errorf("Action.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmp.AllowUnexported(base.ObjectVersionID{})); diff != "" {
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+			if diff := cmp.Diff(tt.want, got, opts); diff != "" {
 				t.Errorf("Action.UnmarshalJSON() mismatch {-want;+got}\n\t%s", diff)
 			}
 		})

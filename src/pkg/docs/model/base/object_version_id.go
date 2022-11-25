@@ -44,13 +44,21 @@ func NewObjectVersionID(UID string, creatingSystemID string) (*ObjectVersionID, 
 		return nil, fmt.Errorf("parseUID error: %w", err)
 	}
 
-	o.UID = &UIDBasedID{ObjectID{Value: o.String()}}
+	o.UID = &UIDBasedID{
+		ObjectID{
+			Value: o.String(),
+		},
+	}
 
 	return o, nil
 }
 
 func (o *ObjectVersionID) String() string {
-	uid := []string{o.ObjectID().String(), o.CreatingSystemID(), o.VersionString()}
+	uid := []string{
+		o.ObjectID().String(),
+		o.CreatingSystemID(),
+		o.VersionString(),
+	}
 	return strings.Join(uid, uidDelimiter)
 }
 

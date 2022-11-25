@@ -27,22 +27,3 @@ func TestParseEhr(t *testing.T) {
 		t.Fatal("EHR Document is not parsed correctly")
 	}
 }
-
-func TestParseComposition(t *testing.T) {
-	wd, _ := os.Getwd()
-	filePath := wd + "/../../../../data/mock/ehr/composition.json"
-
-	inJSON, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatal("Can't open composition.json file", filePath)
-	}
-
-	res, err := parser.ParseComposition(inJSON)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if res.UID.Value == "" {
-		t.Fatal("Composition is not parsed correctly")
-	}
-}

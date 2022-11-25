@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestComposition_UnmarshalJSON(t *testing.T) {
@@ -89,11 +91,63 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 				t.Errorf("Composition.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmp.AllowUnexported(base.ObjectVersionID{})); diff != "" {
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+			if diff := cmp.Diff(tt.want, got, opts); diff != "" {
 				t.Errorf("Composition.UnmarshalJSON() mismatch{-want;+got}\n\t%s", diff)
 			}
 		})
 	}
+}
+
+func TestParseComposition(t *testing.T) {
+	wd, _ := os.Getwd()
+	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+
+	inJSON, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatal("Can't open composition.json file", filePath)
+	}
+
+	res := model.Composition{}
+
+	if err := json.Unmarshal(inJSON, &res); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if res.UID.Value == "" {
+		t.Error("Composition is not parsed correctly")
+	}
+}
+
+func TestMarshalAndUnmarshalComposition(t *testing.T) {
+	wd, _ := os.Getwd()
+	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+
+	inJSON, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatal("Can't open composition.json file", filePath)
+	}
+
+	composition := model.Composition{}
+
+	err = json.Unmarshal(inJSON, &composition)
+	assert.Nil(t, err)
+
+	data, err := json.Marshal(composition)
+	assert.Nil(t, err)
+
+	newComposition := model.Composition{}
+
+	err = json.Unmarshal(data, &newComposition)
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	assert.Equal(t, composition, newComposition)
 }
 
 func toRef[T any](v T) *T {
@@ -102,6 +156,7 @@ func toRef[T any](v T) *T {
 
 var expectedComposition = model.Composition{
 	Language: base.CodePhrase{
+		Type: base.CodePhraseItemType,
 		TerminologyID: base.ObjectID{
 			Type:  "TERMINOLOGY_ID",
 			Value: "ISO_639-1",
@@ -109,15 +164,25 @@ var expectedComposition = model.Composition{
 		CodeString: "en",
 	},
 	Territory: base.CodePhrase{
+		Type: base.CodePhraseItemType,
 		TerminologyID: base.ObjectID{
 			Type:  "TERMINOLOGY_ID",
 			Value: "ISO_3166-1",
 		},
 		CodeString: "US",
 	},
+	Composer: base.NewPartyProxy(
+		&base.PartyIdentified{
+			Name: "Silvia Blake",
+			PartyProxyBase: base.PartyProxyBase{
+				Type: base.PartyIdentifiedItemType,
+			},
+		},
+	),
 	Category: base.NewDvCodedText(
 		"event",
 		base.CodePhrase{
+			Type: base.CodePhraseItemType,
 			TerminologyID: base.ObjectID{
 				Type:  "TERMINOLOGY_ID",
 				Value: "openehr",
@@ -137,6 +202,7 @@ var expectedComposition = model.Composition{
 		Setting: base.NewDvCodedText(
 			"other care",
 			base.CodePhrase{
+				Type: base.CodePhraseItemType,
 				TerminologyID: base.ObjectID{
 					Type:  "TERMINOLOGY_ID",
 					Value: "openehr",
@@ -146,8 +212,9 @@ var expectedComposition = model.Composition{
 		),
 		HealthCareFacility: &base.PartyIdentified{
 			Name: "Hospital",
-			PartyProxy: base.PartyProxy{
-				ExternalRef: base.ObjectRef{
+			PartyProxyBase: base.PartyProxyBase{
+				Type: base.PartyIdentifiedItemType,
+				ExternalRef: &base.ObjectRef{
 					ID: base.ObjectID{
 						Type:  "GENERIC_ID",
 						Value: "9091",
@@ -163,6 +230,7 @@ var expectedComposition = model.Composition{
 				Mode: toRef(base.NewDvCodedText(
 					"face-to-face communication",
 					base.CodePhrase{
+						Type: base.CodePhraseItemType,
 						TerminologyID: base.ObjectID{
 							Type:  "TERMINOLOGY_ID",
 							Value: "openehr",
@@ -170,22 +238,29 @@ var expectedComposition = model.Composition{
 						CodeString: "216",
 					},
 				)),
-				Performer: base.PartyProxy{
-					ExternalRef: base.ObjectRef{
-						ID: base.ObjectID{
-							Type:  "GENERIC_ID",
-							Value: "199",
+				Performer: base.NewPartyProxy(
+					&base.PartyIdentified{
+						Name: "Dr. Marcus Johnson",
+						PartyProxyBase: base.PartyProxyBase{
+							Type: base.PartyIdentifiedItemType,
+							ExternalRef: &base.ObjectRef{
+								ID: base.ObjectID{
+									Type:  "GENERIC_ID",
+									Value: "199",
+								},
+								Namespace: "HOSPITAL-NS",
+								Type:      "PARTY_REF",
+							},
 						},
-						Namespace: "HOSPITAL-NS",
-						Type:      "PARTY_REF",
 					},
-				},
+				),
 			},
 			{
 				Function: base.NewDvText("performer"),
 				Mode: toRef(base.NewDvCodedText(
 					"not specified",
 					base.CodePhrase{
+						Type: base.CodePhraseItemType,
 						TerminologyID: base.ObjectID{
 							Type:  "TERMINOLOGY_ID",
 							Value: "openehr",
@@ -193,16 +268,22 @@ var expectedComposition = model.Composition{
 						CodeString: "193",
 					},
 				)),
-				Performer: base.PartyProxy{
-					ExternalRef: base.ObjectRef{
-						ID: base.ObjectID{
-							Type:  "GENERIC_ID",
-							Value: "198",
+				Performer: base.NewPartyProxy(
+					&base.PartyIdentified{
+						Name: "Lara Markham",
+						PartyProxyBase: base.PartyProxyBase{
+							Type: base.PartyIdentifiedItemType,
+							ExternalRef: &base.ObjectRef{
+								ID: base.ObjectID{
+									Type:  "GENERIC_ID",
+									Value: "198",
+								},
+								Namespace: "HOSPITAL-NS",
+								Type:      "PARTY_REF",
+							},
 						},
-						Namespace: "HOSPITAL-NS",
-						Type:      "PARTY_REF",
 					},
-				},
+				),
 			},
 		},
 	},

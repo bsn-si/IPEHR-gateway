@@ -69,7 +69,11 @@ func TestSection_UnmarshalJSON(t *testing.T) {
 				t.Errorf("Section.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			if diff := cmp.Diff(tt.want, got, cmp.AllowUnexported(base.ObjectVersionID{})); diff != "" {
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+			if diff := cmp.Diff(tt.want, got, opts); diff != "" {
 				t.Errorf("Section.UnmarshalJSON() mismatch {-want;+got}\n\t%s", diff)
 			}
 		})
