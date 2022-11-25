@@ -99,9 +99,11 @@ func (s *Service) List(ctx context.Context, userID, qualifiedQueryName string) (
 			return nil, fmt.Errorf("Query content unmarshal error: %w", err)
 		}
 
-		if qualifiedQueryName != "" && storedQuery.Name == qualifiedQueryName {
-			result = append(result, &storedQuery)
+		if qualifiedQueryName != "" && storedQuery.Name != qualifiedQueryName {
+			continue
 		}
+
+		result = append(result, &storedQuery)
 	}
 
 	return result, nil
