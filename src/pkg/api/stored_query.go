@@ -1,14 +1,14 @@
 package api
 
 import (
-	"hms/gateway/pkg/docs/model/base"
 	"io"
 	"log"
 	"net/http"
 
-	"hms/gateway/pkg/docs/model"
-
 	"github.com/gin-gonic/gin"
+
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 )
 
 // Get
@@ -144,7 +144,7 @@ func (h *QueryHandler) Store(c *gin.Context) {
 // @Failure      400            "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc"
 // @Failure      409            "Is returned when a query with the given 'qualified_query_name' and 'version' already exists on the server"
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /definition/query/{qualifiedQueryName} [put]
+// @Router       /definition/query/{qualifiedQueryName}/{version} [put]
 func (h *QueryHandler) StoreVersion(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {

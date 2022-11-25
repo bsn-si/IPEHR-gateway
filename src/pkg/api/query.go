@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"hms/gateway/pkg/docs/model/base"
 	"io"
 	"net/http"
 
@@ -11,6 +10,7 @@ import (
 
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 )
 
 type QueryService interface {

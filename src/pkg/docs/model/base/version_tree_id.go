@@ -19,7 +19,7 @@ type VersionTreeID struct {
 
 const delimiter = "."
 
-var isVersion = regexp.MustCompile(`^(\d+)+(\.\d+){0,2}$`)
+var isVersion = regexp.MustCompile(`^(\d{1,8})+(\.\d{1,8}){0,2}$`)
 
 func NewVersionTreeID(version string) (*VersionTreeID, error) {
 	if !isVersion.MatchString(version) {
