@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -69,6 +70,116 @@ func (testWrap *testWrap) definitionStoreQuery(testData *TestData) func(t *testi
 		}
 
 		testData.storedQueries = append(testData.storedQueries, storedQuery)
+	}
+}
+
+func (testWrap *testWrap) definitionListStoredQueries(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		if len(testData.users) == 0 {
+			user := &User{
+				id:       uuid.New().String(),
+				password: fakeData.GetRandomStringWithLength(10),
+			}
+
+			reqID, err := registerUser(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatalf("Can not register user, err: %v", err)
+			}
+
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal("registerUser requestWait error: ", err)
+			}
+
+			testData.users = append(testData.users, user)
+		}
+
+		user := testData.users[0]
+
+		if user.accessToken == "" {
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal("User login error:", err)
+			}
+		}
+
+		if user.ehrID == "" {
+			ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			user.ehrID = ehr.EhrID.Value
+			user.ehrStatusID = ehr.EhrStatus.ID.Value
+		}
+
+		if len(testData.storedQueries) == 0 {
+			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			testData.storedQueries = append(testData.storedQueries, storedQuery)
+		}
+
+		query1 := testData.storedQueries[0]
+
+		url := testWrap.server.URL + "/v1/definition/query/" + query1.Name
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", user.id)
+		request.Header.Set("Authorization", "Bearer "+user.accessToken)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var storedQueries []model.StoredQuery
+
+		err = json.Unmarshal(data, &storedQueries)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(storedQueries) == 0 {
+			t.Fatalf("Expected query in list, received: %s", string(data))
+		}
+
+		query2 := storedQueries[0]
+
+		if query1.Name != query2.Name {
+			t.Fatalf("Expected query name: %s, received: %s", query1.Name, query2.Name)
+		}
+
+		if query1.Query != query2.Query {
+			t.Fatalf("Expected query content: %s, received: %s", query1.Query, query2.Query)
+		}
 	}
 }
 

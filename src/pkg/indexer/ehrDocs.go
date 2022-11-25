@@ -268,3 +268,25 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	return tx.Hash().Hex(), nil
 }
+
+func (i *Index) GetEhrIDByUserID(ctx context.Context, userID string) (*uuid.UUID, error) {
+	var uID [32]byte
+
+	copy(uID[:], userID)
+
+	ehrUUIDRaw, err := i.ehrIndex.EhrUsers(&bind.CallOpts{Context: ctx}, uID)
+	if err != nil {
+		return nil, fmt.Errorf("ehrIndex.EhrUsers error: %w", err)
+	}
+
+	if ehrUUIDRaw == [32]byte{} {
+		return nil, errors.ErrNotFound
+	}
+
+	ehrUUID, err := uuid.FromBytes(ehrUUIDRaw[:16])
+	if err != nil {
+		return nil, fmt.Errorf("ehrUUID FromBytes error: %w ehrUUIDRaw %x", err, ehrUUIDRaw)
+	}
+
+	return &ehrUUID, nil
+}
