@@ -170,8 +170,8 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 	}
 
 	version := c.Param("version")
-	v, err := base.NewVersionTreeID(version)
 
+	v, err := base.NewVersionTreeID(version)
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)
 		return
@@ -208,8 +208,8 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 	}
 
 	reqID := c.GetString("reqID")
-	sQ, err := h.service.StoreVersion(c, userID, systemID, reqID, qType, qName, v, string(data))
 
+	sQ, err := h.service.StoreVersion(c, userID, systemID, reqID, qType, qName, v, string(data))
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
