@@ -5,9 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"hms/gateway/pkg/docs/model"
-
 	"github.com/gin-gonic/gin"
+
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 )
 
 // Get
@@ -122,6 +123,101 @@ func (h *QueryHandler) Store(c *gin.Context) {
 	}
 
 	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name+"/"+sQ.Version)
+
+	c.Status(http.StatusOK)
+}
+
+// Store a query version
+// @Summary      Stores a query, at a specified version, on the system.
+// @Description
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
+// @Tags         QUERY
+// @Accept       json
+// @Produce      json
+// @Param        qualified_query_name    path      string  true  "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as "wildcard" in the search"
+// @Param        version                 path      string  true  "A SEMVER version number. This can be a an exact version (e.g. 1.7.1), or a pattern as partial prefix, in a form of {major} or {major}.{minor} (e.g. 1 or 1.0), in which case the highest (latest) version matching the prefix will be considered"
+// @Param        query_type              query     string  true  "Parameter indicating the query language/type"
+// @Param        Authorization           header    string  true  "Bearer AccessToken"
+// @Param        AuthUserId              header    string  true  "UserId UUID"
+// @Header       200  {string}  Location "{baseUrl}/definition/query/org.openehr::compositions/1.0.1"
+// @Success      200            "Is returned when the query was successfully stored"
+// @Failure      400            "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc"
+// @Failure      409            "Is returned when a query with the given 'qualified_query_name' and 'version' already exists on the server"
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
+// @Router       /definition/query/{qualifiedQueryName}/{version} [put]
+func (h *QueryHandler) StoreVersion(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	qName := c.Param("qualifiedQueryName")
+	if qName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "qualifiedQueryName is empty"})
+		return
+	}
+
+	qType := c.GetString("query_type")
+	if qType == "" {
+		qType = model.QueryTypeAQL
+	}
+
+	version := c.Param("version")
+
+	v, err := base.NewVersionTreeID(version)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	query, err := h.service.GetByVersion(c, userID, qName, v)
+	if err != nil {
+		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if query != nil {
+		c.AbortWithStatus(http.StatusConflict)
+		return
+	}
+
+	data, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		return
+	}
+	defer c.Request.Body.Close()
+
+	if string(data) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+
+	if !h.service.Validate(data) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+		return
+	}
+
+	reqID := c.GetString("reqID")
+
+	sQ, err := h.service.StoreVersion(c, userID, systemID, reqID, qType, qName, v, string(data))
+	if err != nil {
+		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Header("Location", h.baseURL+"/v1/definition/query/"+sQ.Name+"/"+v.String())
 
 	c.Status(http.StatusOK)
 }

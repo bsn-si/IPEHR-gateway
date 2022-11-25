@@ -7,6 +7,7 @@ package mocks
 import (
 	context "context"
 	model "hms/gateway/pkg/docs/model"
+	base "hms/gateway/pkg/docs/model/base"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -33,6 +34,21 @@ func NewMockQueryService(ctrl *gomock.Controller) *MockQueryService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockQueryService) EXPECT() *MockQueryServiceMockRecorder {
 	return m.recorder
+}
+
+// GetByVersion mocks base method.
+func (m *MockQueryService) GetByVersion(ctx context.Context, userID, qualifiedQueryName string, version *base.VersionTreeID) (*model.StoredQuery, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByVersion", ctx, userID, qualifiedQueryName, version)
+	ret0, _ := ret[0].(*model.StoredQuery)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByVersion indicates an expected call of GetByVersion.
+func (mr *MockQueryServiceMockRecorder) GetByVersion(ctx, userID, qualifiedQueryName, version interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByVersion", reflect.TypeOf((*MockQueryService)(nil).GetByVersion), ctx, userID, qualifiedQueryName, version)
 }
 
 // List mocks base method.
@@ -66,7 +82,7 @@ func (mr *MockQueryServiceMockRecorder) Store(ctx, userID, systemID, reqID, qTyp
 }
 
 // StoreVersion mocks base method.
-func (m *MockQueryService) StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name, version, q string) (*model.StoredQuery, error) {
+func (m *MockQueryService) StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreVersion", ctx, userID, systemID, reqID, qType, name, version, q)
 	ret0, _ := ret[0].(*model.StoredQuery)

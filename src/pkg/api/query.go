@@ -10,13 +10,15 @@ import (
 
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 )
 
 type QueryService interface {
 	List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error)
+	GetByVersion(ctx context.Context, userID string, qualifiedQueryName string, version *base.VersionTreeID) (*model.StoredQuery, error)
 	Validate(data []byte) bool
 	Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error)
-	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name, version, q string) (*model.StoredQuery, error)
+	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error)
 }
 
 type QueryHandler struct {

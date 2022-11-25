@@ -12,6 +12,7 @@ import (
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/status"
@@ -39,21 +40,27 @@ func (*Service) List(ctx context.Context, userID, qualifiedQueryName string) ([]
 	return nil, nil
 }
 
+func (*Service) GetByVersion(ctx context.Context, userID string, qualifiedQueryName string, version *base.VersionTreeID) (*model.StoredQuery, error) {
+	return nil, errors.ErrNotImplemented
+}
+
 func (*Service) Validate(data []byte) bool {
 	return true
 }
 
 func (s *Service) Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error) {
-	return s.StoreVersion(ctx, userID, systemID, reqID, qType, name, defaultVersion, q)
+	v, _ := base.NewVersionTreeID(defaultVersion)
+
+	return s.StoreVersion(ctx, userID, systemID, reqID, qType, name, v, q)
 }
 
-func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name, version, q string) (*model.StoredQuery, error) {
+func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error) {
 	timestamp := time.Now()
 
 	storedQuery := &model.StoredQuery{
 		Name:        name,
 		Type:        qType,
-		Version:     version,
+		Version:     version.String(),
 		TimeCreated: timestamp.Format(common.OpenEhrTimeFormat),
 		Query:       q,
 	}
