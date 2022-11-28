@@ -1,18 +1,22 @@
 package aqlprocessor
 
 import (
-	"fmt"
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
+	"log"
+	"strconv"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 type AQLListener struct {
 	*aqlparser.BaseAqlParserListener
+	query Query
 }
 
 func NewAQLListener() *AQLListener {
-	return &AQLListener{}
+	return &AQLListener{
+		query: Query{},
+	}
 }
 
 // VisitTerminal is called when a terminal node is visited.
@@ -25,60 +29,101 @@ func (aql *AQLListener) VisitErrorNode(node antlr.ErrorNode) {}
 func (aql *AQLListener) EnterEveryRule(ctx antlr.ParserRuleContext) {}
 
 // ExitEveryRule is called when any rule is exited.
-func (aql *AQLListener) ExitEveryRule(ctx antlr.ParserRuleContext) {
-	fmt.Println("rule", ctx.IsEmpty(), ctx.GetText())
-}
+func (aql *AQLListener) ExitEveryRule(ctx antlr.ParserRuleContext) {}
 
 // EnterSelectQuery is called when production selectQuery is entered.
 func (aql *AQLListener) EnterSelectQuery(ctx *aqlparser.SelectQueryContext) {
-	fmt.Println("ENTER SELECT QUERY")
+	aql.query.Select = Select{}
 }
 
 // ExitSelectQuery is called when production selectQuery is exited.
 func (aql *AQLListener) ExitSelectQuery(ctx *aqlparser.SelectQueryContext) {
-	fmt.Println()
-	fmt.Println("EXIT SELECT QUERY")
 }
 
 // EnterSelectClause is called when production selectClause is entered.
 func (aql *AQLListener) EnterSelectClause(ctx *aqlparser.SelectClauseContext) {
-	fmt.Println("ENTER SELECT CLAUSE")
 }
 
 // ExitSelectClause is called when production selectClause is exited.
 func (aql *AQLListener) ExitSelectClause(ctx *aqlparser.SelectClauseContext) {
-	fmt.Println("EXIT SELECT CLAUSE")
 }
 
 // EnterFromClause is called when production fromClause is entered.
-func (aql *AQLListener) EnterFromClause(ctx *aqlparser.FromClauseContext) {}
+func (aql *AQLListener) EnterFromClause(ctx *aqlparser.FromClauseContext) {
+	aql.query.From = From{}
+}
 
 // ExitFromClause is called when production fromClause is exited.
-func (aql *AQLListener) ExitFromClause(ctx *aqlparser.FromClauseContext) {}
+func (aql *AQLListener) ExitFromClause(ctx *aqlparser.FromClauseContext) {
+}
 
 // EnterWhereClause is called when production whereClause is entered.
-func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {}
+func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {
+	aql.query.Where = &Where{}
+}
 
 // ExitWhereClause is called when production whereClause is exited.
 func (aql *AQLListener) ExitWhereClause(ctx *aqlparser.WhereClauseContext) {}
 
 // EnterOrderByClause is called when production orderByClause is entered.
-func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) {}
+func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) {
+	if ctx.IsEmpty() {
+		return
+	}
+
+	for _, expr := range ctx.AllOrderByExpr() {
+		log.Println(expr.GetText())
+	}
+
+	aql.query.Order = &Order{}
+}
 
 // ExitOrderByClause is called when production orderByClause is exited.
 func (aql *AQLListener) ExitOrderByClause(ctx *aqlparser.OrderByClauseContext) {}
 
 // EnterLimitClause is called when production limitClause is entered.
-func (aql *AQLListener) EnterLimitClause(ctx *aqlparser.LimitClauseContext) {}
+func (aql *AQLListener) EnterLimitClause(ctx *aqlparser.LimitClauseContext) {
+	if ctx.IsEmpty() {
+		return
+	}
+
+	aql.query.Limit = &Limit{}
+
+	if limit := ctx.GetLimit(); limit != nil && limit.GetTokenType() == aqlparser.AqlLexerINTEGER {
+		limit, err := strconv.Atoi(limit.GetText())
+		if err != nil {
+			ctx.SetException(antlr.InputMisMatchException{
+				BaseRecognitionException: &antlr.BaseRecognitionException{},
+			})
+		}
+
+		aql.query.Limit.Limit = limit
+	}
+
+	if offset := ctx.GetOffset(); offset != nil && offset.GetTokenType() == aqlparser.AqlLexerINTEGER {
+		offset, err := strconv.Atoi(offset.GetText())
+		if err != nil {
+			ctx.SetException(antlr.InputMisMatchException{
+				BaseRecognitionException: &antlr.BaseRecognitionException{},
+			})
+		}
+
+		aql.query.Limit.Offset = offset
+	}
+}
 
 // ExitLimitClause is called when production limitClause is exited.
 func (aql *AQLListener) ExitLimitClause(ctx *aqlparser.LimitClauseContext) {}
 
 // EnterSelectExpr is called when production selectExpr is entered.
-func (aql *AQLListener) EnterSelectExpr(ctx *aqlparser.SelectExprContext) {}
+func (aql *AQLListener) EnterSelectExpr(ctx *aqlparser.SelectExprContext) {
+	// fmt.Println("select expr")
+	// fmt.Println(ctx.GetText())
+}
 
 // ExitSelectExpr is called when production selectExpr is exited.
-func (aql *AQLListener) ExitSelectExpr(ctx *aqlparser.SelectExprContext) {}
+func (aql *AQLListener) ExitSelectExpr(ctx *aqlparser.SelectExprContext) {
+}
 
 // EnterFromExpr is called when production fromExpr is entered.
 func (aql *AQLListener) EnterFromExpr(ctx *aqlparser.FromExprContext) {}
@@ -93,13 +138,27 @@ func (aql *AQLListener) EnterWhereExpr(ctx *aqlparser.WhereExprContext) {}
 func (aql *AQLListener) ExitWhereExpr(ctx *aqlparser.WhereExprContext) {}
 
 // EnterOrderByExpr is called when production orderByExpr is entered.
-func (aql *AQLListener) EnterOrderByExpr(ctx *aqlparser.OrderByExprContext) {}
+func (aql *AQLListener) EnterOrderByExpr(ctx *aqlparser.OrderByExprContext) {
+	order := OrderBy{
+		Identifier: ctx.IdentifiedPath().GetText(),
+		Ordering:   AscendingOrdering,
+	}
+
+	if ctx.ASC() != nil || ctx.ASCENDING() != nil {
+		order.Ordering = AscendingOrdering
+	} else if ctx.DESC() != nil || ctx.DESCENDING() != nil {
+		order.Ordering = DescendingOrdering
+	}
+
+	aql.query.Order.Orders = append(aql.query.Order.Orders, order)
+}
 
 // ExitOrderByExpr is called when production orderByExpr is exited.
 func (aql *AQLListener) ExitOrderByExpr(ctx *aqlparser.OrderByExprContext) {}
 
 // EnterColumnExpr is called when production columnExpr is entered.
-func (aql *AQLListener) EnterColumnExpr(ctx *aqlparser.ColumnExprContext) {}
+func (aql *AQLListener) EnterColumnExpr(ctx *aqlparser.ColumnExprContext) {
+}
 
 // ExitColumnExpr is called when production columnExpr is exited.
 func (aql *AQLListener) ExitColumnExpr(ctx *aqlparser.ColumnExprContext) {}
@@ -111,7 +170,8 @@ func (aql *AQLListener) EnterContainsExpr(ctx *aqlparser.ContainsExprContext) {}
 func (aql *AQLListener) ExitContainsExpr(ctx *aqlparser.ContainsExprContext) {}
 
 // EnterIdentifiedExpr is called when production identifiedExpr is entered.
-func (aql *AQLListener) EnterIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) {}
+func (aql *AQLListener) EnterIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) {
+}
 
 // ExitIdentifiedExpr is called when production identifiedExpr is exited.
 func (aql *AQLListener) ExitIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) {}
@@ -135,7 +195,8 @@ func (aql *AQLListener) EnterTerminal(ctx *aqlparser.TerminalContext) {}
 func (aql *AQLListener) ExitTerminal(ctx *aqlparser.TerminalContext) {}
 
 // EnterIdentifiedPath is called when production identifiedPath is entered.
-func (aql *AQLListener) EnterIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) {}
+func (aql *AQLListener) EnterIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) {
+}
 
 // ExitIdentifiedPath is called when production identifiedPath is exited.
 func (aql *AQLListener) ExitIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) {}

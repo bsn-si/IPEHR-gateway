@@ -24,6 +24,7 @@ func NewTree() *Tree {
 		obeservations: Container{},
 	}
 }
+
 func (t *Tree) AddComposition(com model.Composition) error {
 	return t.processCompositionContent(com.Content)
 }
