@@ -112,7 +112,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 	}
 }
 
-func TestStoredQueryHandler_ListVersion(t *testing.T) {
+func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 	var (
 		userID   = uuid.New().String()
 		systemID = uuid.New().String()
@@ -223,7 +223,7 @@ func TestStoredQueryHandler_ListVersion(t *testing.T) {
 
 			respBody, _ := io.ReadAll(resp.Body)
 			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
-				t.Errorf("StoredQueryHandler.ListStoredVersion() status response {-want;+got}\n%s", diff)
+				t.Errorf("StoredQueryHandler.GetStoredByVersion() status response {-want;+got}\n%s", diff)
 			}
 		})
 	}
