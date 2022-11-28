@@ -2,8 +2,6 @@ package api
 
 import (
 	"fmt"
-	"hms/gateway/pkg/docs/service/query"
-	userService "hms/gateway/pkg/user/service"
 	"net/http"
 
 	"github.com/gin-contrib/gzip"
@@ -14,7 +12,9 @@ import (
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/groupAccess"
+	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/infrastructure"
+	userService "hms/gateway/pkg/user/service"
 )
 
 // @title        IPEHR Gateway API
@@ -159,6 +159,7 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 
 		query := r.Group("query")
 		query.GET("/:qualifiedQueryName", a.Query.ListStored)
+		query.GET("/:qualifiedQueryName/:version", a.Query.GetStoredByVersion)
 		query.PUT("/:qualifiedQueryName", a.Query.Store)
 		query.PUT("/:qualifiedQueryName/:version", a.Query.StoreVersion)
 	}
