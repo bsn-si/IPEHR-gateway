@@ -9,6 +9,7 @@ import (
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/errors"
 )
 
 // Get
@@ -49,6 +50,63 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, queryList)
+}
+
+// Get
+// @Summary      Get list stored queries by version
+// @Description  Retrieves the definition of a particular stored query (at specified version) and its associated metadata.
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
+// @Tags         QUERY
+// @Accept       json
+// @Produce      json
+// @Param        qualified_query_name    path      string  false  "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as "wildcard" in the search."
+// @Param        version                 path      string  false  "A SEMVER version number. This can be a an exact version (e.g. 1.7.1), or a pattern as partial prefix, in a form of {major} or {major}.{minor} (e.g. 1 or 1.0), in which case the highest (latest) version matching the prefix will be considered."
+// @Param        Authorization           header    string  true  "Bearer AccessToken"
+// @Param        AuthUserId              header    string  true  "UserId UUID"
+// @Success      200                     {object}  []model.StoredQuery
+// @Failure      400                               "Is returned when the request has invalid content."
+// @Failure      404                               "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
+// @Failure      500                               "Is returned when an unexpected error occurs while processing a request"
+// @Router       /definition/query/{qualifiedQueryName}/{version} [get]
+func (h *QueryHandler) ListStoredVersion(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	version := c.Param("version")
+
+	v, err := base.NewVersionTreeID(version)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// Here we do not check the existence of the argument.
+	// This does not satisfy the specification. https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
+	// But otherwise it is not clear how the client can get the full list of stored queries
+	qName := c.Param("qualifiedQueryName")
+	if qName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "qualified_query_name is empty"})
+		return
+	}
+
+	sq, err := h.service.GetByVersion(c, userID, qName, v)
+
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, sq)
 }
 
 // Store a query

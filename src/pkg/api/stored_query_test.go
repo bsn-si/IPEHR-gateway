@@ -15,6 +15,7 @@ import (
 
 	"hms/gateway/pkg/api/mocks"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/errors"
 )
 
 //
@@ -106,6 +107,123 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			respBody, _ := io.ReadAll(resp.Body)
 			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
 				t.Errorf("StoredQueryHandler.List() status response {-want;+got}\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestStoredQueryHandler_ListVersion(t *testing.T) {
+	var (
+		userID   = uuid.New().String()
+		systemID = uuid.New().String()
+	)
+
+	sqM := &model.StoredQuery{
+		Name:        "org.openehr::compositions",
+		Type:        "aql",
+		Version:     "1.0.1",
+		TimeCreated: "2017-07-16T19:20:30.450+01:00",
+		Query:       "SELECT 1",
+	}
+
+	sqJSON, _ := json.Marshal(sqM)
+
+	tests := []struct {
+		name               string
+		qualifiedQueryName string
+		version            string
+		prepare            func(gaSvc *mocks.MockQueryService)
+		wantStatus         int
+		wantResp           string
+	}{
+		{
+			"1. empty result because {qualifiedQueryName} is incorrect",
+			"",
+			"incorrect",
+			func(gaSvc *mocks.MockQueryService) {},
+			http.StatusBadRequest,
+			"",
+		},
+		{
+			"2. empty result because {version} is incorrect",
+			sqM.Name,
+			"incorrect",
+			func(gaSvc *mocks.MockQueryService) {},
+			http.StatusBadRequest,
+			"",
+		},
+		{
+			"3. empty result because {qualifiedQueryName} was not found",
+			"notexist",
+			sqM.Version,
+			func(gaSvc *mocks.MockQueryService) {
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			"",
+		},
+		{
+			"4. empty result because document with that version is not exist",
+			sqM.Name,
+			"999.999.999",
+			func(gaSvc *mocks.MockQueryService) {
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			"",
+		},
+		{
+			"5. success result",
+			sqM.Name,
+			sqM.Version,
+			func(gaSvc *mocks.MockQueryService) {
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+			},
+			http.StatusOK,
+			string(sqJSON),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			sqSvc := mocks.NewMockQueryService(ctrl)
+			tt.prepare(sqSvc)
+
+			// Mock for auth user service
+			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
+
+			api := API{
+				Query: NewQueryHandler(sqSvc, ""),
+				User:  NewUserHandler(userSvc),
+			}
+
+			router := api.setupRouter(api.buildDefinitionAPI())
+
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/definition/query/%s/%s", tt.qualifiedQueryName, tt.version), nil)
+			req.Header.Set("Authorization", "Bearer emptyJWTkey")
+			req.Header.Set("AuthUserId", userID)
+			req.Header.Set("EhrSystemId", systemID)
+
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+
+			resp := recorder.Result()
+			defer resp.Body.Close()
+
+			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
+				t.Errorf("StoredQueryHandler.List() status code mismatch {-want;+got}\n\t%s", diff)
+			}
+
+			if tt.wantStatus == http.StatusNotFound {
+				return
+			}
+
+			respBody, _ := io.ReadAll(resp.Body)
+			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
+				t.Errorf("StoredQueryHandler.ListStoredVersion() status response {-want;+got}\n%s", diff)
 			}
 		})
 	}
