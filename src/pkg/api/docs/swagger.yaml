@@ -472,7 +472,6 @@ paths:
           and when is empty, it will be treated as '
         in: path
         name: qualified_query_name
-        required: true
         type: string
       - description: Bearer AccessToken
         in: header
@@ -520,9 +519,14 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
         required: true
         type: string
       produces:
@@ -538,6 +542,108 @@ paths:
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: Stores a new query, or updates an existing query on the system
+      tags:
+      - QUERY
+  /definition/query/{qualifiedQueryName}/{version}:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Retrieves the definition of a particular stored query (at specified version) and its associated metadata.
+        https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
+      parameters:
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
+          and when is empty, it will be treated as '
+        in: path
+        name: qualified_query_name
+        type: string
+      - description: A SEMVER version number. This can be a an exact version (e.g.
+          1.7.1), or a pattern as partial prefix, in a form of {major} or {major}.{minor}
+          (e.g. 1 or 1.0), in which case the highest (latest) version matching the
+          prefix will be considered.
+        in: path
+        name: version
+        type: string
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.StoredQuery'
+            type: array
+        "400":
+          description: Is returned when the request has invalid content.
+        "404":
+          description: Is returned when a stored query with {qualified_query_name}
+            and {version} does not exist.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get list stored queries by version
+      tags:
+      - QUERY
+    put:
+      consumes:
+      - application/json
+      description: https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
+      parameters:
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
+          and when is empty, it will be treated as '
+        in: path
+        name: qualified_query_name
+        required: true
+        type: string
+      - description: A SEMVER version number. This can be a an exact version (e.g.
+          1.7.1), or a pattern as partial prefix, in a form of {major} or {major}.{minor}
+          (e.g. 1 or 1.0), in which case the highest (latest) version matching the
+          prefix will be considered
+        in: path
+        name: version
+        required: true
+        type: string
+      - description: Parameter indicating the query language/type
+        in: query
+        name: query_type
+        required: true
+        type: string
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Is returned when the query was successfully stored
+        "400":
+          description: Is returned when the server was unable to store the query.
+            This could be due to incorrect request body (could not be parsed, etc),
+            unknown query type, etc
+        "409":
+          description: Is returned when a query with the given 'qualified_query_name'
+            and 'version' already exists on the server
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Stores a query, at a specified version, on the system.
       tags:
       - QUERY
   /ehr:
