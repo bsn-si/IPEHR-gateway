@@ -36,6 +36,11 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 }
 
 func (s *Service) List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
 	ehrUUID, err := s.Infra.Index.GetEhrIDByUserID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
@@ -49,69 +54,61 @@ func (s *Service) List(ctx context.Context, userID, qualifiedQueryName string) (
 		return nil, fmt.Errorf("ListDocByType error: %w", err)
 	}
 
-	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
-	if err != nil {
-		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
-	}
-
 	var result []*model.StoredQuery
 
 	for i, doc := range list {
-		var key *chachaPoly.Key
-		{
-			keyEncr := doc.GetAttr(model.AttributeKeyEncr)
-			if keyEncr == nil {
-				return nil, fmt.Errorf("%w: KeyEncr of %d StoredQuery", errors.ErrIsEmpty, i)
-			}
+		doc := doc
 
-			keyBytes, err := keybox.Open(keyEncr, userPubKey, userPrivKey)
-			if err != nil {
-				return nil, fmt.Errorf("keybox.Open error: %w", err)
-			}
-
-			key, err = chachaPoly.NewKeyFromBytes(keyBytes)
-			if err != nil {
-				return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
-			}
-		}
-
-		var content []byte
-		{
-			contentEncr := doc.GetAttr(model.AttributeContentEncr)
-			if contentEncr == nil {
-				return nil, fmt.Errorf("%w: ContentEncr of %d StoredQuery", errors.ErrIsEmpty, i)
-			}
-
-			contentCompressed, err := key.Decrypt(contentEncr)
-			if err != nil {
-				return nil, fmt.Errorf("Query content decryption error: %w", err)
-			}
-
-			content, err = compressor.New(compressor.BestCompression).Decompress(contentCompressed)
-			if err != nil {
-				return nil, fmt.Errorf("Query content decompression error: %w", err)
-			}
-		}
-
-		var storedQuery model.StoredQuery
-
-		err = msgpack.Unmarshal(content, &storedQuery)
+		storedQuery, err := extractFromDocMeta(&doc, userPubKey, userPrivKey)
 		if err != nil {
-			return nil, fmt.Errorf("Query content unmarshal error: %w", err)
+			return nil, fmt.Errorf("extractFromDocMeta error: %w index: %d", err, i)
 		}
 
 		if qualifiedQueryName != "" && storedQuery.Name != qualifiedQueryName {
 			continue
 		}
 
-		result = append(result, &storedQuery)
+		result = append(result, storedQuery)
 	}
 
 	return result, nil
 }
 
-func (*Service) GetByVersion(ctx context.Context, userID string, qualifiedQueryName string, version *base.VersionTreeID) (*model.StoredQuery, error) {
-	return nil, errors.ErrNotImplemented
+func (s *Service) GetByVersion(ctx context.Context, userID, systemID, name string, version *base.VersionTreeID) (*model.StoredQuery, error) {
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	ehrUUID, err := s.Infra.Index.GetEhrIDByUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Index.GetEhrIDByUserId error: %w", err)
+	}
+
+	id := []byte(userID + systemID + name + version.String())
+	idHash := sha3.Sum256(id)
+
+	var vID [32]byte
+
+	copy(vID[:], version.String())
+
+	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, ehrUUID, types.Query, &idHash, &vID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
+	}
+
+	storedQuery, err := extractFromDocMeta(docMeta, userPubKey, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("extractFromDocMeta error: %w", err)
+	}
+
+	return storedQuery, nil
 }
 
 func (*Service) Validate(data []byte) bool {
@@ -167,12 +164,13 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 	docMeta := &model.DocumentMeta{
 		Status:    uint8(status.ACTIVE),
 		Id:        idHash[:],
-		Version:   nil,
+		Version:   []byte(version.String()),
 		Timestamp: uint32(timestamp.Unix()),
 		IsLast:    true,
 		Attrs: []ehrIndexer.AttributesAttribute{
 			{Code: model.AttributeKeyEncr, Value: keyEncr},         // encrypted with key
 			{Code: model.AttributeContentEncr, Value: contentEncr}, // encrypted with userPubKey
+			{Code: model.AttributeDocBaseUIDHash, Value: idHash[:]},
 		},
 	}
 
@@ -204,4 +202,51 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 	}
 
 	return storedQuery, nil
+}
+
+func extractFromDocMeta(docMeta *model.DocumentMeta, userPubKey, userPrivKey *[32]byte) (*model.StoredQuery, error) {
+	var key *chachaPoly.Key
+	{
+		keyEncr := docMeta.GetAttr(model.AttributeKeyEncr)
+		if keyEncr == nil {
+			return nil, fmt.Errorf("%w: KeyEncr of StoredQuery", errors.ErrIsEmpty)
+		}
+
+		keyBytes, err := keybox.Open(keyEncr, userPubKey, userPrivKey)
+		if err != nil {
+			return nil, fmt.Errorf("keybox.Open error: %w", err)
+		}
+
+		key, err = chachaPoly.NewKeyFromBytes(keyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+		}
+	}
+
+	var content []byte
+	{
+		contentEncr := docMeta.GetAttr(model.AttributeContentEncr)
+		if contentEncr == nil {
+			return nil, fmt.Errorf("%w: ContentEncr of StoredQuery", errors.ErrIsEmpty)
+		}
+
+		contentCompressed, err := key.Decrypt(contentEncr)
+		if err != nil {
+			return nil, fmt.Errorf("Query content decryption error: %w", err)
+		}
+
+		content, err = compressor.New(compressor.BestCompression).Decompress(contentCompressed)
+		if err != nil {
+			return nil, fmt.Errorf("Query content decompression error: %w", err)
+		}
+	}
+
+	var storedQuery model.StoredQuery
+
+	err := msgpack.Unmarshal(content, &storedQuery)
+	if err != nil {
+		return nil, fmt.Errorf("Query content unmarshal error: %w", err)
+	}
+
+	return &storedQuery, nil
 }

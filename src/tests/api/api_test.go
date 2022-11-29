@@ -193,6 +193,18 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("DEFINITION Store a query version", testWrap.definitionStoreQueryVersion(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("DEFINITION Store a query version with same ID", testWrap.definitionStoreQueryVersionWithSameID(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("DEFINITION Get stored query by ID", testWrap.definitionStoredQueryGetByID(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("DEFINITION List stored queries", testWrap.definitionListStoredQueries(testData)) {
 		t.Fatal()
 	}

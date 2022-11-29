@@ -89,8 +89,8 @@ func (i *Index) ListDocByType(ctx context.Context, ehrUUID *uuid.UUID, docType t
 
 	docsMeta, err := i.ehrIndex.GetEhrDocs(callOpts, eID, uint8(docType))
 	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return nil, fmt.Errorf("ehrIndex.GetEhrDocs error: %w", errors.ErrNotFound)
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
 		}
 		return nil, fmt.Errorf("ehrIndex.GetEhrDocs error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
