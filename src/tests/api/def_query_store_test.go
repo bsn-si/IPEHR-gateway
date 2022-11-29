@@ -298,7 +298,16 @@ func (testWrap *testWrap) definitionStoreQueryVersionWithSameID(testData *TestDa
 			t.Fatal(err)
 		}
 
-		if len(testData.storedQueries) == 0 {
+		var query *model.StoredQuery
+
+		for _, q := range testData.storedQueries {
+			if q.Name != "" && q.Version != "" {
+				query = q
+				break
+			}
+		}
+
+		if query == nil {
 			name := fakeData.GetRandomStringWithLength(10)
 			version := version123
 
@@ -312,10 +321,8 @@ func (testWrap *testWrap) definitionStoreQueryVersionWithSameID(testData *TestDa
 				t.Fatal(err)
 			}
 
-			testData.storedQueries = append(testData.storedQueries, storedQuery)
+			query = storedQuery
 		}
-
-		query := testData.storedQueries[0]
 
 		_, _, err = storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, query.Name, query.Version, testWrap.httpClient)
 		if err == nil || !strings.Contains(err.Error(), "409 Conflict") {

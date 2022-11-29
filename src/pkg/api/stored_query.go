@@ -238,7 +238,7 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 
 	query, err := h.service.GetByVersion(c, userID, systemID, qName, v)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
-		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+		log.Printf("GetByVersion error: %v", err) // TODO replace to ErrorF after merge IPEHR-32
 
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
