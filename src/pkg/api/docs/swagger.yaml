@@ -460,7 +460,7 @@ paths:
       summary: Get a document access list
       tags:
       - ACCESS
-  /definition/query/{qualifiedQueryName}:
+  /definition/query/{qualified_query_name}:
     get:
       consumes:
       - application/json
@@ -468,8 +468,7 @@ paths:
         Retrieves list of all stored queries on the system matched by qualified_query_name as pattern.
         https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
       parameters:
-      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
-          and when is empty, it will be treated as '
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is  empty,  it  will  be  treated  as  '
         in: path
         name: qualified_query_name
         type: string
@@ -503,8 +502,7 @@ paths:
       - application/json
       description: https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
       parameters:
-      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
-          and when is empty, it will be treated as '
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is  empty,  it  will  be  treated  as  '
         in: path
         name: qualified_query_name
         required: true
@@ -536,15 +534,14 @@ paths:
           description: Is returned when the query was successfully stored.
         "400":
           description: Is returned when the server was unable to store the query.
-            This could be due to incorrect request body (could not be parsed, etc),
-            unknown query type, etc.
+            This could be due to incorrect request body (could not be parsed, etc),  unknown  query  type,  etc.
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: Stores a new query, or updates an existing query on the system
       tags:
       - QUERY
-  /definition/query/{qualifiedQueryName}/{version}:
+  /definition/query/{qualified_query_name}/{version}:
     get:
       consumes:
       - application/json
@@ -552,15 +549,13 @@ paths:
         Retrieves the definition of a particular stored query (at specified version) and its associated metadata.
         https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
       parameters:
-      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
-          and when is empty, it will be treated as '
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    '
         in: path
         name: qualified_query_name
         type: string
       - description: A SEMVER version number. This can be a an exact version (e.g.
-          1.7.1), or a pattern as partial prefix, in a form of {major} or {major}.{minor}
-          (e.g. 1 or 1.0), in which case the highest (latest) version matching the
-          prefix will be considered.
+          1.7.1),     or   a     pattern  as      partial  prefix,  in  a        form  of          {major}  or   {major}.{minor}  (e.g.
+          1 or 1.0),  in  which  case  the  highest  (latest)  version  matching  the  prefix  will  be  considered.
         in: path
         name: version
         type: string
@@ -569,9 +564,14 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
         required: true
         type: string
       produces:
@@ -580,18 +580,15 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/model.StoredQuery'
-            type: array
+            $ref: '#/definitions/model.StoredQuery'
         "400":
           description: Is returned when the request has invalid content.
         "404":
-          description: Is returned when a stored query with {qualified_query_name}
-            and {version} does not exist.
+          description: Is returned when a stored query with {qualified_query_name}  and  {version}  does  not  exist.
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
-      summary: Get list stored queries by version
+      summary: Get stored query by version
       tags:
       - QUERY
     put:
@@ -599,16 +596,14 @@ paths:
       - application/json
       description: https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
       parameters:
-      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},
-          and when is empty, it will be treated as '
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    '
         in: path
         name: qualified_query_name
         required: true
         type: string
       - description: A SEMVER version number. This can be a an exact version (e.g.
-          1.7.1), or a pattern as partial prefix, in a form of {major} or {major}.{minor}
-          (e.g. 1 or 1.0), in which case the highest (latest) version matching the
-          prefix will be considered
+          1.7.1),     or   a     pattern  as      partial  prefix,  in  a        form  of          {major}  or   {major}.{minor}  (e.g.
+          1 or 1.0),  in  which  case  the  highest  (latest)  version  matching  the  prefix  will  be  considered
         in: path
         name: version
         required: true
@@ -635,8 +630,7 @@ paths:
           description: Is returned when the query was successfully stored
         "400":
           description: Is returned when the server was unable to store the query.
-            This could be due to incorrect request body (could not be parsed, etc),
-            unknown query type, etc
+            This could be due to incorrect request body (could not be parsed, etc),  unknown  query  type,  etc
         "409":
           description: Is returned when a query with the given 'qualified_query_name'
             and 'version' already exists on the server

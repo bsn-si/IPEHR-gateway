@@ -48,7 +48,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 		wantResp           string
 	}{
 		{
-			"1. empty result because qualifiedQueryName was not found",
+			"1. empty result because qualified_query_name was not found",
 			"notexist",
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any())
@@ -137,7 +137,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 		wantResp           string
 	}{
 		{
-			"1. empty result because {qualifiedQueryName} is incorrect",
+			"1. empty result because {qualified_query_name} is incorrect",
 			"",
 			"incorrect",
 			func(gaSvc *mocks.MockQueryService) {},
@@ -153,7 +153,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			"",
 		},
 		{
-			"3. empty result because {qualifiedQueryName} was not found",
+			"3. empty result because {qualified_query_name} was not found",
 			"notexist",
 			sqM.Version,
 			func(gaSvc *mocks.MockQueryService) {

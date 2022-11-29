@@ -24,7 +24,7 @@ import (
 // @Param        AuthUserId            header    string  true   "UserId UUID"
 // @Success      200                   {object}  []model.StoredQuery
 // @Failure      500                   "Is returned when an unexpected error occurs while processing a request"
-// @Router       /definition/query/{qualifiedQueryName} [get]
+// @Router       /definition/query/{qualified_query_name} [get]
 func (h *QueryHandler) ListStored(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -35,7 +35,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 	// Here we do not check the existence of the argument.
 	// This does not satisfy the specification. https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
 	// But otherwise it is not clear how the client can get the full list of stored queries
-	qName := c.Param("qualifiedQueryName")
+	qName := c.Param("qualified_query_name")
 
 	queryList, err := h.service.List(c, userID, qName)
 	if err != nil {
@@ -68,7 +68,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 // @Failure      400                   "Is returned when the request has invalid content."
 // @Failure      404                   "Is returned when a stored query with {qualified_query_name}  and  {version}  does  not  exist."
 // @Failure      500                   "Is returned when an unexpected error occurs while processing a request"
-// @Router       /definition/query/{qualifiedQueryName}/{version} [get]
+// @Router       /definition/query/{qualified_query_name}/{version} [get]
 func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -90,7 +90,7 @@ func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 		return
 	}
 
-	qName := c.Param("qualifiedQueryName")
+	qName := c.Param("qualified_query_name")
 	if qName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "qualified_query_name is empty"})
 		return
@@ -128,7 +128,7 @@ func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 // @Success      200                   "Is returned when the query was successfully stored."
 // @Failure      400                   "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc),  unknown  query  type,  etc."
 // @Failure      500                   "Is returned when an unexpected error occurs while processing a request"
-// @Router       /definition/query/{qualifiedQueryName} [put]
+// @Router       /definition/query/{qualified_query_name} [put]
 func (h *QueryHandler) Store(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -142,7 +142,7 @@ func (h *QueryHandler) Store(c *gin.Context) {
 		return
 	}
 
-	qName := c.Param("qualifiedQueryName")
+	qName := c.Param("qualified_query_name")
 	if qName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "qualified_query_name is empty"})
 		return
@@ -203,7 +203,7 @@ func (h *QueryHandler) Store(c *gin.Context) {
 // @Failure      400                   "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc),  unknown  query  type,  etc"
 // @Failure      409                   "Is returned when a query with the given 'qualified_query_name' and 'version' already exists on the server"
 // @Failure      500                   "Is returned when an unexpected error occurs while processing a request"
-// @Router       /definition/query/{qualifiedQueryName}/{version} [put]
+// @Router       /definition/query/{qualified_query_name}/{version} [put]
 func (h *QueryHandler) StoreVersion(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -217,9 +217,9 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 		return
 	}
 
-	qName := c.Param("qualifiedQueryName")
+	qName := c.Param("qualified_query_name")
 	if qName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "qualifiedQueryName is empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "qualified_query_name is empty"})
 		return
 	}
 

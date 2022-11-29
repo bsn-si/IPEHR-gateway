@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -325,8 +324,8 @@ func (testWrap *testWrap) definitionStoreQueryVersionWithSameID(testData *TestDa
 		}
 
 		_, _, err = storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, query.Name, query.Version, testWrap.httpClient)
-		if err == nil || !strings.Contains(err.Error(), "409 Conflict") {
-			t.Fatalf("Expected error '409 Conflict', received: %v", err)
+		if err == nil || !errors.Is(err, errors.ErrAlreadyExist) {
+			t.Fatalf("Expected error '%v', received: %v", errors.ErrAlreadyExist, err)
 		}
 	}
 }
@@ -415,10 +414,15 @@ func storeQuery(userID, ehrSystemID, accessToken, baseURL, name, version string,
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
+		if response.StatusCode == http.StatusConflict {
+			return nil, "", errors.ErrAlreadyExist
+		}
+
 		data, err := io.ReadAll(response.Body)
 		if err != nil {
 			return nil, "", err
 		}
+
 		return nil, "", errors.New(response.Status + " data: " + string(data))
 	}
 
