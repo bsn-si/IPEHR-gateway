@@ -13,6 +13,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
+	"hms/gateway/pkg/docs/service/template"
 	"hms/gateway/pkg/infrastructure"
 	userService "hms/gateway/pkg/user/service"
 )
@@ -37,6 +38,7 @@ type API struct {
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
 	Query       *QueryHandler
+	Template    *TemplateHandler
 	//GroupAccess *GroupAccessHandler
 	DocAccess *DocAccessHandler
 	Request   *RequestHandler
@@ -46,6 +48,7 @@ type API struct {
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
+	templateService := template.NewService(docService)
 	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
 
@@ -54,6 +57,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
 		Query:       NewQueryHandler(queryService, cfg.BaseURL),
+		Template:    NewTemplateHandler(templateService, cfg.BaseURL),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess: NewDocAccessHandler(docService),
 		Request:   NewRequestHandler(docService),
@@ -156,6 +160,9 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 
 		r.Use(auth(a))
 		r.Use(ehrSystemID)
+
+		adlV1 := r.Group("template/adl1.4")
+		adlV1.GET("/:template_id", a.Template.GetByID)
 
 		query := r.Group("query")
 		query.GET("/:qualified_query_name", a.Query.ListStored)
