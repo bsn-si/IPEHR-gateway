@@ -37,18 +37,18 @@ func (m *MockQueryService) EXPECT() *MockQueryServiceMockRecorder {
 }
 
 // GetByVersion mocks base method.
-func (m *MockQueryService) GetByVersion(ctx context.Context, userID, qualifiedQueryName string, version *base.VersionTreeID) (*model.StoredQuery, error) {
+func (m *MockQueryService) GetByVersion(ctx context.Context, userID, systemID, name string, version *base.VersionTreeID) (*model.StoredQuery, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByVersion", ctx, userID, qualifiedQueryName, version)
+	ret := m.ctrl.Call(m, "GetByVersion", ctx, userID, systemID, name, version)
 	ret0, _ := ret[0].(*model.StoredQuery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByVersion indicates an expected call of GetByVersion.
-func (mr *MockQueryServiceMockRecorder) GetByVersion(ctx, userID, qualifiedQueryName, version interface{}) *gomock.Call {
+func (mr *MockQueryServiceMockRecorder) GetByVersion(ctx, userID, systemID, name, version interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByVersion", reflect.TypeOf((*MockQueryService)(nil).GetByVersion), ctx, userID, qualifiedQueryName, version)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByVersion", reflect.TypeOf((*MockQueryService)(nil).GetByVersion), ctx, userID, systemID, name, version)
 }
 
 // List mocks base method.

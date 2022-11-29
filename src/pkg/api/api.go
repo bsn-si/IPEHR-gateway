@@ -158,10 +158,10 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 		r.Use(ehrSystemID)
 
 		query := r.Group("query")
-		query.GET("/:qualifiedQueryName", a.Query.ListStored)
-		query.GET("/:qualifiedQueryName/:version", a.Query.GetStoredByVersion)
-		query.PUT("/:qualifiedQueryName", a.Query.Store)
-		query.PUT("/:qualifiedQueryName/:version", a.Query.StoreVersion)
+		query.GET("/:qualified_query_name", a.Query.ListStored)
+		query.GET("/:qualified_query_name/:version", a.Query.GetStoredByVersion)
+		query.PUT("/:qualified_query_name", a.Query.Store)
+		query.PUT("/:qualified_query_name/:version", a.Query.StoreVersion)
 	}
 }
 

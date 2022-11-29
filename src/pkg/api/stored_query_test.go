@@ -48,7 +48,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 		wantResp           string
 	}{
 		{
-			"1. empty result because qualifiedQueryName was not found",
+			"1. empty result because qualified_query_name was not found",
 			"notexist",
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any())
@@ -137,7 +137,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 		wantResp           string
 	}{
 		{
-			"1. empty result because {qualifiedQueryName} is incorrect",
+			"1. empty result because {qualified_query_name} is incorrect",
 			"",
 			"incorrect",
 			func(gaSvc *mocks.MockQueryService) {},
@@ -153,11 +153,11 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			"",
 		},
 		{
-			"3. empty result because {qualifiedQueryName} was not found",
+			"3. empty result because {qualified_query_name} was not found",
 			"notexist",
 			sqM.Version,
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			"",
@@ -167,7 +167,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			sqM.Name,
 			"999.999.999",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			"",
@@ -177,7 +177,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			sqM.Name,
 			sqM.Version,
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
 			},
 			http.StatusOK,
 			string(sqJSON),
@@ -363,6 +363,7 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
 				).Return(nil, nil)
 			},
 			sqM.Version,
@@ -384,6 +385,7 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 			sqM.Query,
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().GetByVersion(
+					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
@@ -411,6 +413,7 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 					gomock.Any(),
 				).Return(&sqM, nil)
 				gaSvc.EXPECT().GetByVersion(
+					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
