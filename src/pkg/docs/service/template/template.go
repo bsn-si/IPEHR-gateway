@@ -15,7 +15,8 @@ type Service struct {
 
 type ADLParser interface {
 	Version() model.VerADL
-	Parse(string) (interface{}, error)
+	AllowedType(string) (model.ADLTypes, error)
+	Parse([]byte, string) ([]byte, error)
 }
 
 func NewService(docService *service.DefaultDocumentService, parsers ...ADLParser) *Service {

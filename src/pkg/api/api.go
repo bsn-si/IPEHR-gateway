@@ -51,8 +51,8 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 
-	opt14 := adl14.NewADLParser()
-	opt2 := adl2.NewADLParser()
+	opt14 := adl14.NewParser()
+	opt2 := adl2.NewParser()
 
 	templateService := template.NewService(docService, opt14, opt2)
 	queryService := query.NewService(docService)
