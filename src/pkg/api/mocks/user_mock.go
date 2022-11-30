@@ -6,8 +6,8 @@ package mocks
 
 import (
 	context "context"
-	model "hms/gateway/pkg/docs/model"
 	processing "hms/gateway/pkg/docs/service/processing"
+	model "hms/gateway/pkg/user/model"
 	service "hms/gateway/pkg/user/service"
 	reflect "reflect"
 
@@ -15,43 +15,43 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockUserHandlerService is a mock of UserHandlerService interface.
-type MockUserHandlerService struct {
+// MockUserService is a mock of UserService interface.
+type MockUserService struct {
 	ctrl     *gomock.Controller
-	recorder *MockUserHandlerServiceMockRecorder
+	recorder *MockUserServiceMockRecorder
 }
 
-// MockUserHandlerServiceMockRecorder is the mock recorder for MockUserHandlerService.
-type MockUserHandlerServiceMockRecorder struct {
-	mock *MockUserHandlerService
+// MockUserServiceMockRecorder is the mock recorder for MockUserService.
+type MockUserServiceMockRecorder struct {
+	mock *MockUserService
 }
 
-// NewMockUserHandlerService creates a new mock instance.
-func NewMockUserHandlerService(ctrl *gomock.Controller) *MockUserHandlerService {
-	mock := &MockUserHandlerService{ctrl: ctrl}
-	mock.recorder = &MockUserHandlerServiceMockRecorder{mock}
+// NewMockUserService creates a new mock instance.
+func NewMockUserService(ctrl *gomock.Controller) *MockUserService {
+	mock := &MockUserService{ctrl: ctrl}
+	mock.recorder = &MockUserServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUserHandlerService) EXPECT() *MockUserHandlerServiceMockRecorder {
+func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 	return m.recorder
 }
 
 // AddTokenInBlackList mocks base method.
-func (m *MockUserHandlerService) AddTokenInBlackList(tokenRaw string, expires int64) {
+func (m *MockUserService) AddTokenInBlackList(tokenRaw string, expires int64) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "AddTokenInBlackList", tokenRaw, expires)
 }
 
 // AddTokenInBlackList indicates an expected call of AddTokenInBlackList.
-func (mr *MockUserHandlerServiceMockRecorder) AddTokenInBlackList(tokenRaw, expires interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) AddTokenInBlackList(tokenRaw, expires interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTokenInBlackList", reflect.TypeOf((*MockUserHandlerService)(nil).AddTokenInBlackList), tokenRaw, expires)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTokenInBlackList", reflect.TypeOf((*MockUserService)(nil).AddTokenInBlackList), tokenRaw, expires)
 }
 
 // CreateToken mocks base method.
-func (m *MockUserHandlerService) CreateToken(userID string) (*service.TokenDetails, error) {
+func (m *MockUserService) CreateToken(userID string) (*service.TokenDetails, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateToken", userID)
 	ret0, _ := ret[0].(*service.TokenDetails)
@@ -60,13 +60,13 @@ func (m *MockUserHandlerService) CreateToken(userID string) (*service.TokenDetai
 }
 
 // CreateToken indicates an expected call of CreateToken.
-func (mr *MockUserHandlerServiceMockRecorder) CreateToken(userID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) CreateToken(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateToken", reflect.TypeOf((*MockUserHandlerService)(nil).CreateToken), userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateToken", reflect.TypeOf((*MockUserService)(nil).CreateToken), userID)
 }
 
 // ExtractToken mocks base method.
-func (m *MockUserHandlerService) ExtractToken(bearToken string) string {
+func (m *MockUserService) ExtractToken(bearToken string) string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExtractToken", bearToken)
 	ret0, _ := ret[0].(string)
@@ -74,13 +74,13 @@ func (m *MockUserHandlerService) ExtractToken(bearToken string) string {
 }
 
 // ExtractToken indicates an expected call of ExtractToken.
-func (mr *MockUserHandlerServiceMockRecorder) ExtractToken(bearToken interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) ExtractToken(bearToken interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExtractToken", reflect.TypeOf((*MockUserHandlerService)(nil).ExtractToken), bearToken)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExtractToken", reflect.TypeOf((*MockUserService)(nil).ExtractToken), bearToken)
 }
 
 // ExtractTokenMetadata mocks base method.
-func (m *MockUserHandlerService) ExtractTokenMetadata(token *jwt.Token) (*service.TokenClaims, error) {
+func (m *MockUserService) ExtractTokenMetadata(token *jwt.Token) (*service.TokenClaims, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExtractTokenMetadata", token)
 	ret0, _ := ret[0].(*service.TokenClaims)
@@ -89,13 +89,13 @@ func (m *MockUserHandlerService) ExtractTokenMetadata(token *jwt.Token) (*servic
 }
 
 // ExtractTokenMetadata indicates an expected call of ExtractTokenMetadata.
-func (mr *MockUserHandlerServiceMockRecorder) ExtractTokenMetadata(token interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) ExtractTokenMetadata(token interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExtractTokenMetadata", reflect.TypeOf((*MockUserHandlerService)(nil).ExtractTokenMetadata), token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExtractTokenMetadata", reflect.TypeOf((*MockUserService)(nil).ExtractTokenMetadata), token)
 }
 
 // GetTokenHash mocks base method.
-func (m *MockUserHandlerService) GetTokenHash(tokenRaw string) [32]byte {
+func (m *MockUserService) GetTokenHash(tokenRaw string) [32]byte {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTokenHash", tokenRaw)
 	ret0, _ := ret[0].([32]byte)
@@ -103,13 +103,27 @@ func (m *MockUserHandlerService) GetTokenHash(tokenRaw string) [32]byte {
 }
 
 // GetTokenHash indicates an expected call of GetTokenHash.
-func (mr *MockUserHandlerServiceMockRecorder) GetTokenHash(tokenRaw interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GetTokenHash(tokenRaw interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenHash", reflect.TypeOf((*MockUserHandlerService)(nil).GetTokenHash), tokenRaw)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenHash", reflect.TypeOf((*MockUserService)(nil).GetTokenHash), tokenRaw)
+}
+
+// GroupCreate mocks base method.
+func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, systemID, reqID, name, description)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GroupCreate indicates an expected call of GroupCreate.
+func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, systemID, reqID, name, description interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, systemID, reqID, name, description)
 }
 
 // IsTokenInBlackList mocks base method.
-func (m *MockUserHandlerService) IsTokenInBlackList(tokenRaw string) bool {
+func (m *MockUserService) IsTokenInBlackList(tokenRaw string) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsTokenInBlackList", tokenRaw)
 	ret0, _ := ret[0].(bool)
@@ -117,13 +131,13 @@ func (m *MockUserHandlerService) IsTokenInBlackList(tokenRaw string) bool {
 }
 
 // IsTokenInBlackList indicates an expected call of IsTokenInBlackList.
-func (mr *MockUserHandlerServiceMockRecorder) IsTokenInBlackList(tokenRaw interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) IsTokenInBlackList(tokenRaw interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsTokenInBlackList", reflect.TypeOf((*MockUserHandlerService)(nil).IsTokenInBlackList), tokenRaw)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsTokenInBlackList", reflect.TypeOf((*MockUserService)(nil).IsTokenInBlackList), tokenRaw)
 }
 
 // Login mocks base method.
-func (m *MockUserHandlerService) Login(ctx context.Context, userID, systemID, password string) error {
+func (m *MockUserService) Login(ctx context.Context, userID, systemID, password string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, userID, systemID, password)
 	ret0, _ := ret[0].(error)
@@ -131,13 +145,13 @@ func (m *MockUserHandlerService) Login(ctx context.Context, userID, systemID, pa
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockUserHandlerServiceMockRecorder) Login(ctx, userID, systemID, password interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) Login(ctx, userID, systemID, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUserHandlerService)(nil).Login), ctx, userID, systemID, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUserService)(nil).Login), ctx, userID, systemID, password)
 }
 
 // NewProcRequest mocks base method.
-func (m *MockUserHandlerService) NewProcRequest(reqID, userID string) (*processing.Request, error) {
+func (m *MockUserService) NewProcRequest(reqID, userID string) (*processing.Request, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewProcRequest", reqID, userID)
 	ret0, _ := ret[0].(*processing.Request)
@@ -146,13 +160,13 @@ func (m *MockUserHandlerService) NewProcRequest(reqID, userID string) (*processi
 }
 
 // NewProcRequest indicates an expected call of NewProcRequest.
-func (mr *MockUserHandlerServiceMockRecorder) NewProcRequest(reqID, userID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) NewProcRequest(reqID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewProcRequest", reflect.TypeOf((*MockUserHandlerService)(nil).NewProcRequest), reqID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewProcRequest", reflect.TypeOf((*MockUserService)(nil).NewProcRequest), reqID, userID)
 }
 
 // Register mocks base method.
-func (m *MockUserHandlerService) Register(ctx context.Context, procRequest *processing.Request, user *model.UserCreateRequest, systemID string) error {
+func (m *MockUserService) Register(ctx context.Context, procRequest *processing.Request, user *model.UserCreateRequest, systemID string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Register", ctx, procRequest, user, systemID)
 	ret0, _ := ret[0].(error)
@@ -160,13 +174,13 @@ func (m *MockUserHandlerService) Register(ctx context.Context, procRequest *proc
 }
 
 // Register indicates an expected call of Register.
-func (mr *MockUserHandlerServiceMockRecorder) Register(ctx, procRequest, user, systemID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) Register(ctx, procRequest, user, systemID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockUserHandlerService)(nil).Register), ctx, procRequest, user, systemID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockUserService)(nil).Register), ctx, procRequest, user, systemID)
 }
 
 // VerifyAccess mocks base method.
-func (m *MockUserHandlerService) VerifyAccess(userID, tokenString string) error {
+func (m *MockUserService) VerifyAccess(userID, tokenString string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyAccess", userID, tokenString)
 	ret0, _ := ret[0].(error)
@@ -174,13 +188,13 @@ func (m *MockUserHandlerService) VerifyAccess(userID, tokenString string) error 
 }
 
 // VerifyAccess indicates an expected call of VerifyAccess.
-func (mr *MockUserHandlerServiceMockRecorder) VerifyAccess(userID, tokenString interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) VerifyAccess(userID, tokenString interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAccess", reflect.TypeOf((*MockUserHandlerService)(nil).VerifyAccess), userID, tokenString)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAccess", reflect.TypeOf((*MockUserService)(nil).VerifyAccess), userID, tokenString)
 }
 
 // VerifyAndGetTokenDetails mocks base method.
-func (m *MockUserHandlerService) VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*service.TokenDetails, error) {
+func (m *MockUserService) VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*service.TokenDetails, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyAndGetTokenDetails", userID, accessToken, refreshToken)
 	ret0, _ := ret[0].(*service.TokenDetails)
@@ -189,13 +203,13 @@ func (m *MockUserHandlerService) VerifyAndGetTokenDetails(userID, accessToken, r
 }
 
 // VerifyAndGetTokenDetails indicates an expected call of VerifyAndGetTokenDetails.
-func (mr *MockUserHandlerServiceMockRecorder) VerifyAndGetTokenDetails(userID, accessToken, refreshToken interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) VerifyAndGetTokenDetails(userID, accessToken, refreshToken interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAndGetTokenDetails", reflect.TypeOf((*MockUserHandlerService)(nil).VerifyAndGetTokenDetails), userID, accessToken, refreshToken)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyAndGetTokenDetails", reflect.TypeOf((*MockUserService)(nil).VerifyAndGetTokenDetails), userID, accessToken, refreshToken)
 }
 
 // VerifyToken mocks base method.
-func (m *MockUserHandlerService) VerifyToken(userID, tokenString string, tokenType service.TokenType) (*jwt.Token, error) {
+func (m *MockUserService) VerifyToken(userID, tokenString string, tokenType service.TokenType) (*jwt.Token, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VerifyToken", userID, tokenString, tokenType)
 	ret0, _ := ret[0].(*jwt.Token)
@@ -204,7 +218,7 @@ func (m *MockUserHandlerService) VerifyToken(userID, tokenString string, tokenTy
 }
 
 // VerifyToken indicates an expected call of VerifyToken.
-func (mr *MockUserHandlerServiceMockRecorder) VerifyToken(userID, tokenString, tokenType interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) VerifyToken(userID, tokenString, tokenType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyToken", reflect.TypeOf((*MockUserHandlerService)(nil).VerifyToken), userID, tokenString, tokenType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyToken", reflect.TypeOf((*MockUserService)(nil).VerifyToken), userID, tokenString, tokenType)
 }

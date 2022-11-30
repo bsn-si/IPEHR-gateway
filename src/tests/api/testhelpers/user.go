@@ -1,6 +1,6 @@
 package testhelpers
 
-import "hms/gateway/pkg/docs/model"
+import "hms/gateway/pkg/user/model"
 
 type UserHelper struct {
 }

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	userService "hms/gateway/pkg/user/service"
 	"io"
 	"log"
 	"net/http"
@@ -11,12 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 
-	"hms/gateway/pkg/docs/model"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/user/model"
+	userService "hms/gateway/pkg/user/service"
 )
 
-type UserHandlerService interface {
+type UserService interface {
 	NewProcRequest(reqID, userID string) (*proc.Request, error)
 	Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
@@ -29,13 +29,14 @@ type UserHandlerService interface {
 	AddTokenInBlackList(tokenRaw string, expires int64)
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
+	GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) error
 }
 
 type UserHandler struct {
-	service UserHandlerService
+	service UserService
 }
 
-func NewUserHandler(handlerService UserHandlerService) *UserHandler {
+func NewUserHandler(handlerService UserService) *UserHandler {
 	return &UserHandler{
 		service: handlerService,
 	}
@@ -56,7 +57,7 @@ func NewUserHandler(handlerService UserHandlerService) *UserHandler {
 // @Failure  422          "Password, systemID or role incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/register [post]
-func (h UserHandler) Register(c *gin.Context) {
+func (h *UserHandler) Register(c *gin.Context) {
 	// TODO can users register by themselves, or does it have to be an already authorized user?
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -137,7 +138,7 @@ func (h UserHandler) Register(c *gin.Context) {
 // @Failure  401          "Password or userID incorrect"
 // @Failure  500          "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/login [post]
-func (h UserHandler) Login(c *gin.Context) {
+func (h *UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
 	var u model.UserAuthRequest
 	if err := c.ShouldBindJSON(&u); err != nil {
@@ -197,7 +198,7 @@ func (h UserHandler) Login(c *gin.Context) {
 // @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/logout [post]
-func (h UserHandler) Logout(c *gin.Context) {
+func (h *UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
 
@@ -241,7 +242,7 @@ func (h UserHandler) Logout(c *gin.Context) {
 // @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/refresh/ [get]
-func (h UserHandler) RefreshToken(c *gin.Context) {
+func (h *UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 	tokenString := c.Request.Header.Get("Authorization")
 
