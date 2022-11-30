@@ -2,14 +2,17 @@ package api
 
 import (
 	"context"
-	"hms/gateway/pkg/docs/model"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service/template"
 )
 
 type TemplateService interface {
+	Parser(version string) (template.ADLParser, error)
 	GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error)
 }
 
@@ -20,6 +23,7 @@ type TemplateHandler struct {
 
 func NewTemplateHandler(templateService TemplateService, baseURL string) *TemplateHandler {
 	return &TemplateHandler{
+		//
 		service: templateService,
 		baseURL: baseURL,
 	}
@@ -47,6 +51,14 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 
 	qName := c.Param("template_id")
 
+	p, err := h.service.Parser(model.VerADL1_4)
+	if err != nil {
+		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
 	t, err := h.service.GetByID(c, userID, qName)
 	if err != nil {
 		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
@@ -54,6 +66,8 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+
+	// TODO convert to needed type
 
 	c.JSON(http.StatusOK, t)
 }

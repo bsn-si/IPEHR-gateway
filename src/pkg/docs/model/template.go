@@ -14,9 +14,9 @@ type Template struct {
 }
 
 // Version show as which service we should use for parsing template
-type verADL = string
+type VerADL = string
 
 const (
-	verADL1_4 verADL = "adl1.4"
-	verADL2   verADL = "adl2"
+	VerADL1_4 VerADL = "adl1.4"
+	VerADL2   VerADL = "adl2"
 )
