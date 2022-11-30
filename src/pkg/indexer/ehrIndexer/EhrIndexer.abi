@@ -1024,16 +1024,6 @@
               "type": "bytes32"
             },
             {
-              "internalType": "bytes",
-              "name": "groupIdEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "groupKeyEncr",
-              "type": "bytes"
-            },
-            {
               "components": [
                 {
                   "internalType": "enum Attributes.Code",

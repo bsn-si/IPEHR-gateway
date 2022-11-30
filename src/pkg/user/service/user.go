@@ -16,11 +16,11 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
+	"hms/gateway/pkg/user/model"
 )
 
 type Service struct {

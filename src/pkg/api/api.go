@@ -185,6 +185,9 @@ func (a *API) buildUserAPI() handlerBuilder {
 
 		r.Use(auth(a))
 		r.POST("/logout", a.User.Logout)
+
+		r = r.Group("group")
+		r.POST("", a.User.GroupCreate)
 	}
 }
 

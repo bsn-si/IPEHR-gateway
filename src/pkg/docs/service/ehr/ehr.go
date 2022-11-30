@@ -183,7 +183,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
 				{Code: model.AttributeDocBaseUIDHash, Value: make([]byte, 32)},
-				{Code: model.AttributeDocUIDEncrypted, Value: ehrIDEncrypted},
+				{Code: model.AttributeDocUIDEncr, Value: ehrIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
 			},
@@ -211,7 +211,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -244,7 +244,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -308,7 +308,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 		return fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -426,7 +426,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
 				{Code: model.AttributeDocBaseUIDHash, Value: baseDocumentUIDHash[:]},
-				{Code: model.AttributeDocUIDEncrypted, Value: statusIDEncrypted},
+				{Code: model.AttributeDocUIDEncr, Value: statusIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
 			},
@@ -487,7 +487,7 @@ func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UU
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -525,7 +525,7 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID string, ehrUU
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -557,7 +557,7 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehr
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncrypted)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}

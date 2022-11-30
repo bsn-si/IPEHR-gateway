@@ -27,6 +27,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
+	userModel "hms/gateway/pkg/user/model"
 	userRoles "hms/gateway/pkg/user/roles"
 	"hms/gateway/tests/api/testhelpers"
 )
@@ -58,6 +59,7 @@ type TestData struct {
 	requests      []*Request
 	groupsAccess  []*model.GroupAccess
 	storedQueries []*model.StoredQuery
+	userGroups    []*userModel.UserGroup
 }
 
 type testWrap struct {
@@ -216,6 +218,10 @@ func Test_API(t *testing.T) {
 	if !t.Run("QUERY execute with POST Expected fail with wrong query", testWrap.queryExecPostFail(testData)) {
 		t.Fatal()
 	}
+
+	if !t.Run("User group create", testWrap.userGroupCreate(testData)) {
+		t.Fatal()
+	}
 }
 
 func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
@@ -251,7 +257,7 @@ func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
 		return err
 	}
 
-	jwt := model.JWT{}
+	jwt := userModel.JWT{}
 	if err = json.Unmarshal(content, &jwt); err != nil {
 		return err
 	}
@@ -380,7 +386,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 			action         string
 			method         string
 			useAuthHeaders bool
-			request        *model.UserAuthRequest
+			request        *userModel.UserAuthRequest
 			statusCode     int
 		}{
 			{
@@ -453,7 +459,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 		}
 
 		var (
-			jwt    model.JWT
+			jwt    userModel.JWT
 			result = true
 		)
 
@@ -1332,7 +1338,7 @@ func (testWrap *testWrap) queryExecPostFail(testData *TestData) func(t *testing.
 }
 
 func userCreateBodyRequest(userID, password string) (*bytes.Reader, error) {
-	userRegisterRequest := &model.UserCreateRequest{
+	userRegisterRequest := &userModel.UserCreateRequest{
 		UserID:   userID,
 		Password: password,
 		Role:     uint8(userRoles.Patient),

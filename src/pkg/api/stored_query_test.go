@@ -75,7 +75,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			tt.prepare(sqSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
@@ -192,7 +192,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			tt.prepare(sqSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
@@ -289,7 +289,7 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 			tt.prepare(sqSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
@@ -434,7 +434,7 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 			tt.prepare(sqSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
