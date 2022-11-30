@@ -16,22 +16,16 @@ type SelectExpr struct {
 
 type SelectValuer interface{}
 
-type BaseSelectValue struct {
-}
-
 type IdentifiedPathSelectValue struct {
-	BaseSelectValue
+	Val IdentifiedPath
 }
 
 type PrimitiveSelectValue struct {
-	BaseSelectValue
 	Val Primitive
 }
 
 type AggregateFunctionCallSelectValue struct {
-	BaseSelectValue
 }
 
 type FunctionCallSelectValue struct {
-	BaseSelectValue
 }

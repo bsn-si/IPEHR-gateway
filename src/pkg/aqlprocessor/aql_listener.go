@@ -174,15 +174,21 @@ func (aql *AQLListener) EnterColumnExpr(ctx *aqlparser.ColumnExprContext) {
 
 	switch val := ctx.GetChild(0).(type) {
 	case *aqlparser.IdentifiedPathContext:
-		selectValue = &IdentifiedPathSelectValue{}
+		selectValue = &IdentifiedPathSelectValue{
+			Val: NewIdentifiedPath(val),
+		}
 	case *aqlparser.PrimitiveContext:
 		selectValue = &PrimitiveSelectValue{
 			Val: NewPrimitive(val),
 		}
 	case *aqlparser.AggregateFunctionCallContext:
 		selectValue = &AggregateFunctionCallSelectValue{}
+
+		log.Fatal("column expr Aggregate Func Call Not implemented")
 	case *aqlparser.FunctionCallContext:
 		selectValue = &FunctionCallSelectValue{}
+
+		log.Fatal("column expr Func Call Not implemented")
 	default:
 		log.Fatalf("unexpected column expresion type: %t", val)
 	}
