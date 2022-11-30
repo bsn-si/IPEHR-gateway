@@ -1,7 +1,6 @@
 package aqlprocessor
 
 import (
-	"fmt"
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
@@ -44,19 +43,19 @@ func (p *AqlProcessor) Process() (Query, error) {
 	var err error
 
 	if len(lexerErrors.Errors) > 0 {
-		fmt.Printf("Lexer %d errors found\n", len(lexerErrors.Errors))
+		// fmt.Printf("Lexer %d errors found\n", len(lexerErrors.Errors))
 
 		for _, e := range lexerErrors.Errors {
-			fmt.Println("ERROR:    \t", e.Error())
+			// fmt.Println("ERROR:    \t", e.Error())
 			err = e
 		}
 	}
 
 	if len(parserErrors.Errors) > 0 {
-		fmt.Printf("Parser %d errors found\n", len(parserErrors.Errors))
+		// fmt.Printf("Parser %d errors found\n", len(parserErrors.Errors))
 
 		for _, e := range parserErrors.Errors {
-			fmt.Println("ERROR:    \t", e.Error())
+			// fmt.Println("ERROR:    \t", e.Error())
 			err = e
 		}
 	}

@@ -8,7 +8,6 @@ type Query struct {
 	Limit  *Limit
 }
 
-type Select struct{}
 type From struct{}
 type Where struct{}
 

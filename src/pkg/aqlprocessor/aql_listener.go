@@ -1,9 +1,10 @@
 package aqlprocessor
 
 import (
-	"hms/gateway/pkg/aqlprocessor/aqlparser"
 	"log"
 	"strconv"
+
+	"hms/gateway/pkg/aqlprocessor/aqlparser"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
@@ -33,7 +34,6 @@ func (aql *AQLListener) ExitEveryRule(ctx antlr.ParserRuleContext) {}
 
 // EnterSelectQuery is called when production selectQuery is entered.
 func (aql *AQLListener) EnterSelectQuery(ctx *aqlparser.SelectQueryContext) {
-	aql.query.Select = Select{}
 }
 
 // ExitSelectQuery is called when production selectQuery is exited.
@@ -42,6 +42,15 @@ func (aql *AQLListener) ExitSelectQuery(ctx *aqlparser.SelectQueryContext) {
 
 // EnterSelectClause is called when production selectClause is entered.
 func (aql *AQLListener) EnterSelectClause(ctx *aqlparser.SelectClauseContext) {
+	aql.query.Select = Select{}
+
+	if distinct := ctx.DISTINCT(); distinct != nil {
+		aql.query.Select.Distinct = true
+	}
+
+	// if top := ctx.Top(); top != nil {
+	// deprecated
+	// }
 }
 
 // ExitSelectClause is called when production selectClause is exited.
@@ -69,10 +78,6 @@ func (aql *AQLListener) ExitWhereClause(ctx *aqlparser.WhereClauseContext) {}
 func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) {
 	if ctx.IsEmpty() {
 		return
-	}
-
-	for _, expr := range ctx.AllOrderByExpr() {
-		log.Println(expr.GetText())
 	}
 
 	aql.query.Order = &Order{}
@@ -117,8 +122,15 @@ func (aql *AQLListener) ExitLimitClause(ctx *aqlparser.LimitClauseContext) {}
 
 // EnterSelectExpr is called when production selectExpr is entered.
 func (aql *AQLListener) EnterSelectExpr(ctx *aqlparser.SelectExprContext) {
-	// fmt.Println("select expr")
-	// fmt.Println(ctx.GetText())
+	selectExpr := SelectExpr{
+		Value: ctx.GetText(),
+	}
+
+	if alias := ctx.GetAliasName(); alias != nil {
+		selectExpr.AliasName = alias.GetText()
+	}
+
+	aql.query.Select.SelectExprs = append(aql.query.Select.SelectExprs, selectExpr)
 }
 
 // ExitSelectExpr is called when production selectExpr is exited.
@@ -158,6 +170,24 @@ func (aql *AQLListener) ExitOrderByExpr(ctx *aqlparser.OrderByExprContext) {}
 
 // EnterColumnExpr is called when production columnExpr is entered.
 func (aql *AQLListener) EnterColumnExpr(ctx *aqlparser.ColumnExprContext) {
+	var selectValue SelectValuer
+
+	switch val := ctx.GetChild(0).(type) {
+	case *aqlparser.IdentifiedPathContext:
+		selectValue = &IdentifiedPathSelectValue{}
+	case *aqlparser.PrimitiveContext:
+		selectValue = &PrimitiveSelectValue{
+			Val: NewPrimitive(val),
+		}
+	case *aqlparser.AggregateFunctionCallContext:
+		selectValue = &AggregateFunctionCallSelectValue{}
+	case *aqlparser.FunctionCallContext:
+		selectValue = &FunctionCallSelectValue{}
+	default:
+		log.Fatalf("unexpected column expresion type: %t", val)
+	}
+
+	aql.query.Select.SetCurrentColumnValue(selectValue)
 }
 
 // ExitColumnExpr is called when production columnExpr is exited.
