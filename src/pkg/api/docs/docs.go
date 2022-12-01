@@ -363,6 +363,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/definition/template/adl1.4/{template_id}": {
+            "get": {
+                "description": "Retrieves the ADL 1.4 operational template (OPT) identified by {template_id} identifier.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list",
+                "produces": [
+                    "application/xml",
+                    "application/openehr.wt+json"
+                ],
+                "tags": [
+                    "TEMPLATE"
+                ],
+                "summary": "Get a template",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Template identifier. Example: Vital Signs",
+                        "name": "template_id",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "404": {
+                        "description": "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
+                    },
+                    "406": {
+                        "description": "Is returned when template with certain ID created with other accept header"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/ehr": {
             "get": {
                 "description": "Retrieve the EHR with the specified subject_id and subject_namespace.\nThese subject parameters will be matched against EHR’s\nEHR_STATUS.subject.external_ref.id.value and EHR_STATUS.subject.external_ref.namespace values.",
