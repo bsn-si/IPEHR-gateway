@@ -10,8 +10,6 @@ import (
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
 	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/docs/parser/adl14"
-	"hms/gateway/pkg/docs/parser/adl2"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
@@ -51,10 +49,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 
-	opt14 := adl14.NewParser()
-	opt2 := adl2.NewParser()
-
-	templateService := template.NewService(docService, opt14, opt2)
+	templateService := template.NewService(docService)
 	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
 

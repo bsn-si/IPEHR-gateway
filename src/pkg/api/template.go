@@ -13,7 +13,7 @@ import (
 )
 
 type TemplateService interface {
-	Parser(version model.VerADL) (template.ADLParser, error)
+	Parser(version model.ADLVer) (template.ADLParser, error)
 	GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error)
 }
 
@@ -24,7 +24,6 @@ type TemplateHandler struct {
 
 func NewTemplateHandler(templateService TemplateService, baseURL string) *TemplateHandler {
 	return &TemplateHandler{
-		//
 		service: templateService,
 		baseURL: baseURL,
 	}
@@ -35,15 +34,16 @@ func NewTemplateHandler(templateService TemplateService, baseURL string) *Templa
 // @Description  Retrieves the ADL 1.4 operational template (OPT) identified by {template_id} identifier.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
 // @Tags         TEMPLATE
-// @Produce      xml
+// @Produce      application/xml
 // @Produce      application/openehr.wt+json
-// @Param        template_id       path      string  false  "Template identifier. Example: Vital Signs"
-// @Param        Authorization     header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId        header    string  true   "UserId UUID"
-// @Success      200               {string}  []byte
-// @Failure      400                               "Is returned when the request has invalid content."
-// @Failure      404                               "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
-// @Failure      500                         "Is returned when an unexpected error occurs while processing a request"
+// @Param        template_id    path      string  false  "Template identifier. Example: Vital Signs"
+// @Param        Authorization  header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Success      200            {string}  []byte
+// @Failure      400            "Is returned when the request has invalid content."
+// @Failure      404            "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
+// @Failure      406            "Is returned when template with certain ID created with other accept header"
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /definition/template/adl1.4/{template_id} [get]
 func (h *TemplateHandler) GetByID(c *gin.Context) {
 	userID := c.GetString("userID")
@@ -67,29 +67,10 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	p, err := h.service.Parser(t.VerADL)
-	if err != nil {
-		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
-
-		c.AbortWithStatus(http.StatusInternalServerError)
+	if c.GetHeader("Accept") != t.MimeType {
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"error": "Accept should be: " + t.MimeType})
 		return
 	}
 
-	needType := c.GetHeader("Accept")
-
-	pType, err := p.AllowedType(needType)
-	if err != nil {
-		c.AbortWithStatus(http.StatusNotAcceptable)
-		return
-	}
-
-	r, err := p.Parse(t.Content, pType)
-	if err != nil {
-		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
-
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.Data(http.StatusOK, pType, r)
+	c.Data(http.StatusOK, t.MimeType, t.Body)
 }

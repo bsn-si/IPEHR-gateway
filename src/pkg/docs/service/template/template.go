@@ -3,9 +3,10 @@ package template
 import (
 	"context"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/parser/adl14"
+	"hms/gateway/pkg/docs/parser/adl2"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/errors"
-	"log"
 )
 
 type Service struct {
@@ -14,24 +15,19 @@ type Service struct {
 }
 
 type ADLParser interface {
-	Version() model.VerADL
-	AllowedType(string) (model.ADLTypes, error)
-	Parse([]byte, string) ([]byte, error)
+	Version() model.ADLVer
+	IsTypeAllowed(t model.ADLType) bool
+	Validate([]byte, model.ADLType) bool
 }
 
-func NewService(docService *service.DefaultDocumentService, parsers ...ADLParser) *Service {
+func NewService(docService *service.DefaultDocumentService) *Service {
 	ps := make(map[string]ADLParser)
 
-	for _, p := range parsers {
-		v := p.Version()
+	opt14 := adl14.NewParser()
+	opt2 := adl2.NewParser()
 
-		_, ok := ps[v]
-		if ok {
-			log.Fatalf("ADL parser with ver %s already implemented", v)
-		}
-
-		ps[v] = p
-	}
+	ps[opt14.Version()] = opt14
+	ps[opt2.Version()] = opt2
 
 	return &Service{
 		docService,
@@ -40,10 +36,6 @@ func NewService(docService *service.DefaultDocumentService, parsers ...ADLParser
 }
 
 func (s *Service) Parser(version string) (ADLParser, error) {
-	if len(s.parsers) == 0 {
-		return nil, errors.ErrIsNotExist
-	}
-
 	p, ok := s.parsers[version]
 	if !ok {
 		return nil, errors.ErrIsNotExist
