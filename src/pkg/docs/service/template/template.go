@@ -21,13 +21,13 @@ type ADLParser interface {
 }
 
 func NewService(docService *service.DefaultDocumentService) *Service {
-	ps := make(map[string]ADLParser)
-
 	opt14 := adl14.NewParser()
 	opt2 := adl2.NewParser()
 
-	ps[opt14.Version()] = opt14
-	ps[opt2.Version()] = opt2
+	ps := map[string]ADLParser{
+		opt14.Version(): opt14,
+		opt2.Version():  opt2,
+	}
 
 	return &Service{
 		docService,
