@@ -116,7 +116,7 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 			tt.prepare(tSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserHandlerService(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
 
 			api := API{
