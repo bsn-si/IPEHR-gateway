@@ -7,19 +7,23 @@ import (
 )
 
 type IdentifiedPath struct {
-	Name          string
-	PathPredicate string
-	Paths         []ObjectPath
+	Identifier    string
+	PathPredicate *PathPredicate
+	ObjectPath    *ObjectPath
 }
 
 type ObjectPath struct {
-	Name          string
-	PathPredicate string
+	Paths []PartPath
+}
+
+type PartPath struct {
+	Identifier    string
+	PathPredicate *PathPredicate
 }
 
 func NewIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) IdentifiedPath {
 	ip := IdentifiedPath{
-		Name: ctx.IDENTIFIER().GetText(),
+		Identifier: ctx.IDENTIFIER().GetText(),
 	}
 
 	if pp := ctx.PathPredicate(); pp != nil {
@@ -28,25 +32,25 @@ func NewIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) IdentifiedPath {
 			log.Fatal(err)
 		}
 
-		ip.PathPredicate = predicate
+		ip.PathPredicate = &predicate
 	}
 
-	if slash := ctx.SYM_SLASH(); slash != nil {
-		if ctx.ObjectPath() != nil {
-			paths, err := processObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			ip.Paths = paths
+	if slash := ctx.SYM_SLASH(); slash != nil && ctx.ObjectPath() != nil {
+		op, err := newObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+		if err != nil {
+			log.Fatal(err)
 		}
+
+		ip.ObjectPath = op
 	}
 
 	return ip
 }
 
-func processObjectPath(ctx *aqlparser.ObjectPathContext) ([]ObjectPath, error) {
-	result := make([]ObjectPath, 0, len(ctx.AllPathPart()))
+func newObjectPath(ctx *aqlparser.ObjectPathContext) (*ObjectPath, error) {
+	result := ObjectPath{
+		Paths: make([]PartPath, 0, len(ctx.AllPathPart())),
+	}
 
 	for _, pp := range ctx.AllPathPart() {
 		val, err := processPathPart(pp.(*aqlparser.PathPartContext))
@@ -54,15 +58,15 @@ func processObjectPath(ctx *aqlparser.ObjectPathContext) ([]ObjectPath, error) {
 			return nil, errors.Wrap(err, "cannot process ObjectPath.PathPart")
 		}
 
-		result = append(result, val)
+		result.Paths = append(result.Paths, val)
 	}
 
-	return result, nil
+	return &result, nil
 }
 
-func processPathPart(ctx *aqlparser.PathPartContext) (ObjectPath, error) {
-	op := ObjectPath{
-		Name: ctx.IDENTIFIER().GetText(),
+func processPathPart(ctx *aqlparser.PathPartContext) (PartPath, error) {
+	op := PartPath{
+		Identifier: ctx.IDENTIFIER().GetText(),
 	}
 
 	if ctx.PathPredicate() != nil {
@@ -71,33 +75,8 @@ func processPathPart(ctx *aqlparser.PathPartContext) (ObjectPath, error) {
 			return op, err
 		}
 
-		op.PathPredicate = pp
+		op.PathPredicate = &pp
 	}
 
 	return op, nil
-}
-
-func processPathPredicate(ctx *aqlparser.PathPredicateContext) (string, error) {
-	log.Println("path predicate childs", ctx.GetChildCount())
-
-	if ctx.StandardPredicate() != nil {
-		sp := ctx.StandardPredicate().(*aqlparser.StandardPredicateContext)
-
-		return sp.GetText(), nil
-	} else if ctx.ArchetypePredicate() != nil {
-		return "", errors.New("archetype predicate handler not implemented")
-	} else if ctx.NodePredicate() != nil {
-		str, err := processNodePredicate(ctx.NodePredicate().(*aqlparser.NodePredicateContext))
-		if err != nil {
-			return "", errors.Wrap(err, "cannot process PathPredicate.NodePredicate")
-		}
-
-		return str, nil
-	}
-
-	return ctx.GetText(), nil
-}
-
-func processNodePredicate(np *aqlparser.NodePredicateContext) (string, error) {
-	return np.GetText(), nil
 }

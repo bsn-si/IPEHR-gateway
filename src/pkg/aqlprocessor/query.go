@@ -8,7 +8,6 @@ type Query struct {
 	Limit  *Limit
 }
 
-type From struct{}
 type Where struct{}
 
 type Order struct {

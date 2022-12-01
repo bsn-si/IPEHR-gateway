@@ -36,6 +36,7 @@ func TestProcessor_SelectNull(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
+			tt.want.From = got.From
 			if !tt.wantErr && assert.NoError(t, err) {
 				assert.Equal(t, tt.want, got)
 			}
@@ -96,6 +97,7 @@ func TestProcessor_SelectString(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
+			tt.want.From = got.From
 			if !tt.wantErr && assert.NoError(t, err) {
 				assert.Equal(t, tt.want, got)
 			}
@@ -108,17 +110,15 @@ func TestProcessor_SelectBoolean(t *testing.T) {
 	// tests := []struct {
 	// 	name    string
 	// 	query   string
-	// 	want    Query
+	// 	want    Select
 	// 	wantErr bool
 	// }{
 	// 	{
 	// 		"1. select TRUE",
-	// 		`SELECT TRUE FROM EHR`,
-	// 		Query{
-	// 			Select: Select{
-	// 				SelectExprs: []SelectExpr{
-	// 					{Value: &PrimitiveSelectValue{Val: Primitive{Val: true}}},
-	// 				},
+	// 		`SELECT true AS dangerousBP FROM EHR`,
+	// 		Select{
+	// 			SelectExprs: []SelectExpr{
+	// 				{Value: &PrimitiveSelectValue{Val: Primitive{Val: true}}},
 	// 			},
 	// 		},
 	// 		false,
@@ -126,11 +126,9 @@ func TestProcessor_SelectBoolean(t *testing.T) {
 	// 	{
 	// 		"2. select FALSE",
 	// 		`SELECT FALSE FROM EHR`,
-	// 		Query{
-	// 			Select: Select{
-	// 				SelectExprs: []SelectExpr{
-	// 					{Value: &PrimitiveSelectValue{Val: Primitive{Val: false}}},
-	// 				},
+	// 		Select{
+	// 			SelectExprs: []SelectExpr{
+	// 				{Value: &PrimitiveSelectValue{Val: Primitive{Val: false}}},
 	// 			},
 	// 		},
 	// 		false,
@@ -146,7 +144,7 @@ func TestProcessor_SelectBoolean(t *testing.T) {
 	// 		}
 
 	// 		if !tt.wantErr && assert.NoError(t, err) {
-	// 			assert.Equal(t, tt.want, got)
+	// 			assert.Equal(t, tt.want, got.Select)
 	// 		}
 	// 	})
 	// }
@@ -205,6 +203,8 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
+
+			tt.want.From = got.From
 
 			if !tt.wantErr && assert.NoError(t, err) {
 				assert.Equal(t, tt.want, got)
@@ -270,6 +270,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
+			tt.want.From = got.From
 			if !tt.wantErr && assert.NoError(t, err) {
 				assert.Equal(t, tt.want, got)
 			}

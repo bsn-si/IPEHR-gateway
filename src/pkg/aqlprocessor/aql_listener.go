@@ -59,7 +59,6 @@ func (aql *AQLListener) ExitSelectClause(ctx *aqlparser.SelectClauseContext) {
 
 // EnterFromClause is called when production fromClause is entered.
 func (aql *AQLListener) EnterFromClause(ctx *aqlparser.FromClauseContext) {
-	aql.query.From = From{}
 }
 
 // ExitFromClause is called when production fromClause is exited.
@@ -138,7 +137,14 @@ func (aql *AQLListener) ExitSelectExpr(ctx *aqlparser.SelectExprContext) {
 }
 
 // EnterFromExpr is called when production fromExpr is entered.
-func (aql *AQLListener) EnterFromExpr(ctx *aqlparser.FromExprContext) {}
+func (aql *AQLListener) EnterFromExpr(ctx *aqlparser.FromExprContext) {
+	from, err := getFrom(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	aql.query.From = from
+}
 
 // ExitFromExpr is called when production fromExpr is exited.
 func (aql *AQLListener) ExitFromExpr(ctx *aqlparser.FromExprContext) {}
@@ -200,7 +206,9 @@ func (aql *AQLListener) EnterColumnExpr(ctx *aqlparser.ColumnExprContext) {
 func (aql *AQLListener) ExitColumnExpr(ctx *aqlparser.ColumnExprContext) {}
 
 // EnterContainsExpr is called when production containsExpr is entered.
-func (aql *AQLListener) EnterContainsExpr(ctx *aqlparser.ContainsExprContext) {}
+func (aql *AQLListener) EnterContainsExpr(ctx *aqlparser.ContainsExprContext) {
+
+}
 
 // ExitContainsExpr is called when production containsExpr is exited.
 func (aql *AQLListener) ExitContainsExpr(ctx *aqlparser.ContainsExprContext) {}
@@ -213,7 +221,9 @@ func (aql *AQLListener) EnterIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext
 func (aql *AQLListener) ExitIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) {}
 
 // EnterClassExpression is called when production classExpression is entered.
-func (aql *AQLListener) EnterClassExpression(ctx *aqlparser.ClassExpressionContext) {}
+func (aql *AQLListener) EnterClassExpression(ctx *aqlparser.ClassExpressionContext) {
+	// ctx/
+}
 
 // ExitClassExpression is called when production classExpression is exited.
 func (aql *AQLListener) ExitClassExpression(ctx *aqlparser.ClassExpressionContext) {}

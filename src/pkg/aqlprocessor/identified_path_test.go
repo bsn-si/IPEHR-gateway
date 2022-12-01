@@ -3,7 +3,7 @@ package aqlprocessor
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestProcessor_SelectIdentifiedPath(t *testing.T) {
@@ -21,7 +21,7 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 					SelectExprs: []SelectExpr{{
 						Value: &IdentifiedPathSelectValue{
 							Val: IdentifiedPath{
-								Name: "field",
+								Identifier: "field",
 							},
 						},
 					}},
@@ -37,8 +37,12 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 					SelectExprs: []SelectExpr{{
 						Value: &IdentifiedPathSelectValue{
 							Val: IdentifiedPath{
-								Name:          "field",
-								PathPredicate: "at0003",
+								Identifier: "field",
+								PathPredicate: &PathPredicate{
+									Type: NodePathPredicate,
+									// Value: "at0003",
+									// Operand: &PathPredicateOperand{},
+								},
 							},
 						},
 					}},
@@ -54,10 +58,17 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 					SelectExprs: []SelectExpr{{
 						Value: &IdentifiedPathSelectValue{
 							Val: IdentifiedPath{
-								Name:          "field",
-								PathPredicate: "at0003",
-								Paths: []ObjectPath{
-									{Name: "value"},
+								Identifier: "field",
+								PathPredicate: &PathPredicate{
+									Type: NodePathPredicate,
+									// Value: "at0003",
+								},
+								ObjectPath: &ObjectPath{
+									Paths: []PartPath{
+										{
+											Identifier: "value",
+										},
+									},
 								},
 							},
 						},
@@ -74,11 +85,18 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 					SelectExprs: []SelectExpr{{
 						Value: &IdentifiedPathSelectValue{
 							Val: IdentifiedPath{
-								Name: "o",
-								Paths: []ObjectPath{
-									{Name: "field", PathPredicate: "at0003"},
-									{Name: "value1"},
-									{Name: "value2"},
+								Identifier: "o",
+								ObjectPath: &ObjectPath{
+									Paths: []PartPath{
+										{
+											Identifier: "field",
+											PathPredicate: &PathPredicate{
+												Type: NodePathPredicate,
+											},
+										},
+										{Identifier: "value1"},
+										{Identifier: "value2"},
+									},
 								},
 							},
 						},
@@ -98,8 +116,9 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
-			if !tt.wantErr && assert.NoError(t, err) {
-				assert.Equal(t, tt.want, got)
+			tt.want.From = got.From
+			if diff := cmp.Diff(tt.want, got); diff != "" {
+				t.Errorf("mismatch {+want;-got}:\n\t%s", diff)
 			}
 		})
 	}
