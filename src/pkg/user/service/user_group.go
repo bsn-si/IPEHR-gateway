@@ -54,12 +54,7 @@ func (s *Service) GroupCreate(ctx context.Context, userID, systemID, reqID, name
 
 	keyEncr, err := keybox.Seal(key.Bytes(), userPubKey, userPrivKey)
 	if err != nil {
-		return nil, fmt.Errorf("keybox.SealAnonymous error: %w", err)
-	}
-
-	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupCreate)
-	if err != nil {
-		return nil, fmt.Errorf("Proc.NewRequest error: %w", err)
+		return nil, fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
 	txHash, err := s.Infra.Index.UserGroupCreate(ctx, &groupID, idEncr, keyEncr, contentEncr, userPrivKey, nil)
@@ -73,10 +68,15 @@ func (s *Service) GroupCreate(ctx context.Context, userID, systemID, reqID, name
 		return nil, fmt.Errorf("Index.GroupCreate error: %w", err)
 	}
 
+	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupCreate)
+	if err != nil {
+		return nil, fmt.Errorf("Proc.NewRequest error: %w", err)
+	}
+
 	procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
 
 	if err := procRequest.Commit(); err != nil {
-		return nil, fmt.Errorf("EHR create procRequest commit error: %w", err)
+		return nil, fmt.Errorf("UserGroup create procRequest commit error: %w", err)
 	}
 
 	return userGroup.GroupID, nil
@@ -126,6 +126,65 @@ func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid
 	}
 
 	return userGroup, nil
+}
+
+func (s *Service) GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
+	var auID [32]byte
+
+	copy(auID[:], addingUserID)
+
+	groupKey, err := s.getAccessKey(ctx, userID, access.UserGroup, groupID[:])
+	if err != nil {
+		if errors.Is(err, errors.ErrAccessDenied) {
+			return err
+		}
+
+		return fmt.Errorf("getAccessKey error: %w", err)
+	}
+
+	userIDEncr, err := groupKey.Encrypt(auID[:])
+	if err != nil {
+		return fmt.Errorf("key.Encrypt addingUserID error: %w", err)
+	}
+
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	addingUserPubKey, addingUserPrivKey, err := s.Infra.Keystore.Get(addingUserID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, addingUserID)
+	}
+
+	groupKeyEncr, err := keybox.Seal(groupKey.Bytes(), addingUserPubKey, addingUserPrivKey)
+	if err != nil {
+		return fmt.Errorf("keybox.Seal error: %w", err)
+	}
+
+	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, userID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
+	if err != nil {
+		if errors.Is(err, errors.ErrAccessDenied) {
+			return err
+		} else if errors.Is(err, errors.ErrAlreadyExist) {
+			return err
+		}
+
+		return fmt.Errorf("Index.GroupCreate error: %w", err)
+	}
+
+	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupAddUser)
+	if err != nil {
+		return fmt.Errorf("Proc.NewRequest error: %w", err)
+	}
+
+	procRequest.AddEthereumTx(processing.TxUserGroupAddUser, txHash)
+
+	if err := procRequest.Commit(); err != nil {
+		return fmt.Errorf("Add user to group procRequest commit error: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) getAccessKey(ctx context.Context, userID string, kind access.Kind, accessID []byte) (*chachaPoly.Key, error) {
