@@ -13,6 +13,7 @@ import (
 
 	jwt "github.com/golang-jwt/jwt"
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockUserService is a mock of UserService interface.
@@ -109,17 +110,33 @@ func (mr *MockUserServiceMockRecorder) GetTokenHash(tokenRaw interface{}) *gomoc
 }
 
 // GroupCreate mocks base method.
-func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) error {
+func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) (*uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, systemID, reqID, name, description)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GroupCreate indicates an expected call of GroupCreate.
 func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, systemID, reqID, name, description interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, systemID, reqID, name, description)
+}
+
+// GroupGetByID mocks base method.
+func (m *MockUserService) GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*model.UserGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupGetByID", ctx, userID, groupID)
+	ret0, _ := ret[0].(*model.UserGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupGetByID indicates an expected call of GroupGetByID.
+func (mr *MockUserServiceMockRecorder) GroupGetByID(ctx, userID, groupID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGetByID", reflect.TypeOf((*MockUserService)(nil).GroupGetByID), ctx, userID, groupID)
 }
 
 // IsTokenInBlackList mocks base method.

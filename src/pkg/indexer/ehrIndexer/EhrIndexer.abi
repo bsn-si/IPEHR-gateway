@@ -298,7 +298,7 @@
         },
         {
           "internalType": "bytes32",
-          "name": "objectIdHash",
+          "name": "accessIdHash",
           "type": "bytes32"
         }
       ],
@@ -322,12 +322,12 @@
               "type": "bytes"
             },
             {
-              "internalType": "enum Access.AccessLevel",
+              "internalType": "enum AccessStore.AccessLevel",
               "name": "level",
               "type": "uint8"
             }
           ],
-          "internalType": "struct Access.Object",
+          "internalType": "struct AccessStore.Access",
           "name": "",
           "type": "tuple"
         }
@@ -723,12 +723,12 @@
               "type": "bytes"
             },
             {
-              "internalType": "enum Access.AccessLevel",
+              "internalType": "enum AccessStore.AccessLevel",
               "name": "level",
               "type": "uint8"
             }
           ],
-          "internalType": "struct Access.Object[]",
+          "internalType": "struct AccessStore.Access[]",
           "name": "",
           "type": "tuple[]"
         }
@@ -751,13 +751,13 @@
               "type": "address"
             },
             {
-              "internalType": "enum Access.AccessLevel",
+              "internalType": "enum AccessStore.AccessLevel",
               "name": "level",
               "type": "uint8"
             },
             {
               "internalType": "bytes",
-              "name": "idEncr",
+              "name": "addingUserIDEncr",
               "type": "bytes"
             },
             {
@@ -915,13 +915,13 @@
               "type": "bytes"
             },
             {
-              "internalType": "enum Access.AccessLevel",
+              "internalType": "enum AccessStore.AccessLevel",
               "name": "level",
               "type": "uint8"
             }
           ],
-          "internalType": "struct Access.Object",
-          "name": "accessObj",
+          "internalType": "struct AccessStore.Access",
+          "name": "access",
           "type": "tuple"
         },
         {
@@ -1017,6 +1017,57 @@
     {
       "inputs": [
         {
+          "internalType": "bytes32",
+          "name": "userID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum AccessStore.AccessKind",
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "idHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "userAccess",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum AccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct AccessStore.Access",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "components": [
             {
               "internalType": "bytes32",
@@ -1059,6 +1110,61 @@
       "name": "userGroupCreate",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "userGroupGetByID",
+      "outputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes32",
+                  "name": "userIDHash",
+                  "type": "bytes32"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "userIDEncr",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Users.GroupMember[]",
+              "name": "members",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Users.UserGroup",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {

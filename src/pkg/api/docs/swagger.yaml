@@ -333,6 +333,12 @@ definitions:
     properties:
       description:
         type: string
+      groupID:
+        type: string
+      members:
+        items:
+          type: string
+        type: array
       name:
         type: string
     type: object
@@ -1563,6 +1569,8 @@ paths:
             RequestID:
               description: Request identifier
               type: string
+          schema:
+            $ref: '#/definitions/model.UserGroup'
         "400":
           description: The request could not be understood by the server due to incorrect
             syntax. The client SHOULD NOT repeat the request without modifications.
@@ -1574,6 +1582,44 @@ paths:
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: User group create
+      tags:
+      - USER
+  /user/group/{group_id}:
+    get:
+      parameters:
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserGroup'
+        "400":
+          description: The request could not be understood by the server due to incorrect
+            syntax.
+        "403":
+          description: Is returned when userID does not have access to requested group
+        "404":
+          description: Is returned when groupID does not exist
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get user group by ID
       tags:
       - USER
   /user/login:

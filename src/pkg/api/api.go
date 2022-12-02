@@ -196,6 +196,7 @@ func (a *API) buildUserAPI() handlerBuilder {
 
 		r = r.Group("group")
 		r.POST("", a.User.GroupCreate)
+		r.GET("/:group_id", a.User.GroupGetByID)
 	}
 }
 

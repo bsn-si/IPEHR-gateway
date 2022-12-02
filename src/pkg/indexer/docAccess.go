@@ -75,7 +75,7 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 
 	idHash := crypto.Keccak256Hash(data)
 
-	accessObj := ehrIndexer.AccessObject{
+	accessObj := ehrIndexer.AccessStoreAccess{
 		IdHash:  idHash,
 		IdEncr:  CIDEncr,
 		KeyEncr: keyEncr,
