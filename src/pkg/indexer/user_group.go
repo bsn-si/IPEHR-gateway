@@ -75,6 +75,10 @@ func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uu
 		return nil, fmt.Errorf("ehrIndex.UserGroupGetByID error: %w", err)
 	}
 
+	if len(ug.Attrs) == 0 {
+		return nil, errors.ErrNotFound
+	}
+
 	contentEncr := model.Attributes(ug.Attrs).GetByCode(model.AttributeContentEncr)
 	if contentEncr == nil {
 		return nil, errors.ErrFieldIsEmpty("ContentEncr")

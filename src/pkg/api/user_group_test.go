@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/api/mocks"
+	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 )
 
@@ -144,7 +145,16 @@ func TestUserHandler_GroupGetByID(t *testing.T) {
 			`{"error":"group_id must be UUID"}`,
 		},
 		{
-			"2. success result",
+			"2. error because {group_id} is not found",
+			ug.GroupID.String(),
+			func(svc *mocks.MockUserService) {
+				svc.EXPECT().GroupGetByID(gomock.Any(), userID, &groupID).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			"",
+		},
+		{
+			"3. success result",
 			ug.GroupID.String(),
 			func(svc *mocks.MockUserService) {
 				svc.EXPECT().GroupGetByID(gomock.Any(), userID, &groupID).Return(ug, nil)

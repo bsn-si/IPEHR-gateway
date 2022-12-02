@@ -98,6 +98,7 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 // @Success  200            {object}  model.UserGroup
 // @Failure  400            "The request could not be understood by the server due to incorrect syntax."
 // @Failure  403            "Is returned when userID does not have access to requested group"
+// @Failure  404            "Is returned when groupID does not exist"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/group/{group_id} [get]
 func (h *UserHandler) GroupGetByID(c *gin.Context) {
@@ -123,6 +124,9 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			c.AbortWithStatus(http.StatusForbidden)
+			return
+		} else if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
 

@@ -94,6 +94,10 @@ func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid
 
 	userGroup, err := s.Infra.Index.UserGroupGetByID(ctx, userID, groupID)
 	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf("Index.UserGroupGetByID error: %w", err)
 	}
 
