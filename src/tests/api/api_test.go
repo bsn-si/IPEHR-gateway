@@ -222,6 +222,10 @@ func Test_API(t *testing.T) {
 	if !t.Run("User group create", testWrap.userGroupCreate(testData)) {
 		t.Fatal()
 	}
+
+	if !t.Run("User group get by ID", testWrap.userGroupGetByID(testData)) {
+		t.Fatal()
+	}
 }
 
 func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {

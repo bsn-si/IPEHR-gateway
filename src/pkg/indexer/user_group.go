@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
@@ -13,9 +14,10 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/ehrIndexer"
+	userModel "hms/gateway/pkg/user/model"
 )
 
-func (i *Index) GroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -63,4 +65,29 @@ func (i *Index) GroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, key
 	}
 
 	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error) {
+	groupIDHash := sha3.Sum256(groupID[:])
+
+	ug, err := i.ehrIndex.UserGroupGetByID(&bind.CallOpts{Context: ctx}, groupIDHash)
+	if err != nil {
+		return nil, fmt.Errorf("ehrIndex.UserGroupGetByID error: %w", err)
+	}
+
+	contentEncr := model.Attributes(ug.Attrs).GetByCode(model.AttributeContentEncr)
+	if contentEncr == nil {
+		return nil, errors.ErrFieldIsEmpty("ContentEncr")
+	}
+
+	userGroup := &userModel.UserGroup{
+		GroupID:     groupID,
+		ContentEncr: contentEncr,
+	}
+
+	for _, m := range ug.Members {
+		userGroup.MembersEncr = append(userGroup.MembersEncr, m.UserIDEncr)
+	}
+
+	return userGroup, nil
 }

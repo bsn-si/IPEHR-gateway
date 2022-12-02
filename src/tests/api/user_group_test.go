@@ -3,6 +3,7 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -40,6 +41,68 @@ func (testWrap *testWrap) userGroupCreate(testData *TestData) func(t *testing.T)
 	}
 }
 
+func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := testWrap.checkUser(testData)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		user := testData.users[0]
+
+		if user.accessToken == "" {
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal("User login error:", err)
+			}
+		}
+
+		err = testWrap.checkUserGroup(user, testData)
+		if err != nil {
+			t.Fatal("checkUserGroup error: ", err)
+		}
+
+		userGroup1 := testData.userGroups[0]
+
+		url := testWrap.server.URL + "/v1/user/group/" + userGroup1.GroupID.String()
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", user.id)
+		request.Header.Set("Authorization", "Bearer "+user.accessToken)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var userGroup model.UserGroup
+
+		err = json.Unmarshal(data, &userGroup)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if userGroup.GroupID.String() != userGroup1.GroupID.String() {
+			t.Fatalf("Expected UUID: %s, received: %s", userGroup1.GroupID, userGroup.GroupID)
+		}
+	}
+}
+
 func userGroupCreate(userID, systemID, accessToken, baseURL, name, description string, client *http.Client) (*model.UserGroup, string, error) {
 	userGroup := &model.UserGroup{
 		Name:        name,
@@ -64,20 +127,52 @@ func userGroupCreate(userID, systemID, accessToken, baseURL, name, description s
 	}
 	defer response.Body.Close()
 
+	data, err = io.ReadAll(response.Body)
+	if err != nil {
+		return nil, "", err
+	}
+
 	if response.StatusCode != http.StatusCreated {
 		if response.StatusCode == http.StatusConflict {
 			return nil, "", errors.ErrAlreadyExist
 		}
 
-		data, err := io.ReadAll(response.Body)
-		if err != nil {
-			return nil, "", err
-		}
-
 		return nil, "", errors.New(response.Status + " data: " + string(data))
+	}
+
+	var userGroup2 model.UserGroup
+
+	err = json.Unmarshal(data, &userGroup2)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if userGroup2.Name != userGroup.Name {
+		return nil, "", errors.ErrFieldIsIncorrect("Name")
 	}
 
 	requestID := response.Header.Get("RequestId")
 
-	return userGroup, requestID, nil
+	return &userGroup2, requestID, nil
+}
+
+func (testWrap *testWrap) checkUserGroup(user *User, testData *TestData) error {
+	if len(testData.userGroups) == 0 {
+		name := fakeData.GetRandomStringWithLength(10)
+		description := fakeData.GetRandomStringWithLength(10)
+
+		userGroup, reqID, err := userGroupCreate(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, description, testWrap.httpClient)
+		if err != nil {
+			return fmt.Errorf("userGroupCreate error: %w", err)
+		}
+
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			return fmt.Errorf("requestWait error, err: %w", err)
+		}
+
+		testData.userGroups = append(testData.userGroups, userGroup)
+	}
+
+	return nil
 }

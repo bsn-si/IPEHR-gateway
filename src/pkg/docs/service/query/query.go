@@ -207,7 +207,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 func extractFromDocMeta(docMeta *model.DocumentMeta, userPubKey, userPrivKey *[32]byte) (*model.StoredQuery, error) {
 	var key *chachaPoly.Key
 	{
-		keyEncr := docMeta.GetAttr(model.AttributeKeyEncr)
+		keyEncr := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeKeyEncr)
 		if keyEncr == nil {
 			return nil, fmt.Errorf("%w: KeyEncr of StoredQuery", errors.ErrIsEmpty)
 		}
@@ -225,7 +225,7 @@ func extractFromDocMeta(docMeta *model.DocumentMeta, userPubKey, userPrivKey *[3
 
 	var content []byte
 	{
-		contentEncr := docMeta.GetAttr(model.AttributeContentEncr)
+		contentEncr := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeContentEncr)
 		if contentEncr == nil {
 			return nil, fmt.Errorf("%w: ContentEncr of StoredQuery", errors.ErrIsEmpty)
 		}

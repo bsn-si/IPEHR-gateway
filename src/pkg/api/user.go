@@ -9,16 +9,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/user/model"
+	userModel "hms/gateway/pkg/user/model"
 	userService "hms/gateway/pkg/user/service"
 )
 
 type UserService interface {
 	NewProcRequest(reqID, userID string) (*proc.Request, error)
-	Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error)
+	Register(ctx context.Context, procRequest *proc.Request, user *userModel.UserCreateRequest, systemID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
 	CreateToken(userID string) (*userService.TokenDetails, error)
 	ExtractToken(bearToken string) string
@@ -29,7 +30,8 @@ type UserService interface {
 	AddTokenInBlackList(tokenRaw string, expires int64)
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
-	GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) error
+	GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) (*uuid.UUID, error)
+	GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
 }
 
 type UserHandler struct {
@@ -83,7 +85,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	var userCreateRequest model.UserCreateRequest
+	var userCreateRequest userModel.UserCreateRequest
 	if err = json.Unmarshal(data, &userCreateRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
@@ -140,7 +142,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 // @Router   /user/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
-	var u model.UserAuthRequest
+	var u userModel.UserAuthRequest
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
 		return
@@ -177,7 +179,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &model.JWT{
+	c.JSON(http.StatusOK, &userModel.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
@@ -209,7 +211,7 @@ func (h *UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	var jwt model.JWT
+	var jwt userModel.JWT
 	if err := c.ShouldBindJSON(&jwt); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
 		return
@@ -267,7 +269,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &model.JWT{
+	c.JSON(http.StatusOK, &userModel.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
