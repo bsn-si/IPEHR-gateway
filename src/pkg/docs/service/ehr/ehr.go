@@ -211,7 +211,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -244,7 +244,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -308,7 +308,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 		return fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -487,7 +487,7 @@ func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UU
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -525,7 +525,7 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID string, ehrUU
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -557,7 +557,7 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehr
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}

@@ -348,7 +348,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
@@ -393,7 +393,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	docUIDEncrypted := model.Attributes(docMeta.Attrs).GetByCode(model.AttributeDocUIDEncr)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
 	if docUIDEncrypted == nil {
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
