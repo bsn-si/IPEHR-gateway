@@ -3,10 +3,8 @@ package api
 import (
 	"context"
 	"hms/gateway/pkg/errors"
-	"io"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
 
