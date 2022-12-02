@@ -2,6 +2,7 @@ package adl2
 
 import (
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/errors"
 )
 
 type Parser struct{}
@@ -22,4 +23,12 @@ func (*Parser) Version() model.ADLVer {
 func (*Parser) Validate(b []byte, t model.ADLType) bool {
 	// TODO
 	return false
+}
+
+func (*Parser) Parse([]byte, model.ADLType) (*model.Template, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+func (*Parser) ParseWithFill([]byte, model.ADLType) (*model.Template, error) {
+	return nil, errors.ErrNotImplemented
 }

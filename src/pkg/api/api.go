@@ -164,6 +164,7 @@ func (a *API) buildDefinitionAPI() handlerBuilder {
 
 		adlV1 := r.Group("template/adl1.4")
 		adlV1.GET("/:template_id", a.Template.GetByID)
+		adlV1.POST("/", a.Template.Store)
 
 		query := r.Group("query")
 		query.GET("/:qualified_query_name", a.Query.ListStored)

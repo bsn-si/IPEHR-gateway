@@ -65,3 +65,17 @@ func (mr *MockTemplateServiceMockRecorder) Parser(version interface{}) *gomock.C
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Parser", reflect.TypeOf((*MockTemplateService)(nil).Parser), version)
 }
+
+// Store mocks base method.
+func (m_2 *MockTemplateService) Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "Store", ctx, userID, systemID, reqID, m)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Store indicates an expected call of Store.
+func (mr *MockTemplateServiceMockRecorder) Store(ctx, userID, systemID, reqID, m interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockTemplateService)(nil).Store), ctx, userID, systemID, reqID, m)
+}
