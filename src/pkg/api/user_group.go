@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 )
@@ -19,7 +20,7 @@ import (
 // @Tags     USER
 // @Accept   json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
-// @Param    AuthUserId     header  string           true  "UserId UUID"
+// @Param    AuthUserId     header  string           true  "UserId"
 // @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request        body    model.UserGroup  true  "User group"
 // @Success  201            {object} model.UserGroup "Indicates that the request has succeeded and transaction about create new user group has been created"
@@ -136,4 +137,76 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userGroup)
+}
+
+// Group add user
+// @Summary  Adding a user to a group
+// @Description
+// @Tags     USER
+// @Accept   json
+// @Param    Authorization  header  string           true  "Bearer AccessToken"
+// @Param    AuthUserId     header  string           true  "UserId"
+// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    user_id        path    string           true  "The identifier of the user to be added"
+// @Param    access_level   path    string           true  "Access Level. One of `admin` or `read`"
+// @Success  200            ""
+// @Header   200            {string}  RequestID  "Request identifier"
+// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
+// @Failure  403            "Authentication required or user does not have access to change the group"
+// @Failure  404            "Group or adding user is not exist"
+// @Failure  409            "The user is already a member of a group"
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/group/{group_id}/user_add/{user_id}/{access_level} [put]
+func (h *UserHandler) GroupAddUser(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
+		return
+	}
+
+	gID := c.Param("group_id")
+	if gID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id is empty"})
+		return
+	}
+
+	groupID, err := uuid.Parse(gID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id must be UUID"})
+		return
+	}
+
+	addingUserID := c.Param("user_id")
+	if addingUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is empty"})
+		return
+	}
+
+	level := access.LevelFromString(c.Param("access_level"))
+	if level == access.Unknown {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "access_level is incorrect"})
+		return
+	}
+
+	reqID := c.GetString("reqID")
+
+	err = h.service.GroupAddUser(c, userID, addingUserID, reqID, level, &groupID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else if errors.Is(err, errors.ErrAlreadyExist) {
+			c.AbortWithStatus(http.StatusConflict)
+			return
+		} else if errors.Is(err, errors.ErrAccessDenied) {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		log.Println("GroupAddUser error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }

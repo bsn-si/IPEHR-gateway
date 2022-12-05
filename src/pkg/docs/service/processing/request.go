@@ -68,6 +68,7 @@ const (
 	RequestDocAccessSet
 	RequestQueryStore
 	RequestUserGroupCreate
+	RequestUserGroupAddUser
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {

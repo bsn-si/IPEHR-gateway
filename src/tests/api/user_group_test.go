@@ -25,19 +25,70 @@ func (testWrap *testWrap) userGroupCreate(testData *TestData) func(t *testing.T)
 		if user.accessToken == "" {
 			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 			if err != nil {
-				t.Fatal("User login error:", err)
+				t.Fatal(err)
 			}
 		}
 
 		name := fakeData.GetRandomStringWithLength(10)
 		description := fakeData.GetRandomStringWithLength(10)
 
-		userGroup, _, err := userGroupCreate(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, description, testWrap.httpClient)
+		userGroup, _, err := userGroupCreate(user, testData.ehrSystemID, testWrap.server.URL, name, description, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		testData.userGroups = append(testData.userGroups, userGroup)
+	}
+}
+
+func (testWrap *testWrap) userGroupAddUser(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := testWrap.checkUser(testData)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		user := testData.users[0]
+
+		if user.accessToken == "" {
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal("checkUserGroup error: ", err)
+		}
+
+		userGroup := testData.userGroups[0]
+
+		url := testWrap.server.URL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_add/" + user.id + "/admin"
+
+		request, err := http.NewRequest(http.MethodPut, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", user.id)
+		request.Header.Set("Authorization", "Bearer "+user.accessToken)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
 	}
 }
 
@@ -53,11 +104,11 @@ func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T
 		if user.accessToken == "" {
 			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 			if err != nil {
-				t.Fatal("User login error:", err)
+				t.Fatal(err)
 			}
 		}
 
-		err = testWrap.checkUserGroup(user, testData)
+		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
@@ -103,7 +154,7 @@ func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T
 	}
 }
 
-func userGroupCreate(userID, systemID, accessToken, baseURL, name, description string, client *http.Client) (*model.UserGroup, string, error) {
+func userGroupCreate(user *User, systemID, baseURL, name, description string, client *http.Client) (*model.UserGroup, string, error) {
 	userGroup := &model.UserGroup{
 		Name:        name,
 		Description: description,
@@ -117,8 +168,8 @@ func userGroupCreate(userID, systemID, accessToken, baseURL, name, description s
 		return nil, "", err
 	}
 
-	request.Header.Set("AuthUserId", userID)
-	request.Header.Set("Authorization", "Bearer "+accessToken)
+	request.Header.Set("AuthUserId", user.id)
+	request.Header.Set("Authorization", "Bearer "+user.accessToken)
 	request.Header.Set("EhrSystemId", systemID)
 
 	response, err := client.Do(request)
@@ -156,17 +207,17 @@ func userGroupCreate(userID, systemID, accessToken, baseURL, name, description s
 	return &userGroup2, requestID, nil
 }
 
-func (testWrap *testWrap) checkUserGroup(user *User, testData *TestData) error {
+func checkUserGroup(user *User, testData *TestData, baseURL string, client *http.Client) error {
 	if len(testData.userGroups) == 0 {
 		name := fakeData.GetRandomStringWithLength(10)
 		description := fakeData.GetRandomStringWithLength(10)
 
-		userGroup, reqID, err := userGroupCreate(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, description, testWrap.httpClient)
+		userGroup, reqID, err := userGroupCreate(user, testData.ehrSystemID, baseURL, name, description, client)
 		if err != nil {
 			return fmt.Errorf("userGroupCreate error: %w", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, baseURL, client)
 		if err != nil {
 			return fmt.Errorf("requestWait error, err: %w", err)
 		}

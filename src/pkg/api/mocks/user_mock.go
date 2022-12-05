@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+	access "hms/gateway/pkg/access"
 	processing "hms/gateway/pkg/docs/service/processing"
 	model "hms/gateway/pkg/user/model"
 	service "hms/gateway/pkg/user/service"
@@ -107,6 +108,20 @@ func (m *MockUserService) GetTokenHash(tokenRaw string) [32]byte {
 func (mr *MockUserServiceMockRecorder) GetTokenHash(tokenRaw interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTokenHash", reflect.TypeOf((*MockUserService)(nil).GetTokenHash), tokenRaw)
+}
+
+// GroupAddUser mocks base method.
+func (m *MockUserService) GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupAddUser", ctx, userID, addingUserID, reqID, level, groupID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GroupAddUser indicates an expected call of GroupAddUser.
+func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, addingUserID, reqID, level, groupID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupAddUser", reflect.TypeOf((*MockUserService)(nil).GroupAddUser), ctx, userID, addingUserID, reqID, level, groupID)
 }
 
 // GroupCreate mocks base method.

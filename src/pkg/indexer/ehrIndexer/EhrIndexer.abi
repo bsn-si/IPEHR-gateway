@@ -742,13 +742,13 @@
           "components": [
             {
               "internalType": "bytes32",
-              "name": "groupIdHash",
+              "name": "groupIDHash",
               "type": "bytes32"
             },
             {
-              "internalType": "address",
-              "name": "addingUserAddr",
-              "type": "address"
+              "internalType": "bytes32",
+              "name": "userIDHash",
+              "type": "bytes32"
             },
             {
               "internalType": "enum AccessStore.AccessLevel",
@@ -757,7 +757,7 @@
             },
             {
               "internalType": "bytes",
-              "name": "addingUserIDEncr",
+              "name": "userIDEncr",
               "type": "bytes"
             },
             {
@@ -790,13 +790,13 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "groupIdHash",
+          "name": "groupIDHash",
           "type": "bytes32"
         },
         {
-          "internalType": "address",
-          "name": "removingUserAddr",
-          "type": "address"
+          "internalType": "bytes32",
+          "name": "userIDHash",
+          "type": "bytes32"
         },
         {
           "internalType": "address",

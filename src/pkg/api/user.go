@@ -11,6 +11,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/access"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	userModel "hms/gateway/pkg/user/model"
@@ -32,6 +33,7 @@ type UserService interface {
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
 	GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) (*uuid.UUID, error)
 	GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
+	GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
 }
 
 type UserHandler struct {

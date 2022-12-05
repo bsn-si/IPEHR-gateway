@@ -70,6 +70,7 @@ const (
 	TxSaveComposition
 	TxUserRegister
 	TxUserGroupCreate
+	TxUserGroupAddUser
 )
 
 var (
@@ -98,6 +99,7 @@ var (
 		TxSaveComposition:    "TxSaveComposition",
 		TxUserRegister:       "TxUserRegister",
 		TxUserGroupCreate:    "TxUserGroupCreate",
+		TxUserGroupAddUser:   "TxUserGroupAddUser",
 
 		TxUnknown: "Unknown",
 	}
