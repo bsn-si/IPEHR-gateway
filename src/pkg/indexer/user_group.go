@@ -88,6 +88,7 @@ func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uu
 	userGroup := &userModel.UserGroup{
 		GroupID:     groupID,
 		ContentEncr: contentEncr,
+		Members:     []string{},
 	}
 
 	for _, m := range ug.Members {
@@ -126,7 +127,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level acces
 		Signature:   make([]byte, signatureLength),
 	}
 
-	data, err := i.abi.Pack("userGroupAddUser", params)
+	data, err := i.abi.Pack("groupAddUser", params)
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}

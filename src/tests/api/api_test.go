@@ -223,6 +223,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("User group add user", testWrap.userGroupAddUser(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("User group get by ID", testWrap.userGroupGetByID(testData)) {
 		t.Fatal()
 	}

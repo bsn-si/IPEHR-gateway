@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -153,6 +152,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 // @Success  200            ""
 // @Header   200            {string}  RequestID  "Request identifier"
 // @Failure  400            "The request could not be understood by the server due to incorrect syntax."
+// @Failure  403            "Authentication required or user does not have access to change the group"
 // @Failure  404            "Group or adding user is not exist"
 // @Failure  409            "The user is already a member of a group"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
@@ -182,14 +182,8 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 		return
 	}
 
-	var level access.Level
-
-	switch strings.ToLower(c.Param("access_level")) {
-	case "admin":
-		level = access.Admin
-	case "read":
-		level = access.Read
-	default:
+	level := access.LevelFromString(c.Param("access_level"))
+	if level == access.Unknown {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "access_level is incorrect"})
 		return
 	}
@@ -203,6 +197,9 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 			return
 		} else if errors.Is(err, errors.ErrAlreadyExist) {
 			c.AbortWithStatus(http.StatusConflict)
+			return
+		} else if errors.Is(err, errors.ErrAccessDenied) {
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 

@@ -111,7 +111,9 @@ func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid
 		return nil, fmt.Errorf("UserGroup content decompression error: %w", err)
 	}
 
-	err = msgpack.Unmarshal(content, userGroup)
+	var userGroupResult model.UserGroup
+
+	err = msgpack.Unmarshal(content, &userGroupResult)
 	if err != nil {
 		return nil, fmt.Errorf("UserGroup Content unmarshal error: %w", err)
 	}
@@ -122,10 +124,10 @@ func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid
 			return nil, fmt.Errorf("UserGroup member %d ID decrypt error: %w", i, err)
 		}
 
-		userGroup.Members = append(userGroup.Members, string(uID))
+		userGroupResult.Members = append(userGroupResult.Members, string(uID))
 	}
 
-	return userGroup, nil
+	return &userGroupResult, nil
 }
 
 func (s *Service) GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
