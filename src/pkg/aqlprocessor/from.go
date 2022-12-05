@@ -19,9 +19,10 @@ type ContainsExpr struct {
 type OperatorType string
 
 const (
-	ANDOperator OperatorType = "AND"
-	OROperator  OperatorType = "OR"
-	NOTOperator OperatorType = "NOT"
+	NoneOperator OperatorType = "NONE"
+	ANDOperator  OperatorType = "AND"
+	OROperator   OperatorType = "OR"
+	NOTOperator  OperatorType = "NOT"
 )
 
 type ClassExpression struct {
@@ -123,5 +124,13 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 }
 
 func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (PathPredicate, error) {
-	return processStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
+	sp, err := getStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
+	if err != nil {
+		return PathPredicate{}, errors.Wrap(err, "cannot get VersionPredicate.StandardPredicate")
+	}
+
+	return PathPredicate{
+		Type:              StandartPathPredicate,
+		StandartPredicate: sp,
+	}, nil
 }

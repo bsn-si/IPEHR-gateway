@@ -10,14 +10,15 @@ type Order struct {
 }
 
 type OrderBy struct {
-	Identifier string
-	Ordering   OrderingType
+	IdentifierPath IdentifiedPath
+	Ordering       OrderingType
 }
 
 type OrderingType uint8
 
 const (
-	DescendingOrdering OrderingType = iota
+	NoneOrdering OrderingType = iota
+	DescendingOrdering
 	AscendingOrdering
 )
 
@@ -39,9 +40,14 @@ func getOrder(ctx *aqlparser.OrderByClauseContext) (*Order, error) {
 }
 
 func getOrderBy(ctx *aqlparser.OrderByExprContext) (OrderBy, error) { //nolint
+	ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+	if err != nil {
+		return OrderBy{}, errors.Wrap(err, "cannot get OrderBy.IdentifiedPath")
+	}
+
 	orderBy := OrderBy{
-		Identifier: ctx.IdentifiedPath().GetText(),
-		Ordering:   AscendingOrdering,
+		IdentifierPath: ip,
+		Ordering:       NoneOrdering,
 	}
 
 	if ctx.ASC() != nil || ctx.ASCENDING() != nil {

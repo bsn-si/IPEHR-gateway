@@ -43,19 +43,13 @@ func (p *AqlProcessor) Process() (Query, error) {
 	var err error
 
 	if len(lexerErrors.Errors) > 0 {
-		// fmt.Printf("Lexer %d errors found\n", len(lexerErrors.Errors))
-
 		for _, e := range lexerErrors.Errors {
-			// fmt.Println("ERROR:    \t", e.Error())
 			err = e
 		}
 	}
 
 	if len(parserErrors.Errors) > 0 {
-		// fmt.Printf("Parser %d errors found\n", len(parserErrors.Errors))
-
 		for _, e := range parserErrors.Errors {
-			// fmt.Println("ERROR:    \t", e.Error())
 			err = e
 		}
 	}
@@ -83,4 +77,15 @@ func (c *CustomErrorListener) SyntaxError(recognizer antlr.Recognizer, offending
 		column: column,
 		msg:    msg,
 	})
+}
+
+func handleError(aParser antlr.Parser, token antlr.Token, err error) {
+	aParser.GetErrorListenerDispatch().SyntaxError(
+		nil, // recognizer antlr.Recognizer,
+		nil, // offendingSymbol interface{},
+		token.GetLine(),
+		token.GetColumn(),
+		err.Error(),
+		nil, // e antlr.RecognitionException,
+	)
 }

@@ -62,7 +62,7 @@ func TestProcessor_From(t *testing.T) {
 								},
 								CMPOperator: SymEQ,
 								Operand: &PathPredicateOperand{
-									Parameter: toRef("$ehrUid"),
+									Parameter: toRef(Parameter("ehrUid")),
 								},
 							},
 						},

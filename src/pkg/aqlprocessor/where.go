@@ -105,11 +105,46 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 }
 
 type Terminal struct {
-	Text string
+	Primitive      *Primitive
+	Parameter      *Parameter
+	IdentifiedPath *IdentifiedPath
+	// FunctionCall *FunctionCall
 }
 
 func getTerminal(ctx *aqlparser.TerminalContext) (*Terminal, error) { //nolint
-	return &Terminal{
-		Text: ctx.GetText(),
-	}, nil
+	t := &Terminal{}
+
+	if ctx.Primitive() != nil {
+		p, err := getPrimitive(ctx.Primitive().(*aqlparser.PrimitiveContext))
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get Terminal.Primitive")
+		}
+
+		t.Primitive = &p
+	}
+
+	if ctx.PARAMETER() != nil {
+		p, err := getParameter(ctx.PARAMETER())
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get Terminal.PARAMETER")
+		}
+
+		t.Parameter = p
+	}
+
+	if ctx.IdentifiedPath() != nil {
+		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get Terminal.IdentifiedPath")
+		}
+
+		t.IdentifiedPath = &ip
+	}
+
+	if ctx.FunctionCall() != nil {
+		//TODO: implement
+		return nil, errors.New("Terminal.FunctionCall not implemented")
+	}
+
+	return t, nil
 }

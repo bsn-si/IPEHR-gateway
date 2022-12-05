@@ -94,16 +94,17 @@ func getColumnExpr(ctx *aqlparser.ColumnExprContext) (SelectValuer, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get ColumnExpr.Primitive")
 		}
+
 		psv := &PrimitiveSelectValue{
 			Val: p,
 		}
 
 		return psv, nil
-	case *aqlparser.AggregateFunctionCallContext:
+	case *aqlparser.AggregateFunctionCallContext: // nolint
 		// selectValue = &AggregateFunctionCallSelectValue{}
 
 		return nil, errors.New("column expr Aggregate Func Call Not implemented")
-	case *aqlparser.FunctionCallContext:
+	case *aqlparser.FunctionCallContext: // nolint
 		// selectValue = &FunctionCallSelectValue{}
 
 		return nil, errors.New("column expr Func Call Not implemented")

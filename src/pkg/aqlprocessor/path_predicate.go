@@ -27,7 +27,7 @@ type PathPredicate struct {
 type PathPredicateOperand struct {
 	Primitive  *Primitive
 	ObjectPath *ObjectPath
-	Parameter  *string
+	Parameter  *Parameter
 	IDCode     *string
 	AtCode     *string
 }
@@ -71,35 +71,54 @@ func getComparisionSimbol(ctx antlr.TerminalNode) (ComparisionSymbol, error) {
 	}
 }
 
-type NodePredicate struct {
-	Value string
-}
-
 type ArchetypePathPredicate struct {
 	ArchetypeHRID *string
-	Parameter     *string
+	Parameter     *Parameter
+}
+
+type Parameter string
+
+func getParameter(tn antlr.TerminalNode) (*Parameter, error) {
+	p, err := getCode[Parameter](tn, "$")
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }
 
 func getPathPredicate(ctx *aqlparser.PathPredicateContext) (PathPredicate, error) {
-	var (
-		err    error
-		result PathPredicate
-	)
+	var result PathPredicate
 
 	if ctx.StandardPredicate() != nil {
-		result, err = processStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
+		sp, err := getStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
 		if err != nil {
 			return PathPredicate{}, errors.Wrap(err, "cannot process PathPredicate.StandartPredicate")
 		}
+
+		result = PathPredicate{
+			Type:              StandartPathPredicate,
+			StandartPredicate: sp,
+		}
 	} else if ctx.ArchetypePredicate() != nil {
-		result, err = processArchetypePredicate(ctx.ArchetypePredicate().(*aqlparser.ArchetypePredicateContext))
+		ap, err := getArchetypePredicate(ctx.ArchetypePredicate().(*aqlparser.ArchetypePredicateContext))
 		if err != nil {
 			return PathPredicate{}, errors.Wrap(err, "cannot process PathPredicate.ArchetypePredicate")
 		}
+
+		result = PathPredicate{
+			Type:      ArchetypedPathPredicate,
+			Archetype: ap,
+		}
 	} else if ctx.NodePredicate() != nil {
-		result, err = processNodePredicate(ctx.NodePredicate().(*aqlparser.NodePredicateContext))
+		np, err := getNodePredicate(ctx.NodePredicate().(*aqlparser.NodePredicateContext))
 		if err != nil {
 			return PathPredicate{}, errors.Wrap(err, "cannot process PathPredicate.NodePredicate")
+		}
+
+		result = PathPredicate{
+			Type:          NodePathPredicate,
+			NodePredicate: np,
 		}
 	} else {
 		return PathPredicate{}, fmt.Errorf("unknown path predicate type: %s", ctx.GetText()) //nolint
@@ -108,94 +127,56 @@ func getPathPredicate(ctx *aqlparser.PathPredicateContext) (PathPredicate, error
 	return result, nil
 }
 
-func processStandartPredicate(ctx *aqlparser.StandardPredicateContext) (PathPredicate, error) {
-	pp := PathPredicate{
-		Type:              StandartPathPredicate,
-		StandartPredicate: &StandartPredicate{},
-	}
+func getStandartPredicate(ctx *aqlparser.StandardPredicateContext) (*StandartPredicate, error) {
+	result := StandartPredicate{}
 
 	if ctx.ObjectPath() != nil {
 		op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
 		if err != nil {
-			return PathPredicate{}, errors.Wrap(err, "cannot get ObjectPath")
+			return nil, errors.Wrap(err, "cannot get ObjectPath")
 		}
 
-		pp.StandartPredicate.ObjectPath = op
+		result.ObjectPath = op
 	}
 
 	if ctx.COMPARISON_OPERATOR() != nil {
 		symb, err := getComparisionSimbol(ctx.COMPARISON_OPERATOR())
 		if err != nil {
-			return PathPredicate{}, errors.Wrap(err, "cannot get ComparisionOperator")
+			return nil, errors.Wrap(err, "cannot get ComparisionOperator")
 		}
 
-		pp.StandartPredicate.CMPOperator = symb
+		result.CMPOperator = symb
 	}
 
 	if ctx.PathPredicateOperand() != nil {
 		operand, err := getPathPredicateOperand(ctx.PathPredicateOperand().(*aqlparser.PathPredicateOperandContext))
 		if err != nil {
-			return PathPredicate{}, err
+			return nil, err
 		}
 
-		pp.StandartPredicate.Operand = operand
+		result.Operand = operand
 	}
 
-	return pp, nil
+	return &result, nil
 }
 
-func processArchetypePredicate(ctx *aqlparser.ArchetypePredicateContext) (PathPredicate, error) {
-	pp := PathPredicate{
-		Type:      ArchetypedPathPredicate,
-		Archetype: &ArchetypePathPredicate{},
-	}
+func getArchetypePredicate(ctx *aqlparser.ArchetypePredicateContext) (*ArchetypePathPredicate, error) {
+	result := ArchetypePathPredicate{}
 
 	if ctx.ARCHETYPE_HRID() != nil {
-		pp.Archetype.ArchetypeHRID = toRef(ctx.ARCHETYPE_HRID().GetText())
+		result.ArchetypeHRID = toRef(ctx.ARCHETYPE_HRID().GetText())
 	} else if ctx.PARAMETER() != nil {
-		pp.Archetype.Parameter = toRef(ctx.PARAMETER().GetText())
+		p, err := getParameter(ctx.PARAMETER())
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get ArchtypePredicate.PARAMETER")
+		}
+
+		result.Parameter = p
 	} else {
-		return PathPredicate{}, fmt.Errorf("unexpected archetype predicate: %v", ctx.GetText()) //nolint
+		return nil, fmt.Errorf("unexpected archetype predicate: %v", ctx.GetText()) //nolint
 	}
 
-	return pp, nil
-}
-
-// nodePredicate: (ID_CODE | AT_CODE) (
-//
-//		SYM_COMMA (
-//			STRING
-//			| PARAMETER
-//			| TERM_CODE
-//			| AT_CODE
-//			| ID_CODE
-//		)
-//	)?
-//	| ARCHETYPE_HRID (
-//		SYM_COMMA (
-//			STRING
-//			| PARAMETER
-//			| TERM_CODE
-//			| AT_CODE
-//			| ID_CODE
-//		)
-//	)?
-//	| PARAMETER
-//	| objectPath COMPARISON_OPERATOR pathPredicateOperand
-//	| objectPath MATCHES CONTAINED_REGEX
-//	| nodePredicate AND nodePredicate
-//
-// | nodePredicate OR nodePredicate;
-func processNodePredicate(ctx *aqlparser.NodePredicateContext) (PathPredicate, error) {
-	pp := PathPredicate{
-		Type: NodePathPredicate,
-		NodePredicate: &NodePredicate{
-			Value: ctx.GetText(),
-		},
-	}
-	//TODO add FULL realisation here
-
-	return pp, nil
+	return &result, nil
 }
 
 func getPathPredicateOperand(ctx *aqlparser.PathPredicateOperandContext) (*PathPredicateOperand, error) {
@@ -206,6 +187,7 @@ func getPathPredicateOperand(ctx *aqlparser.PathPredicateOperandContext) (*PathP
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get PathPredicateOverand.Primitive")
 		}
+
 		result.Primitive = &p
 	} else if ctx.ObjectPath() != nil {
 		op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
@@ -214,7 +196,12 @@ func getPathPredicateOperand(ctx *aqlparser.PathPredicateOperandContext) (*PathP
 		}
 		result.ObjectPath = op
 	} else if ctx.PARAMETER() != nil {
-		result.Parameter = toRef(ctx.PARAMETER().GetText())
+		p, err := getParameter(ctx.PARAMETER())
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get PathPredicateOperand.PARAMETER")
+		}
+
+		result.Parameter = p
 	} else if ctx.AT_CODE() != nil {
 		result.AtCode = toRef(ctx.AT_CODE().GetText())
 	} else if ctx.ID_CODE() != nil {

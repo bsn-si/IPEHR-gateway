@@ -21,7 +21,8 @@ func NewAQLListener() *AQLListener {
 func (aql *AQLListener) EnterSelectClause(ctx *aqlparser.SelectClauseContext) {
 	slct, err := getSelect(ctx)
 	if err != nil {
-		log.Fatalf("get Select err: %v", err)
+		handleError(ctx.GetParser(), ctx.GetStart(), err)
+		log.Printf("get Select err: %v", err)
 	}
 
 	aql.query.Select = *slct
@@ -35,7 +36,8 @@ func (aql *AQLListener) EnterFromClause(ctx *aqlparser.FromClauseContext) {
 
 	from, err := getFrom(ctx.FromExpr().(*aqlparser.FromExprContext))
 	if err != nil {
-		log.Fatalf("get From err: %v", err)
+		handleError(ctx.GetParser(), ctx.GetStart(), err)
+		log.Printf("get From err: %v", err)
 	}
 
 	aql.query.From = from
@@ -49,7 +51,8 @@ func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {
 
 	where, err := getWhere(ctx.WhereExpr().(*aqlparser.WhereExprContext))
 	if err != nil {
-		log.Fatalf("get Where err: %v", err)
+		handleError(ctx.GetParser(), ctx.GetStart(), err)
+		log.Printf("get Where err: %v", err)
 	}
 
 	aql.query.Where = where
@@ -59,7 +62,8 @@ func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {
 func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) {
 	order, err := getOrder(ctx)
 	if err != nil {
-		log.Fatalf("get Order err: %v", err)
+		handleError(ctx.GetParser(), ctx.GetStart(), err)
+		log.Printf("get Order err: %v", err)
 	}
 
 	aql.query.Order = order
@@ -69,7 +73,8 @@ func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) 
 func (aql *AQLListener) EnterLimitClause(ctx *aqlparser.LimitClauseContext) {
 	limit, err := getLimit(ctx)
 	if err != nil {
-		log.Fatalf("get Limit err: %v", err)
+		handleError(ctx.GetParser(), ctx.GetStart(), err)
+		log.Printf("get Limit err: %v", err)
 	}
 
 	aql.query.Limit = limit

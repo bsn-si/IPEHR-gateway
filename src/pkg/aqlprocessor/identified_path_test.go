@@ -41,7 +41,10 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 								PathPredicate: &PathPredicate{
 									Type: NodePathPredicate,
 									NodePredicate: &NodePredicate{
-										Value: "at0003",
+										Value:             "at0003",
+										AtCode:            toRef(AtCode("0003")),
+										Operator:          NoneOperator,
+										ComparisionSymbol: SymNone,
 									},
 								},
 							},
@@ -63,7 +66,10 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 								PathPredicate: &PathPredicate{
 									Type: NodePathPredicate,
 									NodePredicate: &NodePredicate{
-										Value: "at0003",
+										Value:             "at0003",
+										AtCode:            toRef(AtCode("0003")),
+										Operator:          NoneOperator,
+										ComparisionSymbol: SymNone,
 									},
 								},
 								ObjectPath: &ObjectPath{
@@ -96,7 +102,10 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 											PathPredicate: &PathPredicate{
 												Type: NodePathPredicate,
 												NodePredicate: &NodePredicate{
-													Value: "at0003",
+													Value:             "at0003",
+													AtCode:            toRef(AtCode("0003")),
+													Operator:          NoneOperator,
+													ComparisionSymbol: SymNone,
 												},
 											},
 										},

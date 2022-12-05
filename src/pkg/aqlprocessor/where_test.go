@@ -35,7 +35,7 @@ func TestProcessor_Where(t *testing.T) {
 					},
 					ComparisonOperator: toRef(SymEQ),
 					Terminal: &Terminal{
-						Text: "$nameValue",
+						Parameter: toRef(Parameter("nameValue")),
 					},
 				},
 			},
@@ -61,7 +61,9 @@ func TestProcessor_Where(t *testing.T) {
 								},
 							},
 							ComparisonOperator: toRef(SymEQ),
-							Terminal:           &Terminal{Text: "$nameValue"},
+							Terminal: &Terminal{
+								Parameter: toRef(Parameter("nameValue")),
+							},
 						},
 					},
 					{
@@ -77,7 +79,9 @@ func TestProcessor_Where(t *testing.T) {
 								},
 							},
 							ComparisonOperator: toRef(SymGE),
-							Terminal:           &Terminal{Text: "$templateId"},
+							Terminal: &Terminal{
+								Parameter: toRef(Parameter("templateId")),
+							},
 						},
 					},
 				},
@@ -89,7 +93,7 @@ func TestProcessor_Where(t *testing.T) {
 			`SELECT val FROM EHR
 			WHERE
 				(c/name/value = $nameValue OR c/archetype_details/template_id/value = $templateId) AND
-				o/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/value >= 140`,
+				o/data[at0001,id123]/events[at0006,'str']/data[at0003,at0002]/items[at0004,$some_parameter]/value/value >= 140`,
 			&Where{
 				OperatorType: ANDOperator,
 				Next: []*Where{
@@ -110,7 +114,9 @@ func TestProcessor_Where(t *testing.T) {
 												},
 											},
 											ComparisonOperator: toRef(SymEQ),
-											Terminal:           &Terminal{Text: "$nameValue"},
+											Terminal: &Terminal{
+												Parameter: toRef(Parameter("nameValue")),
+											},
 										},
 									},
 									{
@@ -125,7 +131,9 @@ func TestProcessor_Where(t *testing.T) {
 													},
 												},
 											},
-											Terminal:           &Terminal{Text: "$templateId"},
+											Terminal: &Terminal{
+												Parameter: toRef(Parameter("templateId")),
+											},
 											ComparisonOperator: toRef(SymEQ),
 										},
 									},
@@ -141,29 +149,61 @@ func TestProcessor_Where(t *testing.T) {
 									Paths: []PartPath{
 										{
 											Identifier: "data", PathPredicate: &PathPredicate{
-												Type:          NodePathPredicate,
-												NodePredicate: &NodePredicate{Value: "at0001"},
+												Type: NodePathPredicate,
+												NodePredicate: &NodePredicate{
+													Value:             "at0001,id123",
+													AtCode:            toRef(AtCode("0001")),
+													Operator:          NoneOperator,
+													ComparisionSymbol: SymNone,
+													AdditionalData: &NodePredicateAdditionalData{
+														IDCode: toRef(IDCode("123")),
+													},
+												},
 											},
 										},
 										{
 											Identifier: "events",
 											PathPredicate: &PathPredicate{
-												Type:          NodePathPredicate,
-												NodePredicate: &NodePredicate{Value: "at0006"},
+												Type: NodePathPredicate,
+												NodePredicate: &NodePredicate{
+													Value:             "at0006,'str'",
+													AtCode:            toRef(AtCode("0006")),
+													Operator:          NoneOperator,
+													ComparisionSymbol: SymNone,
+													AdditionalData: &NodePredicateAdditionalData{
+														String: toRef("str"),
+													},
+												},
 											},
 										},
 										{
 											Identifier: "data",
 											PathPredicate: &PathPredicate{
-												Type:          NodePathPredicate,
-												NodePredicate: &NodePredicate{Value: "at0003"},
+												Type: NodePathPredicate,
+												NodePredicate: &NodePredicate{
+													Value:             "at0003,at0002",
+													AtCode:            toRef(AtCode("0003")),
+													Operator:          NoneOperator,
+													ComparisionSymbol: SymNone,
+													AdditionalData: &NodePredicateAdditionalData{
+														AtCode: toRef(AtCode("0002")),
+													},
+												},
 											},
 										},
 										{
 											Identifier: "items",
 											PathPredicate: &PathPredicate{
-												Type:          NodePathPredicate,
-												NodePredicate: &NodePredicate{Value: "at0004"},
+												Type: NodePathPredicate,
+												NodePredicate: &NodePredicate{
+													Value:             "at0004,$some_parameter",
+													AtCode:            toRef(AtCode("0004")),
+													Operator:          NoneOperator,
+													ComparisionSymbol: SymNone,
+													AdditionalData: &NodePredicateAdditionalData{
+														Parameter: toRef(Parameter("some_parameter")),
+													},
+												},
 											},
 										},
 										{Identifier: "value"},
@@ -172,7 +212,11 @@ func TestProcessor_Where(t *testing.T) {
 								},
 							},
 							ComparisonOperator: toRef(SymGE),
-							Terminal:           &Terminal{Text: "140"},
+							Terminal: &Terminal{
+								Primitive: &Primitive{
+									Val: float64(140),
+								},
+							},
 						},
 					},
 				},
