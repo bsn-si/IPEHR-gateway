@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
 	"hms/gateway/pkg/errors"
-	"log"
 )
 
 type From struct {
@@ -60,11 +59,8 @@ func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 		switch ctx := ctx.ClassExprOperand().(type) {
 		case *aqlparser.ClassExpressionContext:
 			{
-				log.Println("CLASS EXPR OPERAND", ctx.GetText())
-
 				ce := ClassExpression{}
 				for _, id := range ctx.AllIDENTIFIER() {
-					log.Println("\t", id.GetText())
 					ce.Identifiers = append(ce.Identifiers, id.GetText())
 				}
 
@@ -74,7 +70,6 @@ func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 						return nil, err
 					}
 
-					log.Println("\tPATH_PREDICATE", p)
 					ce.PathPredicate = &p
 				}
 

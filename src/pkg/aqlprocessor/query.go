@@ -8,8 +8,6 @@ type Query struct {
 	Limit  *Limit
 }
 
-type Where struct{}
-
 type Order struct {
 	Orders []OrderBy
 }

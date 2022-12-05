@@ -54,6 +54,12 @@ func TestProcessor_From(t *testing.T) {
 						PathPredicate: &PathPredicate{
 							Type: StandartPathPredicate,
 							StandartPredicate: &StandartPredicate{
+								ObjectPath: &ObjectPath{
+									Paths: []PartPath{
+										{Identifier: "ehr_id"},
+										{Identifier: "value"},
+									},
+								},
 								CMPOperator: SymEQ,
 								Operand: &PathPredicateOperand{
 									Parameter: toRef("$ehrUid"),

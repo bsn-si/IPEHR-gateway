@@ -67,7 +67,14 @@ func (aql *AQLListener) ExitFromClause(ctx *aqlparser.FromClauseContext) {
 
 // EnterWhereClause is called when production whereClause is entered.
 func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {
-	aql.query.Where = &Where{}
+	if ctx.WhereExpr() != nil {
+		where, err := getWhere(ctx.WhereExpr().(*aqlparser.WhereExprContext))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		aql.query.Where = where
+	}
 }
 
 // ExitWhereClause is called when production whereClause is exited.
@@ -206,9 +213,7 @@ func (aql *AQLListener) EnterColumnExpr(ctx *aqlparser.ColumnExprContext) {
 func (aql *AQLListener) ExitColumnExpr(ctx *aqlparser.ColumnExprContext) {}
 
 // EnterContainsExpr is called when production containsExpr is entered.
-func (aql *AQLListener) EnterContainsExpr(ctx *aqlparser.ContainsExprContext) {
-
-}
+func (aql *AQLListener) EnterContainsExpr(ctx *aqlparser.ContainsExprContext) {}
 
 // ExitContainsExpr is called when production containsExpr is exited.
 func (aql *AQLListener) ExitContainsExpr(ctx *aqlparser.ContainsExprContext) {}

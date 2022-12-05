@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
 	"hms/gateway/pkg/errors"
-	"log"
+
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 type PredicateType string
@@ -19,6 +20,7 @@ type PathPredicate struct {
 	Type PredicateType
 
 	StandartPredicate *StandartPredicate
+	NodePredicate     *NodePredicate
 	Archetype         *ArchetypePathPredicate
 }
 
@@ -33,7 +35,7 @@ type PathPredicateOperand struct {
 // standardPredicate:
 // objectPath COMPARISON_OPERATOR pathPredicateOperand;
 type StandartPredicate struct {
-	ObjectPath  ObjectPath
+	ObjectPath  *ObjectPath
 	CMPOperator ComparisionSymbol
 	Operand     *PathPredicateOperand
 }
@@ -41,13 +43,37 @@ type StandartPredicate struct {
 type ComparisionSymbol string
 
 const (
-	SymLT ComparisionSymbol = "<"
-	SymGT ComparisionSymbol = ">"
-	SymLE ComparisionSymbol = "<="
-	SymGE ComparisionSymbol = ">="
-	SymNe ComparisionSymbol = "!="
-	SymEQ ComparisionSymbol = "="
+	SymNone ComparisionSymbol = "NONE"
+	SymLT   ComparisionSymbol = "<"
+	SymGT   ComparisionSymbol = ">"
+	SymLE   ComparisionSymbol = "<="
+	SymGE   ComparisionSymbol = ">="
+	SymNe   ComparisionSymbol = "!="
+	SymEQ   ComparisionSymbol = "="
 )
+
+func getComparisionSimbol(ctx antlr.TerminalNode) (ComparisionSymbol, error) {
+	switch ComparisionSymbol(ctx.GetText()) {
+	case SymEQ:
+		return SymEQ, nil
+	case SymNe:
+		return SymNe, nil
+	case SymGE:
+		return SymGE, nil
+	case SymLE:
+		return SymLE, nil
+	case SymGT:
+		return SymGT, nil
+	case SymLT:
+		return SymLT, nil
+	default:
+		return SymNone, fmt.Errorf("Unexpected comparison operator: %v", ctx.GetText()) //nolint
+	}
+}
+
+type NodePredicate struct {
+	Value string
+}
 
 type ArchetypePathPredicate struct {
 	ArchetypeHRID *string
@@ -83,36 +109,27 @@ func processPathPredicate(ctx *aqlparser.PathPredicateContext) (PathPredicate, e
 }
 
 func processStandartPredicate(ctx *aqlparser.StandardPredicateContext) (PathPredicate, error) {
-	log.Println("STANDART PREDICATE")
-
 	pp := PathPredicate{
 		Type:              StandartPathPredicate,
 		StandartPredicate: &StandartPredicate{},
 	}
 
 	if ctx.ObjectPath() != nil {
-		op := ctx.ObjectPath().(*aqlparser.ObjectPathContext)
+		op, err := newObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+		if err != nil {
+			return PathPredicate{}, errors.Wrap(err, "cannot get ObjectPath")
+		}
 
-		log.Println("\t\tOBJECT_PATH:", op.GetText())
+		pp.StandartPredicate.ObjectPath = op
 	}
 
 	if ctx.COMPARISON_OPERATOR() != nil {
-		switch ComparisionSymbol(ctx.COMPARISON_OPERATOR().GetText()) {
-		case SymEQ:
-			pp.StandartPredicate.CMPOperator = SymEQ
-		case SymNe:
-			pp.StandartPredicate.CMPOperator = SymNe
-		case SymGE:
-			pp.StandartPredicate.CMPOperator = SymGE
-		case SymLE:
-			pp.StandartPredicate.CMPOperator = SymLE
-		case SymGT:
-			pp.StandartPredicate.CMPOperator = SymGT
-		case SymLT:
-			pp.StandartPredicate.CMPOperator = SymLT
-		default:
-			return PathPredicate{}, fmt.Errorf("Unexpected comparison operator: %v", ctx.COMPARISON_OPERATOR().GetText()) //nolint
+		symb, err := getComparisionSimbol(ctx.COMPARISON_OPERATOR())
+		if err != nil {
+			return PathPredicate{}, errors.Wrap(err, "cannot get ComparisionOperator")
 		}
+
+		pp.StandartPredicate.CMPOperator = symb
 	}
 
 	if ctx.PathPredicateOperand() != nil {
@@ -172,6 +189,9 @@ func processArchetypePredicate(ctx *aqlparser.ArchetypePredicateContext) (PathPr
 func processNodePredicate(ctx *aqlparser.NodePredicateContext) (PathPredicate, error) {
 	pp := PathPredicate{
 		Type: NodePathPredicate,
+		NodePredicate: &NodePredicate{
+			Value: ctx.GetText(),
+		},
 	}
 	//TODO add FULL realisation here
 
@@ -181,20 +201,22 @@ func processNodePredicate(ctx *aqlparser.NodePredicateContext) (PathPredicate, e
 func getPathPredicateOperand(ctx *aqlparser.PathPredicateOperandContext) (*PathPredicateOperand, error) {
 	result := PathPredicateOperand{}
 
-	log.Println("\t\tPATH_PREDICATE_OPERAND", ctx.GetText())
-
 	if ctx.Primitive() != nil {
-		log.Println("\t\t\tPRIMITIVE", ctx.Primitive().GetText())
+		p := NewPrimitive(ctx.Primitive().(*aqlparser.PrimitiveContext))
+		result.Primitive = &p
 	} else if ctx.ObjectPath() != nil {
-		log.Println("\t\t\tOBJECT PATH", ctx.ObjectPath().GetText())
+		op, err := newObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get PathPredicateOperand.ObjectPath")
+		}
+		result.ObjectPath = op
 	} else if ctx.PARAMETER() != nil {
-		log.Println("\t\t\tPARAMETER", ctx.PARAMETER().GetText())
 		result.Parameter = toRef(ctx.PARAMETER().GetText())
-	} else {
-		log.Printf("\t\t\tUNEXPECTED TYPE: %T", ctx)
+	} else if ctx.AT_CODE() != nil {
+		result.AtCode = toRef(ctx.AT_CODE().GetText())
+	} else if ctx.ID_CODE() != nil {
+		result.IDCode = toRef(ctx.ID_CODE().GetText())
 	}
-
-	log.Println("\tPATH OPERAND", ctx.GetChildCount())
 
 	return &result, nil
 }

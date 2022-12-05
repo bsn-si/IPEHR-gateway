@@ -40,8 +40,9 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 								Identifier: "field",
 								PathPredicate: &PathPredicate{
 									Type: NodePathPredicate,
-									// Value: "at0003",
-									// Operand: &PathPredicateOperand{},
+									NodePredicate: &NodePredicate{
+										Value: "at0003",
+									},
 								},
 							},
 						},
@@ -61,7 +62,9 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 								Identifier: "field",
 								PathPredicate: &PathPredicate{
 									Type: NodePathPredicate,
-									// Value: "at0003",
+									NodePredicate: &NodePredicate{
+										Value: "at0003",
+									},
 								},
 								ObjectPath: &ObjectPath{
 									Paths: []PartPath{
@@ -92,6 +95,9 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 											Identifier: "field",
 											PathPredicate: &PathPredicate{
 												Type: NodePathPredicate,
+												NodePredicate: &NodePredicate{
+													Value: "at0003",
+												},
 											},
 										},
 										{Identifier: "value1"},
