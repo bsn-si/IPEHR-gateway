@@ -69,12 +69,21 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 
 	if ctx.EXISTS() != nil && ctx.IdentifiedPath() != nil {
 		result.IsExists = toRef(true)
-		ip := NewIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+
+		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get IdentifierExpr.IdentifierPath")
+		}
+
 		result.IdentifiedPath = &ip
 	}
 
 	if ctx.IdentifiedPath() != nil && ctx.COMPARISON_OPERATOR() != nil {
-		ip := NewIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get IdentifierExpr.IdentifierPath")
+		}
+
 		result.IdentifiedPath = &ip
 
 		co, err := getComparisionSimbol(ctx.COMPARISON_OPERATOR())

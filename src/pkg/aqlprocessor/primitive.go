@@ -2,7 +2,6 @@ package aqlprocessor
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -17,24 +16,23 @@ type Primitive struct {
 	Val any
 }
 
-func NewPrimitive(prim *aqlparser.PrimitiveContext) Primitive {
+func getPrimitive(prim *aqlparser.PrimitiveContext) (Primitive, error) {
 	p := Primitive{}
 
-	var err error
 	switch val := prim.GetChild(0).(type) {
 	case *antlr.TerminalNodeImpl:
-		err = p.processTerminalNode(val)
+		if err := p.processTerminalNode(val); err != nil {
+			return Primitive{}, errors.Wrap(err, "cannot get Primitive.TerminalNode")
+		}
 	case *aqlparser.NumericPrimitiveContext:
-		err = p.processNumericPrimitive(val)
+		if err := p.processNumericPrimitive(val); err != nil {
+			return Primitive{}, errors.Wrap(err, "cannot get Primitive.Numeric")
+		}
 	default:
-		err = fmt.Errorf("unexpected PRIMITIVE type: %T", val) //nolint
+		return Primitive{}, fmt.Errorf("unexpected PRIMITIVE type: %T", val) //nolint
 	}
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return p
+	return p, nil
 }
 
 func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error {
@@ -83,6 +81,16 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 	return nil
 }
 
+func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveContext) error {
+	val, err := strconv.ParseFloat(numeric.GetText(), 64)
+	if err != nil {
+		return errors.Wrap(err, "cannot unmarshal numeric value")
+	}
+
+	p.Val = val
+	return nil
+}
+
 func parseDateByLayout(layout, str string) (time.Time, error) {
 	strDate := trimString(str)
 
@@ -102,14 +110,4 @@ func trimString(str string) string {
 	}
 
 	return str
-}
-
-func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveContext) error {
-	val, err := strconv.ParseFloat(numeric.GetText(), 64)
-	if err != nil {
-		return errors.Wrap(err, "cannot unmarshal numeric value")
-	}
-
-	p.Val = val
-	return nil
 }

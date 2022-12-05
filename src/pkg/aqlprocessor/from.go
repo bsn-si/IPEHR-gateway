@@ -39,7 +39,7 @@ func getFrom(ctx *aqlparser.FromExprContext) (From, error) {
 	f := From{}
 
 	if ctx.ContainsExpr() != nil {
-		cExpr, err := newContainsExpr(ctx.ContainsExpr().(*aqlparser.ContainsExprContext))
+		cExpr, err := getContainsExpr(ctx.ContainsExpr().(*aqlparser.ContainsExprContext))
 		if err != nil {
 			return From{}, errors.Wrap(err, "cannot process From.ContainsExpr")
 		}
@@ -52,7 +52,7 @@ func getFrom(ctx *aqlparser.FromExprContext) (From, error) {
 	return f, nil
 }
 
-func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) {
+func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) {
 	result := ContainsExpr{}
 
 	if ctx.ClassExprOperand() != nil {
@@ -65,7 +65,7 @@ func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 				}
 
 				if ctx.PathPredicate() != nil {
-					p, err := processPathPredicate(ctx.PathPredicate().(*aqlparser.PathPredicateContext))
+					p, err := getPathPredicate(ctx.PathPredicate().(*aqlparser.PathPredicateContext))
 					if err != nil {
 						return nil, err
 					}
@@ -81,7 +81,7 @@ func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 				vce.Version = ctx.VERSION().GetText()
 				vce.Variable = toRef(ctx.IDENTIFIER().GetText())
 				if ctx.VersionPredicate() != nil {
-					pp, err := processVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
+					pp, err := getVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
 					if err != nil {
 						return nil, err
 					}
@@ -98,7 +98,7 @@ func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 
 	if len(ctx.AllContainsExpr()) > 0 {
 		for _, ce := range ctx.AllContainsExpr() {
-			cExp, err := newContainsExpr(ce.(*aqlparser.ContainsExprContext))
+			cExp, err := getContainsExpr(ce.(*aqlparser.ContainsExprContext))
 			if err != nil {
 				return nil, err
 			}
@@ -122,6 +122,6 @@ func newContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 	return &result, nil
 }
 
-func processVersionPredicate(ctx *aqlparser.VersionPredicateContext) (PathPredicate, error) {
+func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (PathPredicate, error) {
 	return processStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -221,43 +222,43 @@ func TestProcessor_SelectDates(t *testing.T) {
 	tests := []struct {
 		name    string
 		query   string
-		want    Query
+		want    Select
 		wantErr bool
 	}{
 		{
 			"1. date 2020-10-11",
 			`SELECT '2020-10-11' FROM EHR`,
-			Query{Select: Select{
+			Select{
 				SelectExprs: []SelectExpr{
 					{
 						Value: &PrimitiveSelectValue{Val: Primitive{date}},
 					},
 				},
-			}},
+			},
 			false,
 		},
 		{
 			"2. time  23:58:58.123",
 			`SELECT '23:58:58.123' FROM EHR`,
-			Query{Select: Select{
+			Select{
 				SelectExprs: []SelectExpr{
 					{
 						Value: &PrimitiveSelectValue{Val: Primitive{timeValue}},
 					},
 				},
-			}},
+			},
 			false,
 		},
 		{
 			"3. date_time  2020-10-11 23:58:58.123",
 			`SELECT '2020-10-11T23:58:58.123' FROM EHR`,
-			Query{Select: Select{
+			Select{
 				SelectExprs: []SelectExpr{
 					{
 						Value: &PrimitiveSelectValue{Val: Primitive{dateTimeValue}},
 					},
 				},
-			}},
+			},
 			false,
 		},
 	}
@@ -270,9 +271,8 @@ func TestProcessor_SelectDates(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
-			tt.want.From = got.From
-			if !tt.wantErr && assert.NoError(t, err) {
-				assert.Equal(t, tt.want, got)
+			if diff := cmp.Diff(tt.want, got.Select); diff != "" {
+				t.Errorf("mismatch {-want;+got}\n\t%s", diff)
 			}
 		})
 	}

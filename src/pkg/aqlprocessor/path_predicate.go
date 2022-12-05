@@ -80,7 +80,7 @@ type ArchetypePathPredicate struct {
 	Parameter     *string
 }
 
-func processPathPredicate(ctx *aqlparser.PathPredicateContext) (PathPredicate, error) {
+func getPathPredicate(ctx *aqlparser.PathPredicateContext) (PathPredicate, error) {
 	var (
 		err    error
 		result PathPredicate
@@ -115,7 +115,7 @@ func processStandartPredicate(ctx *aqlparser.StandardPredicateContext) (PathPred
 	}
 
 	if ctx.ObjectPath() != nil {
-		op, err := newObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+		op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
 		if err != nil {
 			return PathPredicate{}, errors.Wrap(err, "cannot get ObjectPath")
 		}
@@ -202,10 +202,13 @@ func getPathPredicateOperand(ctx *aqlparser.PathPredicateOperandContext) (*PathP
 	result := PathPredicateOperand{}
 
 	if ctx.Primitive() != nil {
-		p := NewPrimitive(ctx.Primitive().(*aqlparser.PrimitiveContext))
+		p, err := getPrimitive(ctx.Primitive().(*aqlparser.PrimitiveContext))
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get PathPredicateOverand.Primitive")
+		}
 		result.Primitive = &p
 	} else if ctx.ObjectPath() != nil {
-		op, err := newObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+		op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get PathPredicateOperand.ObjectPath")
 		}
