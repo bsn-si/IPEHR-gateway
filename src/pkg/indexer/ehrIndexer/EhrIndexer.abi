@@ -698,6 +698,54 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        }
+      ],
+      "name": "getUser",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "IDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "enum Users.Role",
+              "name": "role",
+              "type": "uint8"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Users.User",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes32",
           "name": "accessID",
           "type": "bytes32"
@@ -1171,17 +1219,12 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "userAddr",
+          "name": "addr",
           "type": "address"
         },
         {
           "internalType": "bytes32",
-          "name": "id",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "systemID",
+          "name": "IDHash",
           "type": "bytes32"
         },
         {
@@ -1190,9 +1233,21 @@
           "type": "uint8"
         },
         {
-          "internalType": "bytes",
-          "name": "pwdHash",
-          "type": "bytes"
+          "components": [
+            {
+              "internalType": "enum Attributes.Code",
+              "name": "code",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "value",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attributes.Attribute[]",
+          "name": "attrs",
+          "type": "tuple[]"
         },
         {
           "internalType": "address",
@@ -1208,40 +1263,6 @@
       "name": "userNew",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "users",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "id",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "systemID",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "enum Users.Role",
-          "name": "role",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes",
-          "name": "pwdHash",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     }
   ]

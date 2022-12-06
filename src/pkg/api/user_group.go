@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/access"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 )
@@ -68,9 +69,9 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		return
 	}
 
-	reqID := c.GetString("reqID")
+	var txHash string
 
-	userGroup.GroupID, err = h.service.GroupCreate(c, userID, systemID, reqID, userGroup.Name, userGroup.Description)
+	txHash, userGroup.GroupID, err = h.service.GroupCreate(c, userID, systemID, userGroup.Name, userGroup.Description)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -81,6 +82,23 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		}
 
 		log.Println("GroupCreate error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	reqID := c.GetString("reqID")
+
+	procRequest, err := h.service.NewProcRequest(reqID, userID, processing.RequestUserGroupCreate)
+	if err != nil {
+		log.Println("Proc.NewRequest error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
+
+	if err := procRequest.Commit(); err != nil {
+		log.Println("UserGroup create procRequest.Commit error: ", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

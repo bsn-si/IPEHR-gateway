@@ -185,7 +185,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is  empty,  it  will  be  treated  as  ",
+                        "description": "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as ",
                         "name": "qualified_query_name",
                         "in": "path",
                         "required": true
@@ -224,7 +224,7 @@ const docTemplate = `{
                         "description": "Is returned when the query was successfully stored."
                     },
                     "400": {
-                        "description": "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc),  unknown  query  type,  etc."
+                        "description": "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -1538,7 +1538,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1635,6 +1635,137 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Is returned when groupID does not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/group/{group_id}/user_add/{user_id}/{access_level}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "USER"
+                ],
+                "summary": "Adding a user to a group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the user to be added",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Access Level. One of ` + "`" + `admin` + "`" + ` or ` + "`" + `read` + "`" + `",
+                        "name": "access_level",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request could not be understood by the server due to incorrect syntax."
+                    },
+                    "403": {
+                        "description": "Authentication required or user does not have access to change the group"
+                    },
+                    "404": {
+                        "description": "Group or adding user is not exist"
+                    },
+                    "409": {
+                        "description": "The user is already a member of a group"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/info/{user_id}": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "USER"
+                ],
+                "summary": "Get user info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "User unauthorized"
+                    },
+                    "404": {
+                        "description": "User with ID not exist"
+                    },
+                    "422": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -1842,7 +1973,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "User creation request",
+                        "description": "User creation request. ` + "`" + `role` + "`" + `: 0 - Patient, 1 - Doctor. Fields ` + "`" + `Name` + "`" + `, ` + "`" + `Address` + "`" + `, ` + "`" + `Description` + "`" + `, ` + "`" + `PictureURL` + "`" + ` are required for Doctor role",
                         "name": "Request",
                         "in": "body",
                         "required": true,
@@ -2381,7 +2512,19 @@ const docTemplate = `{
         "model.UserCreateRequest": {
             "type": "object",
             "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
                 "password": {
+                    "type": "string"
+                },
+                "pictureURL": {
                     "type": "string"
                 },
                 "role": {
@@ -2408,6 +2551,29 @@ const docTemplate = `{
                     }
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserInfo": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pictureURL": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "timeCreated": {
                     "type": "string"
                 }
             }

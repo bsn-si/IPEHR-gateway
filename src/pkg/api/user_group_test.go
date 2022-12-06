@@ -14,9 +14,14 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/api/mocks"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 )
+
+type MockRequest struct{ processing.Request }
+
+func (r *MockRequest) Commit() error { return nil }
 
 func TestUserHandler_GroupCreate(t *testing.T) {
 	var (
@@ -60,14 +65,8 @@ func TestUserHandler_GroupCreate(t *testing.T) {
 			"",
 			ugBytes,
 			func(svc *mocks.MockUserService) {
-				svc.EXPECT().GroupCreate(
-					gomock.Any(),
-					userID,
-					systemID,
-					gomock.Any(),
-					ug.Name,
-					ug.Description,
-				).Return(ug.GroupID, nil)
+				svc.EXPECT().GroupCreate(gomock.Any(), userID, systemID, ug.Name, ug.Description).Return("", ug.GroupID, nil)
+				svc.EXPECT().NewProcRequest(gomock.Any(), userID, processing.RequestUserGroupCreate).Return(&MockRequest{}, nil)
 			},
 			http.StatusCreated,
 		},

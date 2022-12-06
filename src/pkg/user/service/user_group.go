@@ -16,7 +16,7 @@ import (
 	"hms/gateway/pkg/user/model"
 )
 
-func (s *Service) GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) (*uuid.UUID, error) {
+func (s *Service) GroupCreate(ctx context.Context, userID, systemID, name, description string) (string, *uuid.UUID, error) {
 	groupID := uuid.New()
 
 	userGroup := &model.UserGroup{
@@ -29,57 +29,46 @@ func (s *Service) GroupCreate(ctx context.Context, userID, systemID, reqID, name
 
 	idEncr, err := key.Encrypt(groupID[:])
 	if err != nil {
-		return nil, fmt.Errorf("key.Encrypt groupID error: %w", err)
+		return "", nil, fmt.Errorf("key.Encrypt groupID error: %w", err)
 	}
 
 	content, err := msgpack.Marshal(userGroup)
 	if err != nil {
-		return nil, fmt.Errorf("msgpack.Marshal error: %w", err)
+		return "", nil, fmt.Errorf("msgpack.Marshal error: %w", err)
 	}
 
 	contentCompresed, err := compressor.New(compressor.BestCompression).Compress(content)
 	if err != nil {
-		return nil, fmt.Errorf("UserGroup content compression error: %w", err)
+		return "", nil, fmt.Errorf("UserGroup content compression error: %w", err)
 	}
 
 	contentEncr, err := key.Encrypt(contentCompresed)
 	if err != nil {
-		return nil, fmt.Errorf("key.Encrypt content error: %w", err)
+		return "", nil, fmt.Errorf("key.Encrypt content error: %w", err)
 	}
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
-		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+		return "", nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
 	keyEncr, err := keybox.Seal(key.Bytes(), userPubKey, userPrivKey)
 	if err != nil {
-		return nil, fmt.Errorf("keybox.Seal error: %w", err)
+		return "", nil, fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
 	txHash, err := s.Infra.Index.UserGroupCreate(ctx, &groupID, idEncr, keyEncr, contentEncr, userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
-			return nil, err
+			return "", nil, err
 		} else if errors.Is(err, errors.ErrAlreadyExist) {
-			return nil, err
+			return "", nil, err
 		}
 
-		return nil, fmt.Errorf("Index.GroupCreate error: %w", err)
+		return "", nil, fmt.Errorf("Index.GroupCreate error: %w", err)
 	}
 
-	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupCreate)
-	if err != nil {
-		return nil, fmt.Errorf("Proc.NewRequest error: %w", err)
-	}
-
-	procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
-
-	if err := procRequest.Commit(); err != nil {
-		return nil, fmt.Errorf("UserGroup create procRequest commit error: %w", err)
-	}
-
-	return userGroup.GroupID, nil
+	return txHash, userGroup.GroupID, nil
 }
 
 func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*model.UserGroup, error) {

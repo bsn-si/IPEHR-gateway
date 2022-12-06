@@ -9,6 +9,12 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
+type RequestInterface interface {
+	Commit() error
+	AddEthereumTx(TxKind, string)
+	AddFilecoinTx(TxKind, string, string, string)
+}
+
 type (
 	RequestKind uint8
 

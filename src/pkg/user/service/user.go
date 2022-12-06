@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -12,15 +13,19 @@ import (
 	eth_common "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang-jwt/jwt"
+	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/compressor"
+	docModel "hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/user/model"
+	"hms/gateway/pkg/user/roles"
 )
 
 type Service struct {
@@ -56,8 +61,8 @@ func NewService(infra *infrastructure.Infra, p *processing.Proc) *Service {
 	}
 }
 
-func (s *Service) NewProcRequest(reqID, userID string) (*proc.Request, error) {
-	return s.Proc.NewRequest(reqID, userID, "", proc.RequestUserRegister)
+func (s *Service) NewProcRequest(reqID, userID string, kind processing.RequestKind) (processing.RequestInterface, error) {
+	return s.Proc.NewRequest(reqID, userID, "", kind)
 }
 
 func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error) {
@@ -71,7 +76,32 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 		return fmt.Errorf("generateHashFromPassword error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, userPrivateKey, nil)
+	var content []byte
+
+	switch roles.Role(user.Role) {
+	case roles.Patient:
+	case roles.Doctor:
+		info := model.UserInfo{
+			Name:        user.Name,
+			Address:     user.Address,
+			Description: user.Description,
+			PictuteURL:  user.PictuteURL,
+		}
+
+		content, err = msgpack.Marshal(info)
+		if err != nil {
+			return fmt.Errorf("msgpack.Marshal error: %w", err)
+		}
+
+		content, err = compressor.New(compressor.BestCompression).Compress(content)
+		if err != nil {
+			return fmt.Errorf("DoctorInfo content compression error: %w", err)
+		}
+	default:
+		return errors.ErrFieldIsIncorrect("user.Role")
+	}
+
+	txHash, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivateKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			return err
@@ -109,6 +139,51 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 	}
 
 	return nil
+}
+
+func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, error) {
+	address, err := s.getUserAddress(userID)
+	if err != nil {
+		return nil, fmt.Errorf("s.getUserAddress error: %w", err)
+	}
+
+	user, err := s.Infra.Index.GetUser(ctx, address)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
+	}
+
+	attrs := docModel.Attributes(user.Attrs)
+
+	content := attrs.GetByCode(docModel.AttributeContent)
+	if content == nil {
+		return nil, errors.ErrFieldIsEmpty("AttributeContent")
+	}
+
+	content, err = compressor.New(compressor.BestCompression).Decompress(content)
+	if err != nil {
+		return nil, fmt.Errorf("DoctorInfo content decompression error: %w", err)
+	}
+
+	var userInfo model.UserInfo
+
+	err = msgpack.Unmarshal(content, &userInfo)
+	if err != nil {
+		return nil, fmt.Errorf("msgpack.Marshal error: %w", err)
+	}
+
+	userInfo.Role = roles.Role(user.Role).String()
+
+	timestamp := attrs.GetByCode(docModel.AttributeTimestamp)
+	if timestamp == nil {
+		return nil, errors.ErrFieldIsEmpty("AttributeTimestamp")
+	}
+
+	userInfo.TimeCreated = time.Unix(big.NewInt(0).SetBytes(timestamp).Int64(), 0).Format(common.OpenEhrTimeFormat)
+
+	return &userInfo, nil
 }
 
 func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {

@@ -2,6 +2,7 @@ package indexer
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"log"
 	"math/big"
@@ -23,10 +24,12 @@ import (
 
 type Index struct {
 	sync.RWMutex
-	client       *ethclient.Client
-	ehrIndex     *ehrIndexer.EhrIndexer
-	transactOpts *bind.TransactOpts
-	abi          *abi.ABI
+	client        *ethclient.Client
+	ehrIndex      *ehrIndexer.EhrIndexer
+	transactOpts  *bind.TransactOpts
+	abi           *abi.ABI
+	signerKey     *ecdsa.PrivateKey
+	signerAddress common.Address
 }
 
 const (
@@ -75,6 +78,8 @@ func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64
 		log.Fatal(err)
 	}
 
+	signerAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
+
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -99,10 +104,12 @@ func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64
 	}
 
 	return &Index{
-		client:       client,
-		ehrIndex:     ehrIndex,
-		transactOpts: transactOpts,
-		abi:          bcAbi,
+		client:        client,
+		ehrIndex:      ehrIndex,
+		transactOpts:  transactOpts,
+		abi:           bcAbi,
+		signerKey:     privateKey,
+		signerAddress: signerAddress,
 	}
 }
 

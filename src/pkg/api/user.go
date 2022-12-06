@@ -12,16 +12,19 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/access"
-	proc "hms/gateway/pkg/docs/service/processing"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/user/model"
 	userModel "hms/gateway/pkg/user/model"
+	"hms/gateway/pkg/user/roles"
 	userService "hms/gateway/pkg/user/service"
 )
 
 type UserService interface {
-	NewProcRequest(reqID, userID string) (*proc.Request, error)
-	Register(ctx context.Context, procRequest *proc.Request, user *userModel.UserCreateRequest, systemID string) (err error)
+	NewProcRequest(reqID, userID string, kind processing.RequestKind) (processing.RequestInterface, error)
+	Register(ctx context.Context, procRequest *processing.Request, user *userModel.UserCreateRequest, systemID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
+	Info(ctx context.Context, userID string) (*model.UserInfo, error)
 	CreateToken(userID string) (*userService.TokenDetails, error)
 	ExtractToken(bearToken string) string
 	VerifyAccess(userID, tokenString string) error
@@ -31,7 +34,7 @@ type UserService interface {
 	AddTokenInBlackList(tokenRaw string, expires int64)
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
-	GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) (*uuid.UUID, error)
+	GroupCreate(ctx context.Context, userID, systemID, name, description string) (string, *uuid.UUID, error)
 	GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
 	GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
 }
@@ -53,7 +56,7 @@ func NewUserHandler(handlerService UserService) *UserHandler {
 // @Accept   json
 // @Produce  json
 // @Param    EhrSystemId  header  string                   true  "The identifier of the system, typically a reverse domain identifier"
-// @Param    Request      body    model.UserCreateRequest  true  "User creation request"
+// @Param    Request      body    model.UserCreateRequest  true  "User creation request. `role`: 0 - Patient, 1 - Doctor. Fields `Name`, `Address`, `Description`, `PictureURL` are required for Doctor role"
 // @Success  201          "Indicates that the request has succeeded and transaction about register new user has been created"
 // @Header   201          {string}  RequestID  "Request identifier"
 // @Failure  400          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
@@ -98,14 +101,14 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	procRequest, err := h.service.NewProcRequest(reqID, userCreateRequest.UserID)
+	procRequest, err := h.service.NewProcRequest(reqID, userCreateRequest.UserID, processing.RequestUserRegister)
 	if err != nil {
 		log.Println("User register NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	err = h.service.Register(c, procRequest, &userCreateRequest, systemID)
+	err = h.service.Register(c, procRequest.(*processing.Request), &userCreateRequest, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
@@ -115,6 +118,20 @@ func (h *UserHandler) Register(c *gin.Context) {
 		}
 
 		return
+	}
+
+	if userCreateRequest.Role == uint8(roles.Patient) {
+		groupName := "doctors"
+		groupDescription := ""
+
+		txHash, _, err := h.service.GroupCreate(c, userCreateRequest.UserID, systemID, groupName, groupDescription)
+		if err != nil {
+			log.Println("User register, doctors GroupCreate error:", err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
 	}
 
 	if err := procRequest.Commit(); err != nil {
@@ -275,4 +292,36 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
+}
+
+// Info
+// @Summary  Get user info
+// @Description
+// @Tags     USER
+// @Accept   json
+// @Produce  json
+// @Param    Authorization  header    string  true  "Bearer AccessToken"
+// @Param    AuthUserId     header    string  true  "UserId"
+// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Success  200            {object}  model.UserInfo
+// @Failure  401            "User unauthorized"
+// @Failure  404            "User with ID not exist"
+// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/info/{user_id} [get]
+func (h *UserHandler) Info(c *gin.Context) {
+	userID := c.Param("user_id")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request user_id is empty"})
+		return
+	}
+
+	userInfo, err := h.service.Info(c, userID)
+	if err != nil {
+		log.Println("service.Info error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, userInfo)
 }
