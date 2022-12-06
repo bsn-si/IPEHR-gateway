@@ -150,7 +150,7 @@ func (h *TemplateHandler) Store(c *gin.Context) {
 		return
 	}
 
-	h.setLocationAndETagHeaders(m.VerADL, m.TemplateID, c)
+	c.Header("Location", h.baseURL+"/definition/template/"+m.VerADL+"/"+m.TemplateID)
 
 	if c.Request.Header.Get("Prefer") == "return=representation" {
 		c.Data(http.StatusCreated, "application/xml", data)
@@ -158,9 +158,4 @@ func (h *TemplateHandler) Store(c *gin.Context) {
 	}
 
 	c.Status(http.StatusCreated)
-}
-
-func (h *TemplateHandler) setLocationAndETagHeaders(adlVer string, templateID string, c *gin.Context) {
-	c.Header("Location", h.baseURL+"/definition/template/"+adlVer+"/"+templateID)
-	c.Header("ETag", templateID) // TODO maybe remove it?
 }

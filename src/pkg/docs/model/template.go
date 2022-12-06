@@ -15,7 +15,6 @@ type TemplateXML struct {
 	ArchetypeID string `xml:"definition:archetype_id,attr"` // TODO maybe we should generate it?
 	Concept     string `xml:"definition:concept_name,attr"`
 	UID         string `xml:"uid>value"`
-	ID          string `xml:"id"` // TODO no idea what is it, and why its different with UID
 }
 
 type Template struct {

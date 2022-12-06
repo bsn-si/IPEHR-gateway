@@ -23,8 +23,11 @@ func (*Parser) IsTypeAllowed(t model.ADLType) bool {
 	return t == model.ADLTypeXML || t == model.ADLTypeJSON
 }
 
-func (*Parser) Validate(b []byte, t model.ADLType) bool {
-	// TODO
+func (*Parser) Validate(b []byte, mime model.ADLType) bool {
+	if mime == model.ADLTypeXML {
+		return xml.Unmarshal(b, new(interface{})) == nil
+	}
+
 	return false
 }
 
