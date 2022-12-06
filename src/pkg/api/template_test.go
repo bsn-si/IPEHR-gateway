@@ -300,3 +300,180 @@ func TestTemplateHandler_Store(t *testing.T) {
 		})
 	}
 }
+
+func TestTemplateHandler_Store(t *testing.T) {
+	var (
+		userID        = uuid.New().String()
+		userAccessKey = "emptyJWTkey"
+		systemID      = uuid.New().String()
+	)
+
+	//templateID := "Vital Signs"
+
+	template := &model.Template{
+		TemplateID:  "Vital Signs",
+		Version:     "1",
+		VerADL:      model.VerADL1_4,
+		MimeType:    model.ADLTypeXML,
+		Body:        nil,
+		Concept:     "some concept",
+		ArchetypeID: "openEHR-EHR-COMPOSITION.encounter.v1",
+		//CreatedAt:   "",
+	}
+
+	template.Body = []byte(`<template xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.openehr.org/v1">
+								<language>
+									<terminology_id>
+										<value>ISO_639-1</value>
+									</terminology_id>
+									<code_string>en</code_string>
+								</language>
+								<description>
+									<original_author id="Original Author">Not Specified</original_author>
+									<lifecycle_state>Initial</lifecycle_state>
+									<other_details id="MetaDataSet:Sample Set ">Template metadata sample set</other_details>
+									<details>
+										<language>
+											<terminology_id>
+												<value>ISO_639-1</value>
+											</terminology_id>
+											<code_string>en</code_string>
+										</language>
+										<purpose>Not Specified</purpose>
+									</details>
+								</description>
+								<uid>
+									<value>b4d7f203-b329-4e89-a58a-c605b19e94de</value>
+								</uid>
+								<template_id>
+									<value>` + template.TemplateID + `</value>
+								</template_id>
+								<concept>` + template.Concept + `</concept>
+								<definition archetype_id="` + template.ArchetypeID + `"
+									concept_name="Encounter" name="vital_signs2">
+									<rm_type_name>COMPOSITION</rm_type_name>
+									<occurrences>
+										<lower_included>true</lower_included>
+										<upper_included>true</upper_included>
+										<lower_unbounded>false</lower_unbounded>
+										<upper_unbounded>false</upper_unbounded>
+										<lower>1</lower>
+										<upper>1</upper>
+									</occurrences>
+									<node_id>at0000</node_id>
+								</definition>
+							</template>
+		`)
+
+	tests := []struct {
+		name       string
+		body       string
+		adlVer     string
+		prepare    func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser)
+		wantStatus int
+		wantResp   string
+	}{
+		{
+			"1. empty result because body is empty",
+			"",
+			model.VerADL1_4,
+			func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser) {},
+			http.StatusBadRequest,
+			"",
+		},
+		{
+			"2. empty result because body is not valid",
+			"<xml>...ups",
+			model.VerADL1_4,
+			func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser) {
+				//gaSvc.EXPECT().Parser(model.VerADL1_4).DoAndReturn(func(m string) (*adl14.Parser, error) { return adl14.NewParser(), nil })
+				gaSvc.EXPECT().Parser(model.VerADL1_4).Return(adl14.NewParser(), nil)
+				//gaADL.EXPECT().Validate(gomock.Any(), model.ADLTypeXML).Return(false)
+			},
+			http.StatusBadRequest,
+			"",
+		},
+		{
+			"2. empty result because body is not valid",
+			"<xml>...ups",
+			model.VerADL1_4,
+			func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser) {
+				//gaSvc.EXPECT().Parser(model.VerADL1_4).DoAndReturn(func(m string) (*adl14.Parser, error) { return adl14.NewParser(), nil })
+				gaSvc.EXPECT().Parser(model.VerADL1_4).Return(adl14.NewParser(), nil)
+				//gaADL.EXPECT().Validate(gomock.Any(), model.ADLTypeXML).Return(false)
+			},
+			http.StatusBadRequest,
+			"",
+		},
+		//{
+		//	"2. empty result because request Accept header is not match with template",
+		//	"notmatchmimetype",
+		//	templateID,
+		//	model.VerADL1_4,
+		//	func(gaSvc *mocks.MockTemplateService) {
+		//		gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any()).Return(template, nil)
+		//	},
+		//	http.StatusNotAcceptable,
+		//	"",
+		//},
+		//{
+		//	"3. success result",
+		//	template.MimeType,
+		//	templateID,
+		//	model.VerADL1_4,
+		//	func(gaSvc *mocks.MockTemplateService) {
+		//		gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any()).Return(template, nil)
+		//	},
+		//	http.StatusOK,
+		//	string(template.Body),
+		//},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			tSvc := mocks.NewMockTemplateService(ctrl)
+			tParser := mocks.NewMockADLParser(ctrl)
+			tt.prepare(tSvc, tParser)
+
+			// Mock for auth user service
+			userSvc := mocks.NewMockUserService(ctrl)
+			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
+
+			api := API{
+				Template: NewTemplateHandler(tSvc, ""),
+				User:     NewUserHandler(userSvc),
+			}
+
+			router := api.setupRouter(api.buildDefinitionAPI())
+
+			reqBody := strings.NewReader(tt.body)
+
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/v1/definition/template/%s", tt.adlVer), reqBody)
+			req.Header.Set("Authorization", "Bearer "+userAccessKey)
+			req.Header.Set("AuthUserId", userID)
+			req.Header.Set("EhrSystemId", systemID)
+
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+
+			resp := recorder.Result()
+			defer resp.Body.Close()
+
+			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
+				t.Errorf("TemplateHandler.GetByID() status code mismatch {-want;+got}\n\t%s", diff)
+			}
+
+			if tt.wantStatus != http.StatusCreated {
+				return
+			}
+
+			// TODO
+			//respBody, _ := io.ReadAll(resp.Body)
+			//if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
+			//	t.Errorf("StoredQueryHandler.GetStoredByVersion() status response {-want;+got}\n%s", diff)
+			//}
+		})
+	}
+}
