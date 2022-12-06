@@ -34,6 +34,7 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 // @Produce      json
 // @Param        Authorization  header  string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string  true  "UserId UUID"
+// @Param    EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            ""
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
@@ -93,6 +94,7 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 // @Produce      json
 // @Param        Authorization  header  string                     true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string                     true  "UserId UUID"
+// @Param    EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
 // @Param        Request        body    model.DocAccessSetRequest  true  "DTO with data to create group access"
 // @Success      200            "Indicates that the request to change the level of access to the document was successfully created"
 // @Failure      400            "Is returned when the request has invalid content."
@@ -125,6 +127,12 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
 	CID, err := cid.Parse(req.CID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "CID is incorrect"})
@@ -137,7 +145,7 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Set(c, userID, req.UserID, reqID, &CID, level); err != nil {
+	if err := h.service.Set(c, userID, systemID, req.UserID, reqID, &CID, level); err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return

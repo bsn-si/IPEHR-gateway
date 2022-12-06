@@ -58,7 +58,6 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Router       /ehr/{ehr_id}/ehr_status [put]
 func (h *EhrStatusHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.GetString("ehrSystemID")
 	reqID := c.GetString("reqID")
 
 	//TODO validate ehrID
@@ -75,9 +74,15 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
 	IfMatch := c.Request.Header.Get("If-Match")
 
-	docLast, err := h.service.GetStatus(c, userID, &ehrUUID)
+	docLast, err := h.service.GetStatus(c, userID, systemID, &ehrUUID)
 	if err != nil {
 		log.Println("ehrStatusService.Get error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting last EHR document status"})
@@ -126,7 +131,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateStatus(c, procRequest, userID, &ehrUUID, ehrSystemID, &status); err != nil {
+	if err := h.service.UpdateStatus(c, procRequest, userID, systemID, &ehrUUID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -181,6 +186,12 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
 	versionAtTime := c.Query("version_at_time")
 
 	statusTime, err := time.Parse(common.OpenEhrTimeFormat, versionAtTime)
@@ -191,7 +202,7 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	docDecrypted, err := h.service.GetStatusByNearestTime(c, userID, &ehrUUID, statusTime)
+	docDecrypted, err := h.service.GetStatusByNearestTime(c, userID, systemID, &ehrUUID, statusTime)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsInProcessing) {
 			c.AbortWithStatus(http.StatusAccepted)
@@ -229,7 +240,6 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Router       /ehr/{ehr_id}/ehr_status/{version_uid} [get]
 func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	ehrSystemID := c.GetString("ehrSystemID")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -243,15 +253,21 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
 	versionUID := c.Param("versionid")
 
-	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ehrSystemID not match with versionUID"})
 		return
 	}
 
-	docDecrypted, err := h.service.GetStatusByVersionID(c, userID, &ehrUUID, objectVersionID)
+	docDecrypted, err := h.service.GetStatusByVersionID(c, userID, systemID, &ehrUUID, objectVersionID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

@@ -35,13 +35,13 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
+func (s *Service) List(ctx context.Context, userID, systemID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	ehrUUID, err := s.Infra.Index.GetEhrIDByUserID(ctx, userID)
+	ehrUUID, err := s.Infra.Index.GetEhrUUIDByUserID(ctx, userID, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
@@ -80,7 +80,7 @@ func (s *Service) GetByVersion(ctx context.Context, userID, systemID, name strin
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	ehrUUID, err := s.Infra.Index.GetEhrIDByUserID(ctx, userID)
+	ehrUUID, err := s.Infra.Index.GetEhrUUIDByUserID(ctx, userID, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err

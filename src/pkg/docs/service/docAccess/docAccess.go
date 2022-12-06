@@ -90,7 +90,7 @@ func (s *Service) List(ctx context.Context, userID string) (access.List, error) 
 	return acl, nil
 }
 
-func (s *Service) Set(ctx context.Context, userID, toUserID, reqID string, CID *cid.Cid, accessLevel uint8) error {
+func (s *Service) Set(ctx context.Context, userID, systemID, toUserID, reqID string, CID *cid.Cid, accessLevel uint8) error {
 	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
@@ -103,7 +103,7 @@ func (s *Service) Set(ctx context.Context, userID, toUserID, reqID string, CID *
 
 	var keyEncr, CIDEncr []byte
 	{
-		docAccessKey, err := s.GetDocAccessKey(ctx, userID, CID)
+		docAccessKey, err := s.GetDocAccessKey(ctx, userID, systemID, CID)
 		if err != nil {
 			return fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
 		}

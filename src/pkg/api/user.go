@@ -35,8 +35,8 @@ type UserService interface {
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
 	GroupCreate(ctx context.Context, userID, systemID, name, description string) (string, *uuid.UUID, error)
-	GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
-	GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
+	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
+	GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
 }
 
 type UserHandler struct {

@@ -51,7 +51,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			"1. empty result because qualified_query_name was not found",
 			"notexist",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any())
+				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 			},
 			http.StatusOK,
 			`[]`,
@@ -60,7 +60,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			"2. success result",
 			"exist",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
 			},
 			http.StatusOK,
 			string(sqJSON),

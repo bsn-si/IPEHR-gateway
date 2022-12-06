@@ -139,7 +139,13 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 		return
 	}
 
-	userGroup, err := h.service.GroupGetByID(c, userID, &groupID)
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	userGroup, err := h.service.GroupGetByID(c, userID, systemID, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			c.AbortWithStatus(http.StatusForbidden)
@@ -182,6 +188,12 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
 	gID := c.Param("group_id")
 	if gID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id is empty"})
@@ -208,7 +220,7 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	err = h.service.GroupAddUser(c, userID, addingUserID, reqID, level, &groupID)
+	err = h.service.GroupAddUser(c, userID, systemID, addingUserID, reqID, level, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

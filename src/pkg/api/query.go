@@ -14,7 +14,7 @@ import (
 )
 
 type QueryService interface {
-	List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error)
+	List(ctx context.Context, userID, systemID, qualifiedQueryName string) ([]*model.StoredQuery, error)
 	GetByVersion(ctx context.Context, userID, systemID, name string, version *base.VersionTreeID) (*model.StoredQuery, error)
 	Validate(data []byte) bool
 	Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error)

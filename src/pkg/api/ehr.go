@@ -61,6 +61,12 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
@@ -82,7 +88,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 
 	// Checking EHR does not exist?
 	// проверить чему будет равен ehrUUID
-	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID, systemID)
 	switch {
 	case err == nil && ehrUUID != nil:
 		c.AbortWithStatus(http.StatusConflict)
@@ -95,7 +101,6 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	ehrUUIDnew := uuid.New()
-	ehrSystemID := c.GetString("ehrSystemID")
 	reqID := c.GetString("reqID")
 
 	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
@@ -106,7 +111,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, &ehrUUIDnew, ehrSystemID, &request, procRequest)
+	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -163,10 +168,6 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	ehrSystemID := c.GetString("ehrSystemID")
-
-	defer c.Request.Body.Close()
-
 	request := model.EhrCreateRequest{}
 	if err = json.NewDecoder(c.Request.Body).Decode(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body parsing error"})
@@ -184,8 +185,14 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
 	// Checking EHR does not exist
-	_ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID)
+	_ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID, systemID)
 	switch {
 	case err == nil && _ehrUUID != nil:
 		c.AbortWithStatus(http.StatusConflict)
@@ -208,7 +215,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, &ehrUUID, ehrSystemID, &request, procRequest)
+	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -260,7 +267,13 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	docDecrypted, err := h.service.GetByID(c, userID, &ehrUUID)
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
+	docDecrypted, err := h.service.GetByID(c, userID, systemID, &ehrUUID)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		c.AbortWithStatus(http.StatusAccepted)
 		return
@@ -308,7 +321,13 @@ func (h *EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 		return
 	}
 
-	docDecrypted, err := h.service.GetDocBySubject(c, userID, subjectID, namespace)
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
+	docDecrypted, err := h.service.GetDocBySubject(c, userID, systemID, subjectID, namespace)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		c.AbortWithStatus(http.StatusAccepted)
 		return

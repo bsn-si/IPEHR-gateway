@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
@@ -113,11 +114,12 @@ func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64
 	}
 }
 
-func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUID, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
-	var uID, eID [32]byte
+func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
+	var eID [32]byte
 
-	copy(uID[:], userID)
 	copy(eID[:], ehrUUID[:])
+
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
@@ -135,7 +137,7 @@ func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUI
 
 	sig := make([]byte, 65)
 
-	data, err := i.abi.Pack("setEhrUser", uID, eID, userAddress, sig)
+	data, err := i.abi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
@@ -145,7 +147,7 @@ func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUI
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.abi.Pack("setEhrUser", uID, eID, userAddress, sig)
+	data, err = i.abi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -153,17 +155,12 @@ func (i *Index) SetEhrUser(ctx context.Context, userID string, ehrUUID *uuid.UUI
 	return data, err
 }
 
-func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UUID, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		uID      [32]byte
-	)
+func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error) {
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-	copy(uID[:], userID)
-
-	ehrUUIDRaw, err := i.ehrIndex.EhrUsers(callOpts, uID)
+	ehrUUIDRaw, err := i.ehrIndex.EhrUsers(&bind.CallOpts{Context: ctx}, IDHash)
 	if err != nil {
-		return nil, fmt.Errorf("EhrUsers get error: %w userID %s", err, userID)
+		return nil, fmt.Errorf("EhrUsers get error: %w userID %s systemID %s", err, userID, systemID)
 	}
 
 	if ehrUUIDRaw == [32]byte{} {
@@ -178,12 +175,10 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID string) (*uuid.UU
 	return &ehrUUID, nil
 }
 
-func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID string, CID []byte) ([]byte, error) {
-	var uID [32]byte
+func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string, CID []byte) ([]byte, error) {
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-	copy(uID[:], userID)
-
-	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(uID, access.Doc)
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(IDHash, access.Doc)
 	if err != nil {
 		return nil, fmt.Errorf("args.Pack error: %w", err)
 	}

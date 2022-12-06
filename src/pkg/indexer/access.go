@@ -11,14 +11,11 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func (i *Index) GetUserAccess(ctx context.Context, userID string, kind access.Kind, accessID []byte) ([]byte, access.Level, error) {
-	var uID [32]byte
+func (i *Index) GetUserAccess(ctx context.Context, userID, systemID string, kind access.Kind, accessID []byte) ([]byte, access.Level, error) {
+	userIDHash := sha3.Sum256([]byte(userID + systemID))
+	accessIDHash := sha3.Sum256(accessID)
 
-	copy(uID[:], userID)
-
-	IDHash := sha3.Sum256(accessID)
-
-	acc, err := i.ehrIndex.UserAccess(&bind.CallOpts{Context: ctx}, uID, kind, IDHash)
+	acc, err := i.ehrIndex.UserAccess(&bind.CallOpts{Context: ctx}, userIDHash, kind, accessIDHash)
 	if err != nil {
 		return nil, 0, fmt.Errorf("ehrIndex.UserAccess error: %w", err)
 	}

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/vmihailenco/msgpack/v5"
@@ -71,8 +72,8 @@ func (s *Service) GroupCreate(ctx context.Context, userID, systemID, name, descr
 	return txHash, userGroup.GroupID, nil
 }
 
-func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*model.UserGroup, error) {
-	key, err := s.getAccessKey(ctx, userID, access.UserGroup, groupID[:])
+func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*model.UserGroup, error) {
+	key, err := s.getAccessKey(ctx, userID, systemID, access.UserGroup, groupID[:])
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return nil, err
@@ -119,14 +120,15 @@ func (s *Service) GroupGetByID(ctx context.Context, userID string, groupID *uuid
 	return &userGroupResult, nil
 }
 
-func (s *Service) GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
+func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
 	var auID [32]byte
 
 	copy(auID[:], addingUserID)
 
-	groupKey, err := s.getAccessKey(ctx, userID, access.UserGroup, groupID[:])
+	groupKey, err := s.getAccessKey(ctx, userID, systemID, access.UserGroup, groupID[:])
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
+			log.Println("Hello1")
 			return err
 		}
 
@@ -156,6 +158,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, addingUserID, reqID 
 	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, userID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
+			log.Println("Hello2")
 			return err
 		} else if errors.Is(err, errors.ErrAlreadyExist) {
 			return err
@@ -178,13 +181,13 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, addingUserID, reqID 
 	return nil
 }
 
-func (s *Service) getAccessKey(ctx context.Context, userID string, kind access.Kind, accessID []byte) (*chachaPoly.Key, error) {
+func (s *Service) getAccessKey(ctx context.Context, userID, systemID string, kind access.Kind, accessID []byte) (*chachaPoly.Key, error) {
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	keyEncr, level, err := s.Infra.Index.GetUserAccess(ctx, userID, kind, accessID)
+	keyEncr, level, err := s.Infra.Index.GetUserAccess(ctx, userID, systemID, kind, accessID)
 	if err != nil {
 		return nil, fmt.Errorf("Index.UserGroupGetByID error: %w", err)
 	}

@@ -45,7 +45,7 @@ type FileCoinService interface {
 }
 
 type DocumentsSvc interface {
-	GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error)
+	GetDocFromStorageByID(ctx context.Context, userID, systemID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error)
 }
 
 type KeyStore interface {
@@ -86,7 +86,7 @@ func NewCompositionService(
 	}
 }
 
-func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
+func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
 	var (
 		groupAccess = s.groupAccessService.Default()
 		err         error
@@ -111,7 +111,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 		}
 	*/
 
-	err = s.save(ctx, multiCallTx, procRequest, userID, ehrUUID, groupAccess, ehrSystemID, composition)
+	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, groupAccess, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
@@ -128,7 +128,7 @@ func (s *Service) Create(ctx context.Context, userID string, ehrUUID, groupAcces
 	return composition, nil
 }
 
-func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID, groupAccessUUID *uuid.UUID, ehrSystemID string, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
 	var (
 		groupAccess = s.groupAccessService.Default()
 		err         error
@@ -153,11 +153,11 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID 
 		}
 	*/
 
-	if err = s.increaseVersion(composition, ehrSystemID); err != nil {
+	if err = s.increaseVersion(composition, systemID); err != nil {
 		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
 	}
 
-	err = s.save(ctx, multiCallTx, procRequest, userID, ehrUUID, groupAccess, ehrSystemID, composition)
+	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, groupAccess, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
@@ -194,15 +194,15 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID string) erro
 	return nil
 }
 
-func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, ehrSystemID string, doc *model.Composition) error {
+func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, doc *model.Composition) error {
 	userPubKey, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, ehrSystemID)
+	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, systemID)
 	if err != nil {
-		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID, ehrSystemID)
+		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID, systemID)
 	}
 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
@@ -325,10 +325,10 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	return nil
 }
 
-func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (*model.Composition, error) {
-	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+func (s *Service) GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
 	if err != nil {
-		return nil, fmt.Errorf("GetLastByBaseID error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID)
+		return nil, fmt.Errorf("GetLastByBaseID error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), systemID)
 	}
 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
@@ -353,7 +353,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -368,10 +368,10 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID string, ehrUUID *u
 	return composition, nil
 }
 
-func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionUID string, ehrSystemID string) (*model.Composition, error) {
-	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+func (s *Service) GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
 	if err != nil {
-		return nil, fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID)
+		return nil, fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, systemID)
 	}
 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
@@ -398,7 +398,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -413,10 +413,10 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 	return &composition, nil
 }
 
-func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, ehrSystemID, userID string) (string, error) {
-	objectVersionID, err := base.NewObjectVersionID(versionUID, ehrSystemID)
+func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
 	if err != nil {
-		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, ehrSystemID)
+		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, systemID)
 	}
 
 	_, userPrivKey, err := s.keyStore.Get(userID)
