@@ -44,6 +44,7 @@ jobs:
       run: |
         echo "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" > .blockchain.key
         cd ./src
+        go run ./utils/defaultUserRegister/
     
     - name: Unit Test
       run: |
