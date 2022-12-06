@@ -5,6 +5,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 
