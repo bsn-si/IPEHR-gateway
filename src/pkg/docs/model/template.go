@@ -1,5 +1,7 @@
 package model
 
+import "encoding/xml"
+
 // ADL
 // https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
 
@@ -11,10 +13,13 @@ type TemplateResponse struct {
 }
 
 type TemplateXML struct {
-	TemplateID  string `xml:"template_id>value"`
-	ArchetypeID string `xml:"definition:archetype_id,attr"` // TODO maybe we should generate it?
-	Concept     string `xml:"definition:concept_name,attr"`
-	UID         string `xml:"uid>value"`
+	XMLName    xml.Name `xml:"template"`
+	TemplateID string   `xml:"template_id>value"`
+	UID        string   `xml:"uid>value"`
+	Definition struct {
+		ArchetypeID string `xml:"archetype_id,attr"` // TODO maybe we should generate it?
+		Concept     string `xml:"concept_name,attr"`
+	} `xml:"definition"`
 }
 
 type Template struct {

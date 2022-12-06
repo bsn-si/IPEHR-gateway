@@ -43,11 +43,11 @@ func (*Parser) Parse(b []byte, mime model.ADLType) (*model.Template, error) {
 		return &model.Template{
 			TemplateID:  m.TemplateID,
 			UID:         m.UID,
-			ArchetypeID: m.ArchetypeID,
+			ArchetypeID: m.Definition.ArchetypeID,
 			VerADL:      model.VerADL1_4,
 			MimeType:    mime,
 			Body:        b,
-			Concept:     m.Concept,
+			Concept:     m.Definition.Concept,
 		}, nil
 	}
 

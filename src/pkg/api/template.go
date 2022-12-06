@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 
@@ -150,7 +151,7 @@ func (h *TemplateHandler) Store(c *gin.Context) {
 		return
 	}
 
-	c.Header("Location", h.baseURL+"/definition/template/"+m.VerADL+"/"+m.TemplateID)
+	c.Header("Location", h.baseURL+"/definition/template/"+m.VerADL+"/"+url.QueryEscape(m.TemplateID))
 
 	if c.Request.Header.Get("Prefer") == "return=representation" {
 		c.Data(http.StatusCreated, "application/xml", data)

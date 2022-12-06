@@ -21,7 +21,6 @@ import (
 //
 //go:generate mockgen -source template.go -package mocks -destination mocks/template_mock.go
 //go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
-//go:generate mockgen -source ../docs/service/template/template.go -package mocks -destination mocks/service_template_mock.go
 
 func TestTemplateHandler_GetByID(t *testing.T) {
 	var (
@@ -150,7 +149,7 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 
 			respBody, _ := io.ReadAll(resp.Body)
 			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
-				t.Errorf("StoredQueryHandler.GetStoredByVersion() status response {-want;+got}\n%s", diff)
+				t.Errorf("TemplateHandler.GetByID() status response {-want;+got}\n%s", diff)
 			}
 		})
 	}
@@ -163,8 +162,6 @@ func TestTemplateHandler_Store(t *testing.T) {
 		systemID      = uuid.New().String()
 	)
 
-	//templateID := "Vital Signs"
-
 	template := &model.Template{
 		TemplateID:  "Vital Signs",
 		Version:     "1",
@@ -173,7 +170,6 @@ func TestTemplateHandler_Store(t *testing.T) {
 		Body:        nil,
 		Concept:     "some concept",
 		ArchetypeID: "openEHR-EHR-COMPOSITION.encounter.v1",
-		//CreatedAt:   "",
 	}
 
 	template.Body = []byte(`<template xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.openehr.org/v1">
@@ -224,64 +220,35 @@ func TestTemplateHandler_Store(t *testing.T) {
 		name       string
 		body       string
 		adlVer     string
-		prepare    func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser)
+		prepare    func(gaSvc *mocks.MockTemplateService)
 		wantStatus int
-		wantResp   string
 	}{
 		{
 			"1. empty result because body is empty",
 			"",
 			model.VerADL1_4,
-			func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser) {},
+			func(gaSvc *mocks.MockTemplateService) {},
 			http.StatusBadRequest,
-			"",
 		},
 		{
 			"2. empty result because body is not valid",
 			"<xml>...ups",
 			model.VerADL1_4,
-			func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser) {
-				//gaSvc.EXPECT().Parser(model.VerADL1_4).DoAndReturn(func(m string) (*adl14.Parser, error) { return adl14.NewParser(), nil })
+			func(gaSvc *mocks.MockTemplateService) {
 				gaSvc.EXPECT().Parser(model.VerADL1_4).Return(adl14.NewParser(), nil)
-				//gaADL.EXPECT().Validate(gomock.Any(), model.ADLTypeXML).Return(false)
 			},
 			http.StatusBadRequest,
-			"",
 		},
 		{
-			"2. empty result because body is not valid",
-			"<xml>...ups",
+			"3. success",
+			string(template.Body),
 			model.VerADL1_4,
-			func(gaSvc *mocks.MockTemplateService, gaADL *mocks.MockADLParser) {
-				//gaSvc.EXPECT().Parser(model.VerADL1_4).DoAndReturn(func(m string) (*adl14.Parser, error) { return adl14.NewParser(), nil })
+			func(gaSvc *mocks.MockTemplateService) {
 				gaSvc.EXPECT().Parser(model.VerADL1_4).Return(adl14.NewParser(), nil)
-				//gaADL.EXPECT().Validate(gomock.Any(), model.ADLTypeXML).Return(false)
+				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
-			http.StatusBadRequest,
-			"",
+			http.StatusCreated,
 		},
-		//{
-		//	"2. empty result because request Accept header is not match with template",
-		//	"notmatchmimetype",
-		//	templateID,
-		//	model.VerADL1_4,
-		//	func(gaSvc *mocks.MockTemplateService) {
-		//		gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any()).Return(template, nil)
-		//	},
-		//	http.StatusNotAcceptable,
-		//	"",
-		//},
-		//{
-		//	"3. success result",
-		//	template.MimeType,
-		//	templateID,
-		//	model.VerADL1_4,
-		//	func(gaSvc *mocks.MockTemplateService) {
-		//		gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any()).Return(template, nil)
-		//	},
-		//	http.StatusOK,
-		//	string(template.Body),
-		//},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -289,8 +256,7 @@ func TestTemplateHandler_Store(t *testing.T) {
 			defer ctrl.Finish()
 
 			tSvc := mocks.NewMockTemplateService(ctrl)
-			tParser := mocks.NewMockADLParser(ctrl)
-			tt.prepare(tSvc, tParser)
+			tt.prepare(tSvc)
 
 			// Mock for auth user service
 			userSvc := mocks.NewMockUserService(ctrl)
@@ -324,11 +290,9 @@ func TestTemplateHandler_Store(t *testing.T) {
 				return
 			}
 
-			// TODO
-			//respBody, _ := io.ReadAll(resp.Body)
-			//if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
-			//	t.Errorf("StoredQueryHandler.GetStoredByVersion() status response {-want;+got}\n%s", diff)
-			//}
+			if diff := cmp.Diff(resp.Header.Get("Location"), "/definition/template/"+tt.adlVer+"/"+url.QueryEscape(template.TemplateID)); diff != "" {
+				t.Errorf("TemplateHandler.store() location {-want;+got}\n%s", diff)
+			}
 		})
 	}
 }
