@@ -51,6 +51,21 @@ func (mr *MockTemplateServiceMockRecorder) GetByID(ctx, userID, templateID inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTemplateService)(nil).GetByID), ctx, userID, templateID)
 }
 
+// List mocks base method.
+func (m *MockTemplateService) List(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", ctx, userID, systemID)
+	ret0, _ := ret[0].([]*model.TemplateResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockTemplateServiceMockRecorder) List(ctx, userID, systemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockTemplateService)(nil).List), ctx, userID, systemID)
+}
+
 // Parser mocks base method.
 func (m *MockTemplateService) Parser(version model.ADLVer) (template.ADLParser, error) {
 	m.ctrl.T.Helper()

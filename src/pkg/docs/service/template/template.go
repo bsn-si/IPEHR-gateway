@@ -53,3 +53,7 @@ func (*Service) GetByID(ctx context.Context, userID string, templateID string) (
 func (*Service) Store(ctx context.Context, userID string, systemID string, reqID string, m *model.Template) error {
 	return errors.ErrNotImplemented
 }
+
+func (*Service) List(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error) {
+	return nil, errors.ErrNotImplemented
+}
