@@ -53,6 +53,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "DTO with data to create group access",
                         "name": "Request",
                         "in": "body",
@@ -105,6 +112,13 @@ const docTemplate = `{
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -151,6 +165,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId UUID",
                         "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     }

@@ -444,6 +444,11 @@ paths:
         name: AuthUserId
         required: true
         type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
+        required: true
+        type: string
       - description: DTO with data to create group access
         in: body
         name: Request
@@ -483,6 +488,11 @@ paths:
         name: AuthUserId
         required: true
         type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -516,6 +526,11 @@ paths:
       - description: UserId UUID
         in: header
         name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
         required: true
         type: string
       produces:
