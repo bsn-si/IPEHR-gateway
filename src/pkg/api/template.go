@@ -87,7 +87,6 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Header       201            {string}  Location   "{baseUrl}/definition/template/adl1.4/{template_id}"
-// @Header       201            {string}  ETag       "The unique identifier of the template instance." TODO maybe remove it?
 // @Header       201            {string}  RequestID  "Request identifier"
 // @Accept       application/xml
 // @Produce      text/plain
