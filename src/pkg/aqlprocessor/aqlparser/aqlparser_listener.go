@@ -70,6 +70,9 @@ type AqlParserListener interface {
 	// EnterNodePredicate is called when entering the nodePredicate production.
 	EnterNodePredicate(c *NodePredicateContext)
 
+	// EnterNodePredicateAdditionalData is called when entering the nodePredicateAdditionalData production.
+	EnterNodePredicateAdditionalData(c *NodePredicateAdditionalDataContext)
+
 	// EnterVersionPredicate is called when entering the versionPredicate production.
 	EnterVersionPredicate(c *VersionPredicateContext)
 
@@ -171,6 +174,9 @@ type AqlParserListener interface {
 
 	// ExitNodePredicate is called when exiting the nodePredicate production.
 	ExitNodePredicate(c *NodePredicateContext)
+
+	// ExitNodePredicateAdditionalData is called when exiting the nodePredicateAdditionalData production.
+	ExitNodePredicateAdditionalData(c *NodePredicateAdditionalDataContext)
 
 	// ExitVersionPredicate is called when exiting the versionPredicate production.
 	ExitVersionPredicate(c *VersionPredicateContext)

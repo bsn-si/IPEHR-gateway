@@ -90,29 +90,19 @@ standardPredicate:
 
 archetypePredicate: ARCHETYPE_HRID | PARAMETER;
 
-nodePredicate: (ID_CODE | AT_CODE) (
-		SYM_COMMA (
-			STRING
-			| PARAMETER
-			| TERM_CODE
-			| AT_CODE
-			| ID_CODE
-		)
-	)?
-	| ARCHETYPE_HRID (
-		SYM_COMMA (
-			STRING
-			| PARAMETER
-			| TERM_CODE
-			| AT_CODE
-			| ID_CODE
-		)
-	)?
+nodePredicate: (ID_CODE | AT_CODE) (SYM_COMMA (nodePredicateAdditionalData))?
+	| ARCHETYPE_HRID (SYM_COMMA (nodePredicateAdditionalData))?
 	| PARAMETER
 	| objectPath COMPARISON_OPERATOR pathPredicateOperand
 	| objectPath MATCHES CONTAINED_REGEX
 	| nodePredicate AND nodePredicate
 	| nodePredicate OR nodePredicate;
+
+nodePredicateAdditionalData: STRING
+	| PARAMETER
+	| TERM_CODE
+	| AT_CODE
+	| ID_CODE;
 
 versionPredicate:
 	LATEST_VERSION

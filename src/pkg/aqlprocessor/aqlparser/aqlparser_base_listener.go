@@ -146,6 +146,14 @@ func (s *BaseAqlParserListener) EnterNodePredicate(ctx *NodePredicateContext) {}
 // ExitNodePredicate is called when production nodePredicate is exited.
 func (s *BaseAqlParserListener) ExitNodePredicate(ctx *NodePredicateContext) {}
 
+// EnterNodePredicateAdditionalData is called when production nodePredicateAdditionalData is entered.
+func (s *BaseAqlParserListener) EnterNodePredicateAdditionalData(ctx *NodePredicateAdditionalDataContext) {
+}
+
+// ExitNodePredicateAdditionalData is called when production nodePredicateAdditionalData is exited.
+func (s *BaseAqlParserListener) ExitNodePredicateAdditionalData(ctx *NodePredicateAdditionalDataContext) {
+}
+
 // EnterVersionPredicate is called when production versionPredicate is entered.
 func (s *BaseAqlParserListener) EnterVersionPredicate(ctx *VersionPredicateContext) {}
 
