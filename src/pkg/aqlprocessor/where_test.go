@@ -151,7 +151,6 @@ func TestProcessor_Where(t *testing.T) {
 											Identifier: "data", PathPredicate: &PathPredicate{
 												Type: NodePathPredicate,
 												NodePredicate: &NodePredicate{
-													Value:             "at0001,id123",
 													AtCode:            toRef(AtCode("0001")),
 													Operator:          NoneOperator,
 													ComparisionSymbol: SymNone,
@@ -166,7 +165,6 @@ func TestProcessor_Where(t *testing.T) {
 											PathPredicate: &PathPredicate{
 												Type: NodePathPredicate,
 												NodePredicate: &NodePredicate{
-													Value:             "at0006,'str'",
 													AtCode:            toRef(AtCode("0006")),
 													Operator:          NoneOperator,
 													ComparisionSymbol: SymNone,
@@ -181,7 +179,6 @@ func TestProcessor_Where(t *testing.T) {
 											PathPredicate: &PathPredicate{
 												Type: NodePathPredicate,
 												NodePredicate: &NodePredicate{
-													Value:             "at0003,at0002",
 													AtCode:            toRef(AtCode("0003")),
 													Operator:          NoneOperator,
 													ComparisionSymbol: SymNone,
@@ -196,7 +193,6 @@ func TestProcessor_Where(t *testing.T) {
 											PathPredicate: &PathPredicate{
 												Type: NodePathPredicate,
 												NodePredicate: &NodePredicate{
-													Value:             "at0004,$some_parameter",
 													AtCode:            toRef(AtCode("0004")),
 													Operator:          NoneOperator,
 													ComparisionSymbol: SymNone,

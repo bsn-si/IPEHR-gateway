@@ -5,24 +5,21 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestProcessor_SelectNull(t *testing.T) {
 	tests := []struct {
 		name    string
 		query   string
-		want    Query
+		want    Select
 		wantErr bool
 	}{
 		{
 			"1. select NULL",
 			`SELECT NULL FROM EHR`,
-			Query{
-				Select: Select{
-					SelectExprs: []SelectExpr{
-						{Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}}},
-					},
+			Select{
+				SelectExprs: []SelectExpr{
+					{Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}}},
 				},
 			},
 			false,
@@ -37,9 +34,11 @@ func TestProcessor_SelectNull(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
-			tt.want.From = got.From
-			if !tt.wantErr && assert.NoError(t, err) {
-				assert.Equal(t, tt.want, got)
+			if got == nil {
+				return
+			}
+			if diff := cmp.Diff(tt.want, got.Select); diff != "" {
+				t.Errorf("mismatch {+want;-got}:\n\t%s", diff)
 			}
 		})
 	}
@@ -49,17 +48,15 @@ func TestProcessor_SelectString(t *testing.T) {
 	tests := []struct {
 		name    string
 		query   string
-		want    Query
+		want    Select
 		wantErr bool
 	}{
 		{
 			"1. select string 2",
 			`SELECT 'hello_world' FROM EHR`,
-			Query{
-				Select: Select{
-					SelectExprs: []SelectExpr{
-						{Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}}},
-					},
+			Select{
+				SelectExprs: []SelectExpr{
+					{Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}}},
 				},
 			},
 			false,
@@ -67,11 +64,9 @@ func TestProcessor_SelectString(t *testing.T) {
 		{
 			"2. select string 2",
 			`SELECT "hello_world" FROM EHR`,
-			Query{
-				Select: Select{
-					SelectExprs: []SelectExpr{
-						{Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}}},
-					},
+			Select{
+				SelectExprs: []SelectExpr{
+					{Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}}},
 				},
 			},
 			false,
@@ -79,11 +74,9 @@ func TestProcessor_SelectString(t *testing.T) {
 		{
 			"3. select string 3",
 			`SELECT '"hello_world"' FROM EHR`,
-			Query{
-				Select: Select{
-					SelectExprs: []SelectExpr{
-						{Value: &PrimitiveSelectValue{Val: Primitive{Val: `"hello_world"`}}},
-					},
+			Select{
+				SelectExprs: []SelectExpr{
+					{Value: &PrimitiveSelectValue{Val: Primitive{Val: `"hello_world"`}}},
 				},
 			},
 			false,
@@ -98,9 +91,11 @@ func TestProcessor_SelectString(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
-			tt.want.From = got.From
-			if !tt.wantErr && assert.NoError(t, err) {
-				assert.Equal(t, tt.want, got)
+			if got == nil {
+				return
+			}
+			if diff := cmp.Diff(tt.want, got.Select); diff != "" {
+				t.Errorf("mismatch {+want;-got}:\n\t%s", diff)
 			}
 		})
 	}
@@ -155,44 +150,44 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 	tests := []struct {
 		name    string
 		query   string
-		want    Query
+		want    Select
 		wantErr bool
 	}{
 		{
 			"1. SELECT 0",
 			`SELECT 0 FROM EHR`,
-			Query{Select: Select{
+			Select{
 				SelectExprs: []SelectExpr{
 					{
 						Value: &PrimitiveSelectValue{Val: Primitive{0.0}},
 					},
 				},
-			}},
+			},
 			false,
 		},
 		{
 			"2. SELECT -1",
 			`SELECT -1 FROM EHR`,
-			Query{Select: Select{
+			Select{
 				SelectExprs: []SelectExpr{
 					{
 						Value: &PrimitiveSelectValue{Val: Primitive{-1.0}},
 					},
 				},
-			}},
+			},
 			false,
 		},
 
 		{
 			"3. SELECT 123.5e+10",
 			`SELECT 123.5e+10 FROM EHR`,
-			Query{Select: Select{
+			Select{
 				SelectExprs: []SelectExpr{
 					{
 						Value: &PrimitiveSelectValue{Val: Primitive{123.5e+10}},
 					},
 				},
-			}},
+			},
 			false,
 		},
 	}
@@ -204,11 +199,11 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
-
-			tt.want.From = got.From
-
-			if !tt.wantErr && assert.NoError(t, err) {
-				assert.Equal(t, tt.want, got)
+			if got == nil {
+				return
+			}
+			if diff := cmp.Diff(tt.want, got.Select); diff != "" {
+				t.Errorf("mismatch {+want;-got}:\n\t%s", diff)
 			}
 		})
 	}
@@ -271,8 +266,11 @@ func TestProcessor_SelectDates(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
+			if got == nil {
+				return
+			}
 			if diff := cmp.Diff(tt.want, got.Select); diff != "" {
-				t.Errorf("mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("mismatch {+want;-got}:\n\t%s", diff)
 			}
 		})
 	}
