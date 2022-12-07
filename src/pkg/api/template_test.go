@@ -108,24 +108,26 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 			string(template.Body),
 		},
 	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	tSvc := mocks.NewMockTemplateService(ctrl)
+	userSvc := mocks.NewMockUserService(ctrl)
+
+	api := API{
+		Template: NewTemplateHandler(tSvc, ""),
+		User:     NewUserHandler(userSvc),
+	}
+
+	router := api.setupRouter(api.buildDefinitionAPI())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			tSvc := mocks.NewMockTemplateService(ctrl)
 			tt.prepare(tSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
-
-			api := API{
-				Template: NewTemplateHandler(tSvc, ""),
-				User:     NewUserHandler(userSvc),
-			}
-
-			router := api.setupRouter(api.buildDefinitionAPI())
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/definition/template/%s/%s", tt.adlVer, url.QueryEscape(tt.templateID)), nil)
 			req.Header.Set("Authorization", "Bearer "+userAccessKey)
@@ -250,24 +252,26 @@ func TestTemplateHandler_Store(t *testing.T) {
 			http.StatusCreated,
 		},
 	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	tSvc := mocks.NewMockTemplateService(ctrl)
+	userSvc := mocks.NewMockUserService(ctrl)
+
+	api := API{
+		Template: NewTemplateHandler(tSvc, ""),
+		User:     NewUserHandler(userSvc),
+	}
+
+	router := api.setupRouter(api.buildDefinitionAPI())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			tSvc := mocks.NewMockTemplateService(ctrl)
 			tt.prepare(tSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
-
-			api := API{
-				Template: NewTemplateHandler(tSvc, ""),
-				User:     NewUserHandler(userSvc),
-			}
-
-			router := api.setupRouter(api.buildDefinitionAPI())
 
 			reqBody := strings.NewReader(tt.body)
 
