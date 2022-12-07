@@ -34,25 +34,25 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) EhrCreate(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID string, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
-	return s.EhrCreateWithID(ctx, userID, ehrUUID, ehrSystemID, request, procRequest)
+func (s *Service) EhrCreate(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
+	return s.EhrCreateWithID(ctx, userID, systemID, ehrUUID, request, procRequest)
 }
 
-func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *uuid.UUID, ehrSystemID string, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
+func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
 	var ehr model.EHR
 
-	ehr.SystemID.Value = ehrSystemID
+	ehr.SystemID.Value = systemID
 	ehr.EhrID.Value = ehrUUID.String()
 
 	ehr.EhrAccess.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + ehrSystemID + "::1"
+	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + systemID + "::1"
 	ehr.EhrAccess.Namespace = "local"
 	ehr.EhrAccess.Type = "EHR_ACCESS"
 
 	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
 
 	// Creating EHR_STATUS
-	ehrStatusID := uuid.New().String() + "::" + ehrSystemID + "::1"
+	ehrStatusID := uuid.New().String() + "::" + systemID + "::1"
 	subjectID := request.Subject.ExternalRef.ID.Value
 	subjectNamespace := request.Subject.ExternalRef.Namespace
 
@@ -73,9 +73,9 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 		return nil, fmt.Errorf("MultiCallTxNew error: %w. userID: %s", err, userID)
 	}
 
-	// Index EHR userID -> ehrUUID
+	// Index EHR userIDHash -> ehrUUID
 	{
-		packed, err := s.Infra.Index.SetEhrUser(ctx, userID, ehrUUID, userPrivKey, multiCallTx.Nonce())
+		packed, err := s.Infra.Index.SetEhrUser(ctx, userID, systemID, ehrUUID, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetEhrUser error: %w", err)
 		}
@@ -83,7 +83,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID string, ehrUUID *u
 		multiCallTx.Add(uint8(proc.TxSetEhrUser), packed)
 	}
 
-	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, doc)
+	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, doc)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
 	}
@@ -200,7 +200,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 	return nil
 }
 
-func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID) ([]byte, error) {
+func (s *Service) GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]byte, error) {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocLastByType error: %w", err)
@@ -216,7 +216,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -227,7 +227,7 @@ func (s *Service) GetByID(ctx context.Context, userID string, ehrUUID *uuid.UUID
 }
 
 // GetDocBySubject Get decrypted document by subject
-func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namespace string) (docDecrypted []byte, err error) {
+func (s *Service) GetDocBySubject(ctx context.Context, userID, systemID, subjectID, namespace string) (docDecrypted []byte, err error) {
 	ehrUUID, err := s.Infra.Index.GetEhrUUIDBySubject(ctx, subjectID, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetEhrUUIDBySubject error: %w. userID: %s subjectID: %s namespace: %s", err, userID, subjectID, namespace)
@@ -250,7 +250,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, subjectID, namesp
 	}
 
 	// Getting doc from storage
-	docDecrypted, err = s.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err = s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -297,7 +297,7 @@ func (s *Service) CreateStatus(ehrStatusID string, subject base.PartySelf) (doc 
 	return doc, nil
 }
 
-func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
+func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -313,7 +313,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 		return errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	ehrDecrypted, err := s.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	ehrDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return err
 	} else if err != nil {
@@ -335,7 +335,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID string, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -344,9 +344,9 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
-	objectVersionID, err := base.NewObjectVersionID(status.UID.Value, ehrSystemID)
+	objectVersionID, err := base.NewObjectVersionID(status.UID.Value, systemID)
 	if err != nil {
-		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), ehrSystemID)
+		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), systemID)
 	}
 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
@@ -443,7 +443,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	return nil
 }
 
-func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID string, ehrUUID *uuid.UUID, ehrSystemID string, status *model.EhrStatus) error {
+func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
 	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -454,12 +454,12 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 		return fmt.Errorf("MultiCallTxNew error: %w", err)
 	}
 
-	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, ehrUUID, ehrSystemID, status); err != nil {
+	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status); err != nil {
 		return fmt.Errorf("SaveStatus error: %w", err)
 	}
 
 	// TODO i dont like this logic, because in method GetByID we always grab whole data from filecoin, which contain last status id. It need fix it.
-	if err := s.UpdateEhr(ctx, multiCallTx, procRequest, userID, ehrUUID, status); err != nil {
+	if err := s.UpdateEhr(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status); err != nil {
 		return fmt.Errorf("UpdateEhr error: %w", err)
 	}
 
@@ -476,7 +476,7 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 }
 
 // GetStatus Get current (last) status of EHR document
-func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UUID) (*model.EhrStatus, error) {
+func (s *Service) GetStatus(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) (*model.EhrStatus, error) {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.EhrStatus)
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -492,7 +492,7 @@ func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UU
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -507,7 +507,7 @@ func (s *Service) GetStatus(ctx context.Context, userID string, ehrUUID *uuid.UU
 	return &status, nil
 }
 
-func (s *Service) GetStatusByVersionID(ctx context.Context, userID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) ([]byte, error) {
+func (s *Service) GetStatusByVersionID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) ([]byte, error) {
 	baseDocumentUID := versionID.BasedID()
 	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 
@@ -530,7 +530,7 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID string, ehrUU
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsInProcessing) {
 			return nil, err
@@ -544,7 +544,7 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID string, ehrUU
 	return docDecrypted, nil
 }
 
-func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehrUUID *uuid.UUID, nearestTime time.Time) ([]byte, error) {
+func (s *Service) GetStatusByNearestTime(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, nearestTime time.Time) ([]byte, error) {
 	docMeta, err := s.Infra.Index.GetDocByTime(ctx, ehrUUID, types.EhrStatus, uint32(nearestTime.Unix()))
 	if err != nil && errors.Is(err, errors.ErrNotFound) {
 		return nil, err
@@ -562,7 +562,7 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID string, ehr
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {

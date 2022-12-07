@@ -190,6 +190,7 @@ func (a *API) buildUserAPI() handlerBuilder {
 		r.POST("/register", a.User.Register)
 		r.POST("/login", a.User.Login)
 		r.GET("/refresh", a.User.RefreshToken)
+		r.GET("/:user_id", a.User.Info)
 
 		r.Use(auth(a))
 		r.POST("/logout", a.User.Logout)

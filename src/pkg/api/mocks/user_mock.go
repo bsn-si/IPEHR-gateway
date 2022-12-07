@@ -111,47 +111,63 @@ func (mr *MockUserServiceMockRecorder) GetTokenHash(tokenRaw interface{}) *gomoc
 }
 
 // GroupAddUser mocks base method.
-func (m *MockUserService) GroupAddUser(ctx context.Context, userID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
+func (m *MockUserService) GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupAddUser", ctx, userID, addingUserID, reqID, level, groupID)
+	ret := m.ctrl.Call(m, "GroupAddUser", ctx, userID, systemID, addingUserID, reqID, level, groupID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // GroupAddUser indicates an expected call of GroupAddUser.
-func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, addingUserID, reqID, level, groupID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, systemID, addingUserID, reqID, level, groupID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupAddUser", reflect.TypeOf((*MockUserService)(nil).GroupAddUser), ctx, userID, addingUserID, reqID, level, groupID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupAddUser", reflect.TypeOf((*MockUserService)(nil).GroupAddUser), ctx, userID, systemID, addingUserID, reqID, level, groupID)
 }
 
 // GroupCreate mocks base method.
-func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, reqID, name, description string) (*uuid.UUID, error) {
+func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, name, description string) (string, *uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, systemID, reqID, name, description)
-	ret0, _ := ret[0].(*uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, systemID, name, description)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(*uuid.UUID)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GroupCreate indicates an expected call of GroupCreate.
-func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, systemID, reqID, name, description interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, systemID, name, description interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, systemID, reqID, name, description)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, systemID, name, description)
 }
 
 // GroupGetByID mocks base method.
-func (m *MockUserService) GroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*model.UserGroup, error) {
+func (m *MockUserService) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*model.UserGroup, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupGetByID", ctx, userID, groupID)
+	ret := m.ctrl.Call(m, "GroupGetByID", ctx, userID, systemID, groupID)
 	ret0, _ := ret[0].(*model.UserGroup)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GroupGetByID indicates an expected call of GroupGetByID.
-func (mr *MockUserServiceMockRecorder) GroupGetByID(ctx, userID, groupID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupGetByID(ctx, userID, systemID, groupID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGetByID", reflect.TypeOf((*MockUserService)(nil).GroupGetByID), ctx, userID, groupID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGetByID", reflect.TypeOf((*MockUserService)(nil).GroupGetByID), ctx, userID, systemID, groupID)
+}
+
+// Info mocks base method.
+func (m *MockUserService) Info(ctx context.Context, userID string) (*model.UserInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Info", ctx, userID)
+	ret0, _ := ret[0].(*model.UserInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Info indicates an expected call of Info.
+func (mr *MockUserServiceMockRecorder) Info(ctx, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockUserService)(nil).Info), ctx, userID)
 }
 
 // IsTokenInBlackList mocks base method.
@@ -183,18 +199,18 @@ func (mr *MockUserServiceMockRecorder) Login(ctx, userID, systemID, password int
 }
 
 // NewProcRequest mocks base method.
-func (m *MockUserService) NewProcRequest(reqID, userID string) (*processing.Request, error) {
+func (m *MockUserService) NewProcRequest(reqID, userID string, kind processing.RequestKind) (processing.RequestInterface, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewProcRequest", reqID, userID)
-	ret0, _ := ret[0].(*processing.Request)
+	ret := m.ctrl.Call(m, "NewProcRequest", reqID, userID, kind)
+	ret0, _ := ret[0].(processing.RequestInterface)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // NewProcRequest indicates an expected call of NewProcRequest.
-func (mr *MockUserServiceMockRecorder) NewProcRequest(reqID, userID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) NewProcRequest(reqID, userID, kind interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewProcRequest", reflect.TypeOf((*MockUserService)(nil).NewProcRequest), reqID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewProcRequest", reflect.TypeOf((*MockUserService)(nil).NewProcRequest), reqID, userID, kind)
 }
 
 // Register mocks base method.

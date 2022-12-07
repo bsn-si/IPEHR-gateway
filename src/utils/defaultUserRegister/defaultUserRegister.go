@@ -43,7 +43,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	txHash, err := infra.Index.UserNew(ctx, cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, userPrivKey, nil)
+	txHash, err := infra.Index.UserNew(ctx, cfg.DefaultUserID, cfg.CreatingSystemID, uint8(roles.Patient), pwdHash, nil, userPrivKey, nil)
 	if err != nil {
 		log.Fatalf("Index.UserAdd error: %v", err)
 	}

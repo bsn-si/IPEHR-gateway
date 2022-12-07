@@ -1,17 +1,17 @@
 package roles
 
-type RoleType uint8
+type Role uint8
 
 const (
-	Patient RoleType = iota
+	Patient Role = iota
 	Doctor
 )
 
-var typeNames = map[RoleType]string{
-	Patient: "PATIENT",
-	Doctor:  "DOCTOR",
+var typeNames = map[Role]string{
+	Patient: "Patient",
+	Doctor:  "Doctor",
 }
 
-func (t RoleType) String() string {
+func (t Role) String() string {
 	return typeNames[t]
 }

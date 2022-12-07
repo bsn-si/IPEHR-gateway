@@ -337,7 +337,7 @@ func (testWrap *testWrap) checkUser(testData *TestData) error {
 			password: fakeData.GetRandomStringWithLength(10),
 		}
 
-		reqID, err := registerUser(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
 			return fmt.Errorf("Can not register user, err: %w", err)
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/access"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 )
@@ -68,9 +69,9 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		return
 	}
 
-	reqID := c.GetString("reqID")
+	var txHash string
 
-	userGroup.GroupID, err = h.service.GroupCreate(c, userID, systemID, reqID, userGroup.Name, userGroup.Description)
+	txHash, userGroup.GroupID, err = h.service.GroupCreate(c, userID, systemID, userGroup.Name, userGroup.Description)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -81,6 +82,23 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		}
 
 		log.Println("GroupCreate error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	reqID := c.GetString("reqID")
+
+	procRequest, err := h.service.NewProcRequest(reqID, userID, processing.RequestUserGroupCreate)
+	if err != nil {
+		log.Println("Proc.NewRequest error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
+
+	if err := procRequest.Commit(); err != nil {
+		log.Println("UserGroup create procRequest.Commit error: ", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -121,7 +139,13 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 		return
 	}
 
-	userGroup, err := h.service.GroupGetByID(c, userID, &groupID)
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	userGroup, err := h.service.GroupGetByID(c, userID, systemID, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			c.AbortWithStatus(http.StatusForbidden)
@@ -164,6 +188,12 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
 	gID := c.Param("group_id")
 	if gID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id is empty"})
@@ -190,7 +220,7 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	err = h.service.GroupAddUser(c, userID, addingUserID, reqID, level, &groupID)
+	err = h.service.GroupAddUser(c, userID, systemID, addingUserID, reqID, level, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

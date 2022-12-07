@@ -42,7 +42,7 @@ func NewDefaultDocumentService(cfg *config.Config, infra *infrastructure.Infra) 
 	}
 }
 
-func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error) {
+func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, userID, systemID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error) {
 	// Checking that the same request is not in processing
 	{
 		status, err := d.Proc.GetRetrieveStatus(CID)
@@ -60,7 +60,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 	}
 
 	// Get doc access key
-	docKey, err := d.GetDocAccessKey(ctx, userID, CID)
+	docKey, err := d.GetDocAccessKey(ctx, userID, systemID, CID)
 	if err != nil {
 		return nil, fmt.Errorf("GetDocAccessKey error: %w", err)
 	}
@@ -110,8 +110,8 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 	return docDecrypted, nil
 }
 
-func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID string, CID *cid.Cid) (*chachaPoly.Key, error) {
-	docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, CID.Bytes())
+func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID, systemID string, CID *cid.Cid) (*chachaPoly.Key, error) {
+	docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, systemID, CID.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
 	}

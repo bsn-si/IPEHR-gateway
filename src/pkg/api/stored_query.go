@@ -22,6 +22,7 @@ import (
 // @Param        qualified_query_name  path      string  false  "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is  empty,  it  will  be  treated  as  "wildcard"  in  the  search."
 // @Param        Authorization         header    string  true   "Bearer AccessToken"
 // @Param        AuthUserId            header    string  true   "UserId UUID"
+// @Param        EhrSystemId           header    string  true   "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                   {object}  []model.StoredQuery
 // @Failure      500                   "Is returned when an unexpected error occurs while processing a request"
 // @Router       /definition/query/{qualified_query_name} [get]
@@ -32,12 +33,18 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
 	// Here we do not check the existence of the argument.
 	// This does not satisfy the specification. https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
 	// But otherwise it is not clear how the client can get the full list of stored queries
 	qName := c.Param("qualified_query_name")
 
-	queryList, err := h.service.List(c, userID, qName)
+	queryList, err := h.service.List(c, userID, systemID, qName)
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 

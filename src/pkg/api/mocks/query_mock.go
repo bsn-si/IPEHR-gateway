@@ -52,18 +52,18 @@ func (mr *MockQueryServiceMockRecorder) GetByVersion(ctx, userID, systemID, name
 }
 
 // List mocks base method.
-func (m *MockQueryService) List(ctx context.Context, userID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
+func (m *MockQueryService) List(ctx context.Context, userID, systemID, qualifiedQueryName string) ([]*model.StoredQuery, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List", ctx, userID, qualifiedQueryName)
+	ret := m.ctrl.Call(m, "List", ctx, userID, systemID, qualifiedQueryName)
 	ret0, _ := ret[0].([]*model.StoredQuery)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // List indicates an expected call of List.
-func (mr *MockQueryServiceMockRecorder) List(ctx, userID, qualifiedQueryName interface{}) *gomock.Call {
+func (mr *MockQueryServiceMockRecorder) List(ctx, userID, systemID, qualifiedQueryName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockQueryService)(nil).List), ctx, userID, qualifiedQueryName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockQueryService)(nil).List), ctx, userID, systemID, qualifiedQueryName)
 }
 
 // Store mocks base method.
