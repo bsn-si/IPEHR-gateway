@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"hms/gateway/pkg/errors"
 	"io"
 	"log"
 	"net/http"
@@ -12,12 +11,14 @@ import (
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/template"
+	"hms/gateway/pkg/errors"
 )
 
 type TemplateService interface {
 	Parser(version model.ADLVer) (template.ADLParser, error)
 	GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error)
 	Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error
+	GetList(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error)
 }
 
 type TemplateHandler struct {
@@ -76,6 +77,46 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, t.MimeType, t.Body)
+}
+
+// Get
+// @Summary      Get a list of templates
+// @Description  List the available ADL 1.4 operational templates (OPT) on the system.
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
+// @Tags         TEMPLATE
+// @Produce      json
+// @Param        Authorization  header    string  true  "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true  "UserId UUID"
+// @Success      200            {object}  []model.TemplateResponse
+// @Failure      400            "Is returned because of invalid content."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
+// @Router       /definition/template/adl1.4 [get]
+func (h *TemplateHandler) ListStored(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is empty"})
+		return
+	}
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	l, err := h.service.GetList(c, userID, systemID)
+	if err != nil {
+		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if len(l) == 0 {
+		l = make([]*model.TemplateResponse, 0)
+	}
+
+	c.JSON(http.StatusOK, l)
 }
 
 // Store

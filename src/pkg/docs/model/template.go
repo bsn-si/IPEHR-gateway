@@ -7,6 +7,7 @@ import "encoding/xml"
 
 type TemplateResponse struct {
 	TemplateID  string `json:"template_id"`
+	Version     string `json:"version"`
 	Concept     string `json:"concept"`
 	ArchetypeID string `json:"archetype_id"`
 	CreatedAt   string `json:"created_timestamp"`

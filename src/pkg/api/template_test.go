@@ -1,11 +1,8 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/parser/adl14"
-	"hms/gateway/pkg/errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +13,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+
+	"hms/gateway/pkg/api/mocks"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/parser/adl14"
+	"hms/gateway/pkg/errors"
 )
 
 //
@@ -152,6 +154,95 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 			respBody, _ := io.ReadAll(resp.Body)
 			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
 				t.Errorf("TemplateHandler.GetByID() status response {-want;+got}\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestTemplateHandler_ListStored(t *testing.T) {
+	var (
+		userID   = uuid.New().String()
+		systemID = uuid.New().String()
+		tM       = make([]*model.TemplateResponse, 1)
+	)
+
+	tM[0] = &model.TemplateResponse{
+		TemplateID:  "1",
+		Version:     "1.0.1",
+		Concept:     "concept",
+		ArchetypeID: "openEHR-EHR-COMPOSITION.encounter.v1",
+		CreatedAt:   "2017-07-16T19:20:30.450+01:00",
+	}
+
+	tJSON, _ := json.Marshal(tM)
+
+	tests := []struct {
+		name       string
+		adlVer     string
+		prepare    func(gaSvc *mocks.MockTemplateService)
+		wantStatus int
+		wantResp   string
+	}{
+		{
+			"1. empty result because data was not found",
+			model.VerADL1_4,
+			func(gaSvc *mocks.MockTemplateService) {
+				gaSvc.EXPECT().GetList(gomock.Any(), gomock.Any(), gomock.Any())
+			},
+			http.StatusOK,
+			`[]`,
+		},
+		{
+			"2. success result",
+			model.VerADL1_4,
+			func(gaSvc *mocks.MockTemplateService) {
+				gaSvc.EXPECT().GetList(gomock.Any(), gomock.Any(), gomock.Any()).Return(tM, nil)
+			},
+			http.StatusOK,
+			string(tJSON),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			tSvc := mocks.NewMockTemplateService(ctrl)
+			tt.prepare(tSvc)
+
+			// Mock for auth user service
+			userSvc := mocks.NewMockUserService(ctrl)
+			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
+
+			api := API{
+				Template: NewTemplateHandler(tSvc, ""),
+				User:     NewUserHandler(userSvc),
+			}
+
+			router := api.setupRouter(api.buildDefinitionAPI())
+
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/definition/template/%s", tt.adlVer), nil)
+			req.Header.Set("Authorization", "Bearer emptyJWTkey")
+			req.Header.Set("AuthUserId", userID)
+			req.Header.Set("EhrSystemId", systemID)
+
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+
+			resp := recorder.Result()
+			defer resp.Body.Close()
+
+			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
+				t.Errorf("TemplateHandler.GetList() status code mismatch {-want;+got}\n\t%s", diff)
+			}
+
+			if tt.wantStatus == http.StatusNotFound {
+				return
+			}
+
+			respBody, _ := io.ReadAll(resp.Body)
+			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
+				t.Errorf("TemplateHandler.GetList() status response {-want;+got}\n%s", diff)
 			}
 		})
 	}
