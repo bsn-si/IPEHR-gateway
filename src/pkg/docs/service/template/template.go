@@ -18,6 +18,8 @@ type ADLParser interface {
 	Version() model.ADLVer
 	IsTypeAllowed(t model.ADLType) bool
 	Validate([]byte, model.ADLType) bool
+	Parse([]byte, model.ADLType) (*model.Template, error)
+	ParseWithFill([]byte, model.ADLType) (*model.Template, error)
 }
 
 func NewService(docService *service.DefaultDocumentService) *Service {
@@ -46,4 +48,8 @@ func (s *Service) Parser(version string) (ADLParser, error) {
 
 func (*Service) GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error) {
 	return nil, errors.ErrNotImplemented
+}
+
+func (*Service) Store(ctx context.Context, userID string, systemID string, reqID string, m *model.Template) error {
+	return errors.ErrNotImplemented
 }

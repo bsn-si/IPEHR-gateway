@@ -130,7 +130,7 @@ func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 // @Param        query_type            query     string    true  "Parameter indicating the query language/type"
 // @Param        Authorization         header    string    true  "Bearer AccessToken"
 // @Param        AuthUserId            header    string    true  "UserId"
-// @Param        EhrSystemId                                     header  string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId           header    string    true  "The identifier of the system, typically a reverse domain identifier"
 // @Header       200                   {string}  Location  "{baseUrl}/definition/query/org.openehr::compositions/1.0.1"
 // @Success      200                   "Is returned when the query was successfully stored."
 // @Failure      400                   "Is returned when the server was unable to store the query. This could be due to incorrect request body (could not be parsed, etc), unknown query type, etc."

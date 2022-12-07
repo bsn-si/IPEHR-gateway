@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"hms/gateway/pkg/errors"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 
@@ -15,6 +17,7 @@ import (
 type TemplateService interface {
 	Parser(version model.ADLVer) (template.ADLParser, error)
 	GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error)
+	Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error
 }
 
 type TemplateHandler struct {
@@ -37,8 +40,8 @@ func NewTemplateHandler(templateService TemplateService, baseURL string) *Templa
 // @Produce      application/xml
 // @Produce      application/openehr.wt+json
 // @Param        template_id    path      string  false  "Template identifier. Example: Vital Signs"
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Authorization  header    string     true  "Bearer AccessToken"
+// @Param        AuthUserId     header    string     true  "UserId UUID"
 // @Success      200            {string}  []byte
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      404            "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
@@ -73,4 +76,86 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, t.MimeType, t.Body)
+}
+
+// Store
+// @Summary      Store a template
+// @Description  Upload a new ADL 1.4 operational template (OPT).
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload
+// @Tags         TEMPLATE
+// @Param        Authorization  header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Header       201            {string}  Location   "{baseUrl}/definition/template/adl1.4/{template_id}"
+// @Header       201            {string}  RequestID  "Request identifier"
+// @Accept       application/xml
+// @Produce      text/plain
+// @Produce      application/xml
+// @Success      201  {object}  model.Template  "Is returned when the query was successfully uploaded."
+// @Failure      400  "Is returned when unable to upload a template, because of invalid content."
+// @Failure      409  "Is returned when a template with same {template_id} (at given version, if supplied) already exists."
+// @Failure      500  "Is returned when an unexpected error occurs while processing a request"
+// @Router       /definition/template/adl1.4/ [post]
+func (h *TemplateHandler) Store(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
+		return
+	}
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	data, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		return
+	}
+	defer c.Request.Body.Close()
+
+	if len(data) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is empty"})
+		return
+	}
+
+	p, err := h.service.Parser(model.VerADL1_4)
+	if err != nil {
+		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if !p.Validate(data, model.ADLTypeXML) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body is not valid"})
+		return
+	}
+
+	m, err := p.ParseWithFill(data, model.ADLTypeXML)
+	if err != nil {
+		log.Printf("Template service parse error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	reqID := c.GetString("reqID")
+	if err := h.service.Store(c, userID, systemID, reqID, m); err != nil {
+		log.Printf("Template service store error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
+
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Header("Location", h.baseURL+"/definition/template/"+m.VerADL+"/"+url.QueryEscape(m.TemplateID))
+
+	if c.Request.Header.Get("Prefer") == "return=representation" {
+		c.Data(http.StatusCreated, "application/xml", data)
+		return
+	}
+
+	c.Status(http.StatusCreated)
 }
