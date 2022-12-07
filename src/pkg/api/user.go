@@ -308,7 +308,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 // @Failure  404            "User with ID not exist"
 // @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/info/{user_id} [get]
+// @Router   /user/{user_id} [get]
 func (h *UserHandler) Info(c *gin.Context) {
 	userID := c.Param("user_id")
 	if userID == "" {

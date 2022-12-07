@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 	"github.com/vmihailenco/msgpack/v5"
@@ -128,7 +127,6 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 	groupKey, err := s.getAccessKey(ctx, userID, systemID, access.UserGroup, groupID[:])
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
-			log.Println("Hello1")
 			return err
 		}
 
@@ -158,7 +156,6 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, userID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
-			log.Println("Hello2")
 			return err
 		} else if errors.Is(err, errors.ErrAlreadyExist) {
 			return err

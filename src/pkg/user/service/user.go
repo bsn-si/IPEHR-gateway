@@ -95,7 +95,7 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 
 		content, err = compressor.New(compressor.BestCompression).Compress(content)
 		if err != nil {
-			return fmt.Errorf("DoctorInfo content compression error: %w", err)
+			return fmt.Errorf("UserInfo content compression error: %w", err)
 		}
 	default:
 		return errors.ErrFieldIsIncorrect("user.Role")
