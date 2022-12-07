@@ -187,7 +187,7 @@ func TestTemplateHandler_ListStored(t *testing.T) {
 			"1. empty result because data was not found",
 			model.VerADL1_4,
 			func(gaSvc *mocks.MockTemplateService) {
-				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any())
+				gaSvc.EXPECT().GetList(gomock.Any(), gomock.Any(), gomock.Any())
 			},
 			http.StatusOK,
 			`[]`,
@@ -196,7 +196,7 @@ func TestTemplateHandler_ListStored(t *testing.T) {
 			"2. success result",
 			model.VerADL1_4,
 			func(gaSvc *mocks.MockTemplateService) {
-				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any()).Return(tM, nil)
+				gaSvc.EXPECT().GetList(gomock.Any(), gomock.Any(), gomock.Any()).Return(tM, nil)
 			},
 			http.StatusOK,
 			string(tJSON),
@@ -233,7 +233,7 @@ func TestTemplateHandler_ListStored(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("TemplateHandler.List() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("TemplateHandler.GetList() status code mismatch {-want;+got}\n\t%s", diff)
 			}
 
 			if tt.wantStatus == http.StatusNotFound {
@@ -242,7 +242,7 @@ func TestTemplateHandler_ListStored(t *testing.T) {
 
 			respBody, _ := io.ReadAll(resp.Body)
 			if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
-				t.Errorf("TemplateHandler.List() status response {-want;+got}\n%s", diff)
+				t.Errorf("TemplateHandler.GetList() status response {-want;+got}\n%s", diff)
 			}
 		})
 	}

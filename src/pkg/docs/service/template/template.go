@@ -54,6 +54,6 @@ func (*Service) Store(ctx context.Context, userID string, systemID string, reqID
 	return errors.ErrNotImplemented
 }
 
-func (*Service) List(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error) {
+func (*Service) GetList(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error) {
 	return nil, errors.ErrNotImplemented
 }

@@ -18,7 +18,7 @@ type TemplateService interface {
 	Parser(version model.ADLVer) (template.ADLParser, error)
 	GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error)
 	Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error
-	List(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error)
+	GetList(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error)
 }
 
 type TemplateHandler struct {
@@ -104,7 +104,7 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 		return
 	}
 
-	l, err := h.service.List(c, userID, systemID)
+	l, err := h.service.GetList(c, userID, systemID)
 	if err != nil {
 		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
