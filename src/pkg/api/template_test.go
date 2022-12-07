@@ -21,7 +21,6 @@ import (
 //
 //go:generate mockgen -source template.go -package mocks -destination mocks/template_mock.go
 //go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
-//go:generate mockgen -source ../docs/service/template/template.go -package mocks -destination mocks/service_template_mock.go
 
 func TestTemplateHandler_GetByID(t *testing.T) {
 	var (
@@ -397,24 +396,26 @@ func TestTemplateHandler_Store(t *testing.T) {
 			http.StatusCreated,
 		},
 	}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	tSvc := mocks.NewMockTemplateService(ctrl)
+	userSvc := mocks.NewMockUserService(ctrl)
+
+	api := API{
+		Template: NewTemplateHandler(tSvc, ""),
+		User:     NewUserHandler(userSvc),
+	}
+
+	router := api.setupRouter(api.buildDefinitionAPI())
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			tSvc := mocks.NewMockTemplateService(ctrl)
 			tt.prepare(tSvc)
 
 			// Mock for auth user service
-			userSvc := mocks.NewMockUserService(ctrl)
 			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
-
-			api := API{
-				Template: NewTemplateHandler(tSvc, ""),
-				User:     NewUserHandler(userSvc),
-			}
-
-			router := api.setupRouter(api.buildDefinitionAPI())
 
 			reqBody := strings.NewReader(tt.body)
 
