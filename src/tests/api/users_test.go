@@ -294,7 +294,7 @@ func (testWrap *testWrap) userInfo(testData *TestData) func(t *testing.T) {
 			}
 		}
 
-		url := testWrap.server.URL + "/v1/user/info/" + doctor.id
+		url := testWrap.server.URL + "/v1/user/" + doctor.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {

@@ -1575,6 +1575,46 @@ paths:
       summary: Get list of transactions by certain request id for authorized user
       tags:
       - REQUEST
+  /user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserInfo'
+        "401":
+          description: User unauthorized
+        "404":
+          description: User with ID not exist
+        "422":
+          description: The request could not be understood by the server due to incorrect
+            syntax. The client SHOULD NOT repeat the request without modifications.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get user info
+      tags:
+      - USER
   /user/group:
     post:
       consumes:
@@ -1713,46 +1753,6 @@ paths:
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: Adding a user to a group
-      tags:
-      - USER
-  /user/info/{user_id}:
-    get:
-      consumes:
-      - application/json
-      parameters:
-      - description: Bearer AccessToken
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: UserId
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      - description: The identifier of the system, typically a reverse domain identifier
-        in: header
-        name: EhrSystemId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.UserInfo'
-        "401":
-          description: User unauthorized
-        "404":
-          description: User with ID not exist
-        "422":
-          description: The request could not be understood by the server due to incorrect
-            syntax. The client SHOULD NOT repeat the request without modifications.
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Get user info
       tags:
       - USER
   /user/login:

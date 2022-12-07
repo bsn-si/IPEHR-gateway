@@ -1737,63 +1737,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/info/{user_id}": {
-            "get": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "USER"
-                ],
-                "summary": "Get user info",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer AccessToken",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "UserId",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/model.UserInfo"
-                        }
-                    },
-                    "401": {
-                        "description": "User unauthorized"
-                    },
-                    "404": {
-                        "description": "User with ID not exist"
-                    },
-                    "422": {
-                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
         "/user/login": {
             "post": {
                 "consumes": [
@@ -2021,6 +1964,63 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "Password, systemID or role incorrect"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/{user_id}": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "USER"
+                ],
+                "summary": "Get user info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.UserInfo"
+                        }
+                    },
+                    "401": {
+                        "description": "User unauthorized"
+                    },
+                    "404": {
+                        "description": "User with ID not exist"
+                    },
+                    "422": {
+                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
