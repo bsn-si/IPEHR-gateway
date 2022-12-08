@@ -33,6 +33,10 @@ WHERE
 ORDER BY temperature DESC
 LIMIT 3`,
 			&Query{
+				parameters: map[string]*Parameter{
+					"temperature": toRef(Parameter("temperature")),
+					"chills":      toRef(Parameter("chills")),
+				},
 				Select: Select{
 					SelectExprs: []SelectExpr{
 						{
@@ -313,7 +317,10 @@ LIMIT 3`,
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
-			if diff := cmp.Diff(tt.want, got); diff != "" {
+			opts := cmp.AllowUnexported(
+				Query{},
+			)
+			if diff := cmp.Diff(tt.want, got, opts); diff != "" {
 				t.Errorf("Mismatch {+want;-got}:\n\t%s", diff)
 			}
 		})
