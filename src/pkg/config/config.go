@@ -36,10 +36,12 @@ type Config struct {
 		}
 	}
 	Contract struct {
-		Address     string
-		Endpoint    string
-		PrivKeyPath string
-		GasTipCap   int64 // maxPriorityFeePerGas used for hardhat testing
+		AddressEhrIndex    string
+		AddressAccessStore string
+		AddressUsers       string
+		Endpoint           string
+		PrivKeyPath        string
+		GasTipCap          int64 // maxPriorityFeePerGas used for hardhat testing
 	}
 	DB struct {
 		FilePath string `json:"filePath"`

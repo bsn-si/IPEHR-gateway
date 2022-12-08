@@ -13,7 +13,7 @@ import (
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/indexer/users"
 	userModel "hms/gateway/pkg/user/model"
 	"hms/gateway/pkg/user/roles"
 )
@@ -32,21 +32,21 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &i.signerAddress)
+		nonce, err = i.usersNonce(ctx, &i.signerAddress)
 		if err != nil {
 			return "", fmt.Errorf("signerNonce error: %w address: %s", err, i.signerAddress.String())
 		}
 	}
 
-	var attrs []ehrIndexer.AttributesAttribute
+	var attrs []users.AttributesAttribute
 
 	switch roles.Role(role) {
 	case roles.Patient:
-		attrs = []ehrIndexer.AttributesAttribute{
+		attrs = []users.AttributesAttribute{
 			{Code: model.AttributePasswordHash, Value: pwdHash},
 		}
 	case roles.Doctor:
-		attrs = []ehrIndexer.AttributesAttribute{
+		attrs = []users.AttributesAttribute{
 			{Code: model.AttributePasswordHash, Value: pwdHash},
 			{Code: model.AttributeContent, Value: content},
 		}
@@ -56,7 +56,7 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 
 	sig := make([]byte, signatureLength)
 
-	data, err := i.abi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, sig)
+	data, err := i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, sig)
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
@@ -66,20 +66,20 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.ehrIndex.UserNew(i.transactOpts, userAddress, IDHash, role, attrs, i.signerAddress, sig)
+	tx, err := i.users.UserNew(i.transactOpts, userAddress, IDHash, role, attrs, i.signerAddress, sig)
 	if err != nil {
 		if strings.Contains(err.Error(), "AEX") {
 			return "", errors.ErrAlreadyExist
 		}
 
-		return "", fmt.Errorf("ehrIndex.UserNew error: %w", err)
+		return "", fmt.Errorf("users.UserNew error: %w", err)
 	}
 
 	return tx.Hash().Hex(), nil
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
-	user, err := i.ehrIndex.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
+	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.Users error: %w userAddr %s", err, userAddr.String())
 	}
@@ -88,7 +88,7 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 		return nil, errors.ErrNotFound
 	}
 
-	pwdHash := model.Attributes(user.Attrs).GetByCode(model.AttributePasswordHash)
+	pwdHash := model.AttributesUsers(user.Attrs).GetByCode(model.AttributePasswordHash)
 	if pwdHash == nil {
 		return nil, errors.ErrFieldIsEmpty("PasswordHash")
 	}
@@ -97,7 +97,7 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 }
 
 func (i *Index) GetUser(ctx context.Context, userAddr common.Address) (*userModel.User, error) {
-	user, err := i.ehrIndex.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
+	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.Users error: %w userAddr %s", err, userAddr.String())
 	}

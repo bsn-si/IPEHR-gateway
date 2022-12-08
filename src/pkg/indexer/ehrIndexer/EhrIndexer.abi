@@ -1,22 +1,32 @@
 [
     {
-      "anonymous": false,
       "inputs": [
         {
-          "indexed": true,
           "internalType": "address",
-          "name": "previousOwner",
+          "name": "_accessStore",
           "type": "address"
         },
         {
-          "indexed": true,
           "internalType": "address",
-          "name": "newOwner",
+          "name": "_users",
           "type": "address"
         }
       ],
-      "name": "OwnershipTransferred",
-      "type": "event"
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "accessStore",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     },
     {
       "inputs": [
@@ -265,71 +275,6 @@
           "internalType": "bytes32",
           "name": "",
           "type": "bytes32"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "name": "ehrUsers",
-      "outputs": [
-        {
-          "internalType": "bytes32",
-          "name": "",
-          "type": "bytes32"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "accessID",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "accessIdHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getAccessByIdHash",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "idHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes",
-              "name": "idEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "enum AccessStore.AccessLevel",
-              "name": "level",
-              "type": "uint8"
-            }
-          ],
-          "internalType": "struct AccessStore.Access",
-          "name": "",
-          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -631,6 +576,25 @@
       "inputs": [
         {
           "internalType": "bytes32",
+          "name": "userIDHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getEhrUser",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
           "name": "ehrId",
           "type": "bytes32"
         },
@@ -698,173 +662,6 @@
     {
       "inputs": [
         {
-          "internalType": "address",
-          "name": "addr",
-          "type": "address"
-        }
-      ],
-      "name": "getUser",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "IDHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "enum Users.Role",
-              "name": "role",
-              "type": "uint8"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "enum Attributes.Code",
-                  "name": "code",
-                  "type": "uint8"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "value",
-                  "type": "bytes"
-                }
-              ],
-              "internalType": "struct Attributes.Attribute[]",
-              "name": "attrs",
-              "type": "tuple[]"
-            }
-          ],
-          "internalType": "struct Users.User",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "accessID",
-          "type": "bytes32"
-        }
-      ],
-      "name": "getUserAccessList",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "idHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes",
-              "name": "idEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "enum AccessStore.AccessLevel",
-              "name": "level",
-              "type": "uint8"
-            }
-          ],
-          "internalType": "struct AccessStore.Access[]",
-          "name": "",
-          "type": "tuple[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "groupIDHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "userIDHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "enum AccessStore.AccessLevel",
-              "name": "level",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bytes",
-              "name": "userIDEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "address",
-              "name": "signer",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes",
-              "name": "signature",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct Users.GroupAddUserParams",
-          "name": "p",
-          "type": "tuple"
-        }
-      ],
-      "name": "groupAddUser",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "groupIDHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "userIDHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        }
-      ],
-      "name": "groupRemoveUser",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "bytes[]",
           "name": "data",
           "type": "bytes[]"
@@ -898,26 +695,6 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "owner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "renounceOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -963,12 +740,12 @@
               "type": "bytes"
             },
             {
-              "internalType": "enum AccessStore.AccessLevel",
+              "internalType": "enum IAccessStore.AccessLevel",
               "name": "level",
               "type": "uint8"
             }
           ],
-          "internalType": "struct AccessStore.Access",
+          "internalType": "struct IAccessStore.Access",
           "name": "access",
           "type": "tuple"
         },
@@ -1025,7 +802,7 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "userId",
+          "name": "IDHash",
           "type": "bytes32"
         },
         {
@@ -1063,206 +840,16 @@
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "userID",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "enum AccessStore.AccessKind",
-          "name": "kind",
-          "type": "uint8"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "idHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "userAccess",
+      "inputs": [],
+      "name": "users",
       "outputs": [
         {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "idHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "bytes",
-              "name": "idEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "enum AccessStore.AccessLevel",
-              "name": "level",
-              "type": "uint8"
-            }
-          ],
-          "internalType": "struct AccessStore.Access",
+          "internalType": "address",
           "name": "",
-          "type": "tuple"
+          "type": "address"
         }
       ],
       "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "components": [
-            {
-              "internalType": "bytes32",
-              "name": "groupIdHash",
-              "type": "bytes32"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "enum Attributes.Code",
-                  "name": "code",
-                  "type": "uint8"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "value",
-                  "type": "bytes"
-                }
-              ],
-              "internalType": "struct Attributes.Attribute[]",
-              "name": "attrs",
-              "type": "tuple[]"
-            },
-            {
-              "internalType": "address",
-              "name": "signer",
-              "type": "address"
-            },
-            {
-              "internalType": "bytes",
-              "name": "signature",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct Users.UserGroupCreateParams",
-          "name": "p",
-          "type": "tuple"
-        }
-      ],
-      "name": "userGroupCreate",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "bytes32",
-          "name": "groupIdHash",
-          "type": "bytes32"
-        }
-      ],
-      "name": "userGroupGetByID",
-      "outputs": [
-        {
-          "components": [
-            {
-              "components": [
-                {
-                  "internalType": "enum Attributes.Code",
-                  "name": "code",
-                  "type": "uint8"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "value",
-                  "type": "bytes"
-                }
-              ],
-              "internalType": "struct Attributes.Attribute[]",
-              "name": "attrs",
-              "type": "tuple[]"
-            },
-            {
-              "components": [
-                {
-                  "internalType": "bytes32",
-                  "name": "userIDHash",
-                  "type": "bytes32"
-                },
-                {
-                  "internalType": "bytes",
-                  "name": "userIDEncr",
-                  "type": "bytes"
-                }
-              ],
-              "internalType": "struct Users.GroupMember[]",
-              "name": "members",
-              "type": "tuple[]"
-            }
-          ],
-          "internalType": "struct Users.UserGroup",
-          "name": "",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "addr",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "IDHash",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "enum Users.Role",
-          "name": "role",
-          "type": "uint8"
-        },
-        {
-          "components": [
-            {
-              "internalType": "enum Attributes.Code",
-              "name": "code",
-              "type": "uint8"
-            },
-            {
-              "internalType": "bytes",
-              "name": "value",
-              "type": "bytes"
-            }
-          ],
-          "internalType": "struct Attributes.Attribute[]",
-          "name": "attrs",
-          "type": "tuple[]"
-        },
-        {
-          "internalType": "address",
-          "name": "signer",
-          "type": "address"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        }
-      ],
-      "name": "userNew",
-      "outputs": [],
-      "stateMutability": "nonpayable",
       "type": "function"
     }
   ]

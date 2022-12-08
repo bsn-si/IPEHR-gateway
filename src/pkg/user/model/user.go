@@ -1,5 +1,5 @@
 package model
 
-import "hms/gateway/pkg/indexer/ehrIndexer"
+import "hms/gateway/pkg/indexer/users"
 
-type User = ehrIndexer.UsersUser
+type User = users.IUsersUser

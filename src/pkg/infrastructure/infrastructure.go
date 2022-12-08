@@ -83,7 +83,9 @@ func New(cfg *config.Config) *Infra {
 		IpfsClient:     ipfsClient,
 		FilecoinClient: filecoinClient,
 		Index: indexer.New(
-			cfg.Contract.Address,
+			cfg.Contract.AddressEhrIndex,
+			cfg.Contract.AddressAccessStore,
+			cfg.Contract.AddressUsers,
 			cfg.Contract.PrivKeyPath,
 			ehtClient,
 			cfg.Contract.GasTipCap,

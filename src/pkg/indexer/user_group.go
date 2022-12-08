@@ -14,7 +14,7 @@ import (
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/indexer/users"
 	userModel "hms/gateway/pkg/user/model"
 )
 
@@ -27,34 +27,29 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.usersNonce(ctx, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
-	params := ehrIndexer.UsersUserGroupCreateParams{
-		GroupIdHash: sha3.Sum256(groupID[:]),
-		Attrs: []ehrIndexer.AttributesAttribute{
-			{Code: model.AttributeKeyEncr, Value: keyEncr},         // encrypted by userKey
-			{Code: model.AttributeIDEncr, Value: idEncr},           // encrypted by group key
-			{Code: model.AttributeContentEncr, Value: contentEncr}, // encrypted by group key
-		},
-		Signer:    userAddress,
-		Signature: make([]byte, signatureLength),
+	attrs := []users.AttributesAttribute{
+		{Code: model.AttributeKeyEncr, Value: keyEncr},         // encrypted by userKey
+		{Code: model.AttributeIDEncr, Value: idEncr},           // encrypted by group key
+		{Code: model.AttributeContentEncr, Value: contentEncr}, // encrypted by group key
 	}
 
-	data, err := i.abi.Pack("userGroupCreate", params)
+	data, err := i.usersAbi.Pack("userGroupCreate", sha3.Sum256(groupID[:]), attrs, userAddress, make([]byte, signatureLength))
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
 
-	params.Signature, err = makeSignature(data, nonce, userKey)
+	signature, err := makeSignature(data, nonce, userKey)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.ehrIndex.UserGroupCreate(i.transactOpts, params)
+	tx, err := i.users.UserGroupCreate(i.transactOpts, sha3.Sum256(groupID[:]), attrs, userAddress, signature)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return "", errors.ErrNotFound
@@ -71,7 +66,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error) {
 	groupIDHash := sha3.Sum256(groupID[:])
 
-	ug, err := i.ehrIndex.UserGroupGetByID(&bind.CallOpts{Context: ctx}, groupIDHash)
+	ug, err := i.users.UserGroupGetByID(&bind.CallOpts{Context: ctx}, groupIDHash)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.UserGroupGetByID error: %w", err)
 	}
@@ -80,7 +75,7 @@ func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uu
 		return nil, errors.ErrNotFound
 	}
 
-	contentEncr := model.Attributes(ug.Attrs).GetByCode(model.AttributeContentEncr)
+	contentEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeContentEncr)
 	if contentEncr == nil {
 		return nil, errors.ErrFieldIsEmpty("ContentEncr")
 	}
@@ -111,13 +106,13 @@ func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level acces
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.usersNonce(ctx, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
-	params := ehrIndexer.UsersGroupAddUserParams{
+	params := users.IUsersGroupAddUserParams{
 		GroupIDHash: sha3.Sum256(groupID[:]),
 		UserIDHash:  sha3.Sum256(uID[:]),
 		Level:       level,
@@ -127,7 +122,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level acces
 		Signature:   make([]byte, signatureLength),
 	}
 
-	data, err := i.abi.Pack("groupAddUser", params)
+	data, err := i.usersAbi.Pack("groupAddUser", params)
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
@@ -137,7 +132,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level acces
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.ehrIndex.GroupAddUser(i.transactOpts, params)
+	tx, err := i.users.GroupAddUser(i.transactOpts, params)
 	if err != nil {
 		if strings.Contains(err.Error(), "DNY") {
 			return "", errors.ErrAccessDenied

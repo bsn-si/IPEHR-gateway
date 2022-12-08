@@ -20,15 +20,20 @@ import (
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer/accessStore"
 	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/indexer/users"
 )
 
 type Index struct {
 	sync.RWMutex
 	client        *ethclient.Client
 	ehrIndex      *ehrIndexer.EhrIndexer
+	accessStore   *accessStore.AccessStore
+	users         *users.Users
 	transactOpts  *bind.TransactOpts
-	abi           *abi.ABI
+	ehrIndexAbi   *abi.ABI
+	usersAbi      *abi.ABI
 	signerKey     *ecdsa.PrivateKey
 	signerAddress common.Address
 }
@@ -66,7 +71,7 @@ var (
 	})
 )
 
-func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
+func New(ehrIndexAddr, accessStoreAddr, usersAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
 	ctx := context.Background()
 
 	key, err := os.ReadFile(keyPath)
@@ -86,14 +91,23 @@ func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64
 		log.Fatal(err)
 	}
 
-	address := common.HexToAddress(contractAddr)
-
-	ehrIndex, err := ehrIndexer.NewEhrIndexer(address, client) // shoulbe interface
+	ehrIndex, err := ehrIndexer.NewEhrIndexer(common.HexToAddress(ehrIndexAddr), client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bcAbi, _ := ehrIndexer.EhrIndexerMetaData.GetAbi()
+	accessStore, err := accessStore.NewAccessStore(common.HexToAddress(accessStoreAddr), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_users, err := users.NewUsers(common.HexToAddress(usersAddr), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ehrIndexAbi, _ := ehrIndexer.EhrIndexerMetaData.GetAbi()
+	usersAbi, _ := users.UsersMetaData.GetAbi()
 
 	transactOpts, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
@@ -107,8 +121,11 @@ func New(contractAddr, keyPath string, client *ethclient.Client, gasTipCap int64
 	return &Index{
 		client:        client,
 		ehrIndex:      ehrIndex,
+		accessStore:   accessStore,
+		users:         _users,
 		transactOpts:  transactOpts,
-		abi:           bcAbi,
+		ehrIndexAbi:   ehrIndexAbi,
+		usersAbi:      usersAbi,
 		signerKey:     privateKey,
 		signerAddress: signerAddress,
 	}
@@ -129,15 +146,15 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.usersNonce(ctx, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
-	sig := make([]byte, 65)
+	sig := make([]byte, signatureLength)
 
-	data, err := i.abi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
+	data, err := i.ehrIndexAbi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
@@ -147,7 +164,7 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.abi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -158,7 +175,7 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error) {
 	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-	ehrUUIDRaw, err := i.ehrIndex.EhrUsers(&bind.CallOpts{Context: ctx}, IDHash)
+	ehrUUIDRaw, err := i.ehrIndex.GetEhrUser(&bind.CallOpts{Context: ctx}, IDHash)
 	if err != nil {
 		return nil, fmt.Errorf("EhrUsers get error: %w userID %s systemID %s", err, userID, systemID)
 	}
@@ -191,7 +208,7 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string,
 		Context: ctx,
 	}
 
-	accessObj, err := i.ehrIndex.GetAccessByIdHash(callOpts, accessID, CIDHash)
+	accessObj, err := i.accessStore.GetAccessByIdHash(callOpts, accessID, CIDHash)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound

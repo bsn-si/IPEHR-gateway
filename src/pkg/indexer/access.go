@@ -15,7 +15,7 @@ func (i *Index) GetUserAccess(ctx context.Context, userID, systemID string, kind
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	accessIDHash := sha3.Sum256(accessID)
 
-	acc, err := i.ehrIndex.UserAccess(&bind.CallOpts{Context: ctx}, userIDHash, kind, accessIDHash)
+	acc, err := i.accessStore.UserAccess(&bind.CallOpts{Context: ctx}, userIDHash, kind, accessIDHash)
 	if err != nil {
 		return nil, 0, fmt.Errorf("ehrIndex.UserAccess error: %w", err)
 	}
