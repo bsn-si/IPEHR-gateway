@@ -1,0 +1,186 @@
+[
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "accessID",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAccess",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum IAccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAccessStore.Access[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "accessID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "accessIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getAccessByIdHash",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum IAccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAccessStore.Access",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "accessID",
+          "type": "bytes32"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum IAccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAccessStore.Access",
+          "name": "o",
+          "type": "tuple"
+        }
+      ],
+      "name": "setAccess",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum IAccessStore.AccessKind",
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "idHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "userAccess",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum IAccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAccessStore.Access",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]

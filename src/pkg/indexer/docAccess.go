@@ -12,7 +12,7 @@ import (
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/indexer/accessStore"
 )
 
 func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, error) {
@@ -27,7 +27,7 @@ func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, 
 
 	accessID := crypto.Keccak256Hash(data)
 
-	acl, err := i.ehrIndex.GetUserAccessList(&bind.CallOpts{Context: ctx}, accessID)
+	acl, err := i.accessStore.GetAccess(&bind.CallOpts{Context: ctx}, accessID)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
@@ -75,7 +75,7 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 
 	idHash := crypto.Keccak256Hash(data)
 
-	accessObj := ehrIndexer.AccessStoreAccess{
+	accessObj := accessStore.IAccessStoreAccess{
 		IdHash:  idHash,
 		IdEncr:  CIDEncr,
 		KeyEncr: keyEncr,
@@ -86,15 +86,15 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 	toUserAddress := crypto.PubkeyToAddress(toUserKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.ehrNonce(ctx, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
-	sig := make([]byte, 65)
+	sig := make([]byte, signatureLength)
 
-	data, err = i.abi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
@@ -104,7 +104,7 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.abi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}

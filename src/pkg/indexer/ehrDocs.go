@@ -26,7 +26,7 @@ func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMe
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.ehrNonce(ctx, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -42,7 +42,7 @@ func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMe
 		Signature: make([]byte, signatureLength),
 	}
 
-	data, err := i.abi.Pack("addEhrDoc", params)
+	data, err := i.ehrIndexAbi.Pack("addEhrDoc", params)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
@@ -52,7 +52,7 @@ func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMe
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.abi.Pack("addEhrDoc", params)
+	data, err = i.ehrIndexAbi.Pack("addEhrDoc", params)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -176,15 +176,15 @@ func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.ehrNonce(ctx, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
-	sig := make([]byte, 65)
+	sig := make([]byte, signatureLength)
 
-	data, err := i.abi.Pack("setEhrSubject", subjectKey, eID, userAddress, sig)
+	data, err := i.ehrIndexAbi.Pack("setEhrSubject", subjectKey, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
@@ -194,7 +194,7 @@ func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.abi.Pack("setEhrSubject", subjectKey, eID, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setEhrSubject", subjectKey, eID, userAddress, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -238,15 +238,15 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 	defer i.Unlock()
 
 	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
+		nonce, err = i.ehrNonce(ctx, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
-	sig := make([]byte, 65)
+	sig := make([]byte, signatureLength)
 
-	data, err := i.abi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, version, userAddress, sig)
+	data, err := i.ehrIndexAbi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, version, userAddress, sig)
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}

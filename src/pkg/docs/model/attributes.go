@@ -1,6 +1,9 @@
 package model
 
-import "hms/gateway/pkg/indexer/ehrIndexer"
+import (
+	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/indexer/users"
+)
 
 type Attribute = uint8
 
@@ -19,14 +22,24 @@ const (
 	AttributeTimestamp       Attribute = 12
 )
 
-type Attributes []ehrIndexer.AttributesAttribute
+type AttributesEhr []ehrIndexer.AttributesAttribute
 
-func (a Attributes) GetByCode(code Attribute) []byte {
+func (a AttributesEhr) GetByCode(code Attribute) []byte {
 	for _, attr := range a {
 		if attr.Code == code {
 			return attr.Value
 		}
 	}
+	return nil
+}
 
+type AttributesUsers []users.AttributesAttribute
+
+func (a AttributesUsers) GetByCode(code Attribute) []byte {
+	for _, attr := range a {
+		if attr.Code == code {
+			return attr.Value
+		}
+	}
 	return nil
 }

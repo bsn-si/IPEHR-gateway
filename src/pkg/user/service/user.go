@@ -155,7 +155,7 @@ func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, err
 		return nil, fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
-	attrs := docModel.Attributes(user.Attrs)
+	attrs := docModel.AttributesUsers(user.Attrs)
 
 	content := attrs.GetByCode(docModel.AttributeContent)
 	if content == nil {

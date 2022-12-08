@@ -32,7 +32,9 @@ func main() {
 	}
 
 	index := indexer.New(
-		cfg.Contract.Address,
+		cfg.Contract.AddressEhrIndex,
+		cfg.Contract.AddressAccessStore,
+		cfg.Contract.AddressUsers,
 		cfg.Contract.PrivKeyPath,
 		ehtClient,
 		cfg.Contract.GasTipCap,

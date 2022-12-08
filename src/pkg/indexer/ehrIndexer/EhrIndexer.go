@@ -28,14 +28,6 @@ var (
 	_ = event.NewSubscription
 )
 
-// AccessStoreAccess is an auto generated low-level Go binding around an user-defined struct.
-type AccessStoreAccess struct {
-	IdHash  [32]byte
-	IdEncr  []byte
-	KeyEncr []byte
-	Level   uint8
-}
-
 // AttributesAttribute is an auto generated low-level Go binding around an user-defined struct.
 type AttributesAttribute struct {
 	Code  uint8
@@ -74,47 +66,17 @@ type DocsDocumentMeta struct {
 	Attrs     []AttributesAttribute
 }
 
-// UsersGroupAddUserParams is an auto generated low-level Go binding around an user-defined struct.
-type UsersGroupAddUserParams struct {
-	GroupIDHash [32]byte
-	UserIDHash  [32]byte
-	Level       uint8
-	UserIDEncr  []byte
-	KeyEncr     []byte
-	Signer      common.Address
-	Signature   []byte
-}
-
-// UsersGroupMember is an auto generated low-level Go binding around an user-defined struct.
-type UsersGroupMember struct {
-	UserIDHash [32]byte
-	UserIDEncr []byte
-}
-
-// UsersUser is an auto generated low-level Go binding around an user-defined struct.
-type UsersUser struct {
-	IDHash [32]byte
-	Role   uint8
-	Attrs  []AttributesAttribute
-}
-
-// UsersUserGroup is an auto generated low-level Go binding around an user-defined struct.
-type UsersUserGroup struct {
-	Attrs   []AttributesAttribute
-	Members []UsersGroupMember
-}
-
-// UsersUserGroupCreateParams is an auto generated low-level Go binding around an user-defined struct.
-type UsersUserGroupCreateParams struct {
-	GroupIdHash [32]byte
-	Attrs       []AttributesAttribute
-	Signer      common.Address
-	Signature   []byte
+// IAccessStoreAccess is an auto generated low-level Go binding around an user-defined struct.
+type IAccessStoreAccess struct {
+	IdHash  [32]byte
+	IdEncr  []byte
+	KeyEncr []byte
+	Level   uint8
 }
 
 // EhrIndexerMetaData contains all meta data concerning the EhrIndexer contract.
 var EhrIndexerMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structDocs.AddEhrDocParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"addEhrDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"deleteDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"CIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"CIDEncr\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"docGroupAddDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"groupIdEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"userIdEncr\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structDocGroups.DocGroupCreateParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"docGroupCreate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"}],\"name\":\"docGroupGetDocs\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"\",\"type\":\"bytes[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrSubject\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrUsers\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"accessIdHash\",\"type\":\"bytes32\"}],\"name\":\"getAccessByIdHash\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrID\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"name\":\"getDocByTime\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"getDocByVersion\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"}],\"name\":\"getDocLastByBaseID\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getEhrDocs\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getLastEhrDocByType\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"getUser\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structUsers.User\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"}],\"name\":\"getUserAccessList\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structAccessStore.Access[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"groupIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"userIDEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUsers.GroupAddUserParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"groupAddUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"groupRemoveUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"CIDHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structAccessStore.Access\",\"name\":\"access\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"userAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setDocAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setEhrSubject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userId\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setEhrUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userID\",\"type\":\"bytes32\"},{\"internalType\":\"enumAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"}],\"name\":\"userAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structUsers.UserGroupCreateParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"userGroupCreate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"}],\"name\":\"userGroupGetByID\",\"outputs\":[{\"components\":[{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"userIDEncr\",\"type\":\"bytes\"}],\"internalType\":\"structUsers.GroupMember[]\",\"name\":\"members\",\"type\":\"tuple[]\"}],\"internalType\":\"structUsers.UserGroup\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"userNew\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_accessStore\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_users\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"accessStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structDocs.AddEhrDocParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"addEhrDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"deleteDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"CIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"CIDEncr\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"docGroupAddDoc\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"groupIdEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"userIdEncr\",\"type\":\"bytes\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structDocGroups.DocGroupCreateParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"docGroupCreate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"}],\"name\":\"docGroupGetDocs\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"\",\"type\":\"bytes[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"ehrSubject\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrID\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"}],\"name\":\"getDocByTime\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"version\",\"type\":\"bytes32\"}],\"name\":\"getDocByVersion\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"docBaseUIDHash\",\"type\":\"bytes32\"}],\"name\":\"getDocLastByBaseID\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getEhrDocs\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"}],\"name\":\"getEhrUser\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"enumDocs.DocType\",\"name\":\"docType\",\"type\":\"uint8\"}],\"name\":\"getLastEhrDocByType\",\"outputs\":[{\"components\":[{\"internalType\":\"enumDocs.DocStatus\",\"name\":\"status\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"id\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"version\",\"type\":\"bytes\"},{\"internalType\":\"uint32\",\"name\":\"timestamp\",\"type\":\"uint32\"},{\"internalType\":\"bool\",\"name\":\"isLast\",\"type\":\"bool\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structDocs.DocumentMeta\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"CIDHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"access\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"userAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setDocAccess\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"subjectKey\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setEhrSubject\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrId\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setEhrUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // EhrIndexerABI is the input ABI used to generate the binding from.
@@ -263,6 +225,37 @@ func (_EhrIndexer *EhrIndexerTransactorRaw) Transact(opts *bind.TransactOpts, me
 	return _EhrIndexer.Contract.contract.Transact(opts, method, params...)
 }
 
+// AccessStore is a free data retrieval call binding the contract method 0x45e9ea6f.
+//
+// Solidity: function accessStore() view returns(address)
+func (_EhrIndexer *EhrIndexerCaller) AccessStore(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "accessStore")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// AccessStore is a free data retrieval call binding the contract method 0x45e9ea6f.
+//
+// Solidity: function accessStore() view returns(address)
+func (_EhrIndexer *EhrIndexerSession) AccessStore() (common.Address, error) {
+	return _EhrIndexer.Contract.AccessStore(&_EhrIndexer.CallOpts)
+}
+
+// AccessStore is a free data retrieval call binding the contract method 0x45e9ea6f.
+//
+// Solidity: function accessStore() view returns(address)
+func (_EhrIndexer *EhrIndexerCallerSession) AccessStore() (common.Address, error) {
+	return _EhrIndexer.Contract.AccessStore(&_EhrIndexer.CallOpts)
+}
+
 // AllowedChange is a free data retrieval call binding the contract method 0xe9b5b29a.
 //
 // Solidity: function allowedChange(address ) view returns(bool)
@@ -354,68 +347,6 @@ func (_EhrIndexer *EhrIndexerSession) EhrSubject(arg0 [32]byte) ([32]byte, error
 // Solidity: function ehrSubject(bytes32 ) view returns(bytes32)
 func (_EhrIndexer *EhrIndexerCallerSession) EhrSubject(arg0 [32]byte) ([32]byte, error) {
 	return _EhrIndexer.Contract.EhrSubject(&_EhrIndexer.CallOpts, arg0)
-}
-
-// EhrUsers is a free data retrieval call binding the contract method 0x5113c226.
-//
-// Solidity: function ehrUsers(bytes32 ) view returns(bytes32)
-func (_EhrIndexer *EhrIndexerCaller) EhrUsers(opts *bind.CallOpts, arg0 [32]byte) ([32]byte, error) {
-	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "ehrUsers", arg0)
-
-	if err != nil {
-		return *new([32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-
-	return out0, err
-
-}
-
-// EhrUsers is a free data retrieval call binding the contract method 0x5113c226.
-//
-// Solidity: function ehrUsers(bytes32 ) view returns(bytes32)
-func (_EhrIndexer *EhrIndexerSession) EhrUsers(arg0 [32]byte) ([32]byte, error) {
-	return _EhrIndexer.Contract.EhrUsers(&_EhrIndexer.CallOpts, arg0)
-}
-
-// EhrUsers is a free data retrieval call binding the contract method 0x5113c226.
-//
-// Solidity: function ehrUsers(bytes32 ) view returns(bytes32)
-func (_EhrIndexer *EhrIndexerCallerSession) EhrUsers(arg0 [32]byte) ([32]byte, error) {
-	return _EhrIndexer.Contract.EhrUsers(&_EhrIndexer.CallOpts, arg0)
-}
-
-// GetAccessByIdHash is a free data retrieval call binding the contract method 0x9ae2da76.
-//
-// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((bytes32,bytes,bytes,uint8))
-func (_EhrIndexer *EhrIndexerCaller) GetAccessByIdHash(opts *bind.CallOpts, accessID [32]byte, accessIdHash [32]byte) (AccessStoreAccess, error) {
-	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "getAccessByIdHash", accessID, accessIdHash)
-
-	if err != nil {
-		return *new(AccessStoreAccess), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(AccessStoreAccess)).(*AccessStoreAccess)
-
-	return out0, err
-
-}
-
-// GetAccessByIdHash is a free data retrieval call binding the contract method 0x9ae2da76.
-//
-// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((bytes32,bytes,bytes,uint8))
-func (_EhrIndexer *EhrIndexerSession) GetAccessByIdHash(accessID [32]byte, accessIdHash [32]byte) (AccessStoreAccess, error) {
-	return _EhrIndexer.Contract.GetAccessByIdHash(&_EhrIndexer.CallOpts, accessID, accessIdHash)
-}
-
-// GetAccessByIdHash is a free data retrieval call binding the contract method 0x9ae2da76.
-//
-// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((bytes32,bytes,bytes,uint8))
-func (_EhrIndexer *EhrIndexerCallerSession) GetAccessByIdHash(accessID [32]byte, accessIdHash [32]byte) (AccessStoreAccess, error) {
-	return _EhrIndexer.Contract.GetAccessByIdHash(&_EhrIndexer.CallOpts, accessID, accessIdHash)
 }
 
 // GetDocByTime is a free data retrieval call binding the contract method 0x4f722b16.
@@ -542,6 +473,37 @@ func (_EhrIndexer *EhrIndexerCallerSession) GetEhrDocs(ehrId [32]byte, docType u
 	return _EhrIndexer.Contract.GetEhrDocs(&_EhrIndexer.CallOpts, ehrId, docType)
 }
 
+// GetEhrUser is a free data retrieval call binding the contract method 0xf228d6f0.
+//
+// Solidity: function getEhrUser(bytes32 userIDHash) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerCaller) GetEhrUser(opts *bind.CallOpts, userIDHash [32]byte) ([32]byte, error) {
+	var out []interface{}
+	err := _EhrIndexer.contract.Call(opts, &out, "getEhrUser", userIDHash)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// GetEhrUser is a free data retrieval call binding the contract method 0xf228d6f0.
+//
+// Solidity: function getEhrUser(bytes32 userIDHash) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerSession) GetEhrUser(userIDHash [32]byte) ([32]byte, error) {
+	return _EhrIndexer.Contract.GetEhrUser(&_EhrIndexer.CallOpts, userIDHash)
+}
+
+// GetEhrUser is a free data retrieval call binding the contract method 0xf228d6f0.
+//
+// Solidity: function getEhrUser(bytes32 userIDHash) view returns(bytes32)
+func (_EhrIndexer *EhrIndexerCallerSession) GetEhrUser(userIDHash [32]byte) ([32]byte, error) {
+	return _EhrIndexer.Contract.GetEhrUser(&_EhrIndexer.CallOpts, userIDHash)
+}
+
 // GetLastEhrDocByType is a free data retrieval call binding the contract method 0x15dbcf1a.
 //
 // Solidity: function getLastEhrDocByType(bytes32 ehrId, uint8 docType) view returns((uint8,bytes,bytes,uint32,bool,(uint8,bytes)[]))
@@ -571,68 +533,6 @@ func (_EhrIndexer *EhrIndexerSession) GetLastEhrDocByType(ehrId [32]byte, docTyp
 // Solidity: function getLastEhrDocByType(bytes32 ehrId, uint8 docType) view returns((uint8,bytes,bytes,uint32,bool,(uint8,bytes)[]))
 func (_EhrIndexer *EhrIndexerCallerSession) GetLastEhrDocByType(ehrId [32]byte, docType uint8) (DocsDocumentMeta, error) {
 	return _EhrIndexer.Contract.GetLastEhrDocByType(&_EhrIndexer.CallOpts, ehrId, docType)
-}
-
-// GetUser is a free data retrieval call binding the contract method 0x6f77926b.
-//
-// Solidity: function getUser(address addr) view returns((bytes32,uint8,(uint8,bytes)[]))
-func (_EhrIndexer *EhrIndexerCaller) GetUser(opts *bind.CallOpts, addr common.Address) (UsersUser, error) {
-	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "getUser", addr)
-
-	if err != nil {
-		return *new(UsersUser), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(UsersUser)).(*UsersUser)
-
-	return out0, err
-
-}
-
-// GetUser is a free data retrieval call binding the contract method 0x6f77926b.
-//
-// Solidity: function getUser(address addr) view returns((bytes32,uint8,(uint8,bytes)[]))
-func (_EhrIndexer *EhrIndexerSession) GetUser(addr common.Address) (UsersUser, error) {
-	return _EhrIndexer.Contract.GetUser(&_EhrIndexer.CallOpts, addr)
-}
-
-// GetUser is a free data retrieval call binding the contract method 0x6f77926b.
-//
-// Solidity: function getUser(address addr) view returns((bytes32,uint8,(uint8,bytes)[]))
-func (_EhrIndexer *EhrIndexerCallerSession) GetUser(addr common.Address) (UsersUser, error) {
-	return _EhrIndexer.Contract.GetUser(&_EhrIndexer.CallOpts, addr)
-}
-
-// GetUserAccessList is a free data retrieval call binding the contract method 0xbb059b5c.
-//
-// Solidity: function getUserAccessList(bytes32 accessID) view returns((bytes32,bytes,bytes,uint8)[])
-func (_EhrIndexer *EhrIndexerCaller) GetUserAccessList(opts *bind.CallOpts, accessID [32]byte) ([]AccessStoreAccess, error) {
-	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "getUserAccessList", accessID)
-
-	if err != nil {
-		return *new([]AccessStoreAccess), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([]AccessStoreAccess)).(*[]AccessStoreAccess)
-
-	return out0, err
-
-}
-
-// GetUserAccessList is a free data retrieval call binding the contract method 0xbb059b5c.
-//
-// Solidity: function getUserAccessList(bytes32 accessID) view returns((bytes32,bytes,bytes,uint8)[])
-func (_EhrIndexer *EhrIndexerSession) GetUserAccessList(accessID [32]byte) ([]AccessStoreAccess, error) {
-	return _EhrIndexer.Contract.GetUserAccessList(&_EhrIndexer.CallOpts, accessID)
-}
-
-// GetUserAccessList is a free data retrieval call binding the contract method 0xbb059b5c.
-//
-// Solidity: function getUserAccessList(bytes32 accessID) view returns((bytes32,bytes,bytes,uint8)[])
-func (_EhrIndexer *EhrIndexerCallerSession) GetUserAccessList(accessID [32]byte) ([]AccessStoreAccess, error) {
-	return _EhrIndexer.Contract.GetUserAccessList(&_EhrIndexer.CallOpts, accessID)
 }
 
 // Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
@@ -666,12 +566,12 @@ func (_EhrIndexer *EhrIndexerCallerSession) Nonces(arg0 common.Address) (*big.In
 	return _EhrIndexer.Contract.Nonces(&_EhrIndexer.CallOpts, arg0)
 }
 
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+// Users is a free data retrieval call binding the contract method 0xf2020275.
 //
-// Solidity: function owner() view returns(address)
-func (_EhrIndexer *EhrIndexerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function users() view returns(address)
+func (_EhrIndexer *EhrIndexerCaller) Users(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "owner")
+	err := _EhrIndexer.contract.Call(opts, &out, "users")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -683,80 +583,18 @@ func (_EhrIndexer *EhrIndexerCaller) Owner(opts *bind.CallOpts) (common.Address,
 
 }
 
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+// Users is a free data retrieval call binding the contract method 0xf2020275.
 //
-// Solidity: function owner() view returns(address)
-func (_EhrIndexer *EhrIndexerSession) Owner() (common.Address, error) {
-	return _EhrIndexer.Contract.Owner(&_EhrIndexer.CallOpts)
+// Solidity: function users() view returns(address)
+func (_EhrIndexer *EhrIndexerSession) Users() (common.Address, error) {
+	return _EhrIndexer.Contract.Users(&_EhrIndexer.CallOpts)
 }
 
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
+// Users is a free data retrieval call binding the contract method 0xf2020275.
 //
-// Solidity: function owner() view returns(address)
-func (_EhrIndexer *EhrIndexerCallerSession) Owner() (common.Address, error) {
-	return _EhrIndexer.Contract.Owner(&_EhrIndexer.CallOpts)
-}
-
-// UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
-//
-// Solidity: function userAccess(bytes32 userID, uint8 kind, bytes32 idHash) view returns((bytes32,bytes,bytes,uint8))
-func (_EhrIndexer *EhrIndexerCaller) UserAccess(opts *bind.CallOpts, userID [32]byte, kind uint8, idHash [32]byte) (AccessStoreAccess, error) {
-	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "userAccess", userID, kind, idHash)
-
-	if err != nil {
-		return *new(AccessStoreAccess), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(AccessStoreAccess)).(*AccessStoreAccess)
-
-	return out0, err
-
-}
-
-// UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
-//
-// Solidity: function userAccess(bytes32 userID, uint8 kind, bytes32 idHash) view returns((bytes32,bytes,bytes,uint8))
-func (_EhrIndexer *EhrIndexerSession) UserAccess(userID [32]byte, kind uint8, idHash [32]byte) (AccessStoreAccess, error) {
-	return _EhrIndexer.Contract.UserAccess(&_EhrIndexer.CallOpts, userID, kind, idHash)
-}
-
-// UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
-//
-// Solidity: function userAccess(bytes32 userID, uint8 kind, bytes32 idHash) view returns((bytes32,bytes,bytes,uint8))
-func (_EhrIndexer *EhrIndexerCallerSession) UserAccess(userID [32]byte, kind uint8, idHash [32]byte) (AccessStoreAccess, error) {
-	return _EhrIndexer.Contract.UserAccess(&_EhrIndexer.CallOpts, userID, kind, idHash)
-}
-
-// UserGroupGetByID is a free data retrieval call binding the contract method 0xc1dfff99.
-//
-// Solidity: function userGroupGetByID(bytes32 groupIdHash) view returns(((uint8,bytes)[],(bytes32,bytes)[]))
-func (_EhrIndexer *EhrIndexerCaller) UserGroupGetByID(opts *bind.CallOpts, groupIdHash [32]byte) (UsersUserGroup, error) {
-	var out []interface{}
-	err := _EhrIndexer.contract.Call(opts, &out, "userGroupGetByID", groupIdHash)
-
-	if err != nil {
-		return *new(UsersUserGroup), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(UsersUserGroup)).(*UsersUserGroup)
-
-	return out0, err
-
-}
-
-// UserGroupGetByID is a free data retrieval call binding the contract method 0xc1dfff99.
-//
-// Solidity: function userGroupGetByID(bytes32 groupIdHash) view returns(((uint8,bytes)[],(bytes32,bytes)[]))
-func (_EhrIndexer *EhrIndexerSession) UserGroupGetByID(groupIdHash [32]byte) (UsersUserGroup, error) {
-	return _EhrIndexer.Contract.UserGroupGetByID(&_EhrIndexer.CallOpts, groupIdHash)
-}
-
-// UserGroupGetByID is a free data retrieval call binding the contract method 0xc1dfff99.
-//
-// Solidity: function userGroupGetByID(bytes32 groupIdHash) view returns(((uint8,bytes)[],(bytes32,bytes)[]))
-func (_EhrIndexer *EhrIndexerCallerSession) UserGroupGetByID(groupIdHash [32]byte) (UsersUserGroup, error) {
-	return _EhrIndexer.Contract.UserGroupGetByID(&_EhrIndexer.CallOpts, groupIdHash)
+// Solidity: function users() view returns(address)
+func (_EhrIndexer *EhrIndexerCallerSession) Users() (common.Address, error) {
+	return _EhrIndexer.Contract.Users(&_EhrIndexer.CallOpts)
 }
 
 // AddEhrDoc is a paid mutator transaction binding the contract method 0x8708f61f.
@@ -843,48 +681,6 @@ func (_EhrIndexer *EhrIndexerTransactorSession) DocGroupCreate(p DocGroupsDocGro
 	return _EhrIndexer.Contract.DocGroupCreate(&_EhrIndexer.TransactOpts, p)
 }
 
-// GroupAddUser is a paid mutator transaction binding the contract method 0xa544050a.
-//
-// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,bytes) p) returns()
-func (_EhrIndexer *EhrIndexerTransactor) GroupAddUser(opts *bind.TransactOpts, p UsersGroupAddUserParams) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "groupAddUser", p)
-}
-
-// GroupAddUser is a paid mutator transaction binding the contract method 0xa544050a.
-//
-// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,bytes) p) returns()
-func (_EhrIndexer *EhrIndexerSession) GroupAddUser(p UsersGroupAddUserParams) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.GroupAddUser(&_EhrIndexer.TransactOpts, p)
-}
-
-// GroupAddUser is a paid mutator transaction binding the contract method 0xa544050a.
-//
-// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,bytes) p) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) GroupAddUser(p UsersGroupAddUserParams) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.GroupAddUser(&_EhrIndexer.TransactOpts, p)
-}
-
-// GroupRemoveUser is a paid mutator transaction binding the contract method 0xb94e5cee.
-//
-// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactor) GroupRemoveUser(opts *bind.TransactOpts, groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "groupRemoveUser", groupIDHash, userIDHash, signer, signature)
-}
-
-// GroupRemoveUser is a paid mutator transaction binding the contract method 0xb94e5cee.
-//
-// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerSession) GroupRemoveUser(groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.GroupRemoveUser(&_EhrIndexer.TransactOpts, groupIDHash, userIDHash, signer, signature)
-}
-
-// GroupRemoveUser is a paid mutator transaction binding the contract method 0xb94e5cee.
-//
-// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) GroupRemoveUser(groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.GroupRemoveUser(&_EhrIndexer.TransactOpts, groupIDHash, userIDHash, signer, signature)
-}
-
 // Multicall is a paid mutator transaction binding the contract method 0xac9650d8.
 //
 // Solidity: function multicall(bytes[] data) returns(bytes[] results)
@@ -904,27 +700,6 @@ func (_EhrIndexer *EhrIndexerSession) Multicall(data [][]byte) (*types.Transacti
 // Solidity: function multicall(bytes[] data) returns(bytes[] results)
 func (_EhrIndexer *EhrIndexerTransactorSession) Multicall(data [][]byte) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.Multicall(&_EhrIndexer.TransactOpts, data)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_EhrIndexer *EhrIndexerTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "renounceOwnership")
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_EhrIndexer *EhrIndexerSession) RenounceOwnership() (*types.Transaction, error) {
-	return _EhrIndexer.Contract.RenounceOwnership(&_EhrIndexer.TransactOpts)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _EhrIndexer.Contract.RenounceOwnership(&_EhrIndexer.TransactOpts)
 }
 
 // SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
@@ -951,21 +726,21 @@ func (_EhrIndexer *EhrIndexerTransactorSession) SetAllowed(addr common.Address, 
 // SetDocAccess is a paid mutator transaction binding the contract method 0x3591ac33.
 //
 // Solidity: function setDocAccess(bytes32 CIDHash, (bytes32,bytes,bytes,uint8) access, address userAddr, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactor) SetDocAccess(opts *bind.TransactOpts, CIDHash [32]byte, access AccessStoreAccess, userAddr common.Address, signer common.Address, signature []byte) (*types.Transaction, error) {
+func (_EhrIndexer *EhrIndexerTransactor) SetDocAccess(opts *bind.TransactOpts, CIDHash [32]byte, access IAccessStoreAccess, userAddr common.Address, signer common.Address, signature []byte) (*types.Transaction, error) {
 	return _EhrIndexer.contract.Transact(opts, "setDocAccess", CIDHash, access, userAddr, signer, signature)
 }
 
 // SetDocAccess is a paid mutator transaction binding the contract method 0x3591ac33.
 //
 // Solidity: function setDocAccess(bytes32 CIDHash, (bytes32,bytes,bytes,uint8) access, address userAddr, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerSession) SetDocAccess(CIDHash [32]byte, access AccessStoreAccess, userAddr common.Address, signer common.Address, signature []byte) (*types.Transaction, error) {
+func (_EhrIndexer *EhrIndexerSession) SetDocAccess(CIDHash [32]byte, access IAccessStoreAccess, userAddr common.Address, signer common.Address, signature []byte) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.SetDocAccess(&_EhrIndexer.TransactOpts, CIDHash, access, userAddr, signer, signature)
 }
 
 // SetDocAccess is a paid mutator transaction binding the contract method 0x3591ac33.
 //
 // Solidity: function setDocAccess(bytes32 CIDHash, (bytes32,bytes,bytes,uint8) access, address userAddr, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) SetDocAccess(CIDHash [32]byte, access AccessStoreAccess, userAddr common.Address, signer common.Address, signature []byte) (*types.Transaction, error) {
+func (_EhrIndexer *EhrIndexerTransactorSession) SetDocAccess(CIDHash [32]byte, access IAccessStoreAccess, userAddr common.Address, signer common.Address, signature []byte) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.SetDocAccess(&_EhrIndexer.TransactOpts, CIDHash, access, userAddr, signer, signature)
 }
 
@@ -992,23 +767,23 @@ func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrSubject(subjectKey [32]byt
 
 // SetEhrUser is a paid mutator transaction binding the contract method 0x3f157693.
 //
-// Solidity: function setEhrUser(bytes32 userId, bytes32 ehrId, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactor) SetEhrUser(opts *bind.TransactOpts, userId [32]byte, ehrId [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "setEhrUser", userId, ehrId, signer, signature)
+// Solidity: function setEhrUser(bytes32 IDHash, bytes32 ehrId, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactor) SetEhrUser(opts *bind.TransactOpts, IDHash [32]byte, ehrId [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.contract.Transact(opts, "setEhrUser", IDHash, ehrId, signer, signature)
 }
 
 // SetEhrUser is a paid mutator transaction binding the contract method 0x3f157693.
 //
-// Solidity: function setEhrUser(bytes32 userId, bytes32 ehrId, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerSession) SetEhrUser(userId [32]byte, ehrId [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, userId, ehrId, signer, signature)
+// Solidity: function setEhrUser(bytes32 IDHash, bytes32 ehrId, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerSession) SetEhrUser(IDHash [32]byte, ehrId [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, IDHash, ehrId, signer, signature)
 }
 
 // SetEhrUser is a paid mutator transaction binding the contract method 0x3f157693.
 //
-// Solidity: function setEhrUser(bytes32 userId, bytes32 ehrId, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrUser(userId [32]byte, ehrId [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, userId, ehrId, signer, signature)
+// Solidity: function setEhrUser(bytes32 IDHash, bytes32 ehrId, address signer, bytes signature) returns()
+func (_EhrIndexer *EhrIndexerTransactorSession) SetEhrUser(IDHash [32]byte, ehrId [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _EhrIndexer.Contract.SetEhrUser(&_EhrIndexer.TransactOpts, IDHash, ehrId, signer, signature)
 }
 
 // TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
@@ -1030,199 +805,4 @@ func (_EhrIndexer *EhrIndexerSession) TransferOwnership(newOwner common.Address)
 // Solidity: function transferOwnership(address newOwner) returns()
 func (_EhrIndexer *EhrIndexerTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
 	return _EhrIndexer.Contract.TransferOwnership(&_EhrIndexer.TransactOpts, newOwner)
-}
-
-// UserGroupCreate is a paid mutator transaction binding the contract method 0x5e6a6500.
-//
-// Solidity: function userGroupCreate((bytes32,(uint8,bytes)[],address,bytes) p) returns()
-func (_EhrIndexer *EhrIndexerTransactor) UserGroupCreate(opts *bind.TransactOpts, p UsersUserGroupCreateParams) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "userGroupCreate", p)
-}
-
-// UserGroupCreate is a paid mutator transaction binding the contract method 0x5e6a6500.
-//
-// Solidity: function userGroupCreate((bytes32,(uint8,bytes)[],address,bytes) p) returns()
-func (_EhrIndexer *EhrIndexerSession) UserGroupCreate(p UsersUserGroupCreateParams) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.UserGroupCreate(&_EhrIndexer.TransactOpts, p)
-}
-
-// UserGroupCreate is a paid mutator transaction binding the contract method 0x5e6a6500.
-//
-// Solidity: function userGroupCreate((bytes32,(uint8,bytes)[],address,bytes) p) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) UserGroupCreate(p UsersUserGroupCreateParams) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.UserGroupCreate(&_EhrIndexer.TransactOpts, p)
-}
-
-// UserNew is a paid mutator transaction binding the contract method 0x1bd5a4f9.
-//
-// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactor) UserNew(opts *bind.TransactOpts, addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.contract.Transact(opts, "userNew", addr, IDHash, role, attrs, signer, signature)
-}
-
-// UserNew is a paid mutator transaction binding the contract method 0x1bd5a4f9.
-//
-// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerSession) UserNew(addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.UserNew(&_EhrIndexer.TransactOpts, addr, IDHash, role, attrs, signer, signature)
-}
-
-// UserNew is a paid mutator transaction binding the contract method 0x1bd5a4f9.
-//
-// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_EhrIndexer *EhrIndexerTransactorSession) UserNew(addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _EhrIndexer.Contract.UserNew(&_EhrIndexer.TransactOpts, addr, IDHash, role, attrs, signer, signature)
-}
-
-// EhrIndexerOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the EhrIndexer contract.
-type EhrIndexerOwnershipTransferredIterator struct {
-	Event *EhrIndexerOwnershipTransferred // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *EhrIndexerOwnershipTransferredIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(EhrIndexerOwnershipTransferred)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(EhrIndexerOwnershipTransferred)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *EhrIndexerOwnershipTransferredIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *EhrIndexerOwnershipTransferredIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// EhrIndexerOwnershipTransferred represents a OwnershipTransferred event raised by the EhrIndexer contract.
-type EhrIndexerOwnershipTransferred struct {
-	PreviousOwner common.Address
-	NewOwner      common.Address
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_EhrIndexer *EhrIndexerFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*EhrIndexerOwnershipTransferredIterator, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _EhrIndexer.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &EhrIndexerOwnershipTransferredIterator{contract: _EhrIndexer.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
-}
-
-// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_EhrIndexer *EhrIndexerFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *EhrIndexerOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _EhrIndexer.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(EhrIndexerOwnershipTransferred)
-				if err := _EhrIndexer.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_EhrIndexer *EhrIndexerFilterer) ParseOwnershipTransferred(log types.Log) (*EhrIndexerOwnershipTransferred, error) {
-	event := new(EhrIndexerOwnershipTransferred)
-	if err := _EhrIndexer.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
 }
