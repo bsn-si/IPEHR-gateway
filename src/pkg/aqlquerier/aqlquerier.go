@@ -40,6 +40,7 @@ func (conn *AQLConn) PrepareContext(_ context.Context, query string) (driver.Stm
 
 	stmt := &Stmt{
 		query: aqlQuery,
+		index: conn.index,
 	}
 
 	return stmt, nil

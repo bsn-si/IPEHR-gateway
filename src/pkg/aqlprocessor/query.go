@@ -7,17 +7,17 @@ type Query struct {
 	Order  *Order
 	Limit  *Limit
 
-	parameters map[string]*Parameter
+	Parameters map[string]*Parameter
 }
 
 func (q *Query) addParameter(p *Parameter) {
-	if q.parameters == nil {
-		q.parameters = map[string]*Parameter{}
+	if q.Parameters == nil {
+		q.Parameters = map[string]*Parameter{}
 	}
 
-	q.parameters[string(*p)] = p
+	q.Parameters[string(*p)] = p
 }
 
 func (q *Query) ParametersCount() int {
-	return len(q.parameters)
+	return len(q.Parameters)
 }

@@ -55,13 +55,3 @@ func (rs *Rows) Next(dest []driver.Value) error {
 	rs.cursor++
 	return nil
 }
-
-// lasterrOrErrLocked returns either lasterr or the provided err.
-// rs.closemu must be read-locked.
-func (rs *Rows) lasterrOrErrLocked(err error) error {
-	// if errors.Is(rs.lasterr, io.EOF) {
-	// 	return rs.lasterr
-	// }
-
-	return err
-}

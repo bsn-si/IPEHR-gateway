@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
@@ -14,6 +15,19 @@ import (
 )
 
 func TestService_ExecuteQuery(t *testing.T) {
+	dateVal, _ := time.Parse("2006-01-02", "1984-01-01")
+	timeVal, _ := time.Parse("15:04:05.999", "15:35:10.123")
+	dateTimeVal, _ := time.Parse("2006-01-02T15:04:05.999", "1984-01-01T15:35:10.123")
+
+	type testDataStruct struct {
+		Int      int
+		Float    float64
+		Str      string
+		Date     time.Time
+		Time     time.Time
+		DateTime time.Time
+	}
+
 	tests := []struct {
 		name      string
 		query     string
@@ -35,25 +49,38 @@ func TestService_ExecuteQuery(t *testing.T) {
 			true,
 		},
 		{
-			"2. simple composition and query",
-			"SELECT c/value as val FROM Composition c",
+			"2. select primitives",
+			`SELECT 123, 1.23, 'hello world',
+				'1984-01-01',
+				'15:35:10.123', 
+				'1984-01-01T15:35:10.123'
+			FROM Observation o`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_1.json"},
 			func(rows *sql.Rows) (interface{}, error) {
-				values := [][]int{}
+
+				values := []testDataStruct{}
 
 				for rows.Next() {
-					var val int
-					if err := rows.Scan(&val); err != nil {
-						return nil, err
+					var val testDataStruct
+					err := rows.Scan(
+						&val.Int,
+						&val.Float,
+						&val.Str,
+						&val.Date,
+						&val.Time,
+						&val.DateTime,
+					)
+					if err != nil {
+						return nil, errors.Wrap(err, "cannot scan test struct")
 					}
 
-					values = append(values, []int{val})
+					values = append(values, val)
 				}
 
 				return values, nil
 			},
-			[][]int{{123}, {256}},
+			[]testDataStruct{{123, 1.23, "hello world", dateVal, timeVal, dateTimeVal}},
 			false,
 		},
 	}

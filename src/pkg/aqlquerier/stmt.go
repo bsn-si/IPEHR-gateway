@@ -3,13 +3,17 @@ package aqlquerier
 import (
 	"context"
 	"database/sql/driver"
-	"errors"
-	"hms/gateway/pkg/aqlprocessor"
+	"fmt"
 	"log"
+
+	"hms/gateway/pkg/aqlprocessor"
+	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/storage/treeindex"
 )
 
 type Stmt struct {
 	query *aqlprocessor.Query
+	index *treeindex.Tree
 }
 
 // Close closes the statement.
@@ -48,7 +52,7 @@ func (stmt *Stmt) Exec(args []driver.Value) (driver.Result, error) {
 //
 // Deprecated: Drivers should implement StmtQueryContext instead (or additionally).
 func (stmt *Stmt) Query(args []driver.Value) (driver.Rows, error) {
-	return nil, errors.New("Stmt.Query deprecated and not implemented")
+	return nil, errors.New("Stmt.Query deprecated and not implemented") // nolint
 }
 
 // QueryContext executes a query that may return rows, such as a
@@ -56,19 +60,28 @@ func (stmt *Stmt) Query(args []driver.Value) (driver.Rows, error) {
 //
 // QueryContext must honor the context timeout and return when it is canceled.
 func (stmt *Stmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	parameterValues := map[string]driver.Value{}
+
 	for _, arg := range args {
-		log.Printf("arg: %v = %v (%v)", arg.Name, arg.Value, arg.Ordinal)
+		if _, ok := stmt.query.Parameters[arg.Name]; !ok {
+			return nil, fmt.Errorf("unknown query paramenter: '%s'", arg.Name) // nolint
+		}
+
+		parameterValues[arg.Name] = arg.Value
 	}
 
-	rows := Rows{}
+	log.Println("query parameter: ", parameterValues)
 
-	for _, se := range stmt.query.Select.SelectExprs {
-		rows.columns = append(rows.columns, se.AliasName)
+	exec := executer{
+		query:  stmt.query,
+		params: parameterValues,
+		index:  stmt.index,
 	}
 
-	rows.rows = append(rows.rows,
-		Row{values: []interface{}{123}},
-		Row{values: []interface{}{256}},
-	)
-	return &rows, nil
+	rows, err := exec.run()
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot executer query")
+	}
+
+	return rows, nil
 }

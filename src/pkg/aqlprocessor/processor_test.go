@@ -33,7 +33,7 @@ WHERE
 ORDER BY temperature DESC
 LIMIT 3`,
 			&Query{
-				parameters: map[string]*Parameter{
+				Parameters: map[string]*Parameter{
 					"temperature": toRef(Parameter("temperature")),
 					"chills":      toRef(Parameter("chills")),
 				},

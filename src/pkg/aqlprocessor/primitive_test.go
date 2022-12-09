@@ -159,7 +159,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
-						Value: &PrimitiveSelectValue{Val: Primitive{0.0}},
+						Value: &PrimitiveSelectValue{Val: Primitive{0}},
 					},
 				},
 			},
@@ -171,13 +171,12 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
-						Value: &PrimitiveSelectValue{Val: Primitive{-1.0}},
+						Value: &PrimitiveSelectValue{Val: Primitive{-1}},
 					},
 				},
 			},
 			false,
 		},
-
 		{
 			"3. SELECT 123.5e+10",
 			`SELECT 123.5e+10 FROM EHR`,

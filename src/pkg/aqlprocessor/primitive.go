@@ -82,12 +82,36 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 }
 
 func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveContext) error {
-	val, err := strconv.ParseFloat(numeric.GetText(), 64)
-	if err != nil {
-		return errors.Wrap(err, "cannot unmarshal numeric value")
+	if numeric.INTEGER() != nil {
+		val, err := strconv.Atoi(numeric.INTEGER().GetText())
+		if err != nil {
+			return errors.Wrap(err, "cannot unmarshal numeric value")
+		}
+
+		p.Val = val
+	} else if numeric.SYM_MINUS() != nil {
+		err := p.processNumericPrimitive(numeric.NumericPrimitive().(*aqlparser.NumericPrimitiveContext))
+		if err != nil {
+			return err
+		}
+
+		switch val := p.Val.(type) {
+		case int:
+			p.Val = -val
+		case float64:
+			p.Val = -val
+		default:
+			return errors.New("unexpected primitive value type")
+		}
+	} else {
+		val, err := strconv.ParseFloat(numeric.GetText(), 64)
+		if err != nil {
+			return errors.Wrap(err, "cannot unmarshal numeric value")
+		}
+
+		p.Val = val
 	}
 
-	p.Val = val
 	return nil
 }
 

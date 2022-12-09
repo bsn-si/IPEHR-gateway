@@ -210,7 +210,7 @@ func TestProcessor_Where(t *testing.T) {
 							ComparisonOperator: toRef(SymGE),
 							Terminal: &Terminal{
 								Primitive: &Primitive{
-									Val: float64(140),
+									Val: 140,
 								},
 							},
 						},

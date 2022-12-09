@@ -27,6 +27,21 @@ func NewTree() *Tree {
 	}
 }
 
+func (t *Tree) GetDataSourceByName(name string) (Container, error) {
+	switch name {
+	case "Acton":
+		return nil, errors.New("ACTION source not implemented")
+	case "Evaluation":
+		return nil, errors.New("Evaluation source not implemented")
+	case "Instruction":
+		return nil, errors.New("Instruction source not implemented")
+	case "Observation":
+		return t.obeservations, nil
+	default:
+		return nil, fmt.Errorf("unexpected source type: %v", name) //nolint
+	}
+}
+
 func (t *Tree) AddComposition(com model.Composition) error {
 	return t.processCompositionContent(com.Content)
 }
