@@ -144,7 +144,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Get list stored queries",
                 "parameters": [
@@ -200,7 +200,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Stores a new query, or updates an existing query on the system",
                 "parameters": [
@@ -263,7 +263,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Get stored query by version",
                 "parameters": [
@@ -328,7 +328,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Stores a query, at a specified version, on the system.",
                 "parameters": [
@@ -391,7 +391,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "TEMPLATE"
+                    "DEFINITION"
                 ],
                 "summary": "Get a list of templates",
                 "parameters": [
@@ -440,7 +440,7 @@ const docTemplate = `{
                     "application/xml"
                 ],
                 "tags": [
-                    "TEMPLATE"
+                    "DEFINITION"
                 ],
                 "summary": "Store a template",
                 "parameters": [
@@ -494,7 +494,7 @@ const docTemplate = `{
                     "application/openehr.wt+json"
                 ],
                 "tags": [
-                    "TEMPLATE"
+                    "DEFINITION"
                 ],
                 "summary": "Get a template",
                 "parameters": [

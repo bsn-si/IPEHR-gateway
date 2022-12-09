@@ -37,7 +37,7 @@ func NewTemplateHandler(templateService TemplateService, baseURL string) *Templa
 // @Summary      Get a template
 // @Description  Retrieves the ADL 1.4 operational template (OPT) identified by {template_id} identifier.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
-// @Tags         TEMPLATE
+// @Tags         DEFINITION
 // @Produce      application/xml
 // @Produce      application/openehr.wt+json
 // @Param        template_id    path      string  false  "Template identifier. Example: Vital Signs"
@@ -83,7 +83,7 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 // @Summary      Get a list of templates
 // @Description  List the available ADL 1.4 operational templates (OPT) on the system.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
-// @Tags         TEMPLATE
+// @Tags         DEFINITION
 // @Produce      json
 // @Param        Authorization  header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true  "UserId UUID"
@@ -123,7 +123,7 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 // @Summary      Store a template
 // @Description  Upload a new ADL 1.4 operational template (OPT).
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload
-// @Tags         TEMPLATE
+// @Tags         DEFINITION
 // @Param        Authorization  header    string  true   "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")

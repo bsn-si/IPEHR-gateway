@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +17,7 @@ import (
 	"hms/gateway/pkg/user/roles"
 )
 
-func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -26,7 +25,7 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
@@ -34,7 +33,7 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 	if nonce == nil {
 		nonce, err = i.usersNonce(ctx, &i.signerAddress)
 		if err != nil {
-			return "", fmt.Errorf("signerNonce error: %w address: %s", err, i.signerAddress.String())
+			return nil, fmt.Errorf("signerNonce error: %w address: %s", err, i.signerAddress.String())
 		}
 	}
 
@@ -51,31 +50,25 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 			{Code: model.AttributeContent, Value: content},
 		}
 	default:
-		return "", errors.ErrFieldIsIncorrect("role")
+		return nil, errors.ErrFieldIsIncorrect("role")
 	}
 
-	sig := make([]byte, signatureLength)
-
-	data, err := i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, sig)
+	data, err := i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, make([]byte, signatureLength))
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack error: %w", err)
+		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	sig, err = makeSignature(data, nonce, i.signerKey)
+	signature, err := makeSignature(data, nonce, i.signerKey)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.users.UserNew(i.transactOpts, userAddress, IDHash, role, attrs, i.signerAddress, sig)
+	data, err = i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, signature)
 	if err != nil {
-		if strings.Contains(err.Error(), "AEX") {
-			return "", errors.ErrAlreadyExist
-		}
-
-		return "", fmt.Errorf("users.UserNew error: %w", err)
+		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
 
-	return tx.Hash().Hex(), nil
+	return data, nil
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {

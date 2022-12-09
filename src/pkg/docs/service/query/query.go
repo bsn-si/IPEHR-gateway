@@ -20,6 +20,7 @@ import (
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/ehrIndexer"
 )
 
@@ -184,7 +185,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 		return nil, fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.SendSingle(ctx, packed)
+	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound

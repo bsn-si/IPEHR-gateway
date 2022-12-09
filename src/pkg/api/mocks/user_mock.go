@@ -125,9 +125,9 @@ func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, systemID, addin
 }
 
 // GroupCreate mocks base method.
-func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, name, description string) (string, *uuid.UUID, error) {
+func (m *MockUserService) GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, systemID, name, description)
+	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, name, description)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(*uuid.UUID)
 	ret2, _ := ret[2].(error)
@@ -135,9 +135,9 @@ func (m *MockUserService) GroupCreate(ctx context.Context, userID, systemID, nam
 }
 
 // GroupCreate indicates an expected call of GroupCreate.
-func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, systemID, name, description interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, name, description interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, systemID, name, description)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, name, description)
 }
 
 // GroupGetByID mocks base method.
@@ -214,17 +214,17 @@ func (mr *MockUserServiceMockRecorder) NewProcRequest(reqID, userID, kind interf
 }
 
 // Register mocks base method.
-func (m *MockUserService) Register(ctx context.Context, procRequest *processing.Request, user *model.UserCreateRequest, systemID string) error {
+func (m *MockUserService) Register(ctx context.Context, user *model.UserCreateRequest, systemID, reqID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Register", ctx, procRequest, user, systemID)
+	ret := m.ctrl.Call(m, "Register", ctx, user, systemID, reqID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Register indicates an expected call of Register.
-func (mr *MockUserServiceMockRecorder) Register(ctx, procRequest, user, systemID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) Register(ctx, user, systemID, reqID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockUserService)(nil).Register), ctx, procRequest, user, systemID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockUserService)(nil).Register), ctx, user, systemID, reqID)
 }
 
 // VerifyAccess mocks base method.

@@ -16,7 +16,7 @@ import (
 // @Summary      Get list stored queries
 // @Description  Retrieves list of all stored queries on the system matched by qualified_query_name as pattern.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
-// @Tags         QUERY
+// @Tags         DEFINITION
 // @Accept       json
 // @Produce      json
 // @Param        qualified_query_name  path      string  false  "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is  empty,  it  will  be  treated  as  "wildcard"  in  the  search."
@@ -63,7 +63,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 // @Summary      Get stored query by version
 // @Description  Retrieves the definition of a particular stored query (at specified version) and its associated metadata.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
-// @Tags         QUERY
+// @Tags         DEFINITION
 // @Accept       json
 // @Produce      json
 // @Param        qualified_query_name  path      string  false  "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
@@ -123,7 +123,7 @@ func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 // @Summary  Stores a new query, or updates an existing query on the system
 // @Description
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
-// @Tags         QUERY
+// @Tags         DEFINITION
 // @Accept       json
 // @Produce      json
 // @Param        qualified_query_name  path      string    true  "If pattern should given be in the format of [{namespace}::]{query-name}, and when is empty, it will be treated as "wildcard" in the search."
@@ -196,7 +196,7 @@ func (h *QueryHandler) Store(c *gin.Context) {
 // @Summary  Stores a query, at a specified version, on the system.
 // @Description
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_store.yaml
-// @Tags         QUERY
+// @Tags         DEFINITION
 // @Accept       json
 // @Produce      json
 // @Param        qualified_query_name  path      string    true  "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search"

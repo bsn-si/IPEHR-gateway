@@ -65,8 +65,8 @@ func (s *Service) NewProcRequest(reqID, userID string, kind processing.RequestKi
 	return s.Proc.NewRequest(reqID, userID, "", kind)
 }
 
-func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user *model.UserCreateRequest, systemID string) (err error) {
-	_, userPrivateKey, err := s.Infra.Keystore.Get(user.UserID)
+func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, systemID, reqID string) (err error) {
+	_, userPrivKey, err := s.Infra.Keystore.Get(user.UserID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, user.UserID)
 	}
@@ -101,16 +101,53 @@ func (s *Service) Register(ctx context.Context, procRequest *proc.Request, user 
 		return errors.ErrFieldIsIncorrect("user.Role")
 	}
 
-	txHash, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivateKey, nil)
+	procRequest, err := s.NewProcRequest(reqID, user.UserID, processing.RequestUserRegister)
 	if err != nil {
-		if errors.Is(err, errors.ErrAlreadyExist) {
-			return err
-		}
+		return fmt.Errorf("NewProcRequest error: %w", err)
+	}
 
+	multiCallTx, err := s.Infra.Index.MultiCallUsersNew(ctx, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("MultiCallUsersNew error: %w. userID: %s", err, user.UserID)
+	}
+
+	userNewPacked, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivKey, nil)
+	if err != nil {
 		return fmt.Errorf("Index.UserNew error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxUserRegister, txHash)
+	multiCallTx.Add(uint8(proc.TxUserNew), userNewPacked)
+
+	if user.Role == uint8(roles.Patient) {
+		groupName := "doctors"
+		groupDescription := ""
+
+		userGroupCreatePacked, _, err := s.groupCreatePack(ctx, user.UserID, groupName, groupDescription, nil)
+		if err != nil {
+			return fmt.Errorf("service.GroupCreate error: %w", err)
+		}
+
+		multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupCreatePacked)
+	}
+
+	txHash, err := multiCallTx.Commit()
+	if err != nil {
+		if strings.Contains(err.Error(), "NFD") {
+			return errors.ErrNotFound
+		} else if strings.Contains(err.Error(), "AEX") {
+			return errors.ErrAlreadyExist
+		}
+
+		return fmt.Errorf("UserRegister multicall commit error: %w", err)
+	}
+
+	for _, txKind := range multiCallTx.GetTxKinds() {
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+	}
+
+	if err := procRequest.Commit(); err != nil {
+		return fmt.Errorf("User register procRequest commit error: %w", err)
+	}
 
 	return nil
 }
