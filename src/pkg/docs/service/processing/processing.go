@@ -69,6 +69,7 @@ const (
 	TxSaveEhrStatus
 	TxSaveComposition
 	TxUserRegister
+	TxUserNew
 	TxUserGroupCreate
 	TxUserGroupAddUser
 )
@@ -98,6 +99,7 @@ var (
 		TxSaveEhrStatus:      "TxSaveEhrStatus",
 		TxSaveComposition:    "TxSaveComposition",
 		TxUserRegister:       "TxUserRegister",
+		TxUserNew:            "TxUserNew",
 		TxUserGroupCreate:    "TxUserGroupCreate",
 		TxUserGroupAddUser:   "TxUserGroupAddUser",
 

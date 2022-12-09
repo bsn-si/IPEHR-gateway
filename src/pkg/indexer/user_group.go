@@ -18,10 +18,10 @@ import (
 	userModel "hms/gateway/pkg/user/model"
 )
 
-func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
@@ -29,7 +29,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 	if nonce == nil {
 		nonce, err = i.usersNonce(ctx, &userAddress)
 		if err != nil {
-			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
+			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
 	}
 
@@ -41,26 +41,20 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 
 	data, err := i.usersAbi.Pack("userGroupCreate", sha3.Sum256(groupID[:]), attrs, userAddress, make([]byte, signatureLength))
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack error: %w", err)
+		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
 	signature, err := makeSignature(data, nonce, userKey)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.users.UserGroupCreate(i.transactOpts, sha3.Sum256(groupID[:]), attrs, userAddress, signature)
+	data, err = i.usersAbi.Pack("userGroupCreate", sha3.Sum256(groupID[:]), attrs, userAddress, signature)
 	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return "", errors.ErrNotFound
-		} else if strings.Contains(err.Error(), "AEX") {
-			return "", errors.ErrAlreadyExist
-		}
-
-		return "", fmt.Errorf("ehrIndex.UserGroupCreate error: %w", err)
+		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
 
-	return tx.Hash().Hex(), nil
+	return data, nil
 }
 
 func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error) {

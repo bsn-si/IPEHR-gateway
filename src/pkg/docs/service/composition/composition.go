@@ -29,7 +29,7 @@ type GroupAccessService interface {
 }
 
 type Indexer interface {
-	MultiCallTxNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
+	MultiCallEhrNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
 	GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
 	AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
 	GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
@@ -97,9 +97,9 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.indexer.MultiCallTxNew(ctx, userPrivKey)
+	multiCallTx, err := s.indexer.MultiCallEhrNew(ctx, userPrivKey)
 	if err != nil {
-		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
+		return nil, fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
 	}
 
 	/*
@@ -139,9 +139,9 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID,
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.indexer.MultiCallTxNew(ctx, userPrivKey)
+	multiCallTx, err := s.indexer.MultiCallEhrNew(ctx, userPrivKey)
 	if err != nil {
-		return nil, fmt.Errorf("MultiCallTxNew error: %w userID %s", err, userID)
+		return nil, fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
 	}
 
 	/*

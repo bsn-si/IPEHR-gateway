@@ -16,13 +16,12 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 	userModel "hms/gateway/pkg/user/model"
-	"hms/gateway/pkg/user/roles"
 	userService "hms/gateway/pkg/user/service"
 )
 
 type UserService interface {
 	NewProcRequest(reqID, userID string, kind processing.RequestKind) (processing.RequestInterface, error)
-	Register(ctx context.Context, procRequest *processing.Request, user *userModel.UserCreateRequest, systemID string) (err error)
+	Register(ctx context.Context, user *userModel.UserCreateRequest, systemID, reqID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
 	Info(ctx context.Context, userID string) (*model.UserInfo, error)
 	CreateToken(userID string) (*userService.TokenDetails, error)
@@ -34,7 +33,7 @@ type UserService interface {
 	AddTokenInBlackList(tokenRaw string, expires int64)
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
-	GroupCreate(ctx context.Context, userID, systemID, name, description string) (string, *uuid.UUID, error)
+	GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error)
 	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
 	GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
 }
@@ -101,14 +100,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	procRequest, err := h.service.NewProcRequest(reqID, userCreateRequest.UserID, processing.RequestUserRegister)
-	if err != nil {
-		log.Println("User register NewRequest error:", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	err = h.service.Register(c, procRequest.(*processing.Request), &userCreateRequest, systemID)
+	err = h.service.Register(c, &userCreateRequest, systemID, reqID)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
@@ -117,26 +109,6 @@ func (h *UserHandler) Register(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "User creation error"})
 		}
 
-		return
-	}
-
-	if userCreateRequest.Role == uint8(roles.Patient) {
-		groupName := "doctors"
-		groupDescription := ""
-
-		txHash, _, err := h.service.GroupCreate(c, userCreateRequest.UserID, systemID, groupName, groupDescription)
-		if err != nil {
-			log.Println("User register, doctors GroupCreate error:", err)
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-
-		procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
-	}
-
-	if err := procRequest.Commit(); err != nil {
-		log.Println("User register procRequest commit error:", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 

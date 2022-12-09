@@ -583,7 +583,7 @@ paths:
             a request
       summary: Get list stored queries
       tags:
-      - QUERY
+      - DEFINITION
     put:
       consumes:
       - application/json
@@ -629,7 +629,7 @@ paths:
             a request
       summary: Stores a new query, or updates an existing query on the system
       tags:
-      - QUERY
+      - DEFINITION
   /definition/query/{qualified_query_name}/{version}:
     get:
       consumes:
@@ -679,7 +679,7 @@ paths:
             a request
       summary: Get stored query by version
       tags:
-      - QUERY
+      - DEFINITION
     put:
       consumes:
       - application/json
@@ -728,7 +728,7 @@ paths:
             a request
       summary: Stores a query, at a specified version, on the system.
       tags:
-      - QUERY
+      - DEFINITION
   /definition/template/adl1.4:
     get:
       description: |-
@@ -761,7 +761,7 @@ paths:
             a request
       summary: Get a list of templates
       tags:
-      - TEMPLATE
+      - DEFINITION
   /definition/template/adl1.4/:
     post:
       consumes:
@@ -807,7 +807,7 @@ paths:
             a request
       summary: Store a template
       tags:
-      - TEMPLATE
+      - DEFINITION
   /definition/template/adl1.4/{template_id}:
     get:
       description: |-
@@ -849,7 +849,7 @@ paths:
             a request
       summary: Get a template
       tags:
-      - TEMPLATE
+      - DEFINITION
   /ehr:
     get:
       consumes:

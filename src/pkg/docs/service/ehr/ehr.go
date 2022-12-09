@@ -68,9 +68,9 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	multiCallTx, err := s.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
 	if err != nil {
-		return nil, fmt.Errorf("MultiCallTxNew error: %w. userID: %s", err, userID)
+		return nil, fmt.Errorf("MultiCallEhrNew error: %w. userID: %s", err, userID)
 	}
 
 	// Index EHR userIDHash -> ehrUUID
@@ -449,9 +449,9 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallTxNew(ctx, userPrivKey)
+	multiCallTx, err := s.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
 	if err != nil {
-		return fmt.Errorf("MultiCallTxNew error: %w", err)
+		return fmt.Errorf("MultiCallEhrNew error: %w", err)
 	}
 
 	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status); err != nil {

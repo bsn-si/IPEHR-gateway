@@ -137,7 +137,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Get list stored queries",
                 "parameters": [
@@ -193,7 +193,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Stores a new query, or updates an existing query on the system",
                 "parameters": [
@@ -256,7 +256,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Get stored query by version",
                 "parameters": [
@@ -321,7 +321,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "QUERY"
+                    "DEFINITION"
                 ],
                 "summary": "Stores a query, at a specified version, on the system.",
                 "parameters": [
@@ -384,7 +384,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "TEMPLATE"
+                    "DEFINITION"
                 ],
                 "summary": "Get a list of templates",
                 "parameters": [
@@ -433,7 +433,7 @@
                     "application/xml"
                 ],
                 "tags": [
-                    "TEMPLATE"
+                    "DEFINITION"
                 ],
                 "summary": "Store a template",
                 "parameters": [
@@ -487,7 +487,7 @@
                     "application/openehr.wt+json"
                 ],
                 "tags": [
-                    "TEMPLATE"
+                    "DEFINITION"
                 ],
                 "summary": "Get a template",
                 "parameters": [

@@ -71,7 +71,7 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 
 	var txHash string
 
-	txHash, userGroup.GroupID, err = h.service.GroupCreate(c, userID, systemID, userGroup.Name, userGroup.Description)
+	txHash, userGroup.GroupID, err = h.service.GroupCreate(c, userID, userGroup.Name, userGroup.Description)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
