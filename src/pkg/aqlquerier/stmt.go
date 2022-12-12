@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
-	"log"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -69,8 +68,6 @@ func (stmt *Stmt) QueryContext(ctx context.Context, args []driver.NamedValue) (d
 
 		parameterValues[arg.Name] = arg.Value
 	}
-
-	log.Println("query parameter: ", parameterValues)
 
 	exec := executer{
 		query:  stmt.query,

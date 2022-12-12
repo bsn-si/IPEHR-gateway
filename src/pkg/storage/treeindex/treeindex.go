@@ -46,7 +46,7 @@ func (t *Tree) AddComposition(com model.Composition) error {
 	return t.processCompositionContent(com.Content)
 }
 
-type Container map[string][]noder
+type Container map[string][]Noder
 
 func (c Container) Len() int {
 	count := 0
@@ -105,7 +105,7 @@ func addObjectIntoCollection(container Container, obj base.Root) error {
 		return errors.Wrap(err, "cannot get node for collection")
 	}
 
-	container[node.getID()] = append(container[node.getID()], node)
+	container[node.GetID()] = append(container[node.GetID()], node)
 
 	return nil
 }

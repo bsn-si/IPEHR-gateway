@@ -6,7 +6,7 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func walk(obj any) (noder, error) {
+func walk(obj any) (Noder, error) {
 	switch obj := obj.(type) {
 	case base.Root:
 		return walkRoot(obj)
@@ -17,7 +17,7 @@ func walk(obj any) (noder, error) {
 	}
 }
 
-func walkRoot(obj base.Root) (noder, error) {
+func walkRoot(obj base.Root) (Noder, error) {
 	var err error
 	node := newNode(obj) //nolint
 
@@ -53,7 +53,7 @@ func walkRoot(obj base.Root) (noder, error) {
 	return node, nil
 }
 
-func walkBySlice(slice any) (noder, error) {
+func walkBySlice(slice any) (Noder, error) {
 	sliceNode := newSliceNode()
 
 	switch ss := slice.(type) {
@@ -64,7 +64,7 @@ func walkBySlice(slice any) (noder, error) {
 				return nil, errors.Wrap(err, "cannot process slice ITEM")
 			}
 
-			sliceNode.addAttribute(node.getID(), node)
+			sliceNode.addAttribute(node.GetID(), node)
 		}
 	case base.Items:
 		for _, item := range ss {
@@ -73,7 +73,7 @@ func walkBySlice(slice any) (noder, error) {
 				return nil, errors.Wrap(err, "cannot process ITEMS")
 			}
 
-			sliceNode.addAttribute(node.getID(), node)
+			sliceNode.addAttribute(node.GetID(), node)
 		}
 	case []base.Event[base.ItemStructure]:
 		for _, item := range ss {
@@ -82,7 +82,7 @@ func walkBySlice(slice any) (noder, error) {
 				return nil, errors.Wrap(err, "cannot process EVENTS slice")
 			}
 
-			sliceNode.addAttribute(node.getID(), node)
+			sliceNode.addAttribute(node.GetID(), node)
 		}
 	default:
 		return nil, fmt.Errorf("unexpected slice type: %T", slice) //nolint
@@ -91,7 +91,7 @@ func walkBySlice(slice any) (noder, error) {
 	return sliceNode, nil
 }
 
-func walkDataValue(dv base.DataValue) (noder, error) {
+func walkDataValue(dv base.DataValue) (Noder, error) {
 	var err error
 	node := newNode(dv) //nolint
 

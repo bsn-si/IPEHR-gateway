@@ -36,6 +36,10 @@ type NodePredicateAdditionalData struct {
 
 type AtCode string
 
+func (code AtCode) ToString() string {
+	return fmt.Sprintf("at%v", code)
+}
+
 func getAtCode(tn antlr.TerminalNode) (AtCode, error) {
 	return getCode[AtCode](tn, "at")
 }

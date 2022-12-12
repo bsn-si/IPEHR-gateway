@@ -2,9 +2,10 @@ package aqlquerier
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -25,8 +26,6 @@ func (exec *executer) run() (*Rows, error) {
 		return nil, err
 	}
 
-	log.Println("data sources: ", dataSources)
-
 	// handle SELECT block
 	rows, err := exec.queryData(dataSources)
 	if err != nil {
@@ -40,9 +39,6 @@ func (exec *executer) run() (*Rows, error) {
 }
 
 func (exec *executer) findSources() (map[string]dataSource, error) {
-	data, _ := json.Marshal(exec.query.From)
-	log.Println(string(data))
-
 	from := exec.query.From
 	if len(from.Contains) > 0 || from.Operator != nil {
 		return nil, errors.New("not implemented")
@@ -89,33 +85,45 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 	//TODO: add DISTINCT handling
 	// exec.query.Select.Distinct
 
-	for _, _ = range sources {
-		row := Row{}
-		for _, selectExpr := range exec.query.Select.SelectExprs {
-			switch slct := selectExpr.Value.(type) {
-			case *aqlprocessor.IdentifiedPathSelectValue:
-				return nil, errors.New("Identified path not implemented")
-			case *aqlprocessor.PrimitiveSelectValue:
-				data, _ := json.Marshal(slct)
-				val, err := exec.getPrimitiveColumnValue(slct)
-				if err != nil {
-					return nil, errors.Wrap(err, "cannot get primitive select value")
-				}
+	// for _, source := range sources {
+	// log.Println(source.name, source.alias, source.data)
 
-				log.Printf("PRIMITIVE: %v, %T, %v", string(data), slct.Val.Val, val)
-				row.values = append(row.values, val)
-			case *aqlprocessor.AggregateFunctionCallSelectValue:
-				return nil, errors.New("Aggregation function call not implemented")
-			case *aqlprocessor.FunctionCallSelectValue:
-				return nil, errors.New("Function call not implemented")
-			default:
-				return nil, errors.New("Unexpected SelectExpr type")
+	// row := Row{}
+
+	primitives := Row{}
+
+	for _, selectExpr := range exec.query.Select.SelectExprs {
+		switch slct := selectExpr.Value.(type) {
+		case *aqlprocessor.IdentifiedPathSelectValue:
+			columnValues, err := exec.getDataByIdentifiedPath(slct, sources)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot get data fo~r identified data")
 			}
-		}
 
-		log.Println(row)
-		rows.rows = append(rows.rows, row)
+			for _, val := range columnValues {
+				row := Row{
+					values: []interface{}{val},
+				}
+				rows.rows = append(rows.rows, row)
+			}
+		case *aqlprocessor.PrimitiveSelectValue:
+			val, err := exec.getPrimitiveColumnValue(slct)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot get primitive select value")
+			}
+
+			primitives.values = append(primitives.values, val)
+		case *aqlprocessor.AggregateFunctionCallSelectValue:
+			return nil, errors.New("Aggregation function call not implemented")
+		case *aqlprocessor.FunctionCallSelectValue:
+			return nil, errors.New("Function call not implemented")
+		default:
+			return nil, errors.New("Unexpected SelectExpr type")
+		}
+		// }
 	}
+
+	rows.rows = append(rows.rows, primitives)
 
 	return exec.fillColumns(rows), nil
 }
@@ -134,6 +142,141 @@ func (exec *executer) fillColumns(rows *Rows) *Rows {
 	}
 
 	return rows
+}
+
+func (exec *executer) getDataByIdentifiedPath(slctExpr *aqlprocessor.IdentifiedPathSelectValue, sources map[string]dataSource) ([]any, error) {
+	result := []any{}
+	logger := log.New(os.Stderr, "\t[getDataByIdentifiedPath]\t", log.LstdFlags)
+	logger.Println()
+
+	selectPath := slctExpr.Val
+
+	source, ok := sources[selectPath.Identifier]
+	if !ok {
+		return nil, errors.New("unexpected identifier " + selectPath.Identifier)
+	}
+
+	// logger.Println(source)
+	// logger.Println(source.data.Len())
+	// data, _ := json.MarshalIndent(val, "", "\t")
+	// logger.Println(string(data))
+
+	for _, indexNodes := range source.data {
+		// data, _ := json.MarshalIndent(nodes, "", "\t")
+		// log.Println("data", string(data))
+
+		for _, indexNode := range indexNodes {
+
+			if selectPath.ObjectPath != nil {
+				// logger.Println("NODE:", name, name == selectPath.ObjectPath.Paths[0].Identifier)
+				if resultData, ok := getValueForPath(selectPath.ObjectPath, indexNode); ok {
+					logger.Printf("%v = %T", resultData, resultData)
+					result = append(result, resultData)
+				}
+			}
+			// indexNode.ForEach(func(name string, node treeindex.Noder) bool {
+			//
+			//
+			// return true
+			// })
+		}
+	}
+
+	return result, nil
+}
+
+func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, bool) {
+	var result any
+	found := false
+
+	logger := log.New(os.Stdout, "\t[getValueForPath]\t", log.LstdFlags)
+
+	// logger.Println("NODE_ID", node.GetID())
+	// logger.Println(path.Paths)
+
+	var walkFunc func(name string, node treeindex.Noder) bool
+
+	offset := 0
+	idx := 0
+	walkFunc = func(name string, node treeindex.Noder) bool {
+		offset++
+		strOffset := strings.Repeat("\t", offset)
+
+		if idx >= len(path.Paths) {
+			return false
+		}
+
+		p := path.Paths[idx]
+
+		// logger.Println(strOffset, "p.Identifier", p.Identifier, p.Identifier == name, p.PathPredicate != nil)
+
+		if p.PathPredicate != nil {
+			switch p.PathPredicate.Type {
+			case aqlprocessor.StandartPathPredicate:
+				logger.Println(strOffset, "standart")
+			case aqlprocessor.ArchetypedPathPredicate:
+				logger.Println(strOffset, "archetype")
+			case aqlprocessor.NodePathPredicate:
+				np := p.PathPredicate.NodePredicate
+
+				if np.AtCode != nil {
+					logger.Println(strOffset, "node.at_code", np.AtCode.ToString(), "node_id", node.GetID())
+
+					if name == p.Identifier && np.AtCode.ToString() == node.GetID() {
+						idx++
+					}
+				}
+			default:
+				return false
+			}
+		} else if name == p.Identifier {
+			idx++
+		}
+
+		switch node := node.(type) {
+		case *treeindex.ValueNode:
+			if name == p.Identifier {
+				result = node.GetData()
+				found = true
+				// logger.Println(strOffset, name, "=", node.GetData())
+
+				return false
+			}
+		case *treeindex.SliceNode:
+			// logger.Println(strOffset, "slice_node")
+			if p.PathPredicate != nil {
+				switch p.PathPredicate.Type {
+				case aqlprocessor.StandartPathPredicate:
+					logger.Println(strOffset, "standart")
+				case aqlprocessor.ArchetypedPathPredicate:
+					logger.Println(strOffset, "archetype")
+				case aqlprocessor.NodePathPredicate:
+					np := p.PathPredicate.NodePredicate
+
+					if np.AtCode != nil {
+						newNode := node.TryGetChild(np.AtCode.ToString())
+						if newNode != nil {
+							idx++
+							newNode.ForEach(walkFunc)
+						}
+					}
+				default:
+					return false
+				}
+			}
+		default:
+			logger.Println(strOffset, name, node.GetID())
+			node.ForEach(walkFunc)
+		}
+
+		offset--
+		return true
+	}
+
+	node.ForEach(walkFunc)
+
+	logger.Println("RESULT = ", result)
+	return result, found
 }
 
 type dataSource struct {

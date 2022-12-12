@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func processHistoryItemStructure(node noder, obj base.History[base.ItemStructure]) (noder, error) {
+func processHistoryItemStructure(node Noder, obj base.History[base.ItemStructure]) (Noder, error) {
 	eventsNode, err := walk(obj.Events)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process HISTORY.Events item")
@@ -18,7 +18,7 @@ func processHistoryItemStructure(node noder, obj base.History[base.ItemStructure
 	return node, nil
 }
 
-func processEventItemStructure(node noder, obj base.Event[base.ItemStructure]) (noder, error) {
+func processEventItemStructure(node Noder, obj base.Event[base.ItemStructure]) (Noder, error) {
 	switch obj.GetType() {
 	case base.PointEventItemType:
 		pointEvent, ok := obj.Data.(*base.PointEvent[base.ItemStructure])
@@ -40,17 +40,17 @@ func processEventItemStructure(node noder, obj base.Event[base.ItemStructure]) (
 	}
 }
 
-func proccessPointEventItemStructure(node noder, obj *base.PointEvent[base.ItemStructure]) (noder, error) {
+func proccessPointEventItemStructure(node Noder, obj *base.PointEvent[base.ItemStructure]) (Noder, error) {
 	node, err := proccessBaseEventItemStructure(node, &obj.BaseEvent)
 	return node, err
 }
 
-func proccessIntervalEventItemStructure(node noder, obj *base.IntervalEvent[base.ItemStructure]) (noder, error) {
+func proccessIntervalEventItemStructure(node Noder, obj *base.IntervalEvent[base.ItemStructure]) (Noder, error) {
 	node, err := proccessBaseEventItemStructure(node, &obj.BaseEvent)
 	return node, errors.Wrap(err, "not implemented")
 }
 
-func proccessBaseEventItemStructure(node noder, obj *base.BaseEvent[base.ItemStructure]) (noder, error) {
+func proccessBaseEventItemStructure(node Noder, obj *base.BaseEvent[base.ItemStructure]) (Noder, error) {
 	dataNode, err := walk(obj.Data)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot handle event data")
