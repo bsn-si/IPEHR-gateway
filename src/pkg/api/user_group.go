@@ -111,6 +111,7 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 // @Description
 // @Tags     USER
 // @Produce  json
+// @Param    group_id       path    string           true  "User group identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
 // @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
