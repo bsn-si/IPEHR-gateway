@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/access"
+	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
@@ -34,8 +35,9 @@ type UserService interface {
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
 	GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error)
-	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*userModel.UserGroup, error)
+	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*userModel.UserGroup, error)
 	GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
+	GroupGetList(ctx context.Context, userID, systemID string) ([]*model.UserGroup, error)
 }
 
 type UserHandler struct {

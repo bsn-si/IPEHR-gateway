@@ -154,6 +154,66 @@ func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T
 	}
 }
 
+func (testWrap *testWrap) userGroupGetList(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := testWrap.checkUser(testData)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		user := testData.users[0]
+
+		if user.accessToken == "" {
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal("checkUserGroup error: ", err)
+		}
+
+		url := testWrap.server.URL + "/v1/user/group"
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("AuthUserId", user.id)
+		request.Header.Set("Authorization", "Bearer "+user.accessToken)
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var userGroupList []model.UserGroup
+
+		err = json.Unmarshal(data, &userGroupList)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(userGroupList) == 0 {
+			t.Fatalf("Expected: userGroups, received: empty, body: %s", data)
+		}
+	}
+}
+
 func userGroupCreate(user *User, systemID, baseURL, name, description string, client *http.Client) (*model.UserGroup, string, error) {
 	userGroup := &model.UserGroup{
 		Name:        name,

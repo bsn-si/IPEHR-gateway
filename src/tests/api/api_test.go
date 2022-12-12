@@ -206,6 +206,10 @@ func Test_API(t *testing.T) {
 	if !t.Run("User group get by ID", testWrap.userGroupGetByID(testData)) {
 		t.Fatal()
 	}
+
+	if !t.Run("User group get list", testWrap.userGroupGetList(testData)) {
+		t.Fatal()
+	}
 }
 
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {

@@ -145,7 +145,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 		return
 	}
 
-	userGroup, err := h.service.GroupGetByID(c, userID, systemID, &groupID)
+	userGroup, err := h.service.GroupGetByID(c, userID, systemID, &groupID, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			c.AbortWithStatus(http.StatusForbidden)
@@ -155,7 +155,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 			return
 		}
 
-		log.Println("GroupCreate error: ", err)
+		log.Println("GroupGetByID error: ", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -239,4 +239,49 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 	}
 
 	c.Status(http.StatusOK)
+}
+
+// Group get list
+// @Summary  Get a list of user groups
+// @Description
+// @Tags     USER
+// @Produce  json
+// @Param    Authorization  header  string           true  "Bearer AccessToken"
+// @Param    AuthUserId     header  string           true  "UserId"
+// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Success  200            {object}  []model.UserGroup
+// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
+// @Failure  404            "Is returned when groupID does not exist"
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/group [get]
+func (h *UserHandler) GroupGetList(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
+		return
+	}
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	groupList, err := h.service.GroupGetList(c, userID, systemID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		log.Println("GroupGetList error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if len(groupList) == 0 {
+		groupList = make([]*model.UserGroup, 0)
+	}
+
+	c.JSON(http.StatusOK, groupList)
 }
