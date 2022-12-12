@@ -64,7 +64,6 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 // @Description  Retrieves the definition of a particular stored query (at specified version) and its associated metadata.
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
 // @Tags         DEFINITION
-// @Accept       json
 // @Produce      json
 // @Param        qualified_query_name  path      string  false  "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
 // @Param        version               path      string  false  "A SEMVER version number. This can be a an exact version (e.g. 1.7.1),     or   a     pattern  as      partial  prefix,  in  a        form  of          {major}  or   {major}.{minor}  (e.g. 1 or 1.0),  in  which  case  the  highest  (latest)  version  matching  the  prefix  will  be  considered."

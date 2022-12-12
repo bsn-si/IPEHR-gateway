@@ -8,6 +8,7 @@ func (cit ItemType) ToString() string {
 
 const (
 	ActionItemType          ItemType = "ACTION"
+	AuditDetailsType        ItemType = "AUDIT_DETAILS"
 	ActivityItemType        ItemType = "ACTIVITY"
 	ArchetypedItemType      ItemType = "ARCHETYPED"
 	ArchetypeIDItemType     ItemType = "ARCHETYPE_ID"
