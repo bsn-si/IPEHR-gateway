@@ -93,10 +93,10 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 	return userGroup, nil
 }
 
-func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level access.Level, groupID *uuid.UUID, userIDEncr, groupKeyEncr []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserGroupAddUser(ctx context.Context, addingUserID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
 	var uID [32]byte
 
-	copy(uID[:], userID)
+	copy(uID[:], addingUserID)
 
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
@@ -116,7 +116,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level acces
 		GroupIDHash: sha3.Sum256(groupID[:]),
 		UserIDHash:  sha3.Sum256(uID[:]),
 		Level:       level,
-		UserIDEncr:  userIDEncr,
+		UserIDEncr:  addingUserIDEncr,
 		KeyEncr:     groupKeyEncr,
 		Signer:      userAddress,
 		Signature:   make([]byte, signatureLength),
@@ -141,6 +141,52 @@ func (i *Index) UserGroupAddUser(ctx context.Context, userID string, level acces
 		}
 
 		return "", fmt.Errorf("ehrIndex.UserGroupCreate error: %w", err)
+	}
+
+	return tx.Hash().Hex(), nil
+}
+
+func (i *Index) UserGroupRemoveUser(ctx context.Context, removingUserID string, groupID *uuid.UUID, privKey *[32]byte, nonce *big.Int) (string, error) {
+	var uID [32]byte
+
+	copy(uID[:], removingUserID)
+
+	userKey, err := crypto.ToECDSA(privKey[:])
+	if err != nil {
+		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	if nonce == nil {
+		nonce, err = i.usersNonce(ctx, &userAddress)
+		if err != nil {
+			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
+		}
+	}
+
+	groupIDHash := sha3.Sum256(groupID[:])
+	removingUserIDHash := sha3.Sum256(uID[:])
+
+	data, err := i.usersAbi.Pack("groupRemoveUser", groupIDHash, removingUserIDHash, userAddress, make([]byte, signatureLength))
+	if err != nil {
+		return "", fmt.Errorf("abi.Pack error: %w", err)
+	}
+
+	signature, err := makeSignature(data, nonce, userKey)
+	if err != nil {
+		return "", fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	tx, err := i.users.GroupRemoveUser(i.transactOpts, groupIDHash, removingUserIDHash, userAddress, signature)
+	if err != nil {
+		if strings.Contains(err.Error(), "DNY") {
+			return "", errors.ErrAccessDenied
+		} else if strings.Contains(err.Error(), "NFD") {
+			return "", errors.ErrNotFound
+		}
+
+		return "", fmt.Errorf("users.GroupRemoveUser error: %w", err)
 	}
 
 	return tx.Hash().Hex(), nil

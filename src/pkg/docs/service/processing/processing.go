@@ -72,6 +72,7 @@ const (
 	TxUserNew
 	TxUserGroupCreate
 	TxUserGroupAddUser
+	TxUserGroupRemoveUser
 )
 
 var (
@@ -84,24 +85,25 @@ var (
 	}
 
 	txKinds = map[TxKind]string{
-		TxMultiCall:          "MultiCall",
-		TxSetEhrUser:         "SetEhrUser",
-		TxSetEhrBySubject:    "SetEhrBySubject",
-		TxSetEhrDocs:         "SetEhrDocs",
-		TxSetDocAccess:       "SetDocAccess",
-		TxDeleteDoc:          "DeleteDoc",
-		TxFilecoinStartDeal:  "FilecoinStartDeal",
-		TxEhrCreateWithID:    "EhrCreateWithID",
-		TxUpdateEhrStatus:    "UpdateEhrStatus",
-		TxAddEhrDoc:          "AddEhrDoc",
-		TxSetDocKeyEncrypted: "SetDocKeyEncrypted",
-		TxSaveEhr:            "TxSaveEhr",
-		TxSaveEhrStatus:      "TxSaveEhrStatus",
-		TxSaveComposition:    "TxSaveComposition",
-		TxUserRegister:       "TxUserRegister",
-		TxUserNew:            "TxUserNew",
-		TxUserGroupCreate:    "TxUserGroupCreate",
-		TxUserGroupAddUser:   "TxUserGroupAddUser",
+		TxMultiCall:           "MultiCall",
+		TxSetEhrUser:          "SetEhrUser",
+		TxSetEhrBySubject:     "SetEhrBySubject",
+		TxSetEhrDocs:          "SetEhrDocs",
+		TxSetDocAccess:        "SetDocAccess",
+		TxDeleteDoc:           "DeleteDoc",
+		TxFilecoinStartDeal:   "FilecoinStartDeal",
+		TxEhrCreateWithID:     "EhrCreateWithID",
+		TxUpdateEhrStatus:     "UpdateEhrStatus",
+		TxAddEhrDoc:           "AddEhrDoc",
+		TxSetDocKeyEncrypted:  "SetDocKeyEncrypted",
+		TxSaveEhr:             "TxSaveEhr",
+		TxSaveEhrStatus:       "TxSaveEhrStatus",
+		TxSaveComposition:     "TxSaveComposition",
+		TxUserRegister:        "TxUserRegister",
+		TxUserNew:             "TxUserNew",
+		TxUserGroupCreate:     "TxUserGroupCreate",
+		TxUserGroupAddUser:    "TxUserGroupAddUser",
+		TxUserGroupRemoveUser: "TxUserGroupRemoveUser",
 
 		TxUnknown: "Unknown",
 	}

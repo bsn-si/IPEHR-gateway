@@ -1772,7 +1772,7 @@ paths:
             a request
       summary: Get a list of user groups
       tags:
-      - USER
+      - USER_GROUP
     post:
       consumes:
       - application/json
@@ -1820,7 +1820,7 @@ paths:
             a request
       summary: User group create
       tags:
-      - USER
+      - USER_GROUP
   /user/group/{group_id}:
     get:
       parameters:
@@ -1863,7 +1863,7 @@ paths:
             a request
       summary: Get user group by ID
       tags:
-      - USER
+      - USER_GROUP
   /user/group/{group_id}/user_add/{user_id}/{access_level}:
     put:
       consumes:
@@ -1921,7 +1921,59 @@ paths:
             a request
       summary: Adding a user to a group
       tags:
-      - USER
+      - USER_GROUP
+  /user/group/{group_id}/user_remove/{user_id}:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
+        required: true
+        type: string
+      - description: The identifier of the user group
+        in: path
+        name: group_id
+        required: true
+        type: string
+      - description: The identifier of the user to be removed
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          headers:
+            RequestID:
+              description: Request identifier
+              type: string
+        "400":
+          description: The request could not be understood by the server due to incorrect
+            syntax.
+        "403":
+          description: Authentication required or user does not have access to change
+            the group
+        "404":
+          description: Group or adding user is not exist or `user_id` is not the member
+            of the group
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Removing a user from a group
+      tags:
+      - USER_GROUP
   /user/login:
     post:
       consumes:

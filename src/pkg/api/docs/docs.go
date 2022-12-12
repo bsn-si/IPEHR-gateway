@@ -1648,7 +1648,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "USER"
+                    "USER_GROUP"
                 ],
                 "summary": "Get a list of user groups",
                 "parameters": [
@@ -1700,7 +1700,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "USER"
+                    "USER_GROUP"
                 ],
                 "summary": "User group create",
                 "parameters": [
@@ -1769,7 +1769,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "USER"
+                    "USER_GROUP"
                 ],
                 "summary": "Get user group by ID",
                 "parameters": [
@@ -1830,7 +1830,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "USER"
+                    "USER_GROUP"
                 ],
                 "summary": "Adding a user to a group",
                 "parameters": [
@@ -1898,6 +1898,77 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "The user is already a member of a group"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/user/group/{group_id}/user_remove/{user_id}": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "USER_GROUP"
+                ],
+                "summary": "Removing a user from a group",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the user group",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the user to be removed",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "headers": {
+                            "RequestID": {
+                                "type": "string",
+                                "description": "Request identifier"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request could not be understood by the server due to incorrect syntax."
+                    },
+                    "403": {
+                        "description": "Authentication required or user does not have access to change the group"
+                    },
+                    "404": {
+                        "description": "Group or adding user is not exist or ` + "`" + `user_id` + "`" + ` is not the member of the group"
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"

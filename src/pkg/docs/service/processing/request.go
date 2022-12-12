@@ -75,6 +75,7 @@ const (
 	RequestQueryStore
 	RequestUserGroupCreate
 	RequestUserGroupAddUser
+	RequestUserGroupRemoveUser
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
