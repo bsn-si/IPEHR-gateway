@@ -1857,6 +1857,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "The identifier of the user group",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "The identifier of the user to be added",
                         "name": "user_id",
                         "in": "path",

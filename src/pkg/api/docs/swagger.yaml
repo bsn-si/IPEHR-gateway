@@ -1879,6 +1879,11 @@ paths:
         name: EhrSystemId
         required: true
         type: string
+      - description: The identifier of the user group
+        in: path
+        name: group_id
+        required: true
+        type: string
       - description: The identifier of the user to be added
         in: path
         name: user_id

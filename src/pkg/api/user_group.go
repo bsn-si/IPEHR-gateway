@@ -172,6 +172,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
 // @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    group_id       path    string           true  "The identifier of the user group"
 // @Param    user_id        path    string           true  "The identifier of the user to be added"
 // @Param    access_level   path    string           true  "Access Level. One of `admin` or `read`"
 // @Success  200            ""
