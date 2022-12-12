@@ -2154,6 +2154,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "The identifier of the requested user",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",

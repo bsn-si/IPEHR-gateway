@@ -274,6 +274,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
+// @Param    user_id        path      string  true  "The identifier of the requested user"
 // @Param    Authorization  header    string  true  "Bearer AccessToken"
 // @Param    AuthUserId     header    string  true  "UserId"
 // @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"

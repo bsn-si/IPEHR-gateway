@@ -1695,6 +1695,11 @@ paths:
       consumes:
       - application/json
       parameters:
+      - description: The identifier of the requested user
+        in: path
+        name: user_id
+        required: true
+        type: string
       - description: Bearer AccessToken
         in: header
         name: Authorization
