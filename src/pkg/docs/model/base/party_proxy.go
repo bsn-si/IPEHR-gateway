@@ -48,6 +48,8 @@ func (pp *PartyProxy) UnmarshalJSON(data []byte) error {
 		pp.data = &PartySelf{}
 	case PartyIdentifiedItemType:
 		pp.data = &PartyIdentified{}
+	case PartyRelatedItemType:
+		pp.data = &PartyIdentified{}
 	default:
 		return fmt.Errorf("unexpected PartyProxy type: '%v'", tmp.Type) //nolint
 	}
@@ -83,6 +85,17 @@ type PartyIdentified struct {
 }
 
 func (pi PartyIdentified) GetExternalRef() *ObjectRef {
+	return pi.ExternalRef
+}
+
+// https://specifications.openehr.org/releases/RM/latest/common.html#_party_related_class
+type PartyRelated struct {
+	Name         string      `json:"name"`
+	Relationship DvCodedText `json:"relationship"`
+	PartyProxyBase
+}
+
+func (pi PartyRelated) GetExternalRef() *ObjectRef {
 	return pi.ExternalRef
 }
 

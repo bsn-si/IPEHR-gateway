@@ -27,6 +27,14 @@ func (*Service) Store(ctx context.Context) error {
 	return errors.ErrNotImplemented
 }
 
+func (*Service) Parse(ctx context.Context, c model.Contribution) (*model.Contribution, error) {
+	//for _, v := range c.Versions {
+	//	if (t:=v.Data["_type"]; ){}
+	//}
+
+	return nil, errors.ErrNotImplemented
+}
+
 func (*Service) Validate(ctx context.Context, data interface{}) (bool, error) {
 	return false, errors.ErrNotImplemented
 }
@@ -58,6 +66,7 @@ func (h *Service) AddCommiter(ctx context.Context, c *model.Contribution, u user
 	//	},
 	//	"name": "Dr. Yamamoto"
 	//}
+	return nil
 }
 
 //func (*Service) Rollback(ctx context.Context) error {

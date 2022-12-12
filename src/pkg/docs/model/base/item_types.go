@@ -53,6 +53,7 @@ const (
 	PartyIdentifiedItemType ItemType = "PARTY_IDENTIFIED"
 	PartyRefItemType        ItemType = "PARTY_REF"
 	PartySelfItemType       ItemType = "PARTY_SELF"
+	PartyRelatedItemType    ItemType = "PARTY_RELATED"
 	PointEventItemType      ItemType = "POINT_EVENT"
 	IntervalEventItemType   ItemType = "INTERVAL_EVENT"
 	SectionItemType         ItemType = "SECTION"
