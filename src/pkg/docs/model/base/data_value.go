@@ -1,6 +1,8 @@
 package base
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // DataValue
 // Abstract parent of all DV_ data value types. Serves as a common ancestor of all data value types in openEHR models.
@@ -55,6 +57,8 @@ func (dvw *dataValueWrapper) UnmarshalJSON(data []byte) error {
 		dvw.dv = &DvText{}
 	case DvBooleanItemType:
 		dvw.dv = &DvBoolean{}
+		//case CompositionItemType:
+		//	dvw.dv = &DvComposition{}
 	}
 	// TODO fill it ???
 
@@ -375,3 +379,8 @@ type DvURI struct {
 	DvValueBase
 	Value string `json:"value"`
 }
+
+//type DvComposition struct {
+//	DvValueBase
+//	model.Composition
+//}

@@ -7,6 +7,6 @@ package base
 type Archetyped struct {
 	Type        ItemType  `json:"_type"`
 	ArchetypeID ObjectID  `json:"archetype_id"`
-	TemplateID  *ObjectID `json:"template_id,omitempty"`
+	TemplateID  *ObjectID `json:"template_id,omitempty"` // TODO why link?
 	RmVersion   string    `json:"rm_version"`
 }

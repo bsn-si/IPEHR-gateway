@@ -28,6 +28,8 @@ func (c *Composition) Validate() bool {
 		validation = false
 	}
 
+	// TODO check what template ID is not empty and exist
+
 	return validation
 }
 
@@ -39,6 +41,7 @@ func (c *Composition) UnmarshalJSON(data []byte) error {
 
 	c.Type = cc.Type
 	c.Name = cc.Name
+	c.ArchetypeDetails = cc.ArchetypeDetails
 	c.ArchetypeNodeID = cc.ArchetypeNodeID
 	c.ObjectVersionID = cc.ObjectVersionID
 	c.Composer = cc.Composer
@@ -85,6 +88,7 @@ func (w *compositionContentWrapper) UnmarshalJSON(data []byte) error {
 
 	switch tmp.Type {
 	case base.SectionItemType:
+	case base.EvaluationItemType:
 		w.item = &base.Section{}
 	default:
 		return errors.Errorf("unexpected composition content item: '%v'", tmp.Type)
