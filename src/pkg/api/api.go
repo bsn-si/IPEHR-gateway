@@ -11,6 +11,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
+	contributionService "hms/gateway/pkg/docs/service/contribution"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/docs/service/template"
@@ -40,9 +41,10 @@ type API struct {
 	Query       *QueryHandler
 	Template    *TemplateHandler
 	//GroupAccess *GroupAccessHandler
-	DocAccess *DocAccessHandler
-	Request   *RequestHandler
-	User      *UserHandler
+	DocAccess    *DocAccessHandler
+	Request      *RequestHandler
+	User         *UserHandler
+	Contribution *ContributionHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -52,6 +54,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	templateService := template.NewService(docService)
 	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
+	contribution := contributionService.NewService(docService)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
@@ -60,9 +63,10 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Query:       NewQueryHandler(queryService, cfg.BaseURL),
 		Template:    NewTemplateHandler(templateService, cfg.BaseURL),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
-		DocAccess: NewDocAccessHandler(docService),
-		Request:   NewRequestHandler(docService),
-		User:      NewUserHandler(user),
+		DocAccess:    NewDocAccessHandler(docService),
+		Request:      NewRequestHandler(docService),
+		User:         NewUserHandler(user),
+		Contribution: NewContributionHandler(contribution, user, cfg.BaseURL),
 	}
 }
 
@@ -134,6 +138,9 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
 		r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
+		r.GET("/:ehrid/contribution/:contribution_uid", a.Contribution.GetByID)
+		r.POST("/:ehrid/contribution/", a.Contribution.Create)
+
 	}
 }
 func (a *API) buildAccessAPI() handlerBuilder {

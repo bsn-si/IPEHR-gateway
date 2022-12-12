@@ -252,6 +252,7 @@ func (p *Proc) execEthereum() {
 		Where("status IN ?", statuses).
 		Group("hash").
 		Find(&txs)
+	// TODO add dependsOn field, group and sort by it
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)
 		return
@@ -262,6 +263,7 @@ func (p *Proc) execEthereum() {
 	}
 
 	for _, tx := range txs {
+		// TODO before execute we need to check status of parent transaction
 		ctx, cancel := context.WithTimeout(context.Background(), common.BlockchainTxProcAwaitTime)
 
 		h := eth_common.HexToHash(tx.Hash)

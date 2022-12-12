@@ -56,6 +56,7 @@ func (dvw *dataValueWrapper) UnmarshalJSON(data []byte) error {
 	case DvBooleanItemType:
 		dvw.dv = &DvBoolean{}
 	}
+	// TODO fill it ???
 
 	if err := json.Unmarshal(data, dvw.dv); err != nil {
 		return err
