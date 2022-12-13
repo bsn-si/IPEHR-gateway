@@ -1643,6 +1643,58 @@ const docTemplate = `{
             }
         },
         "/user/group": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "USER"
+                ],
+                "summary": "Get a list of user groups",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.UserGroup"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The request could not be understood by the server due to incorrect syntax."
+                    },
+                    "404": {
+                        "description": "Is returned when groupID does not exist"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            },
             "post": {
                 "consumes": [
                     "application/json"
@@ -1723,6 +1775,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "User group identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398",
+                        "name": "group_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "Bearer AccessToken",
                         "name": "Authorization",
                         "in": "header",
@@ -1794,6 +1853,13 @@ const docTemplate = `{
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
                         "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the user group",
+                        "name": "group_id",
+                        "in": "path",
                         "required": true
                     },
                     {
@@ -2086,6 +2152,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get user info",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "The identifier of the requested user",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Bearer AccessToken",

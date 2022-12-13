@@ -7,6 +7,7 @@ package mocks
 import (
 	context "context"
 	access "hms/gateway/pkg/access"
+	chachaPoly "hms/gateway/pkg/crypto/chachaPoly"
 	processing "hms/gateway/pkg/docs/service/processing"
 	model "hms/gateway/pkg/user/model"
 	service "hms/gateway/pkg/user/service"
@@ -141,18 +142,33 @@ func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, name, descriptio
 }
 
 // GroupGetByID mocks base method.
-func (m *MockUserService) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*model.UserGroup, error) {
+func (m *MockUserService) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*model.UserGroup, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupGetByID", ctx, userID, systemID, groupID)
+	ret := m.ctrl.Call(m, "GroupGetByID", ctx, userID, systemID, groupID, groupKey)
 	ret0, _ := ret[0].(*model.UserGroup)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GroupGetByID indicates an expected call of GroupGetByID.
-func (mr *MockUserServiceMockRecorder) GroupGetByID(ctx, userID, systemID, groupID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupGetByID(ctx, userID, systemID, groupID, groupKey interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGetByID", reflect.TypeOf((*MockUserService)(nil).GroupGetByID), ctx, userID, systemID, groupID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGetByID", reflect.TypeOf((*MockUserService)(nil).GroupGetByID), ctx, userID, systemID, groupID, groupKey)
+}
+
+// GroupGetList mocks base method.
+func (m *MockUserService) GroupGetList(ctx context.Context, userID, systemID string) ([]*model.UserGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupGetList", ctx, userID, systemID)
+	ret0, _ := ret[0].([]*model.UserGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupGetList indicates an expected call of GroupGetList.
+func (mr *MockUserServiceMockRecorder) GroupGetList(ctx, userID, systemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupGetList", reflect.TypeOf((*MockUserService)(nil).GroupGetList), ctx, userID, systemID)
 }
 
 // Info mocks base method.

@@ -34,7 +34,7 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 // @Produce      json
 // @Param        Authorization  header  string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string  true  "UserId UUID"
-// @Param    EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            ""
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
@@ -46,7 +46,13 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 		return
 	}
 
-	acl, err := h.service.List(c, userID)
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
+		return
+	}
+
+	acl, err := h.service.List(c, userID, systemID)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)

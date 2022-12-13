@@ -26,19 +26,19 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, userID string) (access.List, error) {
+func (s *Service) List(ctx context.Context, userID, systemID string) (access.List, error) {
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
 	}
 
-	acl, err := s.Infra.Index.DocAccessList(ctx, userID)
+	acl, err := s.Infra.Index.GetAccessList(ctx, userID, systemID, access.Doc)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("Index.DocAccessList error: %w userID: %s", err, userID)
+		return nil, fmt.Errorf("Index.GetAccessList error: %w userID: %s", err, userID)
 	}
 
 	for _, a := range acl {

@@ -57,7 +57,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 	return data, nil
 }
 
-func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uuid.UUID) (*userModel.UserGroup, error) {
+func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*userModel.UserGroup, error) {
 	groupIDHash := sha3.Sum256(groupID[:])
 
 	ug, err := i.users.UserGroupGetByID(&bind.CallOpts{Context: ctx}, groupIDHash)
@@ -74,10 +74,16 @@ func (i *Index) UserGroupGetByID(ctx context.Context, userID string, groupID *uu
 		return nil, errors.ErrFieldIsEmpty("ContentEncr")
 	}
 
+	groupKeyEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeKeyEncr)
+	if groupKeyEncr == nil {
+		return nil, errors.ErrFieldIsEmpty("KeyEncr")
+	}
+
 	userGroup := &userModel.UserGroup{
-		GroupID:     groupID,
-		ContentEncr: contentEncr,
-		Members:     []string{},
+		GroupID:      groupID,
+		ContentEncr:  contentEncr,
+		GroupKeyEncr: groupKeyEncr,
+		Members:      []string{},
 	}
 
 	for _, m := range ug.Members {

@@ -4,23 +4,21 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/accessStore"
 )
 
-func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, error) {
-	var uID [32]byte
+func (i *Index) GetAccessList(ctx context.Context, userID, systemID string, kind access.Kind) (access.List, error) {
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-	copy(uID[:], userID)
-
-	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(uID, access.Doc)
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(IDHash, kind)
 	if err != nil {
 		return nil, fmt.Errorf("args.Pack error: %w", err)
 	}
@@ -29,7 +27,7 @@ func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, 
 
 	acl, err := i.accessStore.GetAccess(&bind.CallOpts{Context: ctx}, accessID)
 	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
+		if len(acl) == 0 {
 			return nil, errors.ErrNotFound
 		}
 
@@ -39,17 +37,15 @@ func (i *Index) DocAccessList(ctx context.Context, userID string) (access.List, 
 	var l access.List
 
 	for _, a := range acl {
-		idHash := make([]byte, len(a.IdHash))
-		copy(idHash, a.IdHash[:])
-
-		level := []byte{a.Level}
+		IDHash := make([]byte, len(a.IdHash))
+		copy(IDHash, a.IdHash[:])
 
 		l = append(l, &access.Item{
 			Fields: map[string][]byte{
-				"idHash":  idHash,
+				"idHash":  IDHash,
 				"idEncr":  a.IdEncr,
 				"keyEncr": a.KeyEncr,
-				"level":   level,
+				"level":   {a.Level},
 			},
 		})
 	}
