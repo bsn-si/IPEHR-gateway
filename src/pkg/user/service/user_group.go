@@ -129,7 +129,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 		return fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, userID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
+	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, addingUserID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -137,7 +137,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 			return err
 		}
 
-		return fmt.Errorf("Index.GroupCreate error: %w", err)
+		return fmt.Errorf("Index.UserGroupAddUser error: %w", err)
 	}
 
 	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupAddUser)
@@ -149,6 +149,37 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 
 	if err := procRequest.Commit(); err != nil {
 		return fmt.Errorf("Add user to group procRequest commit error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removingUserID, reqID string, groupID *uuid.UUID) error {
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	txHash, err := s.Infra.Index.UserGroupRemoveUser(ctx, removingUserID, groupID, userPrivKey, nil)
+	if err != nil {
+		if errors.Is(err, errors.ErrAccessDenied) {
+			return err
+		} else if errors.Is(err, errors.ErrNotFound) {
+			return err
+		}
+
+		return fmt.Errorf("Index.UserGroupRemoveUser error: %w", err)
+	}
+
+	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupRemoveUser)
+	if err != nil {
+		return fmt.Errorf("Proc.NewRequest error: %w", err)
+	}
+
+	procRequest.AddEthereumTx(processing.TxUserGroupRemoveUser, txHash)
+
+	if err := procRequest.Commit(); err != nil {
+		return fmt.Errorf("Remove user from group procRequest commit error: %w", err)
 	}
 
 	return nil

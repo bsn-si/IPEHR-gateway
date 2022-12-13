@@ -199,9 +199,10 @@ func (a *API) buildUserAPI() handlerBuilder {
 
 		r = r.Group("group")
 		r.POST("", a.User.GroupCreate)
+		r.GET("", a.User.GroupGetList)
 		r.GET("/:group_id", a.User.GroupGetByID)
 		r.PUT("/:group_id/user_add/:user_id/:access_level", a.User.GroupAddUser)
-		r.GET("", a.User.GroupGetList)
+		r.POST("/:group_id/user_remove/:user_id", a.User.GroupRemoveUser)
 	}
 }
 

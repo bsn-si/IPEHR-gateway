@@ -210,6 +210,10 @@ func Test_API(t *testing.T) {
 	if !t.Run("User group get list", testWrap.userGroupGetList(testData)) {
 		t.Fatal()
 	}
+
+	if !t.Run("User group remove user", testWrap.userGroupRemoveUser(testData)) {
+		t.Fatal()
+	}
 }
 
 func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {

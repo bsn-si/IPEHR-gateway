@@ -18,7 +18,7 @@ import (
 // Group create
 // @Summary  User group create
 // @Description
-// @Tags     USER
+// @Tags     USER_GROUP
 // @Accept   json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
@@ -109,7 +109,7 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 // Group get by ID
 // @Summary  Get user group by ID
 // @Description
-// @Tags     USER
+// @Tags     USER_GROUP
 // @Produce  json
 // @Param    group_id       path    string           true  "User group identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
@@ -167,7 +167,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 // Group add user
 // @Summary  Adding a user to a group
 // @Description
-// @Tags     USER
+// @Tags     USER_GROUP
 // @Accept   json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
@@ -243,10 +243,78 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
+// Group remove user
+// @Summary  Removing a user from a group
+// @Description
+// @Tags     USER_GROUP
+// @Accept   json
+// @Param    Authorization  header  string           true  "Bearer AccessToken"
+// @Param    AuthUserId     header  string           true  "UserId"
+// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    group_id       path    string           true  "The identifier of the user group"
+// @Param    user_id        path    string           true  "The identifier of the user to be removed"
+// @Success  200            ""
+// @Header   200            {string}  RequestID  "Request identifier"
+// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
+// @Failure  403            "Authentication required or user does not have access to change the group"
+// @Failure  404            "Group or adding user is not exist or `user_id` is not the member of the group"
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/group/{group_id}/user_remove/{user_id} [post]
+func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
+		return
+	}
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		return
+	}
+
+	gID := c.Param("group_id")
+	if gID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id is empty"})
+		return
+	}
+
+	groupID, err := uuid.Parse(gID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "group_id must be UUID"})
+		return
+	}
+
+	removingUserID := c.Param("user_id")
+	if removingUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is empty"})
+		return
+	}
+
+	reqID := c.GetString("reqID")
+
+	err = h.service.GroupRemoveUser(c, userID, systemID, removingUserID, reqID, &groupID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		} else if errors.Is(err, errors.ErrAccessDenied) {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+
+		log.Println("GroupRemoveUser error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 // Group get list
 // @Summary  Get a list of user groups
 // @Description
-// @Tags     USER
+// @Tags     USER_GROUP
 // @Produce  json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"

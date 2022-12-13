@@ -37,6 +37,7 @@ type UserService interface {
 	GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error)
 	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*userModel.UserGroup, error)
 	GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
+	GroupRemoveUser(ctx context.Context, userID, systemID, removingUserID, reqID string, groupID *uuid.UUID) error
 	GroupGetList(ctx context.Context, userID, systemID string) ([]*model.UserGroup, error)
 }
 
