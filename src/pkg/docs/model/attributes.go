@@ -20,9 +20,13 @@ const (
 	AttributeDescriptionEncr Attribute = 10
 	AttributePasswordHash    Attribute = 11
 	AttributeTimestamp       Attribute = 12
+	AttributeNameEncr        Attribute = 13
 )
 
-type AttributesEhr []ehrIndexer.AttributesAttribute
+type (
+	AttributesEhr   []ehrIndexer.AttributesAttribute
+	AttributesUsers []users.AttributesAttribute
+)
 
 func (a AttributesEhr) GetByCode(code Attribute) []byte {
 	for _, attr := range a {
@@ -32,8 +36,6 @@ func (a AttributesEhr) GetByCode(code Attribute) []byte {
 	}
 	return nil
 }
-
-type AttributesUsers []users.AttributesAttribute
 
 func (a AttributesUsers) GetByCode(code Attribute) []byte {
 	for _, attr := range a {

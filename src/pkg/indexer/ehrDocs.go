@@ -79,20 +79,15 @@ func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docTyp
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-func (i *Index) ListDocByType(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType) ([]model.DocumentMeta, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		eID      [32]byte
-	)
+func (i *Index) ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error) {
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-	copy(eID[:], ehrUUID[:])
-
-	docsMeta, err := i.ehrIndex.GetEhrDocs(callOpts, eID, uint8(docType))
+	docsMeta, err := i.ehrIndex.GetEhrDocs(&bind.CallOpts{Context: ctx}, IDHash, uint8(docType))
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
 		}
-		return nil, fmt.Errorf("ehrIndex.GetEhrDocs error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
+		return nil, fmt.Errorf("ehrIndex.GetEhrDocs error: %w IDHash %x docType %s", err, IDHash, docType.String())
 	}
 
 	var list []model.DocumentMeta

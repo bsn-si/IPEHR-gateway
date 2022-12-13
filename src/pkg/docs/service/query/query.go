@@ -42,16 +42,12 @@ func (s *Service) List(ctx context.Context, userID, systemID, qualifiedQueryName
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	ehrUUID, err := s.Infra.Index.GetEhrUUIDByUserID(ctx, userID, systemID)
+	list, err := s.Infra.Index.ListDocByType(ctx, userID, systemID, types.Query)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
 		}
-		return nil, fmt.Errorf("Index.GetEhrIDByUserId error: %w", err)
-	}
 
-	list, err := s.Infra.Index.ListDocByType(ctx, ehrUUID, types.Query)
-	if err != nil {
 		return nil, fmt.Errorf("ListDocByType error: %w", err)
 	}
 

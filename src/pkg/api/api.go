@@ -130,6 +130,7 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.GET("/:ehrid/ehr_status/:versionid", a.EhrStatus.GetByID)
 		r.GET("/:ehrid/ehr_status", a.EhrStatus.GetStatusByTime)
 		r.POST("/:ehrid/composition", a.Composition.Create)
+		r.GET("/:ehrid/composition", a.Composition.GetList)
 		r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
 		r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)

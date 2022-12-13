@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
@@ -116,47 +115,13 @@ func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID, sy
 		return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
 	}
 
-	userPubKey, userPrivateKey, err := d.Infra.Keystore.Get(userID)
+	docKey, err := d.DecryptKey(userID, docKeyEncr)
 	if err != nil {
-		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
-	}
-
-	docKeyBytes, err := keybox.OpenAnonymous(docKeyEncr, userPubKey, userPrivateKey)
-	if err != nil {
-		log.Printf("docKeyBytes: %x", docKeyBytes)
-		return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
-	}
-
-	docKey, err := chachaPoly.NewKeyFromBytes(docKeyBytes)
-	if err != nil {
-		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+		return nil, fmt.Errorf("decryptKey error: %w", err)
 	}
 
 	return docKey, nil
 }
-
-/* TODO будет на блокчейне
-func (d *DefaultDocumentService) UpdateCollection(ehrUUID *uuid.UUID, docIndexes, toUpdate []*model.DocumentMeta, action func(*model.DocumentMeta) error) (err error) {
-	changed := false
-
-	for _, docIndex := range toUpdate {
-		err := action(docIndex)
-		if err != nil {
-			return err
-		}
-
-		changed = true
-	}
-
-	if changed {
-		if err = d.DocsIndex.Replace(ehrUUID.String(), docIndexes); err != nil {
-			return err
-		}
-	}
-
-	return
-}
-*/
 
 func (d *DefaultDocumentService) GenerateID() string {
 	return uuid.New().String()
@@ -165,4 +130,23 @@ func (d *DefaultDocumentService) GenerateID() string {
 func (d *DefaultDocumentService) GetSystemID() string {
 	ehrSystemID, _ := base.NewEhrSystemID(common.EhrSystemID)
 	return ehrSystemID.String()
+}
+
+func (d *DefaultDocumentService) DecryptKey(userID string, encryptedKey []byte) (*chachaPoly.Key, error) {
+	userPubKey, userPrivateKey, err := d.Infra.Keystore.Get(userID)
+	if err != nil {
+		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
+	}
+
+	keyBytes, err := keybox.OpenAnonymous(encryptedKey, userPubKey, userPrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("keybox.OpenAnonymous error: %w", err)
+	}
+
+	key, err := chachaPoly.NewKeyFromBytes(keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+	}
+
+	return key, nil
 }
