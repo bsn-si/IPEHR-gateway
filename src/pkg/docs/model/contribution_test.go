@@ -28,26 +28,22 @@ func TestContribution_UnmarshalJSON(t *testing.T) {
 		name    string
 		data    contributionTestData
 		wantErr bool
-		//want    model.Contribution
 	}{
 		{
 			"1. error on unmarshal data",
 			contributionTestData{},
 			true,
-			//model.Contribution{},
 		},
 		{
 			"2. empty contribution",
 			newContribution(),
 			false,
-			//model.Contribution{},
 		}, {
 			"3. contribution with composition",
 			newContributionWithVersions([]contributionVersionTestData{
 				{expectedComposition, []byte(compositionJSON)},
 			}),
 			false,
-			//model.Contribution{},
 		},
 	}
 	for _, tt := range tests {
@@ -82,7 +78,7 @@ func newContribution() contributionTestData {
 							ID: base.ObjectID{
 								Type:  "GENERIC_ID",
 								Value: "<OBJECT_ID>",
-								//"scheme": "<ID SCHEME NAME>" TODO mmm no idea, in docs i didnt find information, but it has in tests in EHRBASE
+								//"scheme": "<ID SCHEME NAME>" TODO no idea, in docs i didnt find information, but it has in tests in EHRBASE
 							},
 							Namespace: "DEMOGRAPHIC",
 							Type:      "PERSON",
@@ -101,7 +97,7 @@ func newContribution() contributionTestData {
 			Description: base.DvText{Value: "<optional audit description>"},
 		},
 
-		Versions: nil,
+		Versions: []model.ContributionVersion{},
 	}
 
 	return contributionTestData{c, prepareContributionJSON("")}
