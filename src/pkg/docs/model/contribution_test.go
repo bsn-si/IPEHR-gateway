@@ -188,17 +188,22 @@ func prepareContributionVersionJSON(v []byte) []byte {
 					"type": "PERSON"
 				},
 				"name": "Dr. Yamamoto"
+			},
+			"description": {
+				"value": "<optional audit description>"
 			}
 		},
 		"uid": {
 			"_type": "OBJECT_VERSION_ID",
-			"value": "d11739a8-545d-4137-9bcd-9e5617252a0b::EMR_APP::1"
+			"value": "41f6fdb5-9ea5-4bb8-b2fa-21131543f82e::openEHRSys.example.com::1"
 		},
 		"data": %s,
 		"lifecycle_state": {
+			"_type": "DV_CODED_TEXT",
 			"value": "complete",
 			"defining_code": {
 				"terminology_id": {
+					"_type": "TERMINOLOGY_ID",
 					"value": "openehr"
 				},
 				"code_string": "532"
@@ -229,7 +234,7 @@ func newContributionWithVersions(data []contributionVersionTestData) contributio
 				Type:     base.AuditDetailsType,
 				SystemID: "CABOLABS_EHRSERVER",
 				TimeCommited: base.DvDateTime{
-					Value: "2021-12-03T16:05:19.513939+01:00",
+					Value: "2021-09-21T21:52:31.869-03:00",
 				},
 				ChangeType: base.DvCodedText{
 					DefiningCode: base.CodePhrase{
@@ -266,7 +271,6 @@ func newContributionWithVersions(data []contributionVersionTestData) contributio
 			LifecycleState: base.NewDvCodedText(
 				"complete",
 				base.CodePhrase{
-					Type: base.TerminologyIDItemType,
 					TerminologyID: base.ObjectID{
 						Type:  "TERMINOLOGY_ID",
 						Value: "openehr",
