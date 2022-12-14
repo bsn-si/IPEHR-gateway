@@ -319,7 +319,7 @@ func (h *UserHandler) InfoByCode(c *gin.Context) {
 	codeString := c.Param("code")
 
 	codeInt, _ := strconv.Atoi(codeString)
-	if codeInt < 10000000 || codeInt > 99999999 {
+	if codeInt < 0 || codeInt > 99999999 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "request code must contain 8 digits"})
 		return
 	}
