@@ -26,16 +26,6 @@ type Contribution struct {
 	Audit    AuditDetails          `json:"audit"`
 }
 
-type contributionWrapper struct {
-	UID      base.UIDBasedID              `json:"uid"`
-	Versions []contributionVersionWrapper `json:"versions"`
-	Audit    AuditDetails                 `json:"audit"`
-}
-
-//type ContributionVersioner interface {
-//	GetVersion() ContributionVersion
-//}
-
 type ContributionVersion struct {
 	Type           base.ItemType    `json:"_type"`
 	Contribution   base.ObjectRef   `json:"contribution"`
@@ -43,10 +33,6 @@ type ContributionVersion struct {
 	UID            base.UIDBasedID  `json:"uid"`
 	LifecycleState base.DvCodedText `json:"lifecycle_state"`
 	Data           base.Root        `json:"data"`
-}
-
-func (v ContributionVersion) GetVersion() ContributionVersion {
-	return v
 }
 
 type contributionVersionWrapper struct {
@@ -62,46 +48,21 @@ type contributionVersionDataWrapper struct {
 	item base.Root
 }
 
-func (w *contributionVersionWrapper) toVersion() ContributionVersion {
-	return ContributionVersion{
-		Type:           w.Type,
-		Contribution:   w.Contribution,
-		CommitAudit:    w.CommitAudit,
-		UID:            w.UID,
-		LifecycleState: w.LifecycleState,
-		Data:           w.Data.item,
-	}
-}
-
-func (c *Contribution) UnmarshalJSON(data []byte) error {
-	cW := contributionWrapper{}
-	if err := json.Unmarshal(data, &cW); err != nil {
+func (c *ContributionVersion) UnmarshalJSON(data []byte) error {
+	w := contributionVersionWrapper{}
+	if err := json.Unmarshal(data, &w); err != nil {
 		return errors.Wrap(err, "cannot unmarshal 'contribution' struct from json bytes")
 	}
 
-	c.UID = cW.UID
-	c.Audit = cW.Audit
-
-	if cW.Versions != nil {
-		c.Versions = make([]ContributionVersion, 0, len(cW.Versions))
-		for _, item := range cW.Versions {
-			//item.ContributionVersion.Data = item.Data.item
-			//c.Versions = append(c.Versions, item.GetVersion())
-			c.Versions = append(c.Versions, item.toVersion())
-		}
-	}
+	c.UID = w.UID
+	c.Data = w.Data.item
+	c.LifecycleState = w.LifecycleState
+	c.CommitAudit = w.CommitAudit
+	c.Contribution = w.Contribution
+	c.Type = w.Type
 
 	return nil
 }
-
-//func (ContributionVersion) UnmarshalJSON(data []byte) error {
-//	cW := contributionVersionWrapper{}
-//	if err := json.Unmarshal(data, &cW); err != nil {
-//		return errors.Wrap(err, "cannot unmarshal 'contribution' struct from json bytes")
-//	}
-//
-//	return nil
-//}
 
 func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 	tmp := struct {
@@ -114,13 +75,13 @@ func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 
 	switch tmp.Type {
 	case base.CompositionItemType:
-		w.item = &Composition{}
+		c := Composition{}
+		if err := c.UnmarshalJSON(data); err != nil {
+			return errors.Wrapf(err, "cannot unmarshal contribution content item: '%v'", tmp.Type)
+		}
+		w.item = c
 	default:
 		return errors.Errorf("unexpected contribution content item: '%v'", tmp.Type)
-	}
-
-	if err := json.Unmarshal(data, w.item); err != nil {
-		return errors.Wrapf(err, "cannot unmarshal contribution content item: '%v'", tmp.Type)
 	}
 
 	return nil
