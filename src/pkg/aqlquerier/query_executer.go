@@ -21,19 +21,19 @@ func (exec *executer) run() (*Rows, error) {
 	// handle FROM block
 	dataSources, err := exec.findSources()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot find data sources")
 	}
 
 	// handle WHERE block
 	dataSources, err = exec.filterSources(dataSources)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot filter data sources")
 	}
 
 	// handle SELECT block
 	rows, err := exec.queryData(dataSources)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "cannot query rows from data sources")
 	}
 
 	// handle ORDER block
@@ -88,9 +88,9 @@ func (exec *executer) filterSources(sources map[string]dataSource) (map[string]d
 		return sources, nil
 	}
 
-	where := exec.query.Where
-
-	return processWhere(where, sources)
+	log.Println()
+	log.Println("FILTER SOURCES")
+	return processWhere(exec.query.Where, sources)
 }
 
 func processWhere(where *aqlprocessor.Where, sources map[string]dataSource) (map[string]dataSource, error) {
@@ -100,7 +100,6 @@ func processWhere(where *aqlprocessor.Where, sources map[string]dataSource) (map
 		if ie.ComparisonOperator != nil && ie.IdentifiedPath != nil {
 			for key, source := range sources {
 				ip := *ie.IdentifiedPath
-				// val, ok := getValueForPath(*ie.IdentifiedPath, source)
 				if key == ip.Identifier {
 					newSource := dataSource{
 						name:  source.name,
@@ -135,13 +134,15 @@ func processWhere(where *aqlprocessor.Where, sources map[string]dataSource) (map
 		}
 
 		return result, nil
-	} else if where.OperatorType != aqlprocessor.NoneOperator {
-		if len(where.Next) != 2 {
+	}
+
+	if where.OperatorType != aqlprocessor.NoneOperator && where.OperatorType != "" {
+		if len(where.Next) == 0 {
 			return nil, errors.New("unexpected where conditions count")
 		}
 
-		result := map[string]dataSource{}
-		results := make([]map[string]dataSource, 2)
+		results := make([]map[string]dataSource, len(where.Next))
+
 		for i, where := range where.Next {
 			s, err := processWhere(where, sources)
 			if err != nil {
@@ -152,18 +153,62 @@ func processWhere(where *aqlprocessor.Where, sources map[string]dataSource) (map
 		}
 
 		switch where.OperatorType {
-		case aqlprocessor.ANDOperator:
-			result = mergeDataSourcesAND(results[0], results[1])
-		case aqlprocessor.OROperator:
-			result = mergeDataSourcesOR(results[0], results[1])
-		default:
-			log.Println("UNEXPECTED ", where.OperatorType)
-		}
+		case aqlprocessor.NOTOperator:
+			if len(results) != 1 {
+				return sources, nil
+			}
 
-		return result, nil
+			return mergeDataSourcesNOT(sources, results[0]), nil
+		case aqlprocessor.ANDOperator:
+			if len(results) != 2 {
+				return nil, errors.New("invalid data sources count")
+			}
+
+			return mergeDataSourcesAND(results[0], results[1]), nil
+		case aqlprocessor.OROperator:
+			if len(results) != 2 {
+				return nil, errors.New("invalid data sources count")
+			}
+
+			return mergeDataSourcesOR(results[0], results[1]), nil
+		default:
+			return nil, fmt.Errorf("unexpected operator type: %v", where.OperatorType) //nolint
+		}
+	} else if len(where.Next) == 1 {
+		return processWhere(where.Next[0], sources)
 	}
 
-	return sources, nil
+	return nil, errors.New("unexpected WHERE object state")
+}
+
+func mergeDataSourcesNOT(origin, exclude map[string]dataSource) map[string]dataSource {
+	result := map[string]dataSource{}
+
+	for key, source := range origin {
+		excludeSource, ok := exclude[key]
+		if !ok {
+			result[key] = source
+		}
+
+		newSource := dataSource{
+			name:  source.name,
+			alias: source.alias,
+			data:  treeindex.Container{},
+		}
+
+		for key, val := range source.data {
+			if _, ok := excludeSource.data[key]; !ok {
+				newSource.data[key] = val
+				continue
+			}
+		}
+
+		if len(newSource.data) > 0 {
+			result[key] = newSource
+		}
+	}
+
+	return result
 }
 
 func mergeDataSourcesAND(left, right map[string]dataSource) map[string]dataSource {
@@ -257,11 +302,7 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 				rows.rows = append(rows.rows, row)
 			}
 		case *aqlprocessor.PrimitiveSelectValue:
-			val, err := exec.getPrimitiveColumnValue(slct)
-			if err != nil {
-				return nil, errors.Wrap(err, "cannot get primitive select value")
-			}
-
+			val := exec.getPrimitiveColumnValue(slct)
 			primitivesRow.values = append(primitivesRow.values, val)
 		case *aqlprocessor.AggregateFunctionCallSelectValue:
 			return nil, errors.New("Aggregation function call not implemented")
@@ -277,12 +318,12 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 	return exec.fillColumns(rows), nil
 }
 
-func (exec *executer) getPrimitiveColumnValue(prim *aqlprocessor.PrimitiveSelectValue) (driver.Value, error) {
+func (exec *executer) getPrimitiveColumnValue(prim *aqlprocessor.PrimitiveSelectValue) driver.Value {
 	if prim == nil {
-		return nil, nil
+		return nil
 	}
 
-	return prim.Val.Val, nil
+	return prim.Val.Val
 }
 
 func (exec *executer) fillColumns(rows *Rows) *Rows {

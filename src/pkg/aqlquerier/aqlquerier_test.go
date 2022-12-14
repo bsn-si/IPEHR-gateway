@@ -183,6 +183,60 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]float64{79.9, 981.13},
 			false,
 		},
+		{
+			"7. select values with WHERE NOT",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+   			FROM Observation o
+			WHERE
+				NOT o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []float64{}
+				for rows.Next() {
+					var val float64
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
+
+				sort.Float64s(result)
+				return result, nil
+			},
+			[]float64{940.0, 981.13},
+			false,
+		},
+		{
+			"8. select values with WHERE AND (OR)",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+   			FROM Observation o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
+				OR 
+				(
+					NOT	o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude = 940.0
+				)`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []float64{}
+				for rows.Next() {
+					var val float64
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
+
+				sort.Float64s(result)
+				return result, nil
+			},
+			[]float64{79.9, 981.13},
+			false,
+		},
 	}
 
 	for _, tt := range tests {
