@@ -92,7 +92,20 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 func (i *Index) GetUser(ctx context.Context, userAddr common.Address) (*userModel.User, error) {
 	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.Users error: %w userAddr %s", err, userAddr.String())
+		return nil, fmt.Errorf("users.GetUser error: %w userAddr %s", err, userAddr.String())
+	}
+
+	if user.IDHash == [32]byte{} {
+		return nil, errors.ErrNotFound
+	}
+
+	return &user, nil
+}
+
+func (i *Index) GetUserByCode(ctx context.Context, code uint64) (*userModel.User, error) {
+	user, err := i.users.GetUserByCode(&bind.CallOpts{Context: ctx}, code)
+	if err != nil {
+		return nil, fmt.Errorf("users.GetUserByCode error: %w code %d", err, code)
 	}
 
 	if user.IDHash == [32]byte{} {

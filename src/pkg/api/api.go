@@ -189,11 +189,14 @@ func (a *API) buildUserAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("user")
 		r.Use(gzip.Gzip(gzip.DefaultCompression))
+
+		r.GET("/:user_id", a.User.Info)
+		r.GET("/code/:code", a.User.InfoByCode)
+
 		r.Use(ehrSystemID)
 		r.POST("/register", a.User.Register)
 		r.POST("/login", a.User.Login)
 		r.GET("/refresh", a.User.RefreshToken)
-		r.GET("/:user_id", a.User.Info)
 
 		r.Use(auth(a))
 		r.POST("/logout", a.User.Logout)

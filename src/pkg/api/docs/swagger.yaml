@@ -399,6 +399,8 @@ definitions:
     properties:
       address:
         type: string
+      code:
+        type: string
       description:
         type: string
       name:
@@ -1754,19 +1756,29 @@ paths:
         name: user_id
         required: true
         type: string
-      - description: Bearer AccessToken
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: UserId
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      - description: The identifier of the system, typically a reverse domain identifier
-        in: header
-        name: EhrSystemId
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.UserInfo'
+        "404":
+          description: User with ID not exist
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get user info
+      tags:
+      - USER
+  /user/code/{code}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: The pin code of the requested doctor
+        in: path
+        name: code
         required: true
         type: string
       produces:
@@ -1776,17 +1788,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.UserInfo'
-        "401":
-          description: User unauthorized
         "404":
-          description: User with ID not exist
-        "422":
-          description: The request could not be understood by the server due to incorrect
-            syntax. The client SHOULD NOT repeat the request without modifications.
+          description: User code is not exist
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
-      summary: Get user info
+      summary: Get doctor info by code
       tags:
       - USER
   /user/group:

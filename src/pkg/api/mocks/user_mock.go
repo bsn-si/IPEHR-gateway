@@ -200,6 +200,21 @@ func (mr *MockUserServiceMockRecorder) Info(ctx, userID interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockUserService)(nil).Info), ctx, userID)
 }
 
+// InfoByCode mocks base method.
+func (m *MockUserService) InfoByCode(ctx context.Context, code int) (*model.UserInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InfoByCode", ctx, code)
+	ret0, _ := ret[0].(*model.UserInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InfoByCode indicates an expected call of InfoByCode.
+func (mr *MockUserServiceMockRecorder) InfoByCode(ctx, code interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InfoByCode", reflect.TypeOf((*MockUserService)(nil).InfoByCode), ctx, code)
+}
+
 // IsTokenInBlackList mocks base method.
 func (m *MockUserService) IsTokenInBlackList(tokenRaw string) bool {
 	m.ctrl.T.Helper()

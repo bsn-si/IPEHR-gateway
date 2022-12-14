@@ -32,6 +32,7 @@ type Doctor struct {
 	Address    string
 	Descrition string
 	PictureURL string
+	Code       string
 }
 
 func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
@@ -275,6 +276,38 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 			t.Fatal("registerPatient requestWait error: ", err)
 		}
 
+		// getting doctor code
+		url := testWrap.server.URL + "/v1/user/" + doctor.id
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var doctor2 model.UserInfo
+
+		err = json.Unmarshal(data, &doctor2)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		doctor.Code = doctor2.Code
+
 		testData.doctors = append(testData.doctors, doctor)
 	}
 }
@@ -295,6 +328,56 @@ func (testWrap *testWrap) userInfo(testData *TestData) func(t *testing.T) {
 		}
 
 		url := testWrap.server.URL + "/v1/user/" + doctor.id
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var doctor2 model.UserInfo
+
+		err = json.Unmarshal(data, &doctor2)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if doctor2.Name != doctor.Name {
+			t.Fatalf("Expected Name: %s, received: %s", doctor.Name, doctor2.Name)
+		}
+	}
+}
+
+func (testWrap *testWrap) userInfoByCode(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		if len(testData.doctors) == 0 {
+			testWrap.doctorRegister(testData)(t)
+		}
+
+		doctor := testData.doctors[0]
+
+		if doctor.accessToken == "" {
+			err := doctor.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		url := testWrap.server.URL + "/v1/user/code/" + doctor.Code
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
