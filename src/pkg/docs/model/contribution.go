@@ -7,37 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// https://specifications.openehr.org/releases/RM/latest/common.html#_contribution_class
-type Contribution struct {
-	UID base.UIDBasedID `json:"uid"`
-	//Versions *[]base.ObjectRef `json:"versions"`
-	Versions []ContributionVersion `json:"versions"`
-	Audit    AuditDetails          `json:"audit"`
-}
-
-//type ContributionResponse struct{}
-
-type ContributionVersion struct {
-	Type           base.ItemType    `json:"_type"`
-	Contribution   base.ObjectRef   `json:"contribution"`
-	CommitAudit    AuditDetails     `json:"commit_audit"`
-	UID            base.UIDBasedID  `json:"uid"`
-	Data           base.Root        `json:"data"`
-	LifecycleState base.DvCodedText `json:"lifecycle_state"`
-	//Data           interface{}      `json:"data"` // TODO or *base.PartyProxy ???, or generics
-	//Data           *MainType[T]     `json:"data"` // TODO or *base.PartyProxy ???, or generics
-	//Data *base.dataValueWrapper `json:"data"`
-}
-
-//type Version[T any] struct {
-//	Type           *base.ItemType   `json:"_type"`
-//	Contribution   base.ObjectRef   `json:"contribution"`
-//	CommitAudit    AuditDetails     `json:"commit_audit"`
-//	UID            *base.UIDBasedID `json:"uid"`
-//	Data           *unknownType[T]       `json:"data"` // TODO or *base.PartyProxy ???, or generics
-//	LifecycleState base.DvCodedText `json:"lifecycle_state"`
-//}
-
 // AUDIT_DETAILS
 // The set of attributes required to document the committal of an information item to a repository.
 // https://specifications.openehr.org/releases/RM/latest/common.html#_audit_details_class
@@ -50,39 +19,80 @@ type AuditDetails struct {
 	Description  base.DvText      `json:"description,omitempty"`
 }
 
+// https://specifications.openehr.org/releases/RM/latest/common.html#_contribution_class
+type Contribution struct {
+	UID      base.UIDBasedID  `json:"uid"`
+	Versions []base.ObjectRef `json:"versions"`
+	//Versions []base.ItemList `json:"versions"`
+	//Versions []ContributionVersionI `json:"versions"`
+	Audit AuditDetails `json:"audit"`
+}
+
+type contributionWrapper struct {
+	UID      base.UIDBasedID              `json:"uid"`
+	Versions []contributionVersionWrapper `json:"versions"`
+	Audit    AuditDetails                 `json:"audit"`
+}
+
+type ContributionVersion struct {
+	Type           base.ItemType    `json:"_type"`
+	Contribution   base.ObjectRef   `json:"contribution"`
+	CommitAudit    AuditDetails     `json:"commit_audit"`
+	UID            base.UIDBasedID  `json:"uid"`
+	Data           base.Root        `json:"data"`
+	LifecycleState base.DvCodedText `json:"lifecycle_state"`
+}
+
+type contributionVersionWrapper struct {
+	Type           base.ItemType                  `json:"_type"`
+	Contribution   base.ObjectRef                 `json:"contribution"`
+	CommitAudit    AuditDetails                   `json:"commit_audit"`
+	UID            base.UIDBasedID                `json:"uid"`
+	Data           contributionVersionDataWrapper `json:"data"`
+	LifecycleState base.DvCodedText               `json:"lifecycle_state"`
+}
+
+type contributionVersionDataWrapper struct {
+	item base.Root
+}
+
 func (c *Contribution) UnmarshalJSON(data []byte) error {
-	cc := contributionWrapper{}
-	if err := json.Unmarshal(data, &cc); err != nil {
+	cW := contributionWrapper{}
+	if err := json.Unmarshal(data, &cW); err != nil {
 		return errors.Wrap(err, "cannot unmarshal 'contribution' struct from json bytes")
 	}
 
-	//c.Type = cc.Type
-	//c.Name = cc.Name
+	c.UID = cW.UID
+	c.Audit = cW.Audit
 
-	//if cc.Content != nil {
-	//	c.Content = make([]base.Root, 0, len(cc.Content))
-	//	for _, item := range cc.Content {
-	//		c.Content = append(c.Content, item.item)
+	//if cW.Versions != nil {
+	//	c.Versions = make([]base.ObjectRef, 0, len(cW.Versions))
+	//	//c.Versions = make([]ContributionVersion, 0, 	len(cW.Versions))
+	//	for _, item := range cW.Versions {
+	//		c.Versions = append(c.Versions, item)
 	//	}
 	//}
 
 	return nil
 }
 
-type contributionWrapper struct {
-	Type           base.ItemType              `json:"_type"`
-	Contribution   base.ObjectRef             `json:"contribution"`
-	CommitAudit    AuditDetails               `json:"commit_audit"`
-	UID            base.UIDBasedID            `json:"uid"`
-	LifecycleState base.DvCodedText           `json:"lifecycle_state"`
-	Data           contributionContentWrapper `json:"data"`
-}
+//func (c *ContributionVersion) UnmarshalJSON(data []byte) error {
+//	cc := contributionVersionWrapper{}
+//	if err := json.Unmarshal(data, &cc); err != nil {
+//		return errors.Wrap(err, "cannot unmarshal 'contribution' struct from json bytes")
+//	}
+//
+//	c.Type = cc.Type
+//	c.Contribution = cc.Contribution
+//	c.CommitAudit = cc.CommitAudit
+//	c.UID = cc.UID
+//	c.Data = cc.Data.item
+//	c.LifecycleState = cc.LifecycleState
+//
+//	return nil
+//}
 
-type contributionContentWrapper struct {
-	item base.Root
-}
-
-func (w *contributionContentWrapper) UnmarshalJSON(data []byte) error {
+func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 	tmp := struct {
 		Type base.ItemType `json:"_type"`
 	}{}
@@ -103,4 +113,11 @@ func (w *contributionContentWrapper) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+func (cV *Contribution) Validate() {
+	//TODO invoke validation in ContributionVersion by loop
+}
+func (cV *ContributionVersion) Validate() {
+	// TODO data should exist and type is known, and also run validation in there, if it modifyed and type not exist...
 }
