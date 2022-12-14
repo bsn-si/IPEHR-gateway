@@ -159,6 +159,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("COMPOSITION get list", testWrap.compositionGetList(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("COMPOSITION delete by wrong UID", testWrap.compositionDeleteByWrongID(testData)) {
 		t.Fatal()
 	}

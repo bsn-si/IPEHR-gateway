@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
@@ -24,47 +25,51 @@ import (
 	"hms/gateway/pkg/indexer/ehrIndexer"
 )
 
-type GroupAccessService interface {
-	Default() *model.GroupAccess
-}
+type (
+	GroupAccessService interface {
+		Default() *model.GroupAccess
+	}
 
-type Indexer interface {
-	MultiCallEhrNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
-	GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
-	AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
-	GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
-	DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
-}
+	Indexer interface {
+		MultiCallEhrNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
+		GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
+		AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
+		GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
+		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
+		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
+	}
 
-type IpfsService interface {
-	Add(ctx context.Context, fileContent []byte) (*cid.Cid, error)
-}
+	IpfsService interface {
+		Add(ctx context.Context, fileContent []byte) (*cid.Cid, error)
+	}
 
-type FileCoinService interface {
-	StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint64) (*cid.Cid, string, error)
-}
+	FileCoinService interface {
+		StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint64) (*cid.Cid, string, error)
+	}
 
-type DocumentsSvc interface {
-	GetDocFromStorageByID(ctx context.Context, userID, systemID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error)
-}
+	DocumentsSvc interface {
+		GetDocFromStorageByID(ctx context.Context, userID, systemID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error)
+		DecryptKey(userID string, encryptedKey []byte) (*chachaPoly.Key, error)
+	}
 
-type KeyStore interface {
-	Get(userID string) (publicKey, privateKey *[32]byte, err error)
-}
+	KeyStore interface {
+		Get(userID string) (publicKey, privateKey *[32]byte, err error)
+	}
 
-type Compressor interface {
-	Compress(decompressedData []byte) (compressedData []byte, err error)
-}
+	Compressor interface {
+		Compress(decompressedData []byte) (compressedData []byte, err error)
+	}
 
-type Service struct {
-	indexer            Indexer
-	ipfs               IpfsService
-	fileCoin           FileCoinService
-	keyStore           KeyStore
-	compressor         Compressor
-	docSvc             DocumentsSvc
-	groupAccessService GroupAccessService
-}
+	Service struct {
+		indexer            Indexer
+		ipfs               IpfsService
+		fileCoin           FileCoinService
+		keyStore           KeyStore
+		compressor         Compressor
+		docSvc             DocumentsSvc
+		groupAccessService GroupAccessService
+	}
+)
 
 func NewCompositionService(
 	indexer Indexer,
@@ -256,6 +261,11 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		return fmt.Errorf("EncryptWithAuthData error: %w", err)
 	}
 
+	nameEncr, err := key.Encrypt([]byte(doc.Name.Value))
+	if err != nil {
+		return fmt.Errorf("Encrypt name error: %w", err)
+	}
+
 	// Add filecoin tx
 	procRequest.AddFilecoinTx(proc.TxSaveComposition, CID.String(), dealCID.String(), minerAddr)
 
@@ -284,6 +294,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 				{Code: model.AttributeDocUIDEncr, Value: docIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
+				{Code: model.AttributeNameEncr, Value: nameEncr},
 			},
 		}
 
@@ -449,4 +460,59 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 
 func (s *Service) DefaultGroupAccess() *model.GroupAccess {
 	return s.groupAccessService.Default()
+}
+
+func (s *Service) GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error) {
+	compositions, err := s.indexer.ListDocByType(ctx, userID, systemID, types.Composition)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+
+		return nil, fmt.Errorf("ListDocByType error: %w", err)
+	}
+
+	var list []*model.EhrDocumentItem
+
+	for _, c := range compositions {
+		keyEncr := model.AttributesEhr(c.Attrs).GetByCode(model.AttributeKeyEncr)
+		if keyEncr == nil {
+			return nil, fmt.Errorf("%w: Composition %x meta field KeyEncr is empty", errors.ErrCustom, c.Id)
+		}
+
+		nameEncr := model.AttributesEhr(c.Attrs).GetByCode(model.AttributeNameEncr)
+		if nameEncr == nil {
+			return nil, fmt.Errorf("%w: Composition %x meta field NameEncr is empty", errors.ErrCustom, c.Id)
+		}
+
+		uidEncr := model.AttributesEhr(c.Attrs).GetByCode(model.AttributeDocUIDEncr)
+		if uidEncr == nil {
+			return nil, fmt.Errorf("%w: Composition %x meta field DocUIDEncr is empty", errors.ErrCustom, c.Id)
+		}
+
+		docKey, err := s.docSvc.DecryptKey(userID, keyEncr)
+		if err != nil {
+			return nil, fmt.Errorf("DecryptKey error: %w", err)
+		}
+
+		name, err := docKey.Decrypt(nameEncr)
+		if err != nil {
+			return nil, fmt.Errorf("Composition %x Name decryption error: %w", c.Id, err)
+		}
+
+		uid, err := docKey.DecryptWithAuthData(uidEncr, ehrUUID[:])
+		if err != nil {
+			return nil, fmt.Errorf("Composition %x UID decryption error: %w", c.Id, err)
+		}
+
+		item := model.EhrDocumentItem{
+			Name:        string(name),
+			UID:         string(uid),
+			TimeCreated: time.Unix(int64(c.Timestamp), 0).Format(common.OpenEhrTimeFormat),
+		}
+
+		list = append(list, &item)
+	}
+
+	return list, nil
 }

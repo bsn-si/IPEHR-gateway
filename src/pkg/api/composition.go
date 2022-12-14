@@ -26,6 +26,7 @@ type CompositionService interface {
 	GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 	GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 	DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error)
+	GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error)
 }
 
 type Indexer interface {
@@ -497,6 +498,57 @@ func (h CompositionHandler) Update(c *gin.Context) {
 
 	h.addResponseHeaders(ehrID, compositionUpdated.UID.Value, c)
 	c.JSON(http.StatusOK, compositionUpdated)
+}
+
+// List
+// @Summary      Get all COMPOSITIONs
+// @Description  Retrieves all versions of all COMPOSITIONs associated with the EHR identified by `ehr_id`.
+// @Description
+// @Tags     COMPOSITION
+// @Accept   json
+// @Produce  json
+// @Param    ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param    Authorization  header    string  true  "Bearer AccessToken"
+// @Param    AuthUserId     header    string  true  "UserId UUID"
+// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Success  200            {object}  []model.EhrDocumentItem
+// @Failure  400            "Is returned when AuthUserId or EhrSystemId is not specified"
+// @Failure  404            "is returned when an EHR with `ehr_id` does not exist."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /ehr/{ehr_id}/composition [get]
+func (h CompositionHandler) GetList(c *gin.Context) {
+	ehrID := c.Param("ehrid")
+	systemID := c.GetString("ehrSystemID")
+
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
+		return
+	}
+
+	list, err := h.service.GetList(c, userID, systemID, &ehrUUID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+
+		log.Println("Composition GetList error:", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+
+		return
+	}
+
+	if list == nil {
+		list = []*model.EhrDocumentItem{}
+	}
+
+	c.JSON(http.StatusOK, list)
 }
 
 func (h *CompositionHandler) respondWithDocOrHeaders(ehrID string, doc *model.Composition, c *gin.Context) {
