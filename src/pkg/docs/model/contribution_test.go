@@ -215,8 +215,7 @@ func newContributionWithVersions(data []contributionVersionTestData) contributio
 	cJSON := make([]string, 0, len(data))
 
 	for _, d := range data {
-		//cVer := model.ContributionVersion{
-		_ = model.ContributionVersion{
+		cVer := model.ContributionVersion{
 			Type: "ORIGINAL_VERSION",
 			Contribution: base.ObjectRef{
 				ID: base.ObjectID{
@@ -278,7 +277,7 @@ func newContributionWithVersions(data []contributionVersionTestData) contributio
 			Data: d.cv,
 		}
 
-		//c.c.Versions = append(c.c.Versions, cVer) // TODO uncomment
+		c.c.Versions = append(c.c.Versions, cVer)
 		cJSON = append(cJSON, string(prepareContributionVersionJSON(d.cvJSON)))
 	}
 

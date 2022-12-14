@@ -21,17 +21,19 @@ type AuditDetails struct {
 
 // https://specifications.openehr.org/releases/RM/latest/common.html#_contribution_class
 type Contribution struct {
-	UID      base.UIDBasedID  `json:"uid"`
-	Versions []base.ObjectRef `json:"versions"`
-	//Versions []base.ItemList `json:"versions"`
-	//Versions []ContributionVersionI `json:"versions"`
-	Audit AuditDetails `json:"audit"`
+	UID      base.UIDBasedID         `json:"uid"`
+	Versions []ContributionVersioner `json:"versions"`
+	Audit    AuditDetails            `json:"audit"`
 }
 
 type contributionWrapper struct {
 	UID      base.UIDBasedID              `json:"uid"`
 	Versions []contributionVersionWrapper `json:"versions"`
 	Audit    AuditDetails                 `json:"audit"`
+}
+
+type ContributionVersioner interface {
+	GetVersion() ContributionVersion
 }
 
 type ContributionVersion struct {
@@ -43,13 +45,13 @@ type ContributionVersion struct {
 	LifecycleState base.DvCodedText `json:"lifecycle_state"`
 }
 
+func (v ContributionVersion) GetVersion() ContributionVersion {
+	return v
+}
+
 type contributionVersionWrapper struct {
-	Type           base.ItemType                  `json:"_type"`
-	Contribution   base.ObjectRef                 `json:"contribution"`
-	CommitAudit    AuditDetails                   `json:"commit_audit"`
-	UID            base.UIDBasedID                `json:"uid"`
-	Data           contributionVersionDataWrapper `json:"data"`
-	LifecycleState base.DvCodedText               `json:"lifecycle_state"`
+	ContributionVersion
+	Data contributionVersionDataWrapper `json:"data"`
 }
 
 type contributionVersionDataWrapper struct {
@@ -65,32 +67,15 @@ func (c *Contribution) UnmarshalJSON(data []byte) error {
 	c.UID = cW.UID
 	c.Audit = cW.Audit
 
-	//if cW.Versions != nil {
-	//	c.Versions = make([]base.ObjectRef, 0, len(cW.Versions))
-	//	//c.Versions = make([]ContributionVersion, 0, 	len(cW.Versions))
-	//	for _, item := range cW.Versions {
-	//		c.Versions = append(c.Versions, item)
-	//	}
-	//}
+	if cW.Versions != nil {
+		c.Versions = make([]ContributionVersioner, 0, len(cW.Versions))
+		for _, item := range cW.Versions {
+			c.Versions = append(c.Versions, item.GetVersion())
+		}
+	}
 
 	return nil
 }
-
-//func (c *ContributionVersion) UnmarshalJSON(data []byte) error {
-//	cc := contributionVersionWrapper{}
-//	if err := json.Unmarshal(data, &cc); err != nil {
-//		return errors.Wrap(err, "cannot unmarshal 'contribution' struct from json bytes")
-//	}
-//
-//	c.Type = cc.Type
-//	c.Contribution = cc.Contribution
-//	c.CommitAudit = cc.CommitAudit
-//	c.UID = cc.UID
-//	c.Data = cc.Data.item
-//	c.LifecycleState = cc.LifecycleState
-//
-//	return nil
-//}
 
 func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 	tmp := struct {
