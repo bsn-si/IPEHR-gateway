@@ -21,9 +21,9 @@ type AuditDetails struct {
 
 // https://specifications.openehr.org/releases/RM/latest/common.html#_contribution_class
 type Contribution struct {
-	UID      base.UIDBasedID         `json:"uid"`
-	Versions []ContributionVersioner `json:"versions"`
-	Audit    AuditDetails            `json:"audit"`
+	UID      base.UIDBasedID       `json:"uid"`
+	Versions []ContributionVersion `json:"versions"`
+	Audit    AuditDetails          `json:"audit"`
 }
 
 type contributionWrapper struct {
@@ -32,17 +32,17 @@ type contributionWrapper struct {
 	Audit    AuditDetails                 `json:"audit"`
 }
 
-type ContributionVersioner interface {
-	GetVersion() ContributionVersion
-}
+//type ContributionVersioner interface {
+//	GetVersion() ContributionVersion
+//}
 
 type ContributionVersion struct {
 	Type           base.ItemType    `json:"_type"`
 	Contribution   base.ObjectRef   `json:"contribution"`
 	CommitAudit    AuditDetails     `json:"commit_audit"`
 	UID            base.UIDBasedID  `json:"uid"`
-	Data           base.Root        `json:"data"`
 	LifecycleState base.DvCodedText `json:"lifecycle_state"`
+	Data           base.Root        `json:"data"`
 }
 
 func (v ContributionVersion) GetVersion() ContributionVersion {
@@ -50,12 +50,27 @@ func (v ContributionVersion) GetVersion() ContributionVersion {
 }
 
 type contributionVersionWrapper struct {
-	ContributionVersion
-	Data contributionVersionDataWrapper `json:"data"`
+	Type           base.ItemType                  `json:"_type"`
+	Contribution   base.ObjectRef                 `json:"contribution"`
+	CommitAudit    AuditDetails                   `json:"commit_audit"`
+	UID            base.UIDBasedID                `json:"uid"`
+	LifecycleState base.DvCodedText               `json:"lifecycle_state"`
+	Data           contributionVersionDataWrapper `json:"data"`
 }
 
 type contributionVersionDataWrapper struct {
 	item base.Root
+}
+
+func (w *contributionVersionWrapper) toVersion() ContributionVersion {
+	return ContributionVersion{
+		Type:           w.Type,
+		Contribution:   w.Contribution,
+		CommitAudit:    w.CommitAudit,
+		UID:            w.UID,
+		LifecycleState: w.LifecycleState,
+		Data:           w.Data.item,
+	}
 }
 
 func (c *Contribution) UnmarshalJSON(data []byte) error {
@@ -68,14 +83,25 @@ func (c *Contribution) UnmarshalJSON(data []byte) error {
 	c.Audit = cW.Audit
 
 	if cW.Versions != nil {
-		c.Versions = make([]ContributionVersioner, 0, len(cW.Versions))
+		c.Versions = make([]ContributionVersion, 0, len(cW.Versions))
 		for _, item := range cW.Versions {
-			c.Versions = append(c.Versions, item.GetVersion())
+			//item.ContributionVersion.Data = item.Data.item
+			//c.Versions = append(c.Versions, item.GetVersion())
+			c.Versions = append(c.Versions, item.toVersion())
 		}
 	}
 
 	return nil
 }
+
+//func (ContributionVersion) UnmarshalJSON(data []byte) error {
+//	cW := contributionVersionWrapper{}
+//	if err := json.Unmarshal(data, &cW); err != nil {
+//		return errors.Wrap(err, "cannot unmarshal 'contribution' struct from json bytes")
+//	}
+//
+//	return nil
+//}
 
 func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 	tmp := struct {
