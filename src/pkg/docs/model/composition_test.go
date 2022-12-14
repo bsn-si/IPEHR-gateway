@@ -405,14 +405,13 @@ const compositionJSON = `{
     "health_care_facility": {
       "_type": "PARTY_IDENTIFIED",
       "external_ref": {
-        "_type": "PARTY_REF",
+        "type": "PARTY_REF",
         "id": {
           "_type": "GENERIC_ID",
           "value": "9091",
           "scheme": "HOSPITAL-NS"
         },
-        "namespace": "HOSPITAL-NS",
-        "type": "PARTY"
+        "namespace": "HOSPITAL-NS"
       },
       "name": "Hospital"
     },
@@ -426,14 +425,13 @@ const compositionJSON = `{
         "performer": {
           "_type": "PARTY_IDENTIFIED",
           "external_ref": {
-            "_type": "PARTY_REF",
+            "type": "PARTY_REF",
             "id": {
               "_type": "GENERIC_ID",
               "value": "199",
               "scheme": "HOSPITAL-NS"
             },
-            "namespace": "HOSPITAL-NS",
-            "type": "PERSON"
+            "namespace": "HOSPITAL-NS"
           },
           "name": "Dr. Marcus Johnson"
         },
@@ -459,14 +457,13 @@ const compositionJSON = `{
         "performer": {
           "_type": "PARTY_IDENTIFIED",
           "external_ref": {
-            "_type": "PARTY_REF",
+            "type": "PARTY_REF",
             "id": {
               "_type": "GENERIC_ID",
               "value": "198",
               "scheme": "HOSPITAL-NS"
             },
-            "namespace": "HOSPITAL-NS",
-            "type": "PERSON"
+            "namespace": "HOSPITAL-NS"
           },
           "name": "Lara Markham"
         },

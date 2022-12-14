@@ -88,6 +88,7 @@ func (w *compositionContentWrapper) UnmarshalJSON(data []byte) error {
 
 	switch tmp.Type {
 	case base.SectionItemType:
+		fallthrough
 	case base.EvaluationItemType:
 		w.item = &base.Section{}
 	default:
