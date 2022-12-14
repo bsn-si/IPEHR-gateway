@@ -310,23 +310,23 @@ var expectedComposition = model.Composition{
 			RmVersion: "1.0.4",
 		},
 	},
-	Content: []base.Root{
-		&base.Section{
-			Locatable: base.Locatable{
-				Type:            "SECTION",
-				Name:            base.NewDvText("Medication Summary"),
-				ArchetypeNodeID: "openEHR-EHR-SECTION.adhoc.v1",
-				ArchetypeDetails: &base.Archetyped{
-					Type: "ARCHETYPED",
-					ArchetypeID: base.ObjectID{
-						Type: "ARCHETYPE_ID", Value: "openEHR-EHR-SECTION.adhoc.v1",
-					},
-					RmVersion: "1.0.4",
-				},
-			},
-			Items: []base.Root{},
-		},
-	},
+	//Content: []base.Root{
+	//	&base.Section{
+	//		Locatable: base.Locatable{
+	//			Type:            "SECTION",
+	//			Name:            base.NewDvText("Medication Summary"),
+	//			ArchetypeNodeID: "openEHR-EHR-SECTION.adhoc.v1",
+	//			ArchetypeDetails: &base.Archetyped{
+	//				Type: "ARCHETYPED",
+	//				ArchetypeID: base.ObjectID{
+	//					Type: "ARCHETYPE_ID", Value: "openEHR-EHR-SECTION.adhoc.v1",
+	//				},
+	//				RmVersion: "1.0.4",
+	//			},
+	//		},
+	//		Items: []base.Root{},
+	//	},
+	//},
 }
 
 const compositionJSON = `{
@@ -485,23 +485,5 @@ const compositionJSON = `{
       }
     ]
   },
-  "content": [
-	{
-      "_type": "SECTION",
-      "name": {
-        "_type": "DV_TEXT",
-        "value": "Medication Summary"
-      },
-      "archetype_details": {
-        "_type": "ARCHETYPED",
-        "archetype_id": {
-          "_type": "ARCHETYPE_ID",
-          "value": "openEHR-EHR-SECTION.adhoc.v1"
-        },
-        "rm_version": "1.0.4"
-      },
-      "archetype_node_id": "openEHR-EHR-SECTION.adhoc.v1",
-      "items": []
-    }
-  ]
+  "content": []
 }`
