@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
-	"os"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -21,6 +20,12 @@ type executer struct {
 func (exec *executer) run() (*Rows, error) {
 	// handle FROM block
 	dataSources, err := exec.findSources()
+	if err != nil {
+		return nil, err
+	}
+
+	// handle WHERE block
+	dataSources, err = exec.filterSources(dataSources)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +83,152 @@ func (exec *executer) findSources() (map[string]dataSource, error) {
 	return source, nil
 }
 
+func (exec *executer) filterSources(sources map[string]dataSource) (map[string]dataSource, error) {
+	if exec.query.Where == nil {
+		return sources, nil
+	}
+
+	where := exec.query.Where
+
+	return processWhere(where, sources)
+}
+
+func processWhere(where *aqlprocessor.Where, sources map[string]dataSource) (map[string]dataSource, error) {
+	if ie := where.IdentifiedExpr; ie != nil {
+		result := map[string]dataSource{}
+
+		if ie.ComparisonOperator != nil && ie.IdentifiedPath != nil {
+			for key, source := range sources {
+				ip := *ie.IdentifiedPath
+				// val, ok := getValueForPath(*ie.IdentifiedPath, source)
+				if key == ip.Identifier {
+					newSource := dataSource{
+						name:  source.name,
+						alias: source.alias,
+						data:  treeindex.Container{},
+					}
+
+					for key, indexNodes := range source.data {
+						for _, indexNode := range indexNodes {
+							containsValues := false
+
+							if ip.ObjectPath != nil {
+								value, ok := getValueForPath(ip.ObjectPath, indexNode)
+								if !ok {
+									continue
+								}
+
+								containsValues = compare(ie.Terminal, value, *ie.ComparisonOperator)
+							}
+
+							if containsValues {
+								newSource.data[key] = append(newSource.data[key], indexNode)
+							}
+						}
+					}
+
+					result[key] = newSource
+				} else {
+					result[key] = source
+				}
+			}
+		}
+
+		return result, nil
+	} else if where.OperatorType != aqlprocessor.NoneOperator {
+		if len(where.Next) != 2 {
+			return nil, errors.New("unexpected where conditions count")
+		}
+
+		result := map[string]dataSource{}
+		results := make([]map[string]dataSource, 2)
+		for i, where := range where.Next {
+			s, err := processWhere(where, sources)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot filter inner WHERE conditions")
+			}
+
+			results[i] = s
+		}
+
+		switch where.OperatorType {
+		case aqlprocessor.ANDOperator:
+			result = mergeDataSourcesAND(results[0], results[1])
+		case aqlprocessor.OROperator:
+			result = mergeDataSourcesOR(results[0], results[1])
+		default:
+			log.Println("UNEXPECTED ", where.OperatorType)
+		}
+
+		return result, nil
+	}
+
+	return sources, nil
+}
+
+func mergeDataSourcesAND(left, right map[string]dataSource) map[string]dataSource {
+	result := map[string]dataSource{}
+
+	for k, val1 := range left {
+		val2, ok := right[k]
+		if !ok {
+			continue
+		}
+
+		commonDataSource := dataSource{
+			name:  val1.name,
+			alias: val1.alias,
+			data:  treeindex.Container{},
+		}
+
+		for observKey, nodesA := range val1.data {
+			if _, ok := val2.data[observKey]; !ok {
+				continue
+			}
+
+			commonDataSource.data[observKey] = nodesA
+		}
+
+		if len(commonDataSource.data) > 0 {
+			result[k] = commonDataSource
+		}
+	}
+
+	return result
+}
+
+func mergeDataSourcesOR(left, right map[string]dataSource) map[string]dataSource {
+	result := left
+
+	for key, rightSource := range right {
+		leftSource, ok := result[key]
+		if !ok {
+			result[key] = rightSource
+			continue
+		}
+
+		for key, val := range rightSource.data {
+			if _, ok := leftSource.data[key]; ok {
+				continue
+			}
+
+			leftSource.data[key] = val
+		}
+	}
+
+	return result
+}
+
+func compare(term *aqlprocessor.Terminal, val any, cmpOperator aqlprocessor.ComparisionSymbol) bool {
+	if term.Primitive != nil {
+		return term.Primitive.Compare(val, cmpOperator)
+	}
+
+	//TODO: add logic for other conditions
+
+	return false
+}
+
 func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 	rows := &Rows{}
 
@@ -89,14 +240,14 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 
 	// row := Row{}
 
-	primitives := Row{}
+	primitivesRow := Row{}
 
 	for _, selectExpr := range exec.query.Select.SelectExprs {
 		switch slct := selectExpr.Value.(type) {
 		case *aqlprocessor.IdentifiedPathSelectValue:
-			columnValues, err := exec.getDataByIdentifiedPath(slct, sources)
+			columnValues, err := getDataByIdentifiedPath(slct.Val, sources)
 			if err != nil {
-				return nil, errors.Wrap(err, "cannot get data fo~r identified data")
+				return nil, errors.Wrap(err, "cannot get data for identified data")
 			}
 
 			for _, val := range columnValues {
@@ -111,7 +262,7 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 				return nil, errors.Wrap(err, "cannot get primitive select value")
 			}
 
-			primitives.values = append(primitives.values, val)
+			primitivesRow.values = append(primitivesRow.values, val)
 		case *aqlprocessor.AggregateFunctionCallSelectValue:
 			return nil, errors.New("Aggregation function call not implemented")
 		case *aqlprocessor.FunctionCallSelectValue:
@@ -119,10 +270,9 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 		default:
 			return nil, errors.New("Unexpected SelectExpr type")
 		}
-		// }
 	}
 
-	rows.rows = append(rows.rows, primitives)
+	rows.rows = append(rows.rows, primitivesRow)
 
 	return exec.fillColumns(rows), nil
 }
@@ -143,23 +293,18 @@ func (exec *executer) fillColumns(rows *Rows) *Rows {
 	return rows
 }
 
-func (exec *executer) getDataByIdentifiedPath(slctExpr *aqlprocessor.IdentifiedPathSelectValue, sources map[string]dataSource) ([]any, error) {
+func getDataByIdentifiedPath(ip aqlprocessor.IdentifiedPath, sources map[string]dataSource) ([]any, error) {
 	result := []any{}
-	logger := log.New(os.Stderr, "\t[getDataByIdentifiedPath]\t", log.LstdFlags)
-	logger.Println()
 
-	selectPath := slctExpr.Val
-
-	source, ok := sources[selectPath.Identifier]
+	source, ok := sources[ip.Identifier]
 	if !ok {
-		return nil, errors.New("unexpected identifier " + selectPath.Identifier)
+		return nil, fmt.Errorf("unexpected identifier %v", ip.Identifier) //nolint
 	}
 
 	for _, indexNodes := range source.data {
 		for _, indexNode := range indexNodes {
-			if selectPath.ObjectPath != nil {
-				if resultData, ok := getValueForPath(selectPath.ObjectPath, indexNode); ok {
-					logger.Printf("%v = %T", resultData, resultData)
+			if ip.ObjectPath != nil {
+				if resultData, ok := getValueForPath(ip.ObjectPath, indexNode); ok {
 					result = append(result, resultData)
 				}
 			}
@@ -220,7 +365,6 @@ func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, 
 			if valueNode := node.TryGetChild(path.Identifier); valueNode != nil {
 				queue = append(queue, valueNode)
 			}
-
 		case *treeindex.ValueNode:
 			return node.GetData(), true
 		default:

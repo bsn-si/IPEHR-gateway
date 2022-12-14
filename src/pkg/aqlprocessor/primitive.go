@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -9,11 +10,54 @@ import (
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
 	"hms/gateway/pkg/errors"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 type Primitive struct {
 	Val any
+}
+
+func (p Primitive) Compare(val any, cmpSymbl ComparisionSymbol) bool {
+	x := reflect.ValueOf(p.Val)
+	y := reflect.ValueOf(val)
+
+	if x.Type() == y.Type() {
+		switch x.Kind() {
+		case reflect.Int:
+			return compare(val.(int), p.Val.(int), cmpSymbl)
+		case reflect.Float64:
+			return compare(val.(float64), p.Val.(float64), cmpSymbl)
+		case reflect.String:
+			return compare(val.(string), p.Val.(string), cmpSymbl)
+		}
+	} else if x.Kind() == reflect.Float64 && y.Kind() == reflect.Int {
+		return compare(float64(val.(int)), p.Val.(float64), cmpSymbl)
+	} else if x.Kind() == reflect.Int && y.Kind() == reflect.Float64 {
+		return compare(val.(float64), float64(p.Val.(int)), cmpSymbl)
+	}
+
+	return false
+}
+
+func compare[T constraints.Ordered](x, y T, cmpSymbl ComparisionSymbol) bool {
+	switch cmpSymbl {
+	case SymLT:
+		return x < y
+	case SymGT:
+		return x > y
+	case SymLE:
+		return x <= y
+	case SymGE:
+		return x >= y
+	case SymNe:
+		return x != y
+	case SymEQ:
+		return x == y
+	default:
+		return false
+	}
 }
 
 func getPrimitive(prim *aqlparser.PrimitiveContext) (Primitive, error) {

@@ -274,3 +274,41 @@ func TestProcessor_SelectDates(t *testing.T) {
 		})
 	}
 }
+
+func TestPrimitive_Compare(t *testing.T) {
+	tests := []struct {
+		name     string
+		prim     Primitive
+		val      any
+		cmpSymbl ComparisionSymbol
+		want     bool
+	}{
+		{"1. 123 == 123", Primitive{Val: 123}, 123, SymEQ, true},
+		{"2. 123 == 321", Primitive{Val: 123}, 321, SymEQ, false},
+		{"3. 123 != 321", Primitive{Val: 123}, 331, SymNe, true},
+		{"4. 123 > 321", Primitive{Val: 123}, 321, SymGT, true},
+		{"5. 123 >= 321", Primitive{Val: 123}, 331, SymGE, true},
+		{"6. 123 < 100", Primitive{Val: 123}, 100, SymLT, true},
+		{"7. 123 <= 100", Primitive{Val: 123}, 100, SymLE, true},
+
+		{"8. 123.0 == 123", Primitive{Val: 123.0}, 123, SymEQ, true},
+		{"9. 123.0 == 321", Primitive{Val: 123.0}, 321, SymEQ, false},
+		{"10. 123.0 != 321", Primitive{Val: 123.0}, 331, SymNe, true},
+		{"11. 123.0 > 321", Primitive{Val: 123.0}, 321, SymGT, true},
+		{"12. 123.0 >= 321", Primitive{Val: 123.0}, 331, SymGE, true},
+		{"13. 123.0 < 100", Primitive{Val: 123.0}, 100, SymLT, true},
+		{"14. 123.0 <= 100", Primitive{Val: 123.0}, 100, SymLE, true},
+
+		{"15. 123 <= 100.1", Primitive{Val: 123}, 100.1, SymLE, true},
+		{"16. 123.1 <= 100.1", Primitive{Val: 123.1}, 100.1, SymLE, true},
+
+		{`17. "aaa" != "bbb"`, Primitive{Val: "aaa"}, "bbb", SymNe, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.prim.Compare(tt.val, tt.cmpSymbl); got != tt.want {
+				t.Errorf("Primitive.Compare() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
