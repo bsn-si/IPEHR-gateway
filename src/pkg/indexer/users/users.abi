@@ -93,6 +93,54 @@
     {
       "inputs": [
         {
+          "internalType": "uint64",
+          "name": "code",
+          "type": "uint64"
+        }
+      ],
+      "name": "getUserByCode",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "IDHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "enum IUsers.Role",
+              "name": "role",
+              "type": "uint8"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct IUsers.User",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "components": [
             {
               "internalType": "bytes32",

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -25,6 +26,7 @@ type UserService interface {
 	Register(ctx context.Context, user *userModel.UserCreateRequest, systemID, reqID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
 	Info(ctx context.Context, userID string) (*model.UserInfo, error)
+	InfoByCode(ctx context.Context, code int) (*model.UserInfo, error)
 	CreateToken(userID string) (*userService.TokenDetails, error)
 	ExtractToken(bearToken string) string
 	VerifyAccess(userID, tokenString string) error
@@ -276,11 +278,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 // @Accept   json
 // @Produce  json
 // @Param    user_id        path      string  true  "The identifier of the requested user"
-// @Param    Authorization  header    string  true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true  "UserId"
-// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  model.UserInfo
-// @Failure  401            "User unauthorized"
 // @Failure  404            "User with ID not exist"
 // @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
@@ -294,7 +292,48 @@ func (h *UserHandler) Info(c *gin.Context) {
 
 	userInfo, err := h.service.Info(c, userID)
 	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
 		log.Println("service.Info error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.JSON(http.StatusOK, userInfo)
+}
+
+// Info by code
+// @Summary  Get doctor info by code
+// @Description
+// @Tags     USER
+// @Accept   json
+// @Produce  json
+// @Param    code           path      string  true  "The pin code of the requested doctor"
+// @Success  200            {object}  model.UserInfo
+// @Failure  404            "User code is not exist"
+// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /user/code/{code} [get]
+func (h *UserHandler) InfoByCode(c *gin.Context) {
+	codeString := c.Param("code")
+
+	codeInt, _ := strconv.Atoi(codeString)
+	if codeInt < 10000000 || codeInt > 99999999 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "request code must contain 8 digits"})
+		return
+	}
+
+	userInfo, err := h.service.InfoByCode(c, codeInt)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		log.Println("service. InfoByCode error: ", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

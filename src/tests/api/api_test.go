@@ -86,6 +86,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("User get info by code", testWrap.userInfoByCode(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("EHR creating", testWrap.ehrCreate(testData)) {
 		t.Fatal()
 	}

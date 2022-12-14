@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"strings"
@@ -23,6 +24,7 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/indexer/users"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/user/model"
 	"hms/gateway/pkg/user/roles"
@@ -192,6 +194,32 @@ func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, err
 		return nil, fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
 	}
 
+	userInfo, err := extractUserInfo(user)
+	if err != nil {
+		return nil, fmt.Errorf("extractUserInfo error: %w", err)
+	}
+
+	return userInfo, nil
+}
+
+func (s *Service) InfoByCode(ctx context.Context, code int) (*model.UserInfo, error) {
+	user, err := s.Infra.Index.GetUserByCode(ctx, uint64(code))
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("Login.GetUserPasswordHash error: %w", err)
+	}
+
+	userInfo, err := extractUserInfo(user)
+	if err != nil {
+		return nil, fmt.Errorf("extractUserInfo error: %w", err)
+	}
+
+	return userInfo, nil
+}
+
+func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 	attrs := docModel.AttributesUsers(user.Attrs)
 
 	content := attrs.GetByCode(docModel.AttributeContent)
@@ -199,12 +227,15 @@ func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, err
 		return nil, errors.ErrFieldIsEmpty("AttributeContent")
 	}
 
+	var (
+		userInfo model.UserInfo
+		err      error
+	)
+
 	content, err = compressor.New(compressor.BestCompression).Decompress(content)
 	if err != nil {
 		return nil, fmt.Errorf("DoctorInfo content decompression error: %w", err)
 	}
-
-	var userInfo model.UserInfo
 
 	err = msgpack.Unmarshal(content, &userInfo)
 	if err != nil {
@@ -212,6 +243,11 @@ func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, err
 	}
 
 	userInfo.Role = roles.Role(user.Role).String()
+
+	if user.Role == uint8(roles.Doctor) {
+		codeInt := binary.BigEndian.Uint64(user.IDHash[0:8]) % common.UserCodeMask
+		userInfo.Code = fmt.Sprintf("%08d", codeInt)
+	}
 
 	timestamp := attrs.GetByCode(docModel.AttributeTimestamp)
 	if timestamp == nil {
