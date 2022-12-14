@@ -1736,9 +1736,6 @@ const docTemplate = `{
                     "404": {
                         "description": "User code is not exist"
                     },
-                    "422": {
-                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-                    },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
                     }
@@ -2343,9 +2340,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "User with ID not exist"
-                    },
-                    "422": {
-                        "description": "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"

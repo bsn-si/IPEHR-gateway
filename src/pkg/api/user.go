@@ -280,7 +280,6 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 // @Param    user_id        path      string  true  "The identifier of the requested user"
 // @Success  200            {object}  model.UserInfo
 // @Failure  404            "User with ID not exist"
-// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/{user_id} [get]
 func (h *UserHandler) Info(c *gin.Context) {
@@ -314,7 +313,6 @@ func (h *UserHandler) Info(c *gin.Context) {
 // @Param    code           path      string  true  "The pin code of the requested doctor"
 // @Success  200            {object}  model.UserInfo
 // @Failure  404            "User code is not exist"
-// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/code/{code} [get]
 func (h *UserHandler) InfoByCode(c *gin.Context) {
