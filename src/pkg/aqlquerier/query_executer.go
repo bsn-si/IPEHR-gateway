@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -156,29 +155,14 @@ func (exec *executer) getDataByIdentifiedPath(slctExpr *aqlprocessor.IdentifiedP
 		return nil, errors.New("unexpected identifier " + selectPath.Identifier)
 	}
 
-	// logger.Println(source)
-	// logger.Println(source.data.Len())
-	// data, _ := json.MarshalIndent(val, "", "\t")
-	// logger.Println(string(data))
-
 	for _, indexNodes := range source.data {
-		// data, _ := json.MarshalIndent(nodes, "", "\t")
-		// log.Println("data", string(data))
-
 		for _, indexNode := range indexNodes {
-
 			if selectPath.ObjectPath != nil {
-				// logger.Println("NODE:", name, name == selectPath.ObjectPath.Paths[0].Identifier)
 				if resultData, ok := getValueForPath(selectPath.ObjectPath, indexNode); ok {
 					logger.Printf("%v = %T", resultData, resultData)
 					result = append(result, resultData)
 				}
 			}
-			// indexNode.ForEach(func(name string, node treeindex.Noder) bool {
-			//
-			//
-			// return true
-			// })
 		}
 	}
 
@@ -186,97 +170,64 @@ func (exec *executer) getDataByIdentifiedPath(slctExpr *aqlprocessor.IdentifiedP
 }
 
 func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, bool) {
-	var result any
-	found := false
+	index := 0
+	queue := []treeindex.Noder{node}
 
-	logger := log.New(os.Stdout, "\t[getValueForPath]\t", log.LstdFlags)
-
-	// logger.Println("NODE_ID", node.GetID())
-	// logger.Println(path.Paths)
-
-	var walkFunc func(name string, node treeindex.Noder) bool
-
-	offset := 0
-	idx := 0
-	walkFunc = func(name string, node treeindex.Noder) bool {
-		offset++
-		strOffset := strings.Repeat("\t", offset)
-
-		if idx >= len(path.Paths) {
-			return false
+	for len(queue) > 0 {
+		if index >= len(path.Paths) {
+			return nil, false
 		}
 
-		p := path.Paths[idx]
+		path := path.Paths[index]
 
-		// logger.Println(strOffset, "p.Identifier", p.Identifier, p.Identifier == name, p.PathPredicate != nil)
-
-		if p.PathPredicate != nil {
-			switch p.PathPredicate.Type {
-			case aqlprocessor.StandartPathPredicate:
-				logger.Println(strOffset, "standart")
-			case aqlprocessor.ArchetypedPathPredicate:
-				logger.Println(strOffset, "archetype")
-			case aqlprocessor.NodePathPredicate:
-				np := p.PathPredicate.NodePredicate
-
-				if np.AtCode != nil {
-					logger.Println(strOffset, "node.at_code", np.AtCode.ToString(), "node_id", node.GetID())
-
-					if name == p.Identifier && np.AtCode.ToString() == node.GetID() {
-						idx++
-					}
-				}
-			default:
-				return false
-			}
-		} else if name == p.Identifier {
-			idx++
-		}
+		node := queue[0]
+		queue = queue[1:]
 
 		switch node := node.(type) {
-		case *treeindex.ValueNode:
-			if name == p.Identifier {
-				result = node.GetData()
-				found = true
-				// logger.Println(strOffset, name, "=", node.GetData())
+		case *treeindex.ObjectNode:
+			{
+				nextNode := node.TryGetChild(path.Identifier)
+				if nextNode == nil {
+					continue
+				}
 
-				return false
-			}
-		case *treeindex.SliceNode:
-			// logger.Println(strOffset, "slice_node")
-			if p.PathPredicate != nil {
-				switch p.PathPredicate.Type {
-				case aqlprocessor.StandartPathPredicate:
-					logger.Println(strOffset, "standart")
-				case aqlprocessor.ArchetypedPathPredicate:
-					logger.Println(strOffset, "archetype")
-				case aqlprocessor.NodePathPredicate:
-					np := p.PathPredicate.NodePredicate
-
-					if np.AtCode != nil {
-						newNode := node.TryGetChild(np.AtCode.ToString())
-						if newNode != nil {
-							idx++
-							newNode.ForEach(walkFunc)
+				switch nextNode.GetNodeType() {
+				case treeindex.ObjectNodeType:
+					if path.PathPredicate != nil && path.PathPredicate.Type == aqlprocessor.NodePathPredicate {
+						if np := path.PathPredicate.NodePredicate; np.AtCode != nil && nextNode.GetID() == np.AtCode.ToString() {
+							index++
 						}
 					}
-				default:
-					return false
+				case treeindex.DataValueNodeType:
+					index++
+				}
+
+				queue = append(queue, nextNode)
+			}
+		case *treeindex.SliceNode:
+			if path.PathPredicate != nil && path.PathPredicate.Type == aqlprocessor.NodePathPredicate {
+				np := path.PathPredicate.NodePredicate
+
+				if np.AtCode != nil {
+					nextNode := node.TryGetChild(np.AtCode.ToString())
+					if nextNode != nil {
+						queue = append(queue, nextNode)
+						index++
+					}
 				}
 			}
-		default:
-			logger.Println(strOffset, name, node.GetID())
-			node.ForEach(walkFunc)
-		}
+		case *treeindex.DataValueNode:
+			if valueNode := node.TryGetChild(path.Identifier); valueNode != nil {
+				queue = append(queue, valueNode)
+			}
 
-		offset--
-		return true
+		case *treeindex.ValueNode:
+			return node.GetData(), true
+		default:
+		}
 	}
 
-	node.ForEach(walkFunc)
-
-	logger.Println("RESULT = ", result)
-	return result, found
+	return nil, false
 }
 
 type dataSource struct {

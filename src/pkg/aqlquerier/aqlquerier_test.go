@@ -3,7 +3,8 @@ package aqlquerier
 import (
 	"database/sql"
 	"encoding/json"
-	"io/ioutil"
+	"os"
+	"sort"
 	"testing"
 	"time"
 
@@ -90,18 +91,19 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
 			func(rows *sql.Rows) (interface{}, error) {
-				result := [][]float64{}
+				result := []float64{}
 				for rows.Next() {
 					var val float64
 					if err := rows.Scan(&val); err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
-					result = append(result, []float64{val})
+					result = append(result, val)
 				}
 
+				sort.Float64s(result)
 				return result, nil
 			},
-			[][]float64{{981.13}, {940.0}, {79.9}},
+			[]float64{79.9, 940.0, 981.13},
 			false,
 		},
 	}
@@ -177,7 +179,7 @@ func getPreparedTreeIndex(filenames ...string) error {
 	treeindex.DefaultTree = treeindex.NewTree()
 
 	for _, filename := range filenames {
-		data, err := ioutil.ReadFile(filename)
+		data, err := os.ReadFile(filename)
 		if err != nil {
 			return errors.Wrap(err, "cannot read file")
 		}
