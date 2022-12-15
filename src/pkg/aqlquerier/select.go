@@ -7,13 +7,12 @@ import (
 )
 
 func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
+	rows := []Row{}
 	//TODO: add DISTINCT handling
 	// exec.query.Select.Distinct
 
 	// for _, source := range sources {
 	// log.Println(source.name, source.alias, source.data)
-
-	rows := []Row{}
 
 	for sourceName, source := range sources {
 		for _, indexNodes := range source.data {
