@@ -35,33 +35,12 @@ func (exec *executer) run() (*Rows, error) {
 		return nil, errors.Wrap(err, "cannot query rows from data sources")
 	}
 
-	// handle ORDER block
-	//TODO: add order logic
+	rows, err = exec.orderRows(rows)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot order rows")
+	}
 
 	return exec.limitRows(rows), nil
-}
-
-func (exec *executer) limitRows(rows *Rows) *Rows {
-	if exec.query.Limit == nil {
-		return rows
-	}
-
-	limit := exec.query.Limit.Limit
-	offset := exec.query.Limit.Offset
-
-	if offset >= 0 {
-		if offset > len(rows.rows) {
-			offset = len(rows.rows)
-		}
-
-		rows.rows = rows.rows[offset:]
-	}
-
-	if limit < len(rows.rows) {
-		rows.rows = rows.rows[:limit]
-	}
-
-	return rows
 }
 
 func (exec *executer) findSources() (map[string]dataSource, error) {
@@ -336,6 +315,35 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 	rows.rows = append(rows.rows, primitivesRow)
 
 	return exec.fillColumns(rows), nil
+}
+
+func (exec *executer) orderRows(rows *Rows) (*Rows, error) {
+	// handle ORDER block
+	//TODO: add order logic
+	return rows, nil
+}
+
+func (exec *executer) limitRows(rows *Rows) *Rows {
+	if exec.query.Limit == nil {
+		return rows
+	}
+
+	limit := exec.query.Limit.Limit
+	offset := exec.query.Limit.Offset
+
+	if offset >= 0 {
+		if offset > len(rows.rows) {
+			offset = len(rows.rows)
+		}
+
+		rows.rows = rows.rows[offset:]
+	}
+
+	if limit < len(rows.rows) {
+		rows.rows = rows.rows[:limit]
+	}
+
+	return rows
 }
 
 func (exec *executer) getPrimitiveColumnValue(prim *aqlprocessor.PrimitiveSelectValue) driver.Value {
