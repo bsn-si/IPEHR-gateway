@@ -3,7 +3,6 @@ package aqlquerier
 import (
 	"database/sql/driver"
 	"fmt"
-	"log"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -39,7 +38,30 @@ func (exec *executer) run() (*Rows, error) {
 	// handle ORDER block
 	//TODO: add order logic
 
-	return rows, nil
+	return exec.limitRows(rows), nil
+}
+
+func (exec *executer) limitRows(rows *Rows) *Rows {
+	if exec.query.Limit == nil {
+		return rows
+	}
+
+	limit := exec.query.Limit.Limit
+	offset := exec.query.Limit.Offset
+
+	if offset >= 0 {
+		if offset > len(rows.rows) {
+			offset = len(rows.rows)
+		}
+
+		rows.rows = rows.rows[offset:]
+	}
+
+	if limit < len(rows.rows) {
+		rows.rows = rows.rows[:limit]
+	}
+
+	return rows
 }
 
 func (exec *executer) findSources() (map[string]dataSource, error) {
@@ -88,8 +110,6 @@ func (exec *executer) filterSources(sources map[string]dataSource) (map[string]d
 		return sources, nil
 	}
 
-	log.Println()
-	log.Println("FILTER SOURCES")
 	return processWhere(exec.query.Where, sources)
 }
 
