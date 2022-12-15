@@ -2,7 +2,6 @@ package aqlquerier
 
 import (
 	"database/sql/driver"
-	"fmt"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -41,47 +40,6 @@ func (exec *executer) run() (*Rows, error) {
 	}
 
 	return exec.limitRows(rows), nil
-}
-
-func (exec *executer) findSources() (map[string]dataSource, error) {
-	from := exec.query.From
-	if len(from.Contains) > 0 || from.Operator != nil {
-		return nil, errors.New("not implemented")
-	}
-
-	source := map[string]dataSource{}
-
-	if from.Operand != nil {
-		switch operand := from.Operand.(type) {
-		case aqlprocessor.ClassExpression:
-			if operand.PathPredicate != nil {
-				return nil, errors.New("not implemented")
-			}
-
-			ds := dataSource{
-				name: operand.Identifiers[0],
-			}
-
-			if len(operand.Identifiers) > 1 {
-				ds.alias = operand.Identifiers[1]
-			}
-
-			data, err := exec.index.GetDataSourceByName(ds.name)
-			if err != nil {
-				return nil, errors.Wrap(err, "cannot get data source by name")
-			}
-
-			ds.data = data
-
-			source[ds.getName()] = ds
-		case aqlprocessor.VersionClassExpr:
-			return nil, errors.New("not implemented")
-		default:
-			return nil, fmt.Errorf("unexpected FROM.Operand type: %T", operand) // nolint
-		}
-	}
-
-	return source, nil
 }
 
 func (exec *executer) filterSources(sources map[string]dataSource) (map[string]dataSource, error) {
@@ -179,18 +137,4 @@ func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, 
 	}
 
 	return nil, false
-}
-
-type dataSource struct {
-	name  string
-	alias string
-	data  treeindex.Container
-}
-
-func (ds dataSource) getName() string {
-	if ds.alias != "" {
-		return ds.alias
-	}
-
-	return ds.name
 }

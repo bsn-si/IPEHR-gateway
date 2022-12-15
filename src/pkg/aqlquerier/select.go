@@ -16,44 +16,60 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 
 	rows := []Row{}
 
-	primitivesRow := Row{}
-
-	for _, selectExpr := range exec.query.Select.SelectExprs {
-		switch slct := selectExpr.Value.(type) {
-		case *aqlprocessor.IdentifiedPathSelectValue:
-			{
-				columnValues, err := getDataByIdentifiedPath(slct.Val, sources)
-				if err != nil {
-					return nil, errors.Wrap(err, "cannot get data for identified data")
+	for sourceName, source := range sources {
+		for _, indexNodes := range source.data {
+			for _, indexNode := range indexNodes {
+				row := Row{
+					values: []interface{}{},
 				}
 
-				for _, val := range columnValues {
-					row := Row{
-						values: []interface{}{val},
-					}
+				anyNotNillValue := false
 
+				for _, selectExpr := range exec.query.Select.SelectExprs {
+					switch slct := selectExpr.Value.(type) {
+					case *aqlprocessor.IdentifiedPathSelectValue:
+						{
+							ip := slct.Val
+							var val any
+							if sourceName == ip.Identifier {
+								if ip.ObjectPath != nil {
+									ok := false
+									val, ok = getValueForPath(ip.ObjectPath, indexNode)
+									if !ok {
+										val = nil
+									} else {
+										anyNotNillValue = true
+									}
+								}
+							}
+
+							row.values = append(row.values, val)
+						}
+					case *aqlprocessor.PrimitiveSelectValue:
+						{
+							anyNotNillValue = true
+							val := exec.getPrimitiveColumnValue(slct)
+							row.values = append(row.values, val)
+						}
+					case *aqlprocessor.AggregateFunctionCallSelectValue:
+						{
+							return nil, errors.New("Aggregation function call not implemented")
+						}
+					case *aqlprocessor.FunctionCallSelectValue:
+						{
+							return nil, errors.New("Function call not implemented")
+						}
+					default:
+						return nil, errors.New("Unexpected SelectExpr type")
+					}
+				}
+
+				if anyNotNillValue {
 					rows = append(rows, row)
 				}
 			}
-		case *aqlprocessor.PrimitiveSelectValue:
-			{
-				val := exec.getPrimitiveColumnValue(slct)
-				primitivesRow.values = append(primitivesRow.values, val)
-			}
-		case *aqlprocessor.AggregateFunctionCallSelectValue:
-			{
-				return nil, errors.New("Aggregation function call not implemented")
-			}
-		case *aqlprocessor.FunctionCallSelectValue:
-			{
-				return nil, errors.New("Function call not implemented")
-			}
-		default:
-			return nil, errors.New("Unexpected SelectExpr type")
 		}
 	}
-
-	rows = append(rows, primitivesRow)
 
 	result := &Rows{
 		rows: rows,

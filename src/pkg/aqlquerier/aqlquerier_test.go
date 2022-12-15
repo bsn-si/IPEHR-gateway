@@ -237,6 +237,66 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]float64{79.9, 981.13},
 			false,
 		},
+		{
+			"9. select values and int value",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude, 
+			   10
+   			FROM Observation o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := [][]any{}
+				for rows.Next() {
+					var val float64
+					var val2 int
+					if err := rows.Scan(&val, &val2); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					result = append(result, []any{val, val2})
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					return result[i][0].(float64) <= result[j][0].(float64)
+				})
+				return result, nil
+			},
+			[][]any{{940.0, 10}, {981.13, 10}},
+			false,
+		},
+		{
+			"10. select multipal columns",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude, 
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units 
+   			FROM Observation o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := [][]any{}
+				for rows.Next() {
+					var val float64
+					var val2 *string
+					if err := rows.Scan(&val, &val2); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					result = append(result, []any{val, val2})
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					return result[i][0].(float64) <= result[j][0].(float64)
+				})
+				return result, nil
+			},
+			[][]any{{940.0, toRef("/min")}, {981.13, toRef("kg")}},
+			false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -326,4 +386,8 @@ func getPreparedTreeIndex(filenames ...string) error {
 	}
 
 	return nil
+}
+
+func toRef[T any](v T) *T {
+	return &v
 }
