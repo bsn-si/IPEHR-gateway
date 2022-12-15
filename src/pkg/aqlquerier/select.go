@@ -2,7 +2,6 @@ package aqlquerier
 
 import (
 	"database/sql/driver"
-	"fmt"
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
 )
@@ -76,27 +75,6 @@ func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
 	}
 
 	return exec.fillColumns(result), nil
-}
-
-func getDataByIdentifiedPath(ip aqlprocessor.IdentifiedPath, sources map[string]dataSource) ([]any, error) {
-	result := []any{}
-
-	source, ok := sources[ip.Identifier]
-	if !ok {
-		return nil, fmt.Errorf("unexpected identifier %v", ip.Identifier) //nolint
-	}
-
-	for _, indexNodes := range source.data {
-		for _, indexNode := range indexNodes {
-			if ip.ObjectPath != nil {
-				if resultData, ok := getValueForPath(ip.ObjectPath, indexNode); ok {
-					result = append(result, resultData)
-				}
-			}
-		}
-	}
-
-	return result, nil
 }
 
 func (exec *executer) getPrimitiveColumnValue(prim *aqlprocessor.PrimitiveSelectValue) driver.Value {
