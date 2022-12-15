@@ -1,0 +1,24 @@
+{
+	"host": "localhost:8080",
+	"baseURL": "http://localhost:8080",
+	"localDB": {
+		"path": "/srv/IPEHR-stat/db/local.db",
+		"migrations": "/srv/IPEHR-stat/db/migrations"
+	},
+    "sync": {
+		"endpoint": "https://goerli.infura.io/v3/<API-KEY>",
+        "startBlock": 10000000,
+        "contracts": [
+            {
+                "name": "ehrIndex",
+                "address": "0xABeaebA82b0fA746999071482f7eAd65C42D847a",
+                "abiPath": "/srv/IPEHR-stat/pkg/contracts/ehrIndexer/EhrIndexer.abi"
+            },
+            {
+                "name": "users",
+                "address": "0x116bd8789F51D6103f34415Ef6D6644A6f561F9d",
+                "abiPath": "/srv/IPEHR-stat/pkg/contracts/users/Users.abi"
+            }
+        ]
+    }
+}
