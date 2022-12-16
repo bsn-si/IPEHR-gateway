@@ -59,4 +59,6 @@ const (
 	SectionItemType         ItemType = "SECTION"
 	TemplateIDItemType      ItemType = "TEMPLATE_ID"
 	TerminologyIDItemType   ItemType = "TERMINOLOGY_ID"
+	VersionOriginalItemType ItemType = "ORIGINAL_VERSION"
+	VersionImportedItemType ItemType = "IMPORTED_VERSION"
 )

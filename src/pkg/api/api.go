@@ -66,7 +66,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		DocAccess:    NewDocAccessHandler(docService),
 		Request:      NewRequestHandler(docService),
 		User:         NewUserHandler(user),
-		Contribution: NewContributionHandler(contribution, user, cfg.BaseURL),
+		Contribution: NewContributionHandler(contribution, user, templateService, cfg.BaseURL),
 	}
 }
 
@@ -140,7 +140,6 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
 		r.GET("/:ehrid/contribution/:contribution_uid", a.Contribution.GetByID)
 		r.POST("/:ehrid/contribution/", a.Contribution.Create)
-
 	}
 }
 func (a *API) buildAccessAPI() handlerBuilder {

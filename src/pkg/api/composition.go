@@ -106,7 +106,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	if !composition.Validate() {
+	if ok, _ := composition.Validate(); !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
 	}
@@ -442,7 +442,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if !compositionUpdate.Validate() {
+	if ok, _ := compositionUpdate.Validate(); !ok {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)
 		return
 	}

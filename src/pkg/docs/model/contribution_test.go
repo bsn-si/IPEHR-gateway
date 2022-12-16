@@ -23,7 +23,6 @@ type contributionVersionTestData struct {
 }
 
 func TestContribution_UnmarshalJSON(t *testing.T) {
-
 	tests := []struct {
 		name    string
 		data    contributionTestData

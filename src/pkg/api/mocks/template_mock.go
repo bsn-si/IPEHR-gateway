@@ -66,6 +66,20 @@ func (mr *MockTemplateServiceMockRecorder) GetList(ctx, userID, systemID interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockTemplateService)(nil).GetList), ctx, userID, systemID)
 }
 
+// IsExist mocks base method.
+func (m *MockTemplateService) IsExist(ctx context.Context, userID, systemID, ID string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsExist", ctx, userID, systemID, ID)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsExist indicates an expected call of IsExist.
+func (mr *MockTemplateServiceMockRecorder) IsExist(ctx, userID, systemID, ID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockTemplateService)(nil).IsExist), ctx, userID, systemID, ID)
+}
+
 // Parser mocks base method.
 func (m *MockTemplateService) Parser(version model.ADLVer) (template.ADLParser, error) {
 	m.ctrl.T.Helper()

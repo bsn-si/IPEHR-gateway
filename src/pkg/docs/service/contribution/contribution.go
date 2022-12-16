@@ -6,6 +6,7 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
 	userModel "hms/gateway/pkg/user/model"
 )
 
@@ -19,56 +20,50 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (*Service) GetByID(ctx context.Context, userID string, cID string) (*model.Contribution, error) {
+func (*Service) GetByID(ctx context.Context, userID string, cID string) (*model.ContributionResponse, error) {
 	return nil, errors.ErrNotImplemented
 }
 
-func (*Service) Store(ctx context.Context) error {
+func (*Service) Store(ctx context.Context, reqID, systemID string, user *userModel.UserInfo, c *model.Contribution) error {
 	return errors.ErrNotImplemented
 }
 
-func (*Service) Parse(ctx context.Context, c model.Contribution) (*model.Contribution, error) {
-	//for _, v := range c.Versions {
-	//	if (t:=v.Data["_type"]; ){}
-	//}
-
-	return nil, errors.ErrNotImplemented
+func (s *Service) Validate(_ context.Context, c *model.Contribution, template helper.Searcher) (bool, error) {
+	return c.Validate(template)
 }
 
-func (*Service) Validate(ctx context.Context, data interface{}) (bool, error) {
-	return false, errors.ErrNotImplemented
-}
-
-func (*Service) Execute(ctx context.Context) error {
-	// TODO need create loop, in which create actions should be in single PARENT transaction
+// TODO need create loop, in which create actions should be in single PARENT transaction
+// TODO commit only if lifecicle is complete or incomplete
+// TODO when prev state was incomplete, and we active complete, we need change version +1
+func (*Service) Commit(ctx context.Context, reqID, systemID string, user *userModel.UserInfo, c *model.Contribution) error {
 	return errors.ErrNotImplemented
 }
 
-func (h *Service) AddCommiter(ctx context.Context, c *model.Contribution, u userModel.UserInfo) error {
-	//Composer: base.NewPartyProxy(
-	//	&base.PartyIdentified{
-	//		Name: "Silvia Blake",
-	//		PartyProxyBase: base.PartyProxyBase{
-	//			Type: base.PartyIdentifiedItemType,
-	//		},
-	//	},
-	//),
+//func (h *Service) addCommiter(ctx context.Context, c *model.Contribution, u userModel.UserInfo) error {
+//Composer: base.NewPartyProxy(
+//	&base.PartyIdentified{
+//		Name: "Silvia Blake",
+//		PartyProxyBase: base.PartyProxyBase{
+//			Type: base.PartyIdentifiedItemType,
+//		},
+//	},
+//),
 
-	//"committer": {
-	//	"_type": "PARTY_IDENTIFIED",
-	//		"external_ref": {
-	//		"id": {
-	//			"_type": "HIER_OBJECT_ID",
-	//				"value": "f7e48c23-21b2-4b58-b9e0-a3ccece1bcf1"
-	//		},
-	//		"namespace": "DEMOGRAPHIC", // TODO ???
-	//			"type": "PERSON"
-	//	},
-	//	"name": "Dr. Yamamoto"
-	//}
-	return nil
-}
+//"committer": {
+//	"_type": "PARTY_IDENTIFIED",
+//		"external_ref": {
+//		"id": {
+//			"_type": "HIER_OBJECT_ID",
+//				"value": "f7e48c23-21b2-4b58-b9e0-a3ccece1bcf1"
+//		},
+//		"namespace": "DEMOGRAPHIC", // TODO ???
+//			"type": "PERSON"
+//	},
+//	"name": "Dr. Yamamoto"
+//}
+//return nil
+//}
 
-//func (*Service) Rollback(ctx context.Context) error {
+//func (*Service) rollback(ctx context.Context) error {
 //	return errors.ErrNotImplemented
 //}

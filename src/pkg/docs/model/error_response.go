@@ -1,17 +1,16 @@
 package model
 
 type ErrorResponse struct {
-	Message string   `json:"message"`
-	Errors  []string `json:"validationErrors"`
+	Message string  `json:"message"`
+	Errors  []error `json:"validationErrors"`
 }
 
-func (e *ErrorResponse) Add(err error) {
-	e.Errors = append(e.Errors, err.Error())
+func (e *ErrorResponse) SetMessage(m string) *ErrorResponse {
+	e.Message = m
+	return e
+}
 
-	//for err != nil {
-	//	if x, ok := err.(interface{ As(any) bool }); ok && x.As(target) {
-	//		return true
-	//	}
-	//	err = Unwrap(err)
-	//}
+func (e *ErrorResponse) AddError(err error) *ErrorResponse {
+	e.Errors = append(e.Errors, err)
+	return e
 }

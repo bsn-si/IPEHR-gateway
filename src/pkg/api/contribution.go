@@ -12,27 +12,30 @@ import (
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
+	userModel "hms/gateway/pkg/user/model"
 )
 
 type ContributionService interface {
-	GetByID(ctx context.Context, userID string, cID string) (*model.Contribution, error)
-	Store(ctx context.Context) error
-	Validate(ctx context.Context, data string) (bool, error)
-	Execute(ctx context.Context) error
-	//Rollback(ctx context.Context) error // TODO remove
+	GetByID(ctx context.Context, userID string, cID string) (*model.ContributionResponse, error)
+	Store(ctx context.Context, reqID, systemID string, user *userModel.UserInfo, c *model.Contribution) error
+	Validate(ctx context.Context, c *model.Contribution, template helper.Searcher) (bool, error)
+	Commit(ctx context.Context, reqID, systemID string, user *userModel.UserInfo, c *model.Contribution) error
 }
 
 type ContributionHandler struct {
-	service     ContributionService
-	userService UserService
-	baseURL     string
+	service         ContributionService
+	userService     UserService
+	templateService TemplateService
+	baseURL         string
 }
 
-func NewContributionHandler(cS ContributionService, uS UserService, baseURL string) *ContributionHandler {
+func NewContributionHandler(cS ContributionService, uS UserService, tS TemplateService, baseURL string) *ContributionHandler {
 	return &ContributionHandler{
-		service:     cS,
-		userService: uS,
-		baseURL:     baseURL,
+		service:         cS,
+		userService:     uS,
+		templateService: tS,
+		baseURL:         baseURL,
 	}
 }
 
@@ -104,40 +107,40 @@ func (h *ContributionHandler) GetByID(c *gin.Context) {
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/contribution [post]
 func (h *ContributionHandler) Create(ctx *gin.Context) {
+	errResponse := model.ErrorResponse{}
+
 	userID := ctx.GetString("userID")
 	if userID == "" {
-		// TODO StatusBadRequest shoul return corrent response
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
+		errResponse.SetMessage("Header required").
+			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
 	systemID := ctx.GetString("ehrSystemID")
 	if systemID == "" {
-		// TODO StatusBadRequest shoul return corrent response
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
+		errResponse.SetMessage("Header required").
+			AddError(errors.ErrFieldIsIncorrect("EhrSystemId"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
 	data, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
-		// TODO StatusBadRequest shoul return corrent response
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		errResponse.SetMessage("Request body error").AddError(err)
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 	defer ctx.Request.Body.Close()
 
 	c := &model.Contribution{}
 	if err := json.NewDecoder(ctx.Request.Body).Decode(c); err != nil {
-		//log.Println("Contribution Create request unmarshal error", err)
-		// TODO StatusBadRequest shoul return corrent response
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Request body parsing error"})
-		return
-	}
+		errResponse.SetMessage("Request body parsing error").AddError(err)
 
-	if ok, err := h.service.Validate(ctx, c); !ok {
-		// TODO 409
-		// TODO StatusBadRequest shoul return corrent response
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
@@ -148,14 +151,23 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	reqID := ctx.GetString("reqID")
-	if err := h.service.Execute(ctx, userInfo, reqID, c); err != nil {
-		// TODO StatusBadRequest shoul return corrent response
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": ""})
+	templateSearcher := helper.NewSearcher(ctx, userID, systemID, h.templateService)
+	if ok, err := h.service.Validate(ctx, c, templateSearcher); !ok {
+		errResponse.SetMessage("Validation failed").AddError(err)
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
-	if err := h.service.Store(ctx, userID, systemID, reqID, c); err != nil {
+	reqID := ctx.GetString("reqID")
+	if err := h.service.Commit(ctx, reqID, systemID, userInfo, c); err != nil {
+		errResponse.SetMessage("Commit failed").AddError(err)
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	if err := h.service.Store(ctx, reqID, systemID, userInfo, c); err != nil {
 		log.Printf("Contribution service store error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
 		ctx.AbortWithStatus(http.StatusInternalServerError)

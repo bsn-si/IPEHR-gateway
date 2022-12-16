@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/model/base"
+	errorsPkg "hms/gateway/pkg/errors"
 
 	"github.com/pkg/errors"
 )
@@ -22,15 +23,12 @@ type Composition struct {
 	base.Locatable
 }
 
-func (c *Composition) Validate() bool {
-	validation := true
+func (c *Composition) Validate() (bool, error) {
 	if c.Type != base.CompositionItemType {
-		validation = false
+		return false, errorsPkg.ErrIsUnsupported
 	}
 
-	// TODO check what template ID is not empty and exist
-
-	return validation
+	return true, nil
 }
 
 func (c *Composition) UnmarshalJSON(data []byte) error {
