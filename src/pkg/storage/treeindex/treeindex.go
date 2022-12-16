@@ -29,13 +29,13 @@ func NewTree() *Tree {
 
 func (t *Tree) GetDataSourceByName(name string) (Container, error) {
 	switch name {
-	case "Acton":
+	case "ACTION":
 		return nil, errors.New("ACTION source not implemented")
-	case "Evaluation":
+	case "EVALUATION":
 		return nil, errors.New("Evaluation source not implemented")
-	case "Instruction":
+	case "INSTRUCTION":
 		return nil, errors.New("Instruction source not implemented")
-	case "Observation":
+	case "OBSERVATION":
 		return t.obeservations, nil
 	default:
 		return nil, fmt.Errorf("unexpected source type: %v", name) //nolint

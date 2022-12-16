@@ -55,7 +55,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				'1984-01-01',
 				'15:35:10.123', 
 				'1984-01-01T15:35:10.123'
-			FROM Observation o`,
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_1.json"},
 			func(rows *sql.Rows) (interface{}, error) {
@@ -87,7 +87,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"3. select values",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-   			FROM Observation o`,
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
 			func(rows *sql.Rows) (interface{}, error) {
@@ -110,7 +110,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"4. select values with WHERE",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-   			FROM Observation o
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
 			[]interface{}{},
@@ -135,7 +135,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"5. select values with WHERE AND",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-   			FROM Observation o
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100
 				AND o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 940.0`,
@@ -161,7 +161,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"6. select values with WHERE OR",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-   			FROM Observation o
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
 				OR o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude > 940.0`,
@@ -187,7 +187,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"7. select values with WHERE NOT",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-   			FROM Observation o
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				NOT o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100`,
 			[]interface{}{},
@@ -212,10 +212,10 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"8. select values with WHERE AND (OR)",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-   			FROM Observation o
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
-				OR 
+				OR
 				(
 					NOT	o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude = 940.0
 				)`,
@@ -240,9 +240,9 @@ func TestService_ExecuteQuery(t *testing.T) {
 		{
 			"9. select values and int value",
 			`SELECT
-			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude, 
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
 			   10
-   			FROM Observation o
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
 			[]interface{}{},
@@ -270,9 +270,9 @@ func TestService_ExecuteQuery(t *testing.T) {
 		{
 			"10. select multipal columns",
 			`SELECT
-			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude, 
-			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units 
-   			FROM Observation o
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
 			WHERE
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
 			[]interface{}{},
