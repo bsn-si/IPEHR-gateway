@@ -82,12 +82,14 @@ func (exec *executer) getSources(from aqlprocessor.ContainsExpr) (map[string]dat
 
 func mergeDataSourceMaps(dsMaps []map[string]dataSource) map[string]dataSource {
 	result := map[string]dataSource{}
+
 	for _, m := range dsMaps {
 		for key, ds := range m {
 			if originDS, ok := result[key]; ok {
 				for key, contanier := range ds.data {
 					originDS.data[key] = contanier
 				}
+
 				continue
 			}
 
