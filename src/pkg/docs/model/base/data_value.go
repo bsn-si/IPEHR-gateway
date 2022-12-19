@@ -376,8 +376,3 @@ type DvURI struct {
 	DvValueBase
 	Value string `json:"value"`
 }
-
-//type DvComposition struct {
-//	DvValueBase
-//	model.Composition
-//}

@@ -154,11 +154,6 @@ func (a *API) buildEhrAPI() handlerBuilder {
 
 func (a *API) buildEhrContributionAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
-		r = r.Group("ehr")
-		r.Use(gzip.Gzip(gzip.DefaultCompression))
-		//r.Use(Recovery, app_errors.ErrHandler)
-		r.Use(auth(a))
-		r.Use(ehrSystemID)
 		r.GET("/:ehr_id/contribution/:contribution_uid", a.Contribution.GetByID)
 		r.POST("/:ehr_id/contribution/", a.Contribution.Create)
 	}
