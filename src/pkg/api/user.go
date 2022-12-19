@@ -59,7 +59,7 @@ func NewUserHandler(handlerService UserService) *UserHandler {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    EhrSystemId  header  string                   true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId  header  string                   false "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request      body    model.UserCreateRequest  true  "User creation request. `role`: 0 - Patient, 1 - Doctor. Fields `Name`, `Address`, `Description`, `PictureURL` are required for Doctor role"
 // @Success  201          "Indicates that the request has succeeded and transaction about register new user has been created"
 // @Header   201          {string}  RequestID  "Request identifier"
@@ -89,10 +89,6 @@ func (h *UserHandler) Register(c *gin.Context) {
 	c.Header("RequestId", reqID)
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "EhrSystemId required"})
-		return
-	}
 
 	var userCreateRequest userModel.UserCreateRequest
 	if err = json.Unmarshal(data, &userCreateRequest); err != nil {

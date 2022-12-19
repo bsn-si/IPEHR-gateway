@@ -2272,8 +2272,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "User creation request. ` + "`" + `role` + "`" + `: 0 - Patient, 1 - Doctor. Fields ` + "`" + `Name` + "`" + `, ` + "`" + `Address` + "`" + `, ` + "`" + `Description` + "`" + `, ` + "`" + `PictureURL` + "`" + ` are required for Doctor role",

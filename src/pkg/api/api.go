@@ -192,14 +192,14 @@ func (a *API) buildUserAPI() handlerBuilder {
 
 		r.GET("/:user_id", a.User.Info)
 		r.GET("/code/:code", a.User.InfoByCode)
-
-		r.Use(ehrSystemID)
 		r.POST("/register", a.User.Register)
 		r.POST("/login", a.User.Login)
 		r.GET("/refresh", a.User.RefreshToken)
 
 		r.Use(auth(a))
 		r.POST("/logout", a.User.Logout)
+
+		r.Use(ehrSystemID)
 
 		r = r.Group("group")
 		r.POST("", a.User.GroupCreate)
