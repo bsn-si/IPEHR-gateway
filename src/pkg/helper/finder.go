@@ -5,7 +5,7 @@ import (
 )
 
 type Finder interface {
-	IsExist(ctx context.Context, userID string, systemID string, ID string) bool
+	IsExist(ctx context.Context, userID, systemID, ehrUUID, ID string) bool
 }
 
 type Searcher interface {
@@ -16,18 +16,24 @@ type Search struct {
 	service  Finder
 	ctx      context.Context
 	userID   string
+	ehrUUID  string
 	systemID string
 }
 
 func (h *Search) IsExist(ID string) bool {
-	return h.service.IsExist(h.ctx, h.userID, h.systemID, ID)
+	return h.service.IsExist(h.ctx, h.userID, h.systemID, h.ehrUUID, ID)
 }
 
-func NewSearcher(ctx context.Context, userID string, systemID string, s Finder) *Search {
+func (h *Search) UseService(s Finder) *Search {
+	h.service = s
+	return h
+}
+
+func NewSearcher(ctx context.Context, userID, systemID, ehrUUID string) *Search {
 	return &Search{
-		service:  s,
 		ctx:      ctx,
 		userID:   userID,
+		ehrUUID:  ehrUUID,
 		systemID: systemID,
 	}
 }

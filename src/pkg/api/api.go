@@ -11,6 +11,7 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/composition"
 	contributionService "hms/gateway/pkg/docs/service/contribution"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
@@ -56,17 +57,26 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	user := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 
+	compositionService := composition.NewCompositionService(
+		docService.Infra.Index,
+		docService.Infra.IpfsClient,
+		docService.Infra.FilecoinClient,
+		docService.Infra.Keystore,
+		docService.Infra.Compressor,
+		docService,
+		groupAccessService)
+
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
-		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
+		Composition: NewCompositionHandler(docService, compositionService, cfg.BaseURL),
 		Query:       NewQueryHandler(queryService, cfg.BaseURL),
 		Template:    NewTemplateHandler(templateService, cfg.BaseURL),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess:    NewDocAccessHandler(docService),
 		Request:      NewRequestHandler(docService),
 		User:         NewUserHandler(user),
-		Contribution: NewContributionHandler(contribution, user, templateService, cfg.BaseURL),
+		Contribution: NewContributionHandler(contribution, user, templateService, compositionService, cfg.BaseURL),
 	}
 }
 
@@ -138,8 +148,8 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
 		r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
-		r.GET("/:ehrid/contribution/:contribution_uid", a.Contribution.GetByID)
-		r.POST("/:ehrid/contribution/", a.Contribution.Create)
+		r.GET("/:ehr_id/contribution/:contribution_uid", a.Contribution.GetByID)
+		r.POST("/:ehr_id/contribution/", a.Contribution.Create)
 	}
 }
 func (a *API) buildAccessAPI() handlerBuilder {

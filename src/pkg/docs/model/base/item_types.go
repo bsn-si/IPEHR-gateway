@@ -15,6 +15,7 @@ const (
 	ClusterItemType         ItemType = "CLUSTER"
 	CodePhraseItemType      ItemType = "CODE_PHRASE"
 	CompositionItemType     ItemType = "COMPOSITION"
+	ContributionItemType    ItemType = "CONTRIBUTION"
 	DvBooleanItemType       ItemType = "DV_BOOLEAN"
 	DvCodedTextItemType     ItemType = "DV_CODED_TEXT"
 	DvCountItemType         ItemType = "DV_COUNT"

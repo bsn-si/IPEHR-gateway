@@ -25,6 +25,7 @@ type AuditDetails struct {
 
 // https://specifications.openehr.org/releases/RM/latest/common.html#_contribution_class
 type Contribution struct {
+	base.Root
 	UID      base.UIDBasedID       `json:"uid"`
 	Versions []ContributionVersion `json:"versions"`
 	Audit    AuditDetails          `json:"audit"`
@@ -38,12 +39,13 @@ type ContributionResponse struct {
 }
 
 type ContributionVersion struct {
-	Type           base.ItemType    `json:"_type"`
-	Contribution   base.ObjectRef   `json:"contribution"`
-	CommitAudit    AuditDetails     `json:"commit_audit"`
-	UID            base.UIDBasedID  `json:"uid"`
-	LifecycleState base.DvCodedText `json:"lifecycle_state"`
-	Data           base.Root        `json:"data"`
+	Type                base.ItemType    `json:"_type"`
+	Contribution        base.ObjectRef   `json:"contribution"`
+	CommitAudit         AuditDetails     `json:"commit_audit"`
+	UID                 base.UIDBasedID  `json:"uid"`
+	PrecedingVersionUID base.UIDBasedID  `json:"preceding_version_uid"`
+	LifecycleState      base.DvCodedText `json:"lifecycle_state"`
+	Data                base.Root        `json:"data"`
 }
 
 type contributionVersionWrapper struct {
@@ -58,46 +60,6 @@ type contributionVersionWrapper struct {
 type contributionVersionDataWrapper struct {
 	item base.Root
 }
-
-//type versionType string
-//
-//const (
-//	originalVersion versionType = "ORIGINAL_VERSION"
-//	importedVersion versionType = "IMPORTED_VERSION"
-//)
-
-//func (*versionType) is(t string) bool {
-//	versionType(t)
-//}
-
-// https://specifications.openehr.org/releases/RM/latest/common.html#_version_lifecycle
-//type lifecycleState string
-//
-//type lifecycle struct {
-//	code  int
-//	state lifecycleState
-//}
-
-//	const zzz = map[string]int{
-//		"truck": 5,
-//		"car":   7,
-//	}
-//func init() {
-//	lifeCycleSet := make(map[lifecycle]bool, 0)
-//
-//	tile := lifeCycleSet{X: 1, Y: 2}
-//	tileSet[tile] = true
-//
-//	// check existence
-//	if exists := tileSet[tile]; exists {
-//		// ...
-//	}
-//
-//	// range over set elements
-//	for tile, _ := range tileSet {
-//		// ...
-//	}
-//}
 
 func (c *ContributionVersion) UnmarshalJSON(data []byte) error {
 	w := contributionVersionWrapper{}
@@ -125,7 +87,7 @@ func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 	}
 
 	switch tmp.Type {
-	// TODO need add DIRECTORY/FOLDER type after it will be realized
+	// TODO need add DIRECTORY/FOLDER type after it will be realized and write tests
 	case base.CompositionItemType:
 		c := Composition{}
 		if err := c.UnmarshalJSON(data); err != nil {

@@ -58,7 +58,7 @@ func (*Service) GetList(ctx context.Context, userID, systemID string) ([]*model.
 	return nil, errors.ErrNotImplemented
 }
 
-func (s *Service) IsExist(ctx context.Context, userID string, systemID string, templateID string) bool {
+func (s *Service) IsExist(ctx context.Context, userID, systemID, ehrUUID, templateID string) bool {
 	ok, _ := s.GetByID(ctx, userID, templateID)
 	return (ok != nil)
 }

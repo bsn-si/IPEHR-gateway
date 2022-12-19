@@ -9,33 +9,38 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/helper"
 	userModel "hms/gateway/pkg/user/model"
 )
 
 type ContributionService interface {
+	NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error)
 	GetByID(ctx context.Context, userID string, cID string) (*model.ContributionResponse, error)
-	Store(ctx context.Context, reqID, systemID string, user *userModel.UserInfo, c *model.Contribution) error
+	Store(ctx context.Context, req processing.RequestInterface, systemID string, user *userModel.UserInfo, c *model.Contribution) error
 	Validate(ctx context.Context, c *model.Contribution, template helper.Searcher) (bool, error)
-	Commit(ctx context.Context, reqID, systemID string, user *userModel.UserInfo, c *model.Contribution) error
+	Execute(ctx context.Context, req processing.RequestInterface, userID, ehrUUID string, c *model.Contribution, hComposition helper.Searcher) error
 }
 
 type ContributionHandler struct {
-	service         ContributionService
-	userService     UserService
-	templateService TemplateService
-	baseURL         string
+	service            ContributionService
+	userService        UserService
+	templateService    TemplateService
+	compositionService CompositionService
+	baseURL            string
 }
 
-func NewContributionHandler(cS ContributionService, uS UserService, tS TemplateService, baseURL string) *ContributionHandler {
+func NewContributionHandler(cS ContributionService, uS UserService, tS TemplateService, compS CompositionService, baseURL string) *ContributionHandler {
 	return &ContributionHandler{
-		service:         cS,
-		userService:     uS,
-		templateService: tS,
-		baseURL:         baseURL,
+		service:            cS,
+		userService:        uS,
+		templateService:    tS,
+		compositionService: compS,
+		baseURL:            baseURL,
 	}
 }
 
@@ -118,6 +123,17 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
+	ehrID := ctx.Param("ehr_id")
+
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		errResponse.SetMessage("Incorrect param").
+			AddError(errors.ErrFieldIsIncorrect("ehr_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
 	systemID := ctx.GetString("ehrSystemID")
 	if systemID == "" {
 		errResponse.SetMessage("Header required").
@@ -144,15 +160,8 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	userInfo, err := h.userService.Info(ctx, userID)
-	if err != nil {
-		log.Println("userService.Info error: ", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	templateSearcher := helper.NewSearcher(ctx, userID, systemID, h.templateService)
-	if ok, err := h.service.Validate(ctx, c, templateSearcher); !ok {
+	templateSearcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String())
+	if ok, err := h.service.Validate(ctx, c, templateSearcher.UseService(h.templateService)); !ok {
 		errResponse.SetMessage("Validation failed").AddError(err)
 
 		ctx.JSON(http.StatusBadRequest, errResponse)
@@ -160,23 +169,48 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 	}
 
 	reqID := ctx.GetString("reqID")
-	if err := h.service.Commit(ctx, reqID, systemID, userInfo, c); err != nil {
-		errResponse.SetMessage("Commit failed").AddError(err)
+
+	procRequest, err := h.service.NewProcRequest(reqID, userID, ehrUUID.String(), processing.RequestContributionCreate)
+	if err != nil {
+		log.Println("contributionService.Create error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+
+	if err := h.service.Execute(ctx, procRequest, userID, ehrUUID.String(), c, templateSearcher.UseService(h.compositionService)); err != nil {
+		errResponse.SetMessage("Execute failed").AddError(err)
 
 		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
-	if err := h.service.Store(ctx, reqID, systemID, userInfo, c); err != nil {
+	userInfo, err := h.userService.Info(ctx, userID)
+	if err != nil {
+		log.Println("userService.Info error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if err := h.service.Store(ctx, procRequest, systemID, userInfo, c); err != nil {
 		log.Printf("Contribution service store error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	// TODO UID into UUID?
+	if err := procRequest.Commit(); err != nil {
+		log.Println("Contribution procRequest commit error:", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	// TODO wrap into model response
 	ctx.Header("Location", fmt.Sprintf("%s/%s/contribution/%s", h.baseURL, systemID, c.UID.Value))
 	ctx.Header("ETag", fmt.Sprintf("\"%s\"", c.UID.Value))
+
+	//responseContribution := model.ContributionResponse{
+	//	UID:   base.UIDBasedID{},
+	//	Audit: model.AuditDetails{},
+	//}
 
 	if ctx.Request.Header.Get("Prefer") == "return=representation" {
 		ctx.Data(http.StatusCreated, "application/xml", data)

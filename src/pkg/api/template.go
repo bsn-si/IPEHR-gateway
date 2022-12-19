@@ -58,7 +58,7 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	tID := c.Param("template_id") // TODO should have its own structure and validation method
+	tID := c.Param("template_id")
 
 	t, err := h.service.GetByID(c, userID, tID)
 	if err != nil {

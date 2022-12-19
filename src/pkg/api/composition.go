@@ -13,13 +13,14 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
-	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
 )
 
 type CompositionService interface {
+	helper.Finder
 	DefaultGroupAccess() *model.GroupAccess
 	Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
 	Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
@@ -44,17 +45,9 @@ type CompositionHandler struct {
 	baseURL       string
 }
 
-func NewCompositionHandler(docService *service.DefaultDocumentService, groupAccessService *groupAccess.Service, baseURL string) *CompositionHandler {
+func NewCompositionHandler(docService *service.DefaultDocumentService, compositionService *composition.Service, baseURL string) *CompositionHandler {
 	return &CompositionHandler{
-		service: composition.NewCompositionService(
-			docService.Infra.Index,
-			docService.Infra.IpfsClient,
-			docService.Infra.FilecoinClient,
-			docService.Infra.Keystore,
-			docService.Infra.Compressor,
-			docService,
-			groupAccessService,
-		),
+		service:       compositionService,
 		indexer:       docService.Infra.Index,
 		processingSvc: docService.Proc,
 		baseURL:       baseURL,

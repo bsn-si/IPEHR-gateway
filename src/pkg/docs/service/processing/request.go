@@ -76,6 +76,7 @@ const (
 	RequestUserGroupCreate
 	RequestUserGroupAddUser
 	RequestUserGroupRemoveUser
+	RequestContributionCreate
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
