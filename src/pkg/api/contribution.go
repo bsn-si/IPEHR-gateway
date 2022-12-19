@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 
@@ -24,6 +23,7 @@ type ContributionService interface {
 	Store(ctx context.Context, req processing.RequestInterface, systemID string, user *userModel.UserInfo, c *model.Contribution) error
 	Validate(ctx context.Context, c *model.Contribution, template helper.Searcher) (bool, error)
 	Execute(ctx context.Context, req processing.RequestInterface, userID, ehrUUID string, c *model.Contribution, hComposition helper.Searcher) error
+	PrepareResponse(ctx context.Context, systemID string, c *model.Contribution) (*model.ContributionResponse, error)
 }
 
 type ContributionHandler struct {
@@ -54,7 +54,7 @@ func NewContributionHandler(cS ContributionService, uS UserService, tS TemplateS
 // @Param        Authorization  header    string     true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string     true  "UserId UUID"
 // @Param        EhrSystemId           header    string  true   "The identifier of the system, typically a reverse domain identifier"
-// @Success      200            {string}  model.contribution
+// @Success      200            {object}  model.ContributionResponse
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      404            "Is returned when an EHR with {ehr_id}  does not exist, or when a CONTRIBUTION with {contribution_uid} does not exist"
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
@@ -107,7 +107,7 @@ func (h *ContributionHandler) GetByID(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Success      201  {object}  model.ContributionResponse  "Is returned when the CONTRIBUTION was successfully created."
-// @Failure      400  {object} model.ContributionResponseWithError "Is returned when the request URL or body could not be parsed or has invalid content (e.g. invalid {ehr_id}, or either the body of the request not be converted to a valid CONTRIBUTION object, or the modification type doesn’t match the operation - i.e. first version of a composition with MODIFICATION)."
+// @Failure      400  {object} model.ErrorResponse "Is returned when the request URL or body could not be parsed or has invalid content (e.g. invalid {ehr_id}, or either the body of the request not be converted to a valid CONTRIBUTION object, or the modification type doesn’t match the operation - i.e. first version of a composition with MODIFICATION)."
 // @Failure      409  "Is returned when a resource with same identifier(s) already exists."
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/contribution [post]
@@ -143,20 +143,23 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	data, err := io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		errResponse.SetMessage("Request body error").AddError(err)
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
-	defer ctx.Request.Body.Close()
-
 	c := &model.Contribution{}
 	if err := json.NewDecoder(ctx.Request.Body).Decode(c); err != nil {
 		errResponse.SetMessage("Request body parsing error").AddError(err)
 
 		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	existContr, err := h.service.GetByID(ctx, userID, c.UID.Value)
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
+		log.Println("contributionService.GetByID error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if existContr != nil {
+		ctx.AbortWithStatus(http.StatusConflict)
 		return
 	}
 
@@ -203,19 +206,20 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	// TODO wrap into model response
-	ctx.Header("Location", fmt.Sprintf("%s/%s/contribution/%s", h.baseURL, systemID, c.UID.Value))
+	ctx.Header("Location", fmt.Sprintf("%s/%s/contribution/%s", h.baseURL, ehrUUID.String(), c.UID.Value))
 	ctx.Header("ETag", fmt.Sprintf("\"%s\"", c.UID.Value))
 
-	//responseContribution := model.ContributionResponse{
-	//	UID:   base.UIDBasedID{},
-	//	Audit: model.AuditDetails{},
-	//}
+	prefer := ctx.Request.Header.Get("Prefer")
+	if prefer == "return=representation" {
+		cR, err := h.service.PrepareResponse(ctx, systemID, c)
+		if err != nil {
+			log.Println("Contribution PrepareResponse error:", err)
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
 
-	if ctx.Request.Header.Get("Prefer") == "return=representation" {
-		ctx.Data(http.StatusCreated, "application/xml", data)
+		ctx.JSON(http.StatusCreated, cR)
 		return
 	}
-
 	ctx.Status(http.StatusCreated)
 }

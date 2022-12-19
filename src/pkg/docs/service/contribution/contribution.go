@@ -2,6 +2,8 @@ package contribution
 
 import (
 	"context"
+	"hms/gateway/pkg/common"
+	"time"
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
@@ -31,7 +33,6 @@ func (*Service) GetByID(ctx context.Context, userID string, cID string) (*model.
 }
 
 func (*Service) Store(ctx context.Context, req processing.RequestInterface, systemID string, user *userModel.UserInfo, c *model.Contribution) error {
-	// TODO what about increase version?
 	return errors.ErrNotImplemented
 }
 
@@ -93,30 +94,28 @@ func (s *Service) Execute(ctx context.Context, req processing.RequestInterface, 
 	return errors.ErrNotImplemented
 }
 
-//func (h *Service) addCommiter(ctx context.Context, c *model.Contribution, u userModel.UserInfo) error {
-//Composer: base.NewPartyProxy(
-//	&base.PartyIdentified{
-//		Name: "Silvia Blake",
-//		PartyProxyBase: base.PartyProxyBase{
-//			Type: base.PartyIdentifiedItemType,
-//		},
-//	},
-//),
+func (s *Service) PrepareResponse(ctx context.Context, systemID string, c *model.Contribution) (*model.ContributionResponse, error) {
+	cR := model.ContributionResponse{
+		UID: c.UID,
+	}
 
-//"committer": {
-//	"_type": "PARTY_IDENTIFIED",
-//		"external_ref": {
-//		"id": {
-//			"_type": "HIER_OBJECT_ID",
-//				"value": "f7e48c23-21b2-4b58-b9e0-a3ccece1bcf1"
-//		},
-//		"namespace": "DEMOGRAPHIC", // TODO ???
-//			"type": "PERSON"
-//	},
-//	"name": "Dr. Yamamoto"
-//}
-//return nil
-//}
+	for _, v := range c.Versions {
+		t := model.ContributionVersionResponse{
+			Type:         v.Type,
+			Contribution: v.Contribution,
+		}
+
+		cR.Versions = append(cR.Versions, t)
+	}
+
+	cR.Audit.TimeCommited = base.DvDateTime{
+		Value: time.Now().Format(common.OpenEhrTimeFormat),
+	}
+
+	cR.Audit.SystemID = systemID
+
+	return &cR, nil
+}
 
 //func (*Service) rollback(ctx context.Context) error {
 //	return errors.ErrNotImplemented

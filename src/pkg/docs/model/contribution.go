@@ -32,10 +32,9 @@ type Contribution struct {
 }
 
 type ContributionResponse struct {
-	UID base.UIDBasedID `json:"uid"`
-	// TODO must be only references, like base.ObjectRef
-	//Versions []ContributionVersion `json:"versions"`
-	Audit AuditDetails `json:"audit"`
+	UID      base.UIDBasedID               `json:"uid"`
+	Versions []ContributionVersionResponse `json:"versions"`
+	Audit    AuditDetails                  `json:"audit"`
 }
 
 type ContributionVersion struct {
@@ -46,6 +45,11 @@ type ContributionVersion struct {
 	PrecedingVersionUID base.UIDBasedID  `json:"preceding_version_uid"`
 	LifecycleState      base.DvCodedText `json:"lifecycle_state"`
 	Data                base.Root        `json:"data"`
+}
+
+type ContributionVersionResponse struct {
+	Type         base.ItemType `json:"_type"`
+	Contribution base.ObjectRef
 }
 
 type contributionVersionWrapper struct {
