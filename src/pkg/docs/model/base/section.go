@@ -58,8 +58,6 @@ func (item *sectionItemWrapper) UnmarshalJSON(data []byte) error {
 		item.contentItem = &Observation{}
 	case InstructionItemType:
 		item.contentItem = &Instruction{}
-	//case CompositionItemType://
-	//	item.contentItem = &Instruction{}
 	default:
 		return errors.Errorf("unexpected section item type: '%v'", str.Type)
 	}

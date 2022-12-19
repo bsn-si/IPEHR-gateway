@@ -84,6 +84,7 @@ func (a *API) Build() *gin.Engine {
 	return a.setupRouter(
 		a.buildUserAPI(),
 		a.buildEhrAPI(),
+		a.buildEhrContributionAPI(),
 		a.buildAccessAPI(),
 		//a.buildGroupAccessAPI(),
 		a.buildQueryAPI(),
@@ -148,10 +149,21 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.GET("/:ehrid/composition/:version_uid", a.Composition.GetByID)
 		r.DELETE("/:ehrid/composition/:preceding_version_uid", a.Composition.Delete)
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
+	}
+}
+
+func (a *API) buildEhrContributionAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("ehr")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		//r.Use(Recovery, app_errors.ErrHandler)
+		r.Use(auth(a))
+		r.Use(ehrSystemID)
 		r.GET("/:ehr_id/contribution/:contribution_uid", a.Contribution.GetByID)
 		r.POST("/:ehr_id/contribution/", a.Contribution.Create)
 	}
 }
+
 func (a *API) buildAccessAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("access")

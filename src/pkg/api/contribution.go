@@ -66,6 +66,8 @@ func (h *ContributionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
+	// TODO do I need to checking userID by EHRid?
+
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
@@ -124,6 +126,7 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 	}
 
 	ehrID := ctx.Param("ehr_id")
+	// TODO do we need checking userID by EHRid because it can be summary data with different users (GetEhrUUIDByUserID(c, userID, systemID))
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {

@@ -121,7 +121,6 @@ func (c *Contribution) Validate(template helper.Searcher) (bool, error) {
 	return true, nil
 }
 
-// TODO data should exist and type is known, and also run validation in there, if it modified and type not exist...
 func (c *ContributionVersion) Validate(templateSearcher helper.Searcher) (bool, error) {
 	if c.Data == nil {
 		return false, errorsPkg.ErrFieldIsEmpty("Data")
@@ -139,7 +138,7 @@ func (c *ContributionVersion) Validate(templateSearcher helper.Searcher) (bool, 
 		// If version of lifecycle state is incomplete then validation can be missed partially
 		// https://specifications.openehr.org/releases/RM/latest/common.html#_version_lifecycle
 		if ok, err := composition.Validate(); !ok {
-			return false, errorsPkg.Wrap(err, "Version of composition is not valid")
+			return false, errorsPkg.Wrap(err, "Version of contribution is not valid")
 		}
 
 		templateID := composition.ArchetypeDetails.TemplateID.Value
