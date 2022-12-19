@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
@@ -71,8 +72,8 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, groupAcce
 // @Produce  json
 // @Param    ehr_id         path      string                 true   "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    Authorization  header    string                 true   "Bearer AccessToken"
-// @Param    AuthUserId     header    string                 true   "UserId - UUID"
-// @Param    EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
+// @Param    AuthUserId     header    string                 true   "UserId"
+// @Param    EhrSystemId    header    string                 false  "The identifier of the system, typically a reverse domain identifier"
 // @Param    GroupAccessId  header    string                 false  "GroupAccessId - UUID. If not specified, the default access group will be used."
 // @Param    Prefer         header    string                 true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param    Request        body      model.SwagComposition  true   "COMPOSITION"
@@ -87,7 +88,11 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, groupAcce
 // @Router   /ehr/{ehr_id}/composition [post]
 func (h *CompositionHandler) Create(c *gin.Context) {
 	ehrID := c.Param("ehrid")
+
 	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	//TODO validate id
 
@@ -185,8 +190,8 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 // @Param    ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    version_uid    path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 // @Param    Authorization  header    string  true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true  "UserId UUID"
-// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    AuthUserId     header    string  true  "UserId"
+// @Param    EhrSystemId    header    string  false "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  model.SwagComposition
 // @Success  202            "Is returned when the request is still being processed"
 // @Failure  204            "Is returned when the COMPOSITION is deleted (logically)."
@@ -196,7 +201,11 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{version_uid} [get]
 func (h *CompositionHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
+
 	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -259,8 +268,8 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 // @Param    ehr_id                 path    string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    preceding_version_uid  path    string  true  "Identifier of the COMPOSITION to be deleted. This MUST be the last (most recent)  version.  Example:  `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
 // @Param    Authorization          header  string  true  "Bearer AccessToken"
-// @Param    AuthUserId             header  string  true  "UserId UUID"
-// @Param    EhrSystemId            header  string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    AuthUserId             header  string  true  "UserId"
+// @Param    EhrSystemId            header  string  false "The identifier of the system, typically a reverse domain identifier"
 // @Failure  204                    "`No Content` is returned when COMPOSITION was deleted."
 // @Header   204                    {string}  RequestID  "Request identifier"
 // @Failure  400                    "`Bad Request` is returned when the composition with `preceding_version_uid` is already deleted."
@@ -270,7 +279,11 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{preceding_version_uid} [delete]
 func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
+
 	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	//TODO validate ehrID
 
@@ -352,8 +365,8 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Param    ehr_id                path      string                 true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    versioned_object_uid  path      string                 true  "identifier of the COMPOSITION to be updated. Example: `8849182c-82ad-4088-a07f-48ead4180515`"
 // @Param    Authorization         header    string                 true  "Bearer AccessToken"
-// @Param    AuthUserId            header    string                 true  "UserId UUID"
-// @Param    EhrSystemId           header    string                 true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    AuthUserId            header    string                 true  "UserId"
+// @Param    EhrSystemId           header    string                 false "The identifier of the system, typically a reverse domain identifier"
 // @Param    Prefer                header    string                 true  "The updated COMPOSITION resource is returned to the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param    If-Match              header    string                 true  "The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid).  Example:  `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
 // @Param    Request               body      model.SwagComposition  true  "List of changes in COMPOSITION"
@@ -369,9 +382,12 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
 	ehrID := c.Param("ehrid")
-	systemID := c.GetString("ehrSystemID")
-
 	//TODO validate ehrID
+
+	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -509,8 +525,8 @@ func (h CompositionHandler) Update(c *gin.Context) {
 // @Produce  json
 // @Param    ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    Authorization  header    string  true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true  "UserId UUID"
-// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    AuthUserId     header    string  true  "UserId"
+// @Param    EhrSystemId    header    string  false "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  []model.EhrDocumentItem
 // @Failure  400            "Is returned when AuthUserId or EhrSystemId is not specified"
 // @Failure  404            "is returned when an EHR with `ehr_id` does not exist."
@@ -518,7 +534,11 @@ func (h CompositionHandler) Update(c *gin.Context) {
 // @Router   /ehr/{ehr_id}/composition [get]
 func (h CompositionHandler) GetList(c *gin.Context) {
 	ehrID := c.Param("ehrid")
+
 	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {

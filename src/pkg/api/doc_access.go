@@ -10,6 +10,7 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/access"
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/docAccess"
@@ -34,7 +35,7 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 // @Produce      json
 // @Param        Authorization  header  string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string  true  "UserId UUID"
-// @Param        EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId    header    string                 false   "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            ""
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
@@ -48,8 +49,7 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	acl, err := h.service.List(c, userID, systemID)
@@ -100,7 +100,7 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 // @Produce      json
 // @Param        Authorization  header  string                     true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string                     true  "UserId UUID"
-// @Param    EhrSystemId    header    string                 true   "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId    header    string                 false   "The identifier of the system, typically a reverse domain identifier"
 // @Param        Request        body    model.DocAccessSetRequest  true  "DTO with data to create group access"
 // @Success      200            "Indicates that the request to change the level of access to the document was successfully created"
 // @Failure      400            "Is returned when the request has invalid content."
@@ -135,8 +135,7 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	CID, err := cid.Parse(req.CID)

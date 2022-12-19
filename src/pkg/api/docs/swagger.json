@@ -49,8 +49,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "DTO with data to create group access",
@@ -110,8 +109,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -397,7 +395,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -446,7 +444,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -506,7 +504,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -571,7 +569,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -580,8 +578,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -624,7 +621,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -633,8 +630,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -716,7 +712,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -725,8 +721,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -772,7 +767,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -781,8 +776,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -871,7 +865,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -880,8 +874,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -934,7 +927,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId - UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -943,8 +936,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -1042,7 +1034,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1051,8 +1043,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1117,7 +1108,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1126,8 +1117,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1192,7 +1182,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1201,8 +1191,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -1313,8 +1302,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1376,8 +1364,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -1498,8 +1485,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -2093,8 +2079,7 @@
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "User authentication request",
@@ -2159,13 +2144,6 @@
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
                         "description": "JWT",
                         "name": "Request",
                         "in": "body",
@@ -2215,13 +2193,6 @@
                         "type": "string",
                         "description": "UserId",
                         "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     }
@@ -2978,6 +2949,9 @@
                     "type": "string"
                 },
                 "timeCreated": {
+                    "type": "string"
+                },
+                "userID": {
                     "type": "string"
                 }
             }

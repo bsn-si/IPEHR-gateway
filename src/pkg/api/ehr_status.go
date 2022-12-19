@@ -40,7 +40,7 @@ func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL str
 // @Param        ehr_id         path      string                 true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        Authorization  header    string                 true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string                 true  "UserId UUID"
-// @Param        EhrSystemId    header    string                 true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId    header    string                 false  "The identifier of the system, typically a reverse domain identifier"
 // @Param        If-Match       header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`)  must  be  specified."
 // @Param        Prefer         header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request        body      model.EhrStatusUpdate  true  "EHR_STATUS"
@@ -76,8 +76,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	IfMatch := c.Request.Header.Get("If-Match")
@@ -164,7 +163,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 // @Param        version_at_time  query     string  true  "A given time in the extended ISO 8601 format. Example: 2015-01-20T19:30:22.765+01:00"
 // @Param        Authorization    header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true  "UserId UUID"
-// @Param        EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrStatusUpdate
 // @Success      202              "Is returned when the request is still being processed"
 // @Failure      400              "Is returned when the request has invalid content such as an invalid `version_at_time` format."
@@ -188,8 +187,7 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	versionAtTime := c.Query("version_at_time")
@@ -231,7 +229,7 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Param        version_uid    path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 // @Param        Authorization  header    string  true  "Bearer AccessToken"
 // @Param        AuthUserId       header    string  true  "UserId UUID"
-// @Param        EhrSystemId      header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId      header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200              {object}  model.EhrStatusUpdate
 // @Success      202            "Is returned when the request is still being processed"
 // @Failure      400            "Is returned when AuthUserId is not specified"
@@ -255,8 +253,7 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	versionUID := c.Param("versionid")

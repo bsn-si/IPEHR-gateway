@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
@@ -42,8 +43,8 @@ func NewEhrHandler(docService *service.DefaultDocumentService, baseURL string) *
 // @Accept       json
 // @Produce      json
 // @Param        Authorization  header    string                  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string                  true  "UserId UUID"
-// @Param        EhrSystemId    header    string                  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        AuthUserId     header    string                  true  "UserId"
+// @Param        EhrSystemId    header    string                  false "The identifier of the system, typically a reverse domain identifier"
 // @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
 // @Success      201            {object}  model.EhrSummary
@@ -63,8 +64,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	data, err := io.ReadAll(c.Request.Body)
@@ -146,8 +146,8 @@ func (h *EhrHandler) Create(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        Authorization  header    string                  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string                  true  "UserId UUID"
-// @Param        EhrSystemId    header    string                  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        AuthUserId     header    string                  true  "UserId"
+// @Param        EhrSystemId    header    string                  false "The identifier of the system, typically a reverse domain identifier"
 // @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        ehr_id         path      string                  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
@@ -187,8 +187,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	// Checking EHR does not exist
@@ -244,8 +243,8 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 // @Produce      json
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        Authorization  header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true  "UserId UUID"
-// @Param        EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        AuthUserId     header    string  true "UserId"
+// @Param        EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrSummary
 // @Success      202            "Is returned when the request is still being processed"
 // @Failure      400            "Is returned when userID is empty"
@@ -269,8 +268,7 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	docDecrypted, err := h.service.GetByID(c, userID, systemID, &ehrUUID)
@@ -297,8 +295,8 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 // @Param        subject_id         query     string  true  "subject id. Example: ins01"
 // @Param        subject_namespace  query     string  true  "id namespace. Example: examples"
 // @Param        Authorization      header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId         header    string  true  "UserId UUID"
-// @Param        EhrSystemId        header    string  true  "The identifier of the system, typically a reverse domain identifier"
+// @Param        AuthUserId         header    string  true  "UserId"
+// @Param        EhrSystemId        header    string  false "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary
 // @Success      202                "Is returned when the request is still being processed"
 // @Failure      400                "Is returned when userID is empty"
@@ -323,8 +321,7 @@ func (h *EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "systemID is empty"})
-		return
+		systemID = common.EhrSystemID
 	}
 
 	docDecrypted, err := h.service.GetDocBySubject(c, userID, systemID, subjectID, namespace)

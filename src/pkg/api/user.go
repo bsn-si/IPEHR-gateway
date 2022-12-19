@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/access"
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
@@ -89,6 +90,9 @@ func (h *UserHandler) Register(c *gin.Context) {
 	c.Header("RequestId", reqID)
 
 	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	var userCreateRequest userModel.UserCreateRequest
 	if err = json.Unmarshal(data, &userCreateRequest); err != nil {
@@ -123,7 +127,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 // @Accept   json
 // @Produce  json
 // @Param    AuthUserId   header    string                 true  "UserId"
-// @Param    EhrSystemId  header    string                 true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId  header    string                 false "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request      body      model.UserAuthRequest  true  "User authentication request"
 // @Success  200          {object}  model.JWT
 // @Failure  404          "User with ID not exist"
@@ -147,7 +151,11 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
+
 	systemID := c.GetString("ehrSystemID")
+	if systemID == "" {
+		systemID = common.EhrSystemID
+	}
 
 	if tokenString != "" && userID != "" {
 		c.JSON(http.StatusUnprocessableEntity, "You are already authorised, please use logout")
@@ -185,7 +193,6 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Produce  json
 // @Param    Authorization  header  string     true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string     true  "UserId"
-// @Param    EhrSystemId    header  string     true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request        body    model.JWT  true  "JWT"
 // @Success  200            "Successfully logged out"
 // @Failure  401            "User unauthorized"
@@ -229,7 +236,6 @@ func (h *UserHandler) Logout(c *gin.Context) {
 // @Produce  json
 // @Param    Authorization  header    string  true  "Bearer RefreshToken"
 // @Param    AuthUserId     header    string  true  "UserId"
-// @Param    EhrSystemId    header    string  true  "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  model.JWT
 // @Failure  401            "User unauthorized"
 // @Failure  404            "User with ID not exist"
