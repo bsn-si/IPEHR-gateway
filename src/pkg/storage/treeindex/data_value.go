@@ -5,11 +5,11 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func processDvValueBase(node noder, value *base.DvValueBase) (noder, error) {
+func processDvValueBase(node Noder, value *base.DvValueBase) (Noder, error) {
 	return node, nil
 }
 
-func processDvEncapsulated(node noder, value *base.DvEncapsulated) (noder, error) {
+func processDvEncapsulated(node Noder, value *base.DvEncapsulated) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_ENCAPSULATED.base")
@@ -26,7 +26,7 @@ func processDvEncapsulated(node noder, value *base.DvEncapsulated) (noder, error
 	return node, nil
 }
 
-func processDvURI(node noder, value *base.DvURI) (noder, error) {
+func processDvURI(node Noder, value *base.DvURI) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_URI.base")
@@ -37,7 +37,7 @@ func processDvURI(node noder, value *base.DvURI) (noder, error) {
 	return node, nil
 }
 
-func processDvTemporal(node noder, value *base.DvTemporal) (noder, error) {
+func processDvTemporal(node Noder, value *base.DvTemporal) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_TEMPORAL.base")
@@ -55,7 +55,7 @@ func processDvTemporal(node noder, value *base.DvTemporal) (noder, error) {
 	return node, nil
 }
 
-func processDvTime(node noder, value *base.DvTime) (noder, error) {
+func processDvTime(node Noder, value *base.DvTime) (Noder, error) {
 	node, err := processDvTemporal(node, &value.DvTemporal)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_TIME.base")
@@ -66,7 +66,7 @@ func processDvTime(node noder, value *base.DvTime) (noder, error) {
 	return node, nil
 }
 
-func processDvQuantity(node noder, value *base.DvQuantity) (noder, error) {
+func processDvQuantity(node Noder, value *base.DvQuantity) (Noder, error) {
 	node, err := processDvAmount(node, &value.DvAmount)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_QUANTITY.base")
@@ -95,7 +95,7 @@ func processDvQuantity(node noder, value *base.DvQuantity) (noder, error) {
 	return node, nil
 }
 
-func processDvState(node noder, value *base.DvState) (noder, error) {
+func processDvState(node Noder, value *base.DvState) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_STATE.base")
@@ -112,7 +112,7 @@ func processDvState(node noder, value *base.DvState) (noder, error) {
 	return node, nil
 }
 
-func processDvOrdered[T any](node noder, value *base.DvOrdered[T]) (noder, error) {
+func processDvOrdered[T any](node Noder, value *base.DvOrdered[T]) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_ORDERED.base")
@@ -127,7 +127,7 @@ func processDvOrdered[T any](node noder, value *base.DvOrdered[T]) (noder, error
 	return node, nil
 }
 
-func processDvQuantified[T any](node noder, value *base.DvQuantified[T]) (noder, error) {
+func processDvQuantified[T any](node Noder, value *base.DvQuantified[T]) (Noder, error) {
 	node, err := processDvOrdered(node, &value.DvOrdered)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_QUANTIFIED.base")
@@ -140,7 +140,7 @@ func processDvQuantified[T any](node noder, value *base.DvQuantified[T]) (noder,
 	return node, nil
 }
 
-func processDvAmount[T any](node noder, value *base.DvAmount[T]) (noder, error) {
+func processDvAmount[T any](node Noder, value *base.DvAmount[T]) (Noder, error) {
 	node, err := processDvQuantified(node, &value.DvQuantified)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_AMOUNT.base")
@@ -152,7 +152,7 @@ func processDvAmount[T any](node noder, value *base.DvAmount[T]) (noder, error) 
 	return node, nil
 }
 
-func processDvProportion(node noder, value *base.DvProportion) (noder, error) {
+func processDvProportion(node Noder, value *base.DvProportion) (Noder, error) {
 	node, err := processDvAmount(node, &value.DvAmount)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_PROPORTION.base")
@@ -171,15 +171,15 @@ func processDvProportion(node noder, value *base.DvProportion) (noder, error) {
 	return node, nil
 }
 
-func processDvParsable(node noder, value *base.DvParsable) (noder, error) {
+func processDvParsable(node Noder, value *base.DvParsable) (Noder, error) {
 	return node, errors.New("DV_PARSABLE not implemented")
 }
 
-func processDvParagraph(node noder, value *base.DvParagraph) (noder, error) {
+func processDvParagraph(node Noder, value *base.DvParagraph) (Noder, error) {
 	return node, errors.New("DV_PARAGRAPH not implemented")
 }
 
-func processDvMultimedia(node noder, value *base.DvMultimedia) (noder, error) {
+func processDvMultimedia(node Noder, value *base.DvMultimedia) (Noder, error) {
 	var err error
 
 	node, err = processDvEncapsulated(node, &value.DvEncapsulated)
@@ -224,7 +224,7 @@ func processDvMultimedia(node noder, value *base.DvMultimedia) (noder, error) {
 	return node, nil
 }
 
-func processDvIdentifier(node noder, value *base.DvIdentifier) (noder, error) {
+func processDvIdentifier(node Noder, value *base.DvIdentifier) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_IDENTIFIER.base")
@@ -238,7 +238,7 @@ func processDvIdentifier(node noder, value *base.DvIdentifier) (noder, error) {
 	return node, nil
 }
 
-func processDvDuration(node noder, value *base.DvDuration) (noder, error) {
+func processDvDuration(node Noder, value *base.DvDuration) (Noder, error) {
 	node, err := processDvAmount(node, &value.DvAmount)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_DURATION.base")
@@ -249,7 +249,7 @@ func processDvDuration(node noder, value *base.DvDuration) (noder, error) {
 	return node, nil
 }
 
-func processDvDateTime(node noder, value *base.DvDateTime) (noder, error) {
+func processDvDateTime(node Noder, value *base.DvDateTime) (Noder, error) {
 	node, err := processDvTemporal(node, &value.DvTemporal)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_DATE_TIME.base")
@@ -260,7 +260,7 @@ func processDvDateTime(node noder, value *base.DvDateTime) (noder, error) {
 	return node, nil
 }
 
-func processDvDate(node noder, value *base.DvDate) (noder, error) {
+func processDvDate(node Noder, value *base.DvDate) (Noder, error) {
 	node, err := processDvTemporal(node, &value.DvTemporal)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_DATE.base")
@@ -271,7 +271,7 @@ func processDvDate(node noder, value *base.DvDate) (noder, error) {
 	return node, nil
 }
 
-func processDvCount(node noder, value *base.DvCount) (noder, error) {
+func processDvCount(node Noder, value *base.DvCount) (Noder, error) {
 	node, err := processDvAmount(node, &value.DvAmount)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_COUNT.base")
@@ -284,7 +284,7 @@ func processDvCount(node noder, value *base.DvCount) (noder, error) {
 	return node, nil
 }
 
-func processDvCodedText(node noder, value *base.DvCodedText) (noder, error) {
+func processDvCodedText(node Noder, value *base.DvCodedText) (Noder, error) {
 	node, err := processDvText(node, &value.DvText)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_CODED_TEXT.DV_TEXT")
@@ -295,7 +295,7 @@ func processDvCodedText(node noder, value *base.DvCodedText) (noder, error) {
 	return node, nil
 }
 
-func processDvText(node noder, value *base.DvText) (noder, error) {
+func processDvText(node Noder, value *base.DvText) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_TEXT.base")
@@ -329,7 +329,7 @@ func processDvText(node noder, value *base.DvText) (noder, error) {
 	return node, nil
 }
 
-func processDvBoolean(node noder, value *base.DvBoolean) (noder, error) {
+func processDvBoolean(node Noder, value *base.DvBoolean) (Noder, error) {
 	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process DV_BOLLEAN.base")

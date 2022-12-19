@@ -21,6 +21,9 @@ func getLimit(ctx *aqlparser.LimitClauseContext) (*Limit, error) {
 		}
 
 		limit.Limit = limitVal
+		if limit.Limit == 0 {
+			return nil, errors.New("LIMIT rows_count should by more then 0")
+		}
 	}
 
 	if offset := ctx.GetOffset(); offset != nil && offset.GetTokenType() == aqlparser.AqlLexerINTEGER {

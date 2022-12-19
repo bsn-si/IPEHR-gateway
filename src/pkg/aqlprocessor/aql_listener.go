@@ -4,6 +4,8 @@ import (
 	"log"
 
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
+
+	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
 type AQLListener struct {
@@ -14,6 +16,13 @@ type AQLListener struct {
 func NewAQLListener() *AQLListener {
 	return &AQLListener{
 		query: Query{},
+	}
+}
+
+// VisitTerminal is called when a terminal node is visited.
+func (aql *AQLListener) VisitTerminal(node antlr.TerminalNode) {
+	if p, err := getParameter(node); err == nil {
+		aql.query.addParameter(p)
 	}
 }
 

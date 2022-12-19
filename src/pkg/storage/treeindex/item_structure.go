@@ -6,7 +6,7 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func processItemStructure(node noder, obj base.ItemStructure) (noder, error) {
+func processItemStructure(node Noder, obj base.ItemStructure) (Noder, error) {
 	switch obj.GetType() {
 	case base.ItemSingleItemType:
 		item, ok := obj.Data.(*base.ItemSingle)
@@ -41,11 +41,11 @@ func processItemStructure(node noder, obj base.ItemStructure) (noder, error) {
 	}
 }
 
-func processDataStructure(node noder, obj *base.DataStructure) (noder, error) {
+func processDataStructure(node Noder, obj *base.DataStructure) (Noder, error) {
 	return node, nil
 }
 
-func processItemSingle(node noder, obj *base.ItemSingle) (noder, error) {
+func processItemSingle(node Noder, obj *base.ItemSingle) (Noder, error) {
 	node, err := processDataStructure(node, &obj.DataStructure)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process ITEM_SINGLE.base")
@@ -61,7 +61,7 @@ func processItemSingle(node noder, obj *base.ItemSingle) (noder, error) {
 	return nil, errors.New("item single not implemented")
 }
 
-func processItemList(node noder, obj *base.ItemList) (noder, error) {
+func processItemList(node Noder, obj *base.ItemList) (Noder, error) {
 	node, err := processDataStructure(node, &obj.DataStructure)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process ITEM_LIST.base")
@@ -77,7 +77,7 @@ func processItemList(node noder, obj *base.ItemList) (noder, error) {
 	return nil, errors.New("item list not implemented")
 }
 
-func processItemTable(node noder, obj *base.ItemTable) (noder, error) {
+func processItemTable(node Noder, obj *base.ItemTable) (Noder, error) {
 	node, err := processDataStructure(node, &obj.DataStructure)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process ITEM_TABLE.base")
@@ -93,7 +93,7 @@ func processItemTable(node noder, obj *base.ItemTable) (noder, error) {
 	return nil, errors.New("item table not implemented")
 }
 
-func processItemTree(node noder, obj *base.ItemTree) (noder, error) {
+func processItemTree(node Noder, obj *base.ItemTree) (Noder, error) {
 	node, err := processDataStructure(node, &obj.DataStructure)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot process ITEM_TREE.base")

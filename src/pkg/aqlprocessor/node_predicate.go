@@ -10,7 +10,6 @@ import (
 )
 
 type NodePredicate struct {
-	Value             string
 	Operator          OperatorType
 	ComparisionSymbol ComparisionSymbol
 
@@ -36,6 +35,10 @@ type NodePredicateAdditionalData struct {
 }
 
 type AtCode string
+
+func (code AtCode) ToString() string {
+	return fmt.Sprintf("at%v", code)
+}
 
 func getAtCode(tn antlr.TerminalNode) (AtCode, error) {
 	return getCode[AtCode](tn, "at")
@@ -92,7 +95,6 @@ func getNodePredicateWithATOrIDCode(ctx *aqlparser.NodePredicateContext) (*NodeP
 	np := &NodePredicate{
 		Operator:          NoneOperator,
 		ComparisionSymbol: SymNone,
-		Value:             ctx.GetText(),
 	}
 
 	if ctx.AT_CODE() != nil {
@@ -127,7 +129,6 @@ func getNodePredicateWithArchetypeHIRD(ctx *aqlparser.NodePredicateContext) (*No
 	np := &NodePredicate{
 		Operator:          NoneOperator,
 		ComparisionSymbol: SymNone,
-		Value:             ctx.GetText(),
 		ArchetypeHRID:     toRef(ctx.ARCHETYPE_HRID().GetText()),
 	}
 
@@ -160,7 +161,6 @@ func getNodePredicateWithComparisionOperator(ctx *aqlparser.NodePredicateContext
 	}
 
 	np := &NodePredicate{
-		Value:                ctx.GetText(),
 		Operator:             NoneOperator,
 		ComparisionSymbol:    cs,
 		ObjectPath:           op,
@@ -179,7 +179,6 @@ func getNodePredicateWithMatches(ctx *aqlparser.NodePredicateContext) (*NodePred
 	np := &NodePredicate{
 		Operator:          NoneOperator,
 		ComparisionSymbol: SymNone,
-		Value:             ctx.GetText(),
 		IsMatches:         true,
 		ObjectPath:        op,
 		ContainedRegex:    toRef(ctx.CONTAINED_REGEX().GetText()),
@@ -197,7 +196,6 @@ func getNodePredicateWithParameter(ctx *aqlparser.NodePredicateContext) (*NodePr
 	np := &NodePredicate{
 		Operator:          NoneOperator,
 		ComparisionSymbol: SymNone,
-		Value:             ctx.GetText(),
 		Parameter:         p,
 	}
 
@@ -208,7 +206,6 @@ func getNodePredicateWithAndOperator(ctx *aqlparser.NodePredicateContext) (*Node
 	np := &NodePredicate{
 		Operator:          ANDOperator,
 		ComparisionSymbol: SymNone,
-		Value:             ctx.GetText(),
 		Next:              make([]*NodePredicate, 0, len(ctx.AllNodePredicate())),
 	}
 
@@ -228,7 +225,6 @@ func getNodePredicateWithOrOperator(ctx *aqlparser.NodePredicateContext) (*NodeP
 	np := &NodePredicate{
 		Operator:          OROperator,
 		ComparisionSymbol: SymNone,
-		Value:             ctx.GetText(),
 		Next:              make([]*NodePredicate, 0, len(ctx.AllNodePredicate())),
 	}
 

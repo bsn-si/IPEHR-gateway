@@ -9,6 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var DefaultTree = NewTree()
+
 type Tree struct {
 	actions       Container
 	evaluations   Container
@@ -25,11 +27,26 @@ func NewTree() *Tree {
 	}
 }
 
+func (t *Tree) GetDataSourceByName(name string) (Container, error) {
+	switch name {
+	case "ACTION":
+		return nil, errors.New("ACTION source not implemented")
+	case "EVALUATION":
+		return nil, errors.New("Evaluation source not implemented")
+	case "INSTRUCTION":
+		return nil, errors.New("Instruction source not implemented")
+	case "OBSERVATION":
+		return t.obeservations, nil
+	default:
+		return nil, fmt.Errorf("unexpected source type: %v", name) //nolint
+	}
+}
+
 func (t *Tree) AddComposition(com model.Composition) error {
 	return t.processCompositionContent(com.Content)
 }
 
-type Container map[string][]noder
+type Container map[string][]Noder
 
 func (c Container) Len() int {
 	count := 0
@@ -88,7 +105,7 @@ func addObjectIntoCollection(container Container, obj base.Root) error {
 		return errors.Wrap(err, "cannot get node for collection")
 	}
 
-	container[node.getID()] = append(container[node.getID()], node)
+	container[node.GetID()] = append(container[node.GetID()], node)
 
 	return nil
 }

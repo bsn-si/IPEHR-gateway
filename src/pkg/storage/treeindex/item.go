@@ -5,7 +5,7 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func processElement(node noder, obj *base.Element) (noder, error) {
+func processElement(node Noder, obj *base.Element) (Noder, error) {
 	if obj.Value != nil {
 		valueNode, err := walk(*obj.Value)
 		if err != nil {
@@ -18,7 +18,7 @@ func processElement(node noder, obj *base.Element) (noder, error) {
 	return node, nil
 }
 
-func processCluster(node noder, obj *base.Cluster) (noder, error) {
+func processCluster(node Noder, obj *base.Cluster) (Noder, error) {
 	itemsNode, err := walk(obj.Items)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot handle CLUSTER.Items")

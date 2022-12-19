@@ -252,6 +252,10 @@ func TestProcessor_From(t *testing.T) {
 				t.Errorf("Process Query err: '%v', want: %v", err, tt.wantErr)
 			}
 
+			if got == nil {
+				return
+			}
+
 			if diff := cmp.Diff(tt.want, got.From); diff != "" {
 				t.Errorf("Mismatch {+want;-got}:\n\t%s", diff)
 			}

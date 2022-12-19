@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"hms/gateway/pkg/aqlprocessor/aqlparser"
+	"hms/gateway/pkg/errors"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
@@ -28,7 +29,7 @@ func NewAqlProcessor(data string) *AqlProcessor {
 	}
 }
 
-func (p *AqlProcessor) Process() (Query, error) {
+func (p *AqlProcessor) Process() (*Query, error) {
 	p.lexer.RemoveErrorListeners()
 	p.parser.RemoveErrorListeners()
 
@@ -54,7 +55,10 @@ func (p *AqlProcessor) Process() (Query, error) {
 		}
 	}
 
-	return p.listener.query, err
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot get query")
+	}
+	return &p.listener.query, nil
 }
 
 type CustomSyntaxError struct {
