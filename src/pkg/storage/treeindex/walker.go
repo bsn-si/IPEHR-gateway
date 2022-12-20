@@ -11,9 +11,9 @@ import (
 func walk(obj any) (Noder, error) {
 	switch obj := obj.(type) {
 	case model.EHR:
-		return walkEhr(obj)
+		return processEHR(obj)
 	case model.Composition:
-		return walkComposition(obj)
+		return processComposition(obj)
 	case base.Root:
 		return walkRoot(obj)
 	case base.DataValue:
@@ -21,32 +21,6 @@ func walk(obj any) (Noder, error) {
 	default:
 		return walkBySlice(obj)
 	}
-}
-
-func walkEhr(ehr model.EHR) (Noder, error) {
-	node := &ObjectNode{
-		baseNode: baseNode{
-			ID:   ehr.EhrID.Value,
-			Name: ehr.EhrID.Value,
-		},
-		attributes: map[string]Noder{},
-	}
-
-	return node, nil
-}
-
-func walkComposition(cmp model.Composition) (Noder, error) {
-	l := cmp.Locatable
-	node := &ObjectNode{
-		baseNode: baseNode{
-			ID:   l.ArchetypeNodeID,
-			Type: l.Type,
-			Name: l.Name.Value,
-		},
-		attributes: map[string]Noder{},
-	}
-
-	return node, nil
 }
 
 func walkRoot(obj base.Root) (Noder, error) {
@@ -89,6 +63,15 @@ func walkBySlice(slice any) (Noder, error) {
 	sliceNode := newSliceNode()
 
 	switch ss := slice.(type) {
+	case []model.Composition:
+		for _, item := range ss {
+			node, err := walk(item)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot process slice COMPOSITION")
+			}
+
+			sliceNode.addAttribute(node.GetID(), node)
+		}
 	case []base.Root:
 		for _, item := range ss {
 			node, err := walk(item)
