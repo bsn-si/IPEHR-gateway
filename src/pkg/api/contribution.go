@@ -125,7 +125,7 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ehrID := ctx.Param("ehr_id")
+	ehrID := ctx.Param("ehrid")
 	// TODO do we need checking userID by EHRid because it can be summary data with different users (GetEhrUUIDByUserID(c, userID, systemID))
 
 	ehrUUID, err := uuid.Parse(ehrID)
@@ -224,5 +224,6 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusCreated, cR)
 		return
 	}
+
 	ctx.Status(http.StatusCreated)
 }

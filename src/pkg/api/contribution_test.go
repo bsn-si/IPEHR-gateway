@@ -1,10 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"hms/gateway/pkg/api/mocks"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,25 +24,20 @@ import (
 //go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
 //
 
-type contributionTestData struct {
-	c     model.ContributionResponse
-	cJSON []byte
-}
-
 func TestContributionHandler_GetByID(t *testing.T) {
 	var (
 		userID   = uuid.New().String()
 		systemID = uuid.New().String()
 	)
 
-	cM := newContributionResponse()
+	cR := newContributionResponse()
 
 	tests := []struct {
 		name            string
 		contributionUID string
 		prepare         func(gaSvc *mocks.MockContributionService)
 		wantStatus      int
-		wantResp        string
+		wantResp        *model.ContributionResponse
 	}{
 		{
 			"1. empty result because doc with {contribution_uid} is not exist",
@@ -49,16 +46,16 @@ func TestContributionHandler_GetByID(t *testing.T) {
 				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
-			"",
+			nil,
 		},
 		{
 			"2. success result",
 			"123",
 			func(gaSvc *mocks.MockContributionService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&cM.c, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(cR, nil)
 			},
 			http.StatusOK,
-			string(cM.cJSON),
+			cR,
 		},
 	}
 	for _, tt := range tests {
@@ -96,23 +93,35 @@ func TestContributionHandler_GetByID(t *testing.T) {
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
 				t.Errorf("ContributionHandler.GetByID() status code mismatch {-want;+got}\n\t%s", diff)
+				return
 			}
 
 			if tt.wantStatus != http.StatusOK {
 				return
 			}
 
-			// TODO Dont know how to compare 2 jsons
-			//respBody, _ := io.ReadAll(resp.Body)
-			//if diff := cmp.Diff(tt.wantResp, string(respBody)); diff != "" {
-			//	t.Errorf("ContributionHandler.GetByID() status response {-want;+got}\n%s", diff)
-			//}
+			var got *model.ContributionResponse
+			respBody, _ := io.ReadAll(resp.Body)
+
+			err := json.Unmarshal(respBody, &got)
+			if err != nil {
+				t.Errorf("Cant unmarshal JSON: %v", err)
+			}
+
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+
+			if diff := cmp.Diff(tt.wantResp, got, opts); diff != "" {
+				t.Errorf("ContributionHandler.GetByID() status response {-want;+got}\n%s", diff)
+			}
 		})
 	}
 }
 
-func newContributionResponse() contributionTestData {
-	c := model.ContributionResponse{
+func newContributionResponse() *model.ContributionResponse {
+	return &model.ContributionResponse{
 		UID: base.UIDBasedID{
 			ObjectID: base.ObjectID{
 				Value: "0826851c-c4c2-4d61-92b9-410fb8275ff0",
@@ -155,47 +164,4 @@ func newContributionResponse() contributionTestData {
 
 		Versions: []model.ContributionVersionResponse{},
 	}
-
-	return contributionTestData{c, prepareContributionJSON("")}
-}
-
-func prepareContributionJSON(v string) []byte {
-	if v == "" {
-		v = "[]"
-	}
-
-	return []byte(fmt.Sprintf(`{
-		"uid":{
-			"value": "0826851c-c4c2-4d61-92b9-410fb8275ff0"
-		},
-		"versions": %s,
-		"audit": {
-			"system_id": "test-system-id",
-			"time_commited": "2021-12-03T16:05:19.513939+01:00",
-			"committer": {
-				"_type": "PARTY_IDENTIFIED",
-				"name": "<optional name of the committer>",
-				"external_ref": {
-					"id": {
-						"_type": "GENERIC_ID",
-						"value": "<OBJECT_ID>",
-					},
-					"namespace": "DEMOGRAPHIC",
-					"type": "PERSON"
-				}
-			},
-			"change_type": {
-				"value": "creation",
-				"defining_code": {
-					"terminology_id": {
-						"value": "openehr"
-					},
-					"code_string": "249"
-				}
-			},
-			"description": {
-				"value": "<optional audit description>"
-			}
-		}
-	}`, v))
 }
