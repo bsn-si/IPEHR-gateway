@@ -300,7 +300,6 @@ func TestContributionHandler_Create(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func newContribution() contributionTestData {
@@ -364,7 +363,7 @@ func prepareContributionJSON(v string) []byte {
 		"versions": %s,
 		"audit": {
 			"system_id": "test-system-id",
-			"time_commited": "2021-12-03T16:05:19.513939+01:00",
+			"time_committed": "2021-12-03T16:05:19.513939+01:00",
 			"committer": {
 				"_type": "PARTY_IDENTIFIED",
 				"name": "<optional name of the committer>",
@@ -454,7 +453,7 @@ func prepareContributionResponseJSON(v string) []byte {
 		"versions": %s,
 		"audit": {
 			"system_id": "test-system-id",
-			"time_commited": "2021-12-03T16:05:19.513939+01:00",
+			"time_committed": "2021-12-03T16:05:19.513939+01:00",
 			"committer": {
 				"_type": "PARTY_IDENTIFIED",
 				"name": "<optional name of the committer>",
