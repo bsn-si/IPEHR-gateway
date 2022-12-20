@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/ehr"
@@ -63,9 +62,6 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -186,9 +182,6 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	// Checking EHR does not exist
 	_ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID, systemID)
@@ -267,9 +260,6 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	docDecrypted, err := h.service.GetByID(c, userID, systemID, &ehrUUID)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
@@ -320,9 +310,6 @@ func (h *EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	docDecrypted, err := h.service.GetDocBySubject(c, userID, systemID, subjectID, namespace)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {

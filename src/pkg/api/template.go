@@ -99,10 +99,6 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	l, err := h.service.GetList(c, userID, systemID)
 	if err != nil {
@@ -145,10 +141,6 @@ func (h *TemplateHandler) Store(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {

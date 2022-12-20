@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
@@ -90,9 +89,6 @@ func (h *UserHandler) Register(c *gin.Context) {
 	c.Header("RequestId", reqID)
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	var userCreateRequest userModel.UserCreateRequest
 	if err = json.Unmarshal(data, &userCreateRequest); err != nil {
@@ -153,9 +149,6 @@ func (h *UserHandler) Login(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	if tokenString != "" && userID != "" {
 		c.JSON(http.StatusUnprocessableEntity, "You are already authorised, please use logout")

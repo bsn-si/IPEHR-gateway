@@ -22,7 +22,6 @@ import (
 // @Accept   json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
-// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
 // @Param    Request        body    model.UserGroup  true  "User group"
 // @Success  201            {object} model.UserGroup "Indicates that the request has succeeded and transaction about create new user group has been created"
 // @Header   201            {string}  RequestID  "Request identifier"
@@ -35,12 +34,6 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "header AuthUserId is empty"})
-		return
-	}
-
-	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
 		return
 	}
 
@@ -141,10 +134,6 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	userGroup, err := h.service.GroupGetByID(c, userID, systemID, &groupID, nil)
 	if err != nil {
@@ -191,10 +180,6 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	gID := c.Param("group_id")
 	if gID == "" {
@@ -268,10 +253,6 @@ func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	gID := c.Param("group_id")
 	if gID == "" {
@@ -332,10 +313,6 @@ func (h *UserHandler) GroupGetList(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	groupList, err := h.service.GroupGetList(c, userID, systemID)
 	if err != nil {

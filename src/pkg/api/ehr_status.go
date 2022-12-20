@@ -75,9 +75,6 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	IfMatch := c.Request.Header.Get("If-Match")
 
@@ -186,9 +183,6 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	versionAtTime := c.Query("version_at_time")
 
@@ -252,9 +246,6 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	versionUID := c.Param("versionid")
 

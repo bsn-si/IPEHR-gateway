@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
@@ -90,9 +89,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	//TODO validate id
 
@@ -203,9 +199,6 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -281,9 +274,6 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	//TODO validate ehrID
 
@@ -385,9 +375,6 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	//TODO validate ehrID
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -536,9 +523,6 @@ func (h CompositionHandler) GetList(c *gin.Context) {
 	ehrID := c.Param("ehrid")
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {

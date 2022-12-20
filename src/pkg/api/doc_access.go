@@ -10,7 +10,6 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/docAccess"
@@ -48,9 +47,6 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	acl, err := h.service.List(c, userID, systemID)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
@@ -134,9 +130,6 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		systemID = common.EhrSystemID
-	}
 
 	CID, err := cid.Parse(req.CID)
 	if err != nil {
