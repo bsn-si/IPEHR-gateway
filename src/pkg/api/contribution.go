@@ -130,8 +130,6 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-
 	c := &model.Contribution{}
 	if err := json.NewDecoder(ctx.Request.Body).Decode(c); err != nil {
 		errResponse.SetMessage("Request body parsing error").AddError(err)
@@ -151,6 +149,8 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusConflict)
 		return
 	}
+
+	systemID := ctx.GetString("ehrSystemID")
 
 	templateSearcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String())
 	if ok, err := h.service.Validate(ctx, c, templateSearcher.UseService(h.templateService)); !ok {

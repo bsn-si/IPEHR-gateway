@@ -62,4 +62,5 @@ const (
 	TerminologyIDItemType   ItemType = "TERMINOLOGY_ID"
 	VersionOriginalItemType ItemType = "ORIGINAL_VERSION"
 	VersionImportedItemType ItemType = "IMPORTED_VERSION"
+	UIDBasedIDItemType      ItemType = "UID_BASED_ID"
 )
