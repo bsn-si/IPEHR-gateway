@@ -411,6 +411,8 @@ definitions:
         type: string
       timeCreated:
         type: string
+      userID:
+        type: string
     type: object
   processing.EthereumTx:
     properties:
@@ -494,7 +496,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: DTO with data to create group access
         in: body
@@ -538,7 +539,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -751,7 +751,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -786,7 +786,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -834,7 +834,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -885,7 +885,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -893,7 +893,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -928,7 +927,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -936,7 +935,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: The new EHR resource is returned in the body when the request’s
           `Prefer` header value is `return=representation`, otherwise only headers
@@ -995,7 +993,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1003,7 +1001,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1042,7 +1039,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1050,7 +1047,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: The new EHR resource is returned in the body when the request’s
           `Prefer` header value is `return=representation`, otherwise only headers
@@ -1116,7 +1112,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1124,7 +1120,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1162,7 +1157,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId - UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1170,7 +1165,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: GroupAccessId - UUID. If not specified, the default access group
           will be used.
@@ -1245,7 +1239,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1253,7 +1247,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1302,7 +1295,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1310,7 +1303,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1359,7 +1351,7 @@ paths:
         name: Authorization
         required: true
         type: string
-      - description: UserId UUID
+      - description: UserId
         in: header
         name: AuthUserId
         required: true
@@ -1367,7 +1359,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: The updated COMPOSITION resource is returned to the body when
           the request’s `Prefer` header value is `return=representation`, otherwise
@@ -1459,7 +1450,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1505,7 +1495,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: The existing latest `version_uid` of EHR_STATUS resource (i.e.
           the `preceding_version_uid`)  must  be  specified.
@@ -1595,7 +1584,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -2048,7 +2036,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: User authentication request
         in: body
@@ -2093,11 +2080,6 @@ paths:
         name: AuthUserId
         required: true
         type: string
-      - description: The identifier of the system, typically a reverse domain identifier
-        in: header
-        name: EhrSystemId
-        required: true
-        type: string
       - description: JWT
         in: body
         name: Request
@@ -2135,11 +2117,6 @@ paths:
         name: AuthUserId
         required: true
         type: string
-      - description: The identifier of the system, typically a reverse domain identifier
-        in: header
-        name: EhrSystemId
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -2168,7 +2145,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: 'User creation request. `role`: 0 - Patient, 1 - Doctor. Fields
           `Name`, `Address`, `Description`, `PictureURL` are required for Doctor role'

@@ -42,7 +42,7 @@ func NewTemplateHandler(templateService TemplateService, baseURL string) *Templa
 // @Produce      application/openehr.wt+json
 // @Param        template_id    path      string  false  "Template identifier. Example: Vital Signs"
 // @Param        Authorization  header    string     true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string     true  "UserId UUID"
+// @Param        AuthUserId     header    string     true  "UserId"
 // @Success      200            {string}  []byte
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      404            "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
@@ -86,7 +86,7 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 // @Tags         DEFINITION
 // @Produce      json
 // @Param        Authorization  header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true  "UserId UUID"
+// @Param        AuthUserId     header    string  true  "UserId"
 // @Success      200            {object}  []model.TemplateResponse
 // @Failure      400            "Is returned because of invalid content."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
@@ -99,10 +99,6 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	l, err := h.service.GetList(c, userID, systemID)
 	if err != nil {
@@ -125,7 +121,7 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload
 // @Tags         DEFINITION
 // @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        AuthUserId     header    string  true   "UserId"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Header       201            {string}  Location   "{baseUrl}/definition/template/adl1.4/{template_id}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -145,10 +141,6 @@ func (h *TemplateHandler) Store(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {

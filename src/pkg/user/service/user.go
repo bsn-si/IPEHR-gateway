@@ -84,6 +84,7 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 	case roles.Patient:
 	case roles.Doctor:
 		info := model.UserInfo{
+			UserID:      user.UserID,
 			Name:        user.Name,
 			Address:     user.Address,
 			Description: user.Description,

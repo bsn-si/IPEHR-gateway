@@ -34,10 +34,6 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	// Here we do not check the existence of the argument.
 	// This does not satisfy the specification. https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
@@ -84,10 +80,6 @@ func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	version := c.Param("version")
 
@@ -144,10 +136,6 @@ func (h *QueryHandler) Store(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	qName := c.Param("qualified_query_name")
 	if qName == "" {
@@ -218,10 +206,6 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 	}
 
 	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
 
 	qName := c.Param("qualified_query_name")
 	if qName == "" {

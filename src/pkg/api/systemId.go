@@ -1,18 +1,16 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
-	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/common"
 )
 
 func ehrSystemID(c *gin.Context) {
 	ehrSystemID := c.Request.Header.Get("EhrSystemId")
-	if ehrSystemID == "" {
-		_ = c.AbortWithError(http.StatusBadRequest, errors.ErrIncorrectRequest)
-		return
+
+	if ehrSystemID != "" {
+		ehrSystemID = common.EhrSystemID
 	}
 
 	c.Set("ehrSystemID", ehrSystemID)

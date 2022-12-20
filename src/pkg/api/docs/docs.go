@@ -56,8 +56,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "DTO with data to create group access",
@@ -117,8 +116,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -404,7 +402,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -453,7 +451,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -513,7 +511,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -578,7 +576,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -587,8 +585,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -631,7 +628,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -640,8 +637,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -723,7 +719,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -732,8 +728,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -779,7 +774,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -788,8 +783,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -878,7 +872,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -887,8 +881,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -941,7 +934,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId - UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -950,8 +943,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -1049,7 +1041,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1058,8 +1050,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1124,7 +1115,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1133,8 +1124,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1199,7 +1189,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "UserId UUID",
+                        "description": "UserId",
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
@@ -1208,8 +1198,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -1320,8 +1309,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1383,8 +1371,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -1505,8 +1492,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -2100,8 +2086,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "User authentication request",
@@ -2166,13 +2151,6 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
                         "description": "JWT",
                         "name": "Request",
                         "in": "body",
@@ -2224,13 +2202,6 @@ const docTemplate = `{
                         "name": "AuthUserId",
                         "in": "header",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
                     }
                 ],
                 "responses": {
@@ -2272,8 +2243,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "description": "User creation request. ` + "`" + `role` + "`" + `: 0 - Patient, 1 - Doctor. Fields ` + "`" + `Name` + "`" + `, ` + "`" + `Address` + "`" + `, ` + "`" + `Description` + "`" + `, ` + "`" + `PictureURL` + "`" + ` are required for Doctor role",
@@ -2986,6 +2956,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "timeCreated": {
+                    "type": "string"
+                },
+                "userID": {
                     "type": "string"
                 }
             }

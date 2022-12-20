@@ -194,6 +194,7 @@ func (a *API) buildUserAPI() handlerBuilder {
 		r.GET("/code/:code", a.User.InfoByCode)
 
 		r.Use(ehrSystemID)
+
 		r.POST("/register", a.User.Register)
 		r.POST("/login", a.User.Login)
 		r.GET("/refresh", a.User.RefreshToken)
