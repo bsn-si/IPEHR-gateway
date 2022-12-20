@@ -274,7 +274,8 @@ func TestContributionHandler_Create(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("ContributionHandler.GetByID() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("ContributionHandler.GetByID() status code mismatch {-want;+got}\n\t%s response: %s", diff, resp.Body)
+
 				return
 			}
 
@@ -313,7 +314,7 @@ func newContribution() contributionTestData {
 		Audit: model.AuditDetails{
 			Type:     base.AuditDetailsType,
 			SystemID: "test-system-id",
-			TimeCommited: base.DvDateTime{
+			TimeCommitted: base.DvDateTime{
 				DvTemporal: base.DvTemporal{
 					DvValueBase: base.DvValueBase{Type: base.DvDateTimeItemType},
 				},
@@ -358,23 +359,14 @@ func prepareContributionJSON(v string) []byte {
 
 	return []byte(fmt.Sprintf(`{
 		"uid":{
+			"_type": "UID_BASED_ID",
 			"value": "0826851c-c4c2-4d61-92b9-410fb8275ff0"
 		},
 		"versions": %s,
 		"audit": {
-			"system_id": "test-system-id",
-			"time_committed": "2021-12-03T16:05:19.513939+01:00",
 			"committer": {
 				"_type": "PARTY_IDENTIFIED",
-				"name": "<optional name of the committer>",
-				"external_ref": {
-					"id": {
-						"_type": "GENERIC_ID",
-						"value": "<OBJECT_ID>"
-					},
-					"namespace": "DEMOGRAPHIC",
-					"type": "PERSON"
-				}
+				"name": "<optional name of the committer>"
 			},
 			"change_type": {
 				"value": "creation",
@@ -403,7 +395,7 @@ func newContributionResponse() contributionResponseTestData {
 		Audit: model.AuditDetails{
 			Type:     base.AuditDetailsType,
 			SystemID: "test-system-id",
-			TimeCommited: base.DvDateTime{
+			TimeCommitted: base.DvDateTime{
 				DvTemporal: base.DvTemporal{
 					DvValueBase: base.DvValueBase{Type: base.DvDateTimeItemType},
 				},

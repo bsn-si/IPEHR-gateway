@@ -108,7 +108,7 @@ func (s *Service) PrepareResponse(ctx context.Context, systemID string, c *model
 		cR.Versions = append(cR.Versions, t)
 	}
 
-	cR.Audit.TimeCommited = base.DvDateTime{
+	cR.Audit.TimeCommitted = base.DvDateTime{
 		Value: time.Now().Format(common.OpenEhrTimeFormat),
 	}
 

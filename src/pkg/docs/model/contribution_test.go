@@ -228,7 +228,7 @@ func newContributionWithVersions(data []contributionVersionTestData) contributio
 			CommitAudit: model.AuditDetails{
 				Type:     base.AuditDetailsType,
 				SystemID: "CABOLABS_EHRSERVER",
-				TimeCommited: base.DvDateTime{
+				TimeCommitted: base.DvDateTime{
 					Value: "2021-09-21T21:52:31.869-03:00",
 				},
 				ChangeType: base.DvCodedText{

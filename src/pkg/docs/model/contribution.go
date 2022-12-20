@@ -15,12 +15,12 @@ import (
 // The set of attributes required to document the committal of an information item to a repository.
 // https://specifications.openehr.org/releases/RM/latest/common.html#_audit_details_class
 type AuditDetails struct {
-	Type         base.ItemType    `json:"_type"`
-	SystemID     string           `json:"system_id"`
-	TimeCommited base.DvDateTime  `json:"time_committed,omitempty"`
-	ChangeType   base.DvCodedText `json:"change_type,omitempty"`
-	Committer    base.PartyProxy  `json:"committer,omitempty"`
-	Description  base.DvText      `json:"description,omitempty"`
+	Type          base.ItemType    `json:"_type"`
+	SystemID      string           `json:"system_id"`
+	TimeCommitted base.DvDateTime  `json:"time_committed,omitempty"`
+	ChangeType    base.DvCodedText `json:"change_type,omitempty"`
+	Committer     base.PartyProxy  `json:"committer,omitempty"`
+	Description   base.DvText      `json:"description,omitempty"`
 }
 
 // https://specifications.openehr.org/releases/RM/latest/common.html#_contribution_class
