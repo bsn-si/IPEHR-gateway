@@ -2,12 +2,18 @@ package treeindex
 
 import (
 	"fmt"
+
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/errors"
 )
 
 func walk(obj any) (Noder, error) {
 	switch obj := obj.(type) {
+	case model.EHR:
+		return walkEhr(obj)
+	case model.Composition:
+		return walkComposition(obj)
 	case base.Root:
 		return walkRoot(obj)
 	case base.DataValue:
@@ -15,6 +21,32 @@ func walk(obj any) (Noder, error) {
 	default:
 		return walkBySlice(obj)
 	}
+}
+
+func walkEhr(ehr model.EHR) (Noder, error) {
+	node := &ObjectNode{
+		baseNode: baseNode{
+			ID:   ehr.EhrID.Value,
+			Name: ehr.EhrID.Value,
+		},
+		attributes: map[string]Noder{},
+	}
+
+	return node, nil
+}
+
+func walkComposition(cmp model.Composition) (Noder, error) {
+	l := cmp.Locatable
+	node := &ObjectNode{
+		baseNode: baseNode{
+			ID:   l.ArchetypeNodeID,
+			Type: l.Type,
+			Name: l.Name.Value,
+		},
+		attributes: map[string]Noder{},
+	}
+
+	return node, nil
 }
 
 func walkRoot(obj base.Root) (Noder, error) {

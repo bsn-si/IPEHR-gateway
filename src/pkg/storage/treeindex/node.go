@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 )
 
@@ -14,6 +15,8 @@ const (
 	SliceNodeType
 	DataValueNodeType
 	ValueNodeType
+	EHRNodeType
+	CompostionNodeType
 )
 
 type Noder interface {
@@ -199,6 +202,10 @@ func (node ValueNode) MarshalJSON() ([]byte, error) {
 
 func newNode(obj any) Noder {
 	switch obj := obj.(type) {
+	case model.EHR:
+		return newEHRNode(obj)
+	case model.Composition:
+		return newCompositionNode(obj)
 	case base.Root:
 		return newObjectNode(obj)
 	case base.DataValue:
