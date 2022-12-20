@@ -67,13 +67,6 @@ func (h *ContributionHandler) GetByID(c *gin.Context) {
 	}
 
 	// TODO do I need to checking userID by EHRid?
-
-	systemID := c.GetString("ehrSystemID")
-	if systemID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "header EhrSystemId is empty"})
-		return
-	}
-
 	cUID := c.Param("contribution_uid")
 	if cUID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "contribution_uid is empty"})
@@ -138,13 +131,6 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 	}
 
 	systemID := ctx.GetString("ehrSystemID")
-	if systemID == "" {
-		errResponse.SetMessage("Header required").
-			AddError(errors.ErrFieldIsIncorrect("EhrSystemId"))
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
 
 	c := &model.Contribution{}
 	if err := json.NewDecoder(ctx.Request.Body).Decode(c); err != nil {
