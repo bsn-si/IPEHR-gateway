@@ -16,6 +16,7 @@ import (
 	"hms/gateway/pkg/api/mocks"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	userModel "hms/gateway/pkg/user/model"
 )
@@ -43,6 +44,7 @@ func TestContributionHandler_GetByID(t *testing.T) {
 	)
 
 	cR := newContributionResponse()
+	contributionID := cR.c.UID.Value
 
 	tests := []struct {
 		name            string
@@ -53,18 +55,18 @@ func TestContributionHandler_GetByID(t *testing.T) {
 	}{
 		{
 			"1. empty result because doc with {contribution_uid} is not exist",
-			"123",
+			contributionID,
 			func(gaSvc *mocks.MockContributionService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			nil,
 		},
 		{
 			"2. success result",
-			"123",
+			contributionID,
 			func(gaSvc *mocks.MockContributionService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(cR.c, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(cR.c, nil)
 			},
 			http.StatusOK,
 			cR.c,
@@ -136,9 +138,11 @@ func TestContributionHandler_Create(t *testing.T) {
 	var (
 		userID   = uuid.New().String()
 		systemID = uuid.New().String()
+		ehrUUID  = uuid.New().String()
 	)
 
 	c := newContribution()
+	contributionID := c.c.UID.Value
 	cR := newContributionResponse()
 
 	tests := []struct {
@@ -158,7 +162,7 @@ func TestContributionHandler_Create(t *testing.T) {
 		{
 			"1. empty result because doc with {contribution_uid} is already exist",
 			func(gaSvc *mocks.MockContributionService, _ *mocks.MockUserService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(cR.c, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(cR.c, nil)
 			},
 			c.cJSON,
 			http.StatusConflict,
@@ -167,7 +171,7 @@ func TestContributionHandler_Create(t *testing.T) {
 		{
 			"2. failed because data is not valid",
 			func(gaSvc *mocks.MockContributionService, _ *mocks.MockUserService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(nil, nil)
 				gaSvc.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, errors.ErrIsNotValid)
 			},
 			c.cJSON,
@@ -177,10 +181,10 @@ func TestContributionHandler_Create(t *testing.T) {
 		{
 			"3. failed because cant save versions",
 			func(gaSvc *mocks.MockContributionService, _ *mocks.MockUserService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(nil, nil)
 				gaSvc.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				gaSvc.EXPECT().NewProcRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
-				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.ErrNotImplemented)
+				gaSvc.EXPECT().NewProcRequest(gomock.Any(), userID, ehrUUID, processing.RequestContributionCreate)
+				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(errors.ErrNotImplemented)
 			},
 			c.cJSON,
 			http.StatusBadRequest,
@@ -189,12 +193,13 @@ func TestContributionHandler_Create(t *testing.T) {
 		{
 			"4. failed because cant store CONTRIBUTION",
 			func(gaSvc *mocks.MockContributionService, userSvc *mocks.MockUserService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(nil, nil)
 				gaSvc.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				gaSvc.EXPECT().NewProcRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
-				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				userSvc.EXPECT().Info(gomock.Any(), gomock.Any()).Return(nil, nil)
-				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.ErrCustom)
+				gaSvc.EXPECT().NewProcRequest(gomock.Any(), userID, ehrUUID, processing.RequestContributionCreate)
+				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(nil)
+				u := &userModel.UserInfo{}
+				userSvc.EXPECT().Info(gomock.Any(), userID).Return(u, nil)
+				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), systemID, u, gomock.Any()).Return(errors.ErrCustom)
 			},
 			c.cJSON,
 			http.StatusInternalServerError,
@@ -203,14 +208,15 @@ func TestContributionHandler_Create(t *testing.T) {
 		{
 			"5. failed because can create response for contribution",
 			func(gaSvc *mocks.MockContributionService, userSvc *mocks.MockUserService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(nil, nil)
 				gaSvc.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				gaSvc.EXPECT().NewProcRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&MockRequest{}, nil)
-				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				gaSvc.EXPECT().NewProcRequest(gomock.Any(), userID, ehrUUID, processing.RequestContributionCreate).Return(&MockRequest{}, nil)
+				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(nil)
 
-				userSvc.EXPECT().Info(gomock.Any(), gomock.Any()).Return(&userModel.UserInfo{}, nil)
-				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				gaSvc.EXPECT().PrepareResponse(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotImplemented)
+				u := &userModel.UserInfo{}
+				userSvc.EXPECT().Info(gomock.Any(), userID).Return(u, nil)
+				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), systemID, u, gomock.Any()).Return(nil)
+				gaSvc.EXPECT().PrepareResponse(gomock.Any(), systemID, gomock.Any()).Return(nil, errors.ErrNotImplemented)
 			},
 			c.cJSON,
 			http.StatusInternalServerError,
@@ -218,14 +224,15 @@ func TestContributionHandler_Create(t *testing.T) {
 		}, {
 			"6. successfully created",
 			func(gaSvc *mocks.MockContributionService, userSvc *mocks.MockUserService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, contributionID).Return(nil, nil)
 				gaSvc.EXPECT().Validate(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				gaSvc.EXPECT().NewProcRequest(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(&MockRequest{}, nil)
-				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				gaSvc.EXPECT().NewProcRequest(gomock.Any(), userID, ehrUUID, processing.RequestContributionCreate).Return(&MockRequest{}, nil)
+				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(nil)
 
-				userSvc.EXPECT().Info(gomock.Any(), gomock.Any()).Return(&userModel.UserInfo{}, nil)
-				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				gaSvc.EXPECT().PrepareResponse(gomock.Any(), gomock.Any(), gomock.Any()).Return(cR.c, nil)
+				u := &userModel.UserInfo{}
+				userSvc.EXPECT().Info(gomock.Any(), userID).Return(u, nil)
+				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), systemID, u, gomock.Any()).Return(nil)
+				gaSvc.EXPECT().PrepareResponse(gomock.Any(), systemID, gomock.Any()).Return(cR.c, nil)
 			},
 			c.cJSON,
 			http.StatusCreated,
@@ -254,7 +261,7 @@ func TestContributionHandler_Create(t *testing.T) {
 
 			router := api.setupRouter(api.buildEhrContributionAPI())
 
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/v1/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/contribution/"), bytes.NewReader(tt.payload))
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/v1/ehr/%s/contribution/", ehrUUID), bytes.NewReader(tt.payload))
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userID)
 			req.Header.Set("EhrSystemId", systemID)
