@@ -9,27 +9,36 @@ import (
 var DefaultEHRIndex = NewEHRIndex()
 
 type EHRIndex struct {
-	ehrs Container
+	ehrs map[string]*EHRNode
 }
 
 func NewEHRIndex() *EHRIndex {
 	idx := EHRIndex{
-		ehrs: Container{},
+		ehrs: map[string]*EHRNode{},
 	}
 
 	return &idx
 }
 
 func (idx *EHRIndex) AddEHR(ehr model.EHR) error {
-	node, err := walk(ehr)
+	node, err := processEHR(ehr)
 
 	if err != nil {
 		return errors.Wrap(err, "cannot add EHR object")
 	}
 
-	idx.ehrs[node.GetID()] = append(idx.ehrs[node.GetID()], node)
+	idx.ehrs[node.GetID()] = node
 
 	return nil
+}
+
+func (idx *EHRIndex) AddComposition(ehrID string, cmp model.Composition) error {
+	ehrNode, ok := idx.ehrs[ehrID]
+	if !ok {
+		return errors.New("EHR not found")
+	}
+
+	return ehrNode.addComposition(cmp)
 }
 
 func (idx EHRIndex) MarshalJSON() ([]byte, error) {

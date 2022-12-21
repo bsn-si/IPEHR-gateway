@@ -9,16 +9,13 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func processEHR(ehr model.EHR) (Noder, error) {
+func processEHR(ehr model.EHR) (*EHRNode, error) {
 	node := newEHRNode(ehr)
 
 	for _, cmp := range ehr.Compositions {
-		cmpNode, err := walk(cmp)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot get node for Composition object")
+		if err := node.addComposition(cmp); err != nil {
+			return nil, err
 		}
-
-		node.compositions[cmpNode.GetID()] = append(node.compositions[cmpNode.GetID()], cmpNode)
 	}
 
 	// TODO: add logic for other fields
@@ -43,6 +40,16 @@ func newEHRNode(ehr model.EHR) *EHRNode {
 	}
 
 	return &node
+}
+
+func (ehr *EHRNode) addComposition(cmp model.Composition) error {
+	cmpNode, err := processComposition(cmp)
+	if err != nil {
+		return errors.Wrap(err, "cannot add Composition node into EHRNode")
+	}
+
+	ehr.compositions[cmpNode.GetID()] = append(ehr.compositions[cmpNode.GetID()], cmpNode)
+	return nil
 }
 
 func (ehr EHRNode) GetNodeType() NodeType {
