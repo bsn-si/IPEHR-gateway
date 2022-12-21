@@ -28,7 +28,58 @@ func Test_processComposition(t *testing.T) {
 					Type: base.CompositionItemType,
 					Name: "International Patient Summary",
 				},
-				attributes: map[string]Noder{},
+				Tree: Tree{
+					actions:       Container{},
+					evaluations:   Container{},
+					instructions:  Container{},
+					obeservations: Container{},
+				},
+				attributes: map[string]Noder{
+					"language": newNode(&base.CodePhrase{
+						Type: base.CodePhraseItemType,
+						TerminologyID: base.ObjectID{
+							Type:  base.TerminologyIDItemType,
+							Value: "ISO_639-1",
+						},
+						CodeString: "en",
+					}),
+					"territory": newNode(&base.CodePhrase{
+						Type: base.CodePhraseItemType,
+						TerminologyID: base.ObjectID{
+							Type:  base.TerminologyIDItemType,
+							Value: "ISO_3166-1",
+						},
+						CodeString: "US",
+					}),
+					"category": newNode(base.NewDvCodedText("event", base.CodePhrase{
+						Type: base.CodePhraseItemType,
+						TerminologyID: base.ObjectID{
+							Type:  base.TerminologyIDItemType,
+							Value: "openehr",
+						},
+						CodeString: "443",
+					})),
+					"context": &EventContextNode{
+						attributes: map[string]Noder{
+							"start_time": newNode(&base.DvDateTime{
+								DvTemporal: base.DvTemporal{
+									DvValueBase: base.DvValueBase{
+										Type: base.DvDateTimeItemType,
+									},
+								},
+								Value: "2021-12-03T17:34:06.849379+01:00",
+							}),
+							"setting": newNode(base.NewDvCodedText("other care", base.CodePhrase{
+								Type: base.CodePhraseItemType,
+								TerminologyID: base.ObjectID{
+									Type:  base.TerminologyIDItemType,
+									Value: "openehr",
+								},
+								CodeString: "238",
+							})),
+						},
+					},
+				},
 			},
 			false,
 		},

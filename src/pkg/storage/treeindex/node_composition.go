@@ -3,12 +3,19 @@ package treeindex
 import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
+	"log"
 )
 
 func processComposition(cmp model.Composition) (Noder, error) {
 	node := newCompositionNode(cmp)
 
+	node.addAttribute("language", newNode(&cmp.Language))
+	node.addAttribute("territory", newNode(&cmp.Territory))
+	node.addAttribute("category", newNode(&cmp.Category))
+
 	if cmp.Context != nil {
+		log.Println("add Context")
+
 		ctxNode, err := walk(*cmp.Context)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get node for Composition.Context")
@@ -17,16 +24,21 @@ func processComposition(cmp model.Composition) (Noder, error) {
 		node.addAttribute("context", ctxNode)
 	}
 
+	if err := node.processCompositionContent(cmp.Content); err != nil {
+		return nil, errors.Wrap(err, "cannot process Composition.Content")
+	}
+	// TODO: add Composition.Composer field handling
+
 	return node, nil
 }
 
 type CompositionNode struct {
 	baseNode
-
+	Tree
 	attributes map[string]Noder
 }
 
-func newCompositionNode(cmp model.Composition) Noder {
+func newCompositionNode(cmp model.Composition) *CompositionNode {
 	l := cmp.Locatable
 	node := &CompositionNode{
 		baseNode: baseNode{
@@ -34,6 +46,7 @@ func newCompositionNode(cmp model.Composition) Noder {
 			Type: l.Type,
 			Name: l.Name.Value,
 		},
+		Tree:       *NewTree(),
 		attributes: map[string]Noder{},
 	}
 
@@ -60,5 +73,5 @@ func (cmp CompositionNode) ForEach(foo func(name string, node Noder) bool) {
 }
 
 func (cmp CompositionNode) addAttribute(key string, val Noder) {
-
+	cmp.attributes[key] = val
 }

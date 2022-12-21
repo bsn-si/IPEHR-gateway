@@ -77,7 +77,38 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 										Type: base.CompositionItemType,
 										Name: "International Patient Summary",
 									},
-									attributes: map[string]Noder{},
+									Tree: Tree{
+										actions:       Container{},
+										evaluations:   Container{},
+										instructions:  Container{},
+										obeservations: Container{},
+									},
+									attributes: map[string]Noder{
+										"language": newNode(&base.CodePhrase{
+											Type: base.CodePhraseItemType,
+											TerminologyID: base.ObjectID{
+												Type:  base.TerminologyIDItemType,
+												Value: "ISO_639-1",
+											},
+											CodeString: "en",
+										}),
+										"territory": newNode(&base.CodePhrase{
+											Type: base.CodePhraseItemType,
+											TerminologyID: base.ObjectID{
+												Type:  base.TerminologyIDItemType,
+												Value: "ISO_3166-1",
+											},
+											CodeString: "US",
+										}),
+										"category": newNode(base.NewDvCodedText("event", base.CodePhrase{
+											Type: base.CodePhraseItemType,
+											TerminologyID: base.ObjectID{
+												Type:  base.TerminologyIDItemType,
+												Value: "openehr",
+											},
+											CodeString: "443",
+										})),
+									},
 								},
 							},
 						},

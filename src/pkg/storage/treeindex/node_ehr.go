@@ -61,7 +61,7 @@ func (ehr EHRNode) ForEach(func(name string, node Noder) bool) {
 }
 
 func (ehr EHRNode) addAttribute(key string, val Noder) {
-
+	ehr.attributes[key] = val
 }
 
 func (ehr EHRNode) MarshalJSON() ([]byte, error) {
