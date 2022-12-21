@@ -1,9 +1,22 @@
 package treeindex
 
-import "hms/gateway/pkg/docs/model"
+import (
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/errors"
+)
 
 func processComposition(cmp model.Composition) (Noder, error) {
 	node := newCompositionNode(cmp)
+
+	if cmp.Context != nil {
+		ctxNode, err := walk(*cmp.Context)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get node for Composition.Context")
+		}
+
+		node.addAttribute("context", ctxNode)
+	}
+
 	return node, nil
 }
 

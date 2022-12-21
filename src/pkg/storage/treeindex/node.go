@@ -17,6 +17,7 @@ const (
 	ValueNodeType
 	EHRNodeType
 	CompostionNodeType
+	EventContextNodeType
 )
 
 type Noder interface {

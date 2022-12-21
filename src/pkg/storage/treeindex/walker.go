@@ -14,6 +14,8 @@ func walk(obj any) (Noder, error) {
 		return processEHR(obj)
 	case model.Composition:
 		return processComposition(obj)
+	case model.EventContext:
+		return processEventContext(obj)
 	case base.Root:
 		return walkRoot(obj)
 	case base.DataValue:

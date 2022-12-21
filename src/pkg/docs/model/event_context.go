@@ -11,9 +11,9 @@ import "hms/gateway/pkg/docs/model/base"
 type EventContext struct {
 	StartTime          base.DvDateTime       `json:"start_time"`
 	EndTime            *base.DvDateTime      `json:"end_time,omitempty"`
-	Location           string                `json:"location,omitempty"`
+	Location           *string               `json:"location,omitempty"`
 	Setting            base.DvCodedText      `json:"setting"`
-	OtherContext       *base.Locatable       `json:"other_context,omitempty"`
+	OtherContext       *base.ItemStructure   `json:"other_context,omitempty"`
 	HealthCareFacility *base.PartyIdentified `json:"health_care_facility,omitempty"`
-	Participations     *[]base.Participation `json:"participations,omitempty"`
+	Participations     []base.Participation  `json:"participations,omitempty"`
 }
