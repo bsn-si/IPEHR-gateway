@@ -25,24 +25,47 @@ func (ds dataSource) getName() string {
 
 func (exec *executer) findSources() (map[string]dataSource, error) {
 	from := exec.query.From
+
 	data, _ := json.MarshalIndent(from, "", "\t")
 	log.Println(string(data))
 
-	result, err := exec.getSources(exec.query.From.ContainsExpr)
-	log.Println(result)
+	result := make(map[string]dataSource)
+	result, err := exec.getSources(exec.query.From.ContainsExpr, result)
+
+	log.Println("resulted data sources", result)
+
 	return result, err
 }
 
-func (exec *executer) getSources(from aqlprocessor.ContainsExpr) (map[string]dataSource, error) {
+func (exec *executer) getSources(from aqlprocessor.ContainsExpr, sources map[string]dataSource) (map[string]dataSource, error) {
+	if from.Operand == nil {
+		return sources, nil
+	}
+
+	switch operand := from.Operand.(type) {
+	case aqlprocessor.ClassExpression:
+		ds, err := exec.getDataSourceForClassExpression(operand)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot get data source for class expression")
+		}
+
+		sources[ds.getName()] = ds
+	case aqlprocessor.VersionClassExpr:
+		return nil, errors.New("not implemented")
+	default:
+		return nil, fmt.Errorf("unexpected FROM.Operand type: %T", operand) // nolint
+	}
+
 	if len(from.Contains) > 0 {
 		sourceMaps := make([]map[string]dataSource, 0, len(from.Contains))
+		sourceMaps = append(sourceMaps, sources)
 
 		for _, ce := range from.Contains {
 			if ce == nil {
 				continue
 			}
 
-			s, err := exec.getSources(*ce)
+			s, err := exec.getSources(*ce, sources)
 			if err != nil {
 				return nil, errors.Wrap(err, "cannot get contains data sources")
 			}
@@ -57,27 +80,7 @@ func (exec *executer) getSources(from aqlprocessor.ContainsExpr) (map[string]dat
 		return mergeDataSourceMaps(sourceMaps), nil
 	}
 
-	result := map[string]dataSource{}
-
-	if from.Operand == nil {
-		return result, nil
-	}
-
-	switch operand := from.Operand.(type) {
-	case aqlprocessor.ClassExpression:
-		ds, err := exec.getDataSourceForClassExpression(operand)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot get data source for class expression")
-		}
-
-		result[ds.getName()] = ds
-	case aqlprocessor.VersionClassExpr:
-		return nil, errors.New("not implemented")
-	default:
-		return nil, fmt.Errorf("unexpected FROM.Operand type: %T", operand) // nolint
-	}
-
-	return result, nil
+	return sources, nil
 }
 
 func mergeDataSourceMaps(dsMaps []map[string]dataSource) map[string]dataSource {
@@ -113,12 +116,28 @@ func (exec *executer) getDataSourceForClassExpression(operand aqlprocessor.Class
 		ds.alias = operand.Identifiers[1]
 	}
 
-	data, err := exec.index.GetDataSourceByName(ds.name)
-	if err != nil {
-		return dataSource{}, errors.Wrap(err, "cannot get data source by name")
+	switch ds.name {
+	case "EHR":
+		ehrs, err := exec.index.GetEHRs("")
+		if err != nil {
+			return dataSource{}, errors.Wrap(err, "cannot get data source for EHRs")
+		}
+
+		ds.data = make(treeindex.Container, len(ehrs))
+		for _, ehrNode := range ehrs {
+			ds.data[ehrNode.GetID()] = append(ds.data[ehrNode.GetID()], ehrNode)
+		}
+	case "COMPOSITON":
+	default:
+		return dataSource{}, fmt.Errorf("unexpeted data source type: %s", ds.name) //nolint
 	}
 
-	ds.data = data
+	// data, err := exec.index.GetDataSourceByName(ds.name)
+	// if err != nil {
+	// 	return dataSource{}, errors.Wrap(err, "cannot get data source by name")
+	// }
+
+	// ds.data = data
 
 	return ds, nil
 }

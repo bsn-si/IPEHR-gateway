@@ -12,7 +12,7 @@ type executer struct {
 	query  *aqlprocessor.Query
 	params map[string]driver.Value
 
-	index *treeindex.Tree
+	index *treeindex.EHRIndex
 }
 
 func (exec *executer) run() (*Rows, error) {

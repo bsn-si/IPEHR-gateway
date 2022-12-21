@@ -20,6 +20,14 @@ func NewEHRIndex() *EHRIndex {
 	return &idx
 }
 
+func AddEHR(ehr model.EHR) error {
+	return DefaultEHRIndex.AddEHR(ehr)
+}
+
+func AddComposition(ehrID string, cmp model.Composition) error {
+	return DefaultEHRIndex.AddComposition(ehrID, cmp)
+}
+
 func (idx *EHRIndex) AddEHR(ehr model.EHR) error {
 	node, err := processEHR(ehr)
 
@@ -30,6 +38,24 @@ func (idx *EHRIndex) AddEHR(ehr model.EHR) error {
 	idx.ehrs[node.GetID()] = node
 
 	return nil
+}
+
+func (idx EHRIndex) GetEHRs(id string) ([]*EHRNode, error) {
+	if id == "" {
+		result := make([]*EHRNode, 0, len(idx.ehrs))
+		for _, ehrNode := range idx.ehrs {
+			result = append(result, ehrNode)
+		}
+
+		return result, nil
+	}
+
+	ehrNode, ok := idx.ehrs[id]
+	if !ok {
+		return nil, errors.New("cannot get EHR by id")
+	}
+
+	return []*EHRNode{ehrNode}, nil
 }
 
 func (idx *EHRIndex) AddComposition(ehrID string, cmp model.Composition) error {

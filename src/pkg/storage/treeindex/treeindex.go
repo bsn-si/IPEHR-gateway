@@ -9,8 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var DefaultTree = NewTree()
-
 type Tree struct {
 	actions       Container
 	evaluations   Container

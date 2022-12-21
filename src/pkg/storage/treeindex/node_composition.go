@@ -3,7 +3,6 @@ package treeindex
 import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
-	"log"
 )
 
 func processComposition(cmp model.Composition) (Noder, error) {
@@ -14,8 +13,6 @@ func processComposition(cmp model.Composition) (Noder, error) {
 	node.addAttribute("category", newNode(&cmp.Category))
 
 	if cmp.Context != nil {
-		log.Println("add Context")
-
 		ctxNode, err := walk(*cmp.Context)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get node for Composition.Context")
