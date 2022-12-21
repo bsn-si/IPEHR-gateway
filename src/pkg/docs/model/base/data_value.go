@@ -1,6 +1,8 @@
 package base
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // DataValue
 // Abstract parent of all DV_ data value types. Serves as a common ancestor of all data value types in openEHR models.

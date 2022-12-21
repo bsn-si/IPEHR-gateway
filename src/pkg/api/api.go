@@ -11,6 +11,8 @@ import (
 
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/service/composition"
+	contributionService "hms/gateway/pkg/docs/service/contribution"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/docs/service/template"
@@ -40,9 +42,10 @@ type API struct {
 	Query       *QueryHandler
 	Template    *TemplateHandler
 	//GroupAccess *GroupAccessHandler
-	DocAccess *DocAccessHandler
-	Request   *RequestHandler
-	User      *UserHandler
+	DocAccess    *DocAccessHandler
+	Request      *RequestHandler
+	User         *UserHandler
+	Contribution *ContributionHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -52,17 +55,28 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	templateService := template.NewService(docService)
 	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
+	contribution := contributionService.NewService(docService)
+
+	compositionService := composition.NewCompositionService(
+		docService.Infra.Index,
+		docService.Infra.IpfsClient,
+		docService.Infra.FilecoinClient,
+		docService.Infra.Keystore,
+		docService.Infra.Compressor,
+		docService,
+		groupAccessService)
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
 		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
-		Composition: NewCompositionHandler(docService, groupAccessService, cfg.BaseURL),
+		Composition: NewCompositionHandler(docService, compositionService, cfg.BaseURL),
 		Query:       NewQueryHandler(queryService, cfg.BaseURL),
 		Template:    NewTemplateHandler(templateService, cfg.BaseURL),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
-		DocAccess: NewDocAccessHandler(docService),
-		Request:   NewRequestHandler(docService),
-		User:      NewUserHandler(user),
+		DocAccess:    NewDocAccessHandler(docService),
+		Request:      NewRequestHandler(docService),
+		User:         NewUserHandler(user),
+		Contribution: NewContributionHandler(contribution, user, templateService, compositionService, cfg.BaseURL),
 	}
 }
 
@@ -70,6 +84,7 @@ func (a *API) Build() *gin.Engine {
 	return a.setupRouter(
 		a.buildUserAPI(),
 		a.buildEhrAPI(),
+		a.buildEhrContributionAPI(),
 		a.buildAccessAPI(),
 		//a.buildGroupAccessAPI(),
 		a.buildQueryAPI(),
@@ -136,6 +151,18 @@ func (a *API) buildEhrAPI() handlerBuilder {
 		r.PUT("/:ehrid/composition/:versioned_object_uid", a.Composition.Update)
 	}
 }
+
+func (a *API) buildEhrContributionAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("ehr")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		r.Use(auth(a))
+		r.Use(ehrSystemID)
+		r.GET("/:ehrid/contribution/:contribution_uid", a.Contribution.GetByID)
+		r.POST("/:ehrid/contribution/", a.Contribution.Create)
+	}
+}
+
 func (a *API) buildAccessAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("access")

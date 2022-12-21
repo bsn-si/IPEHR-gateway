@@ -34,12 +34,13 @@ type (
 	}
 
 	Tx struct {
-		ReqID     string `gorm:"req_id" json:"-"`
-		Kind      TxKind `gorm:"kind" json:"-"`
-		KindStr   string `gorm:"-" json:"Kind"`
-		Status    Status `gorm:"status" json:"-"`
-		StatusStr string `gorm:"-" json:"Status"`
-		Comment   string
+		ParentTxID string `gorm:"parent_id" json:"-"`
+		ReqID      string `gorm:"req_id" json:"-"`
+		Kind       TxKind `gorm:"kind" json:"-"`
+		KindStr    string `gorm:"-" json:"Kind"`
+		Status     Status `gorm:"status" json:"-"`
+		StatusStr  string `gorm:"-" json:"Status"`
+		Comment    string
 	}
 
 	EthereumTx struct {
@@ -76,6 +77,7 @@ const (
 	RequestUserGroupCreate
 	RequestUserGroupAddUser
 	RequestUserGroupRemoveUser
+	RequestContributionCreate
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {

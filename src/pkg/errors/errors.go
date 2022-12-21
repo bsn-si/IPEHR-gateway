@@ -34,6 +34,7 @@ var (
 	ErrRefreshTokenExp  = errors.New("Refresh token expired")
 	ErrUnauthorized     = errors.New("Unauthorized")
 	ErrAccessDenied     = errors.New("Access denied")
+	ErrTypeNotValid     = errors.New("Type is not valid")
 )
 
 func ErrFieldIsEmpty(name string) error {
@@ -42,4 +43,8 @@ func ErrFieldIsEmpty(name string) error {
 
 func ErrFieldIsIncorrect(name string) error {
 	return fmt.Errorf("%w: %s", ErrIncorrectFormat, name)
+}
+
+func ErrObjectWithIDIsNotExist(name string, ID string) error {
+	return fmt.Errorf("%w: %s '%s'", ErrIsNotExist, name, ID)
 }

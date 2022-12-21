@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"hms/gateway/pkg/docs/model/base"
+	errorsPkg "hms/gateway/pkg/errors"
 
 	"github.com/pkg/errors"
 )
@@ -22,13 +23,12 @@ type Composition struct {
 	base.Locatable
 }
 
-func (c *Composition) Validate() bool {
-	validation := true
+func (c *Composition) Validate() (bool, error) {
 	if c.Type != base.CompositionItemType {
-		validation = false
+		return false, errorsPkg.ErrIsUnsupported
 	}
 
-	return validation
+	return true, nil
 }
 
 func (c *Composition) UnmarshalJSON(data []byte) error {
@@ -39,6 +39,7 @@ func (c *Composition) UnmarshalJSON(data []byte) error {
 
 	c.Type = cc.Type
 	c.Name = cc.Name
+	c.ArchetypeDetails = cc.ArchetypeDetails
 	c.ArchetypeNodeID = cc.ArchetypeNodeID
 	c.ObjectVersionID = cc.ObjectVersionID
 	c.Composer = cc.Composer
@@ -85,6 +86,8 @@ func (w *compositionContentWrapper) UnmarshalJSON(data []byte) error {
 
 	switch tmp.Type {
 	case base.SectionItemType:
+		fallthrough
+	case base.EvaluationItemType:
 		w.item = &base.Section{}
 	default:
 		return errors.Errorf("unexpected composition content item: '%v'", tmp.Type)

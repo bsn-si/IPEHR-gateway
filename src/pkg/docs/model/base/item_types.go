@@ -8,12 +8,14 @@ func (cit ItemType) ToString() string {
 
 const (
 	ActionItemType          ItemType = "ACTION"
+	AuditDetailsType        ItemType = "AUDIT_DETAILS"
 	ActivityItemType        ItemType = "ACTIVITY"
 	ArchetypedItemType      ItemType = "ARCHETYPED"
 	ArchetypeIDItemType     ItemType = "ARCHETYPE_ID"
 	ClusterItemType         ItemType = "CLUSTER"
 	CodePhraseItemType      ItemType = "CODE_PHRASE"
 	CompositionItemType     ItemType = "COMPOSITION"
+	ContributionItemType    ItemType = "CONTRIBUTION"
 	DvBooleanItemType       ItemType = "DV_BOOLEAN"
 	DvCodedTextItemType     ItemType = "DV_CODED_TEXT"
 	DvCountItemType         ItemType = "DV_COUNT"
@@ -52,9 +54,13 @@ const (
 	PartyIdentifiedItemType ItemType = "PARTY_IDENTIFIED"
 	PartyRefItemType        ItemType = "PARTY_REF"
 	PartySelfItemType       ItemType = "PARTY_SELF"
+	PartyRelatedItemType    ItemType = "PARTY_RELATED"
 	PointEventItemType      ItemType = "POINT_EVENT"
 	IntervalEventItemType   ItemType = "INTERVAL_EVENT"
 	SectionItemType         ItemType = "SECTION"
 	TemplateIDItemType      ItemType = "TEMPLATE_ID"
 	TerminologyIDItemType   ItemType = "TERMINOLOGY_ID"
+	VersionOriginalItemType ItemType = "ORIGINAL_VERSION"
+	VersionImportedItemType ItemType = "IMPORTED_VERSION"
+	UIDBasedIDItemType      ItemType = "UID_BASED_ID"
 )

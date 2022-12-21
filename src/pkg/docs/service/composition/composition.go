@@ -516,3 +516,13 @@ func (s *Service) GetList(ctx context.Context, userID, systemID string, ehrUUID 
 
 	return list, nil
 }
+
+func (s *Service) IsExist(ctx context.Context, userID, systemID, ehrID, versionUID string) bool {
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		return false
+	}
+
+	ok, err := s.GetLastByBaseID(ctx, userID, systemID, &ehrUUID, versionUID)
+	return (ok != nil && err == nil)
+}

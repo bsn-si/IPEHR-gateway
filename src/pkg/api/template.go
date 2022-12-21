@@ -12,9 +12,11 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/template"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
 )
 
 type TemplateService interface {
+	helper.Finder
 	Parser(version model.ADLVer) (template.ADLParser, error)
 	GetByID(ctx context.Context, userID string, templateID string) (*model.Template, error)
 	Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error
@@ -56,7 +58,7 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	tID := c.Param("template_id") // TODO should have its own structure and validation method
+	tID := c.Param("template_id")
 
 	t, err := h.service.GetByID(c, userID, tID)
 	if err != nil {

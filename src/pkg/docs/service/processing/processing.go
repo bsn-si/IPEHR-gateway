@@ -245,12 +245,19 @@ func (p *Proc) execEthereum() {
 		StatusProcessing,
 	}
 
-	var txs []EthereumTx
+	var txs []struct {
+		EthereumTx
+		ParentID     uint
+		ParentStatus Status
+	}
 
 	result := p.db.Model(&EthereumTx{}).
-		Select("req_id, hash, status").
-		Where("status IN ?", statuses).
-		Group("hash").
+		Select("ethereum_txes.req_id, ethereum_txes.hash, ethereum_txes.status, parent_txes.req_id as parent_tx_id, parent_txes.status as parent_status").
+		Joins("left join ethereum_txes parent_txes on ethereum_txes.parent_tx_id = parent_txes.req_id").
+		Where("ethereum_txes.status IN ?", statuses).
+		Group("ethereum_txes.hash").
+		Group("parent_txes.req_id").
+		Order("parent_txes.req_id desc").
 		Find(&txs)
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)
@@ -262,6 +269,10 @@ func (p *Proc) execEthereum() {
 	}
 
 	for _, tx := range txs {
+		if tx.ParentStatus != StatusSuccess {
+			continue
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), common.BlockchainTxProcAwaitTime)
 
 		h := eth_common.HexToHash(tx.Hash)
