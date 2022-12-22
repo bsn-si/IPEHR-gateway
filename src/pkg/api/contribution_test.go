@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"hms/gateway/pkg/api/mocks"
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service/processing"
@@ -40,7 +41,7 @@ type contributionTestData struct {
 func TestContributionHandler_GetByID(t *testing.T) {
 	var (
 		userID   = uuid.New().String()
-		systemID = uuid.New().String()
+		systemID = common.EhrSystemID
 	)
 
 	cR := newContributionResponse()
@@ -137,7 +138,7 @@ func TestContributionHandler_GetByID(t *testing.T) {
 func TestContributionHandler_Create(t *testing.T) {
 	var (
 		userID   = uuid.New().String()
-		systemID = uuid.New().String()
+		systemID = common.EhrSystemID
 		ehrUUID  = uuid.New().String()
 	)
 
