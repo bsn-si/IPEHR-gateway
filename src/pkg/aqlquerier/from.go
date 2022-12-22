@@ -127,7 +127,7 @@ func (exec *executer) getDataSourceForClassExpression(operand aqlprocessor.Class
 		for _, ehrNode := range ehrs {
 			ds.data[ehrNode.GetID()] = append(ds.data[ehrNode.GetID()], ehrNode)
 		}
-	case "COMPOSITON":
+	case "COMPOSITION":
 	default:
 		return dataSource{}, fmt.Errorf("unexpeted data source type: %s", ds.name) //nolint
 	}

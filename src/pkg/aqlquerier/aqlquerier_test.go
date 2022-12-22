@@ -404,7 +404,3 @@ func getPreparedTreeIndex(filenames ...string) error {
 
 	return nil
 }
-
-func toRef[T any](v T) *T {
-	return &v
-}
