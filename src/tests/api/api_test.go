@@ -18,6 +18,7 @@ import (
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 	userModel "hms/gateway/pkg/user/model"
+	"hms/gateway/pkg/user/roles"
 )
 
 type TestData struct {
@@ -50,9 +51,9 @@ func Test_API(t *testing.T) {
 		ehrSystemID: common.EhrSystemID,
 		//nolint
 		users: []*User{
-			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
-			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
-			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10)},
+			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10), role: uint8(roles.Patient)},
+			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10), role: uint8(roles.Patient)},
+			&User{id: uuid.New().String(), password: fakeData.GetRandomStringWithLength(10), role: uint8(roles.Patient)},
 		},
 	}
 

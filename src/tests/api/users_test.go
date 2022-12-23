@@ -19,6 +19,7 @@ import (
 type User struct {
 	id           string
 	password     string
+	role         uint8
 	accessToken  string
 	refreshToken string
 	ehrID        string
@@ -259,6 +260,7 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 			User: User{
 				id:       uuid.New().String(),
 				password: fakeData.GetRandomStringWithLength(10),
+				role:     uint8(roles.Doctor),
 			},
 			Name:       "Gregory House, M.D.",
 			Address:    "Ann Arbor, Michigan, United States",
