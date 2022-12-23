@@ -254,9 +254,6 @@ const docTemplate = `{
         "/definition/query/{qualified_query_name}/{version}": {
             "get": {
                 "description": "Retrieves the definition of a particular stored query (at specified version) and its associated metadata.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -375,163 +372,6 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Is returned when a query with the given 'qualified_query_name' and 'version' already exists on the server"
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
-        "/definition/template/adl1.4": {
-            "get": {
-                "description": "List the available ADL 1.4 operational templates (OPT) on the system.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "DEFINITION"
-                ],
-                "summary": "Get a list of templates",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer AccessToken",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "UserId",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.TemplateResponse"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Is returned because of invalid content."
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
-        "/definition/template/adl1.4/": {
-            "post": {
-                "description": "Upload a new ADL 1.4 operational template (OPT).\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload",
-                "consumes": [
-                    "application/xml"
-                ],
-                "produces": [
-                    "text/plain",
-                    "application/xml"
-                ],
-                "tags": [
-                    "DEFINITION"
-                ],
-                "summary": "Store a template",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer AccessToken",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "UserId",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "default": "\"return=minimal\"",
-                        "description": "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation.",
-                        "name": "Prefer",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Is returned when the query was successfully uploaded.",
-                        "schema": {
-                            "$ref": "#/definitions/model.Template"
-                        }
-                    },
-                    "400": {
-                        "description": "Is returned when unable to upload a template, because of invalid content."
-                    },
-                    "409": {
-                        "description": "Is returned when a template with same {template_id} (at given version, if supplied) already exists."
-                    },
-                    "500": {
-                        "description": "Is returned when an unexpected error occurs while processing a request"
-                    }
-                }
-            }
-        },
-        "/definition/template/adl1.4/{template_id}": {
-            "get": {
-                "description": "Retrieves the ADL 1.4 operational template (OPT) identified by {template_id} identifier.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list",
-                "produces": [
-                    "application/xml",
-                    "application/openehr.wt+json"
-                ],
-                "tags": [
-                    "DEFINITION"
-                ],
-                "summary": "Get a template",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Template identifier. Example: Vital Signs",
-                        "name": "template_id",
-                        "in": "path"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer AccessToken",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "UserId",
-                        "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Is returned when the request has invalid content."
-                    },
-                    "404": {
-                        "description": "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
-                    },
-                    "406": {
-                        "description": "Is returned when template with certain ID created with other accept header"
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -1693,6 +1533,7 @@ const docTemplate = `{
         },
         "/user/code/{code}": {
             "get": {
+                "description": "Get information about the doctor by code",
                 "consumes": [
                     "application/json"
                 ],
@@ -1718,6 +1559,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.UserInfo"
                         }
+                    },
+                    "400": {
+                        "description": "` + "`" + `code` + "`" + ` is incorrect or requested user is not a doctor"
                     },
                     "404": {
                         "description": "User code is not exist"
@@ -1756,8 +1600,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1801,13 +1644,6 @@ const docTemplate = `{
                         "type": "string",
                         "description": "UserId",
                         "name": "AuthUserId",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "The identifier of the system, typically a reverse domain identifier",
-                        "name": "EhrSystemId",
                         "in": "header",
                         "required": true
                     },
@@ -1884,8 +1720,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -1938,8 +1773,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -2019,8 +1853,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
-                        "in": "header",
-                        "required": true
+                        "in": "header"
                     },
                     {
                         "type": "string",
@@ -2282,6 +2115,7 @@ const docTemplate = `{
         },
         "/user/{user_id}": {
             "get": {
+                "description": "Get information about the doctor by user_id",
                 "consumes": [
                     "application/json"
                 ],
@@ -2291,7 +2125,7 @@ const docTemplate = `{
                 "tags": [
                     "USER"
                 ],
-                "summary": "Get user info",
+                "summary": "Get doctor info",
                 "parameters": [
                     {
                         "type": "string",
@@ -2307,6 +2141,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.UserInfo"
                         }
+                    },
+                    "400": {
+                        "description": "` + "`" + `user_id` + "`" + ` is incorrect or requested user is not a doctor"
                     },
                     "404": {
                         "description": "User with ID not exist"
@@ -2815,61 +2652,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.Template": {
-            "type": "object",
-            "properties": {
-                "archetypeID": {
-                    "type": "string"
-                },
-                "body": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "concept": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "mimeType": {
-                    "type": "string"
-                },
-                "templateID": {
-                    "type": "string"
-                },
-                "uid": {
-                    "type": "string"
-                },
-                "verADL": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "model.TemplateResponse": {
-            "type": "object",
-            "properties": {
-                "archetype_id": {
-                    "type": "string"
-                },
-                "concept": {
-                    "type": "string"
-                },
-                "created_timestamp": {
-                    "type": "string"
-                },
-                "template_id": {
                     "type": "string"
                 },
                 "version": {
