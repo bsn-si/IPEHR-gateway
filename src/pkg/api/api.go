@@ -13,6 +13,7 @@ import (
 	"hms/gateway/pkg/docs/service"
 	"hms/gateway/pkg/docs/service/composition"
 	contributionService "hms/gateway/pkg/docs/service/contribution"
+	directoryService "hms/gateway/pkg/docs/service/directory"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/docs/service/template"
@@ -39,6 +40,7 @@ type API struct {
 	Ehr         *EhrHandler
 	EhrStatus   *EhrStatusHandler
 	Composition *CompositionHandler
+	Directory   *DirectoryHandler
 	Query       *QueryHandler
 	Template    *TemplateHandler
 	//GroupAccess *GroupAccessHandler
@@ -56,6 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
+	directory := directoryService.NewService(docService)
 
 	compositionService := composition.NewCompositionService(
 		docService.Infra.Index,
@@ -77,6 +80,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Request:      NewRequestHandler(docService),
 		User:         NewUserHandler(user),
 		Contribution: NewContributionHandler(contribution, user, templateService, compositionService, cfg.BaseURL),
+		Directory:    NewDirectoryHandler(directory, user, templateService, compositionService, cfg.BaseURL),
 	}
 }
 
@@ -85,6 +89,7 @@ func (a *API) Build() *gin.Engine {
 		a.buildUserAPI(),
 		a.buildEhrAPI(),
 		a.buildEhrContributionAPI(),
+		a.buildEhrDirectoryAPI(),
 		a.buildAccessAPI(),
 		//a.buildGroupAccessAPI(),
 		a.buildQueryAPI(),
@@ -173,6 +178,20 @@ func (a *API) buildEhrContributionAPI() handlerBuilder {
 		r.Use(ehrSystemID)
 		r.GET("/:ehrid/contribution/:contribution_uid", a.Contribution.GetByID)
 		r.POST("/:ehrid/contribution/", a.Contribution.Create)
+	}
+}
+
+func (a *API) buildEhrDirectoryAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("ehr")
+		r.Use(gzip.Gzip(gzip.DefaultCompression))
+		r.Use(auth(a))
+		r.Use(ehrSystemID)
+		r.POST("/:ehrid/directory/", a.Directory.Create)
+		r.PUT("/:ehrid/directory/", a.Directory.Update)
+		r.DELETE("/:ehrid/directory/", a.Directory.Delete)
+		r.GET("/:ehrid/directory/", a.Directory.GetByTime)
+		r.GET("/:ehrid/directory/:version_uid", a.Directory.GetByVersion)
 	}
 }
 
