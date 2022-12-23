@@ -15,7 +15,7 @@ type directoryTestData struct {
 }
 
 func TestDirectory_UnmarshalJSON(t *testing.T) {
-	tests := []struct {
+	var tests = []struct {
 		name    string
 		data    directoryTestData
 		wantErr bool
@@ -53,7 +53,9 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 			"3. empty directory with items",
 			directoryTestData{
 				d: model.Directory{
-					Locatable: base.Locatable{Type: base.FolderItemType, Name: base.NewDvText("root"),
+					Locatable: base.Locatable{
+						Type:            base.FolderItemType,
+						Name:            base.NewDvText("root"),
 						ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1"},
 					FeederAudit: base.FeederAudit{},
 					Folders:     nil,
@@ -279,7 +281,72 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 			},
 			false,
 		},
+		{
+			name: "5. empty directory with details",
+			data: directoryTestData{
+				d: model.Directory{
+					Locatable: base.Locatable{
+						Type:            base.FolderItemType,
+						Name:            base.NewDvText("root"),
+						ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+					},
+					FeederAudit: base.FeederAudit{},
+					Folders:     nil,
+					Details: base.ItemStructure{Data: &base.ItemTree{
+						DataStructure: base.DataStructure{
+							Locatable: base.Locatable{
+								Type:            base.ItemTreeItemType,
+								Name:            base.NewDvText("Tree"),
+								ArchetypeNodeID: "at0003",
+							},
+						},
+						Items: base.Items{
+							&base.Element{
+								Item: base.Item{
+									Type:            base.ElementItemType,
+									Name:            base.NewDvText("text"),
+									ArchetypeNodeID: "at0004",
+								},
+								Value: toRef(base.NewDvText("Lorem ipsum dolor sit amet")),
+							},
+						}}},
+				},
+				JSON: []byte(`
+					{
+					  "_type": "FOLDER",
+					  "name": {
+						"_type": "DV_TEXT",
+						"value": "root"
+					  },
+					  "archetype_node_id": "openEHR-EHR-FOLDER.generic.v1",
+					  "details": {
+						"_type": "ITEM_TREE",
+						"name": {
+						  "_type": "DV_TEXT",
+						  "value": "Tree"
+						},
+						"archetype_node_id": "at0003",
+						"items": [
+						  {
+							"_type": "ELEMENT",
+							"name": {
+							  "_type": "DV_TEXT",
+							  "value": "text"
+							},
+							"archetype_node_id": "at0004",
+							"value": {
+							  "_type": "DV_TEXT",
+							  "value": "Lorem ipsum dolor sit amet"
+							}
+						  }
+						]
+					  }
+					}
+				`),
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := model.Directory{}

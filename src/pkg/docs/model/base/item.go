@@ -67,7 +67,7 @@ func (itemW *itemWrapper) UnmarshalJSON(data []byte) error {
 type Element struct {
 	Item
 	NullFlavour *DvCodedText `json:"null_flavour,omitempty"`
-	Value       *DataValue   `json:"value,omitempty"`
+	Value       DataValue    `json:"value,omitempty"`
 	NullReason  *DvText      `json:"null_reason,omitempty"`
 }
 
@@ -99,7 +99,7 @@ func (e *Element) UnmarshalJSON(data []byte) error {
 	e.NullFlavour = wrapper.NullFlavour
 
 	if wrapper.Value != nil {
-		e.Value = &wrapper.Value.dv
+		e.Value = wrapper.Value.dv
 	}
 
 	return nil
