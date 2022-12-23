@@ -208,10 +208,8 @@ func prepareContributionVersionJSON(v []byte) []byte {
 	}`, v))
 }
 
-// func newContributionVersionData(data base.Root, dataJSON []byte) contributionTestData {}
 func newContributionWithVersions(data []contributionVersionTestData) contributionTestData {
 	c := newContribution()
-	//var cJSON string
 	cJSON := make([]string, 0, len(data))
 
 	for _, d := range data {
