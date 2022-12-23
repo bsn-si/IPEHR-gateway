@@ -227,8 +227,6 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 		err      error
 	)
 
-	userInfo.Role = roles.Role(user.Role).String()
-
 	if user.Role == uint8(roles.Doctor) {
 		content := attrs.GetByCode(docModel.AttributeContent)
 		if content == nil {
@@ -253,6 +251,8 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 	if timestamp == nil {
 		return nil, errors.ErrFieldIsEmpty("AttributeTimestamp")
 	}
+
+	userInfo.Role = roles.Role(user.Role).String()
 
 	userInfo.TimeCreated = time.Unix(big.NewInt(0).SetBytes(timestamp).Int64(), 0).Format(common.OpenEhrTimeFormat)
 
