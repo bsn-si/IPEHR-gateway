@@ -322,42 +322,6 @@ definitions:
       version:
         type: string
     type: object
-  model.Template:
-    properties:
-      archetypeID:
-        type: string
-      body:
-        items:
-          type: integer
-        type: array
-      concept:
-        type: string
-      createdAt:
-        type: string
-      mimeType:
-        type: string
-      templateID:
-        type: string
-      uid:
-        type: string
-      verADL:
-        type: string
-      version:
-        type: string
-    type: object
-  model.TemplateResponse:
-    properties:
-      archetype_id:
-        type: string
-      concept:
-        type: string
-      created_timestamp:
-        type: string
-      template_id:
-        type: string
-      version:
-        type: string
-    type: object
   model.UserAuthRequest:
     properties:
       password:
@@ -643,8 +607,6 @@ paths:
       - DEFINITION
   /definition/query/{qualified_query_name}/{version}:
     get:
-      consumes:
-      - application/json
       description: |-
         Retrieves the definition of a particular stored query (at specified version) and its associated metadata.
         https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query/operation/definition_query_list
@@ -738,127 +700,6 @@ paths:
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: Stores a query, at a specified version, on the system.
-      tags:
-      - DEFINITION
-  /definition/template/adl1.4:
-    get:
-      description: |-
-        List the available ADL 1.4 operational templates (OPT) on the system.
-        https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
-      parameters:
-      - description: Bearer AccessToken
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: UserId
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.TemplateResponse'
-            type: array
-        "400":
-          description: Is returned because of invalid content.
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Get a list of templates
-      tags:
-      - DEFINITION
-  /definition/template/adl1.4/:
-    post:
-      consumes:
-      - application/xml
-      description: |-
-        Upload a new ADL 1.4 operational template (OPT).
-        https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload
-      parameters:
-      - description: Bearer AccessToken
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: UserId
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      - default: '"return=minimal"'
-        description: Request header to indicate the preference over response details.
-          The response will contain the entire resource when the Prefer header has
-          a value of return=representation.
-        in: header
-        name: Prefer
-        required: true
-        type: string
-      produces:
-      - text/plain
-      - application/xml
-      responses:
-        "201":
-          description: Is returned when the query was successfully uploaded.
-          schema:
-            $ref: '#/definitions/model.Template'
-        "400":
-          description: Is returned when unable to upload a template, because of invalid
-            content.
-        "409":
-          description: Is returned when a template with same {template_id} (at given
-            version, if supplied) already exists.
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Store a template
-      tags:
-      - DEFINITION
-  /definition/template/adl1.4/{template_id}:
-    get:
-      description: |-
-        Retrieves the ADL 1.4 operational template (OPT) identified by {template_id} identifier.
-        https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
-      parameters:
-      - description: 'Template identifier. Example: Vital Signs'
-        in: path
-        name: template_id
-        type: string
-      - description: Bearer AccessToken
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: UserId
-        in: header
-        name: AuthUserId
-        required: true
-        type: string
-      produces:
-      - application/xml
-      - application/openehr.wt+json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Is returned when the request has invalid content.
-        "404":
-          description: Is returned when a stored query with {qualified_query_name}
-            and {version} does not exist.
-        "406":
-          description: Is returned when template with certain ID created with other
-            accept header
-        "500":
-          description: Is returned when an unexpected error occurs while processing
-            a request
-      summary: Get a template
       tags:
       - DEFINITION
   /ehr:
@@ -1738,6 +1579,7 @@ paths:
     get:
       consumes:
       - application/json
+      description: Get information about the doctor by user_id
       parameters:
       - description: The identifier of the requested user
         in: path
@@ -1751,18 +1593,21 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.UserInfo'
+        "400":
+          description: '`user_id` is incorrect or requested user is not a doctor'
         "404":
           description: User with ID not exist
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
-      summary: Get user info
+      summary: Get doctor info
       tags:
       - USER
   /user/code/{code}:
     get:
       consumes:
       - application/json
+      description: Get information about the doctor by code
       parameters:
       - description: The pin code of the requested doctor
         in: path
@@ -1776,6 +1621,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.UserInfo'
+        "400":
+          description: '`code` is incorrect or requested user is not a doctor'
         "404":
           description: User code is not exist
         "500":
@@ -1800,7 +1647,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1834,11 +1680,6 @@ paths:
       - description: UserId
         in: header
         name: AuthUserId
-        required: true
-        type: string
-      - description: The identifier of the system, typically a reverse domain identifier
-        in: header
-        name: EhrSystemId
         required: true
         type: string
       - description: User group
@@ -1891,7 +1732,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       produces:
       - application/json
@@ -1931,7 +1771,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: The identifier of the user group
         in: path
@@ -1989,7 +1828,6 @@ paths:
       - description: The identifier of the system, typically a reverse domain identifier
         in: header
         name: EhrSystemId
-        required: true
         type: string
       - description: The identifier of the user group
         in: path

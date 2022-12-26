@@ -18,6 +18,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
 	userModel "hms/gateway/pkg/user/model"
+	"hms/gateway/pkg/user/roles"
 	userService "hms/gateway/pkg/user/service"
 )
 
@@ -267,13 +268,14 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 }
 
 // Info
-// @Summary  Get user info
-// @Description
+// @Summary  Get doctor info
+// @Description Get information about the doctor by user_id
 // @Tags     USER
 // @Accept   json
 // @Produce  json
 // @Param    user_id        path      string  true  "The identifier of the requested user"
 // @Success  200            {object}  model.UserInfo
+// @Failure  400            "`user_id` is incorrect or requested user is not a doctor"
 // @Failure  404            "User with ID not exist"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/{user_id} [get]
@@ -296,17 +298,23 @@ func (h *UserHandler) Info(c *gin.Context) {
 		return
 	}
 
+	if userInfo.Role != roles.Doctor.String() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Info only available for users with the 'Doctor' role"})
+		return
+	}
+
 	c.JSON(http.StatusOK, userInfo)
 }
 
 // Info by code
 // @Summary  Get doctor info by code
-// @Description
+// @Description Get information about the doctor by code
 // @Tags     USER
 // @Accept   json
 // @Produce  json
 // @Param    code           path      string  true  "The pin code of the requested doctor"
 // @Success  200            {object}  model.UserInfo
+// @Failure  400            "`code` is incorrect or requested user is not a doctor"
 // @Failure  404            "User code is not exist"
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /user/code/{code} [get]
@@ -328,6 +336,11 @@ func (h *UserHandler) InfoByCode(c *gin.Context) {
 
 		log.Println("service. InfoByCode error: ", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if userInfo.Role != roles.Doctor.String() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Info only available for users with the 'Doctor' role"})
 		return
 	}
 

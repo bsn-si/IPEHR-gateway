@@ -45,20 +45,20 @@ func NewContributionHandler(cS ContributionService, uS UserService, tS TemplateS
 }
 
 // Get
-// @Summary      Get CONTRIBUTION by id
-// @Description  Retrieves a CONTRIBUTION identified by {contribution_uid} and associated with the EHR identified by {ehr_id}.
-// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/CONTRIBUTION/operation/contribution_create
-// @Tags         CONTRIBUTION
-// @Produce      json
-// @Param        contribution_uid    path      string  false  "The CONTRIBUTION uid"
-// @Param        Authorization  header    string     true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string     true  "UserId UUID"
-// @Param        EhrSystemId           header    string  true   "The identifier of the system, typically a reverse domain identifier"
-// @Success      200            {object}  model.ContributionResponse
-// @Failure      400            "Is returned when the request has invalid content."
-// @Failure      404            "Is returned when an EHR with {ehr_id}  does not exist, or when a CONTRIBUTION with {contribution_uid} does not exist"
-// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /ehr/{ehr_id}/contribution/{contribution_uid} [get]
+// Summary      Get CONTRIBUTION by id
+// Description  Retrieves a CONTRIBUTION identified by {contribution_uid} and associated with the EHR identified by {ehr_id}.
+// Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/CONTRIBUTION/operation/contribution_create
+// Tags         CONTRIBUTION
+// Produce      json
+// Param        contribution_uid    path      string  false  "The CONTRIBUTION uid"
+// Param        Authorization  header    string     true  "Bearer AccessToken"
+// Param        AuthUserId     header    string     true  "UserId UUID"
+// Param        EhrSystemId           header    string  true   "The identifier of the system, typically a reverse domain identifier"
+// Success      200            {object}  model.ContributionResponse
+// Failure      400            "Is returned when the request has invalid content."
+// Failure      404            "Is returned when an EHR with {ehr_id}  does not exist, or when a CONTRIBUTION with {contribution_uid} does not exist"
+// Failure      500            "Is returned when an unexpected error occurs while processing a request"
+// Router       /ehr/{ehr_id}/contribution/{contribution_uid} [get]
 func (h *ContributionHandler) GetByID(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -90,22 +90,22 @@ func (h *ContributionHandler) GetByID(c *gin.Context) {
 }
 
 // Create
-// @Summary      Create CONTRIBUTION
-// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/CONTRIBUTION/operation/contribution_create
-// @Tags         CONTRIBUTION
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
-// @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
-// @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the contribution_uid identifier, enclosed by double quotes. Example: \"0826851c-c4c2-4d61-92b9-410fb8275ff0\""
-// @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/contribution/{contribution_uid}"
-// @Header       201            {string}  RequestID  "Request identifier"
-// @Accept       json
-// @Produce      json
-// @Success      201  {object}  model.ContributionResponse  "Is returned when the CONTRIBUTION was successfully created."
-// @Failure      400  {object} model.ErrorResponse "Is returned when the request URL or body could not be parsed or has invalid content (e.g. invalid {ehr_id}, or either the body of the request not be converted to a valid CONTRIBUTION object, or the modification type doesn’t match the operation - i.e. first version of a composition with MODIFICATION)."
-// @Failure      409  "Is returned when a resource with same identifier(s) already exists."
-// @Failure      500  "Is returned when an unexpected error occurs while processing a request"
-// @Router       /ehr/{ehr_id}/contribution [post]
+// Summary      Create CONTRIBUTION
+// Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/CONTRIBUTION/operation/contribution_create
+// Tags         CONTRIBUTION
+// Param        Authorization  header    string  true   "Bearer AccessToken"
+// Param        AuthUserId     header    string  true   "UserId UUID"
+// Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the contribution_uid identifier, enclosed by double quotes. Example: \"0826851c-c4c2-4d61-92b9-410fb8275ff0\""
+// Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/contribution/{contribution_uid}"
+// Header       201            {string}  RequestID  "Request identifier"
+// Accept       json
+// Produce      json
+// Success      201  {object} model.ContributionResponse "Is returned when the CONTRIBUTION was successfully created."
+// Failure      400  {object} model.ErrorResponse "Is returned when the request URL or body could not be parsed or has invalid content (e.g. invalid {ehr_id}, or either the body of the request not be converted to a valid CONTRIBUTION object, or the modification type doesn’t match the operation - i.e. first version of a composition with MODIFICATION)."
+// Failure      409  "Is returned when a resource with same identifier(s) already exists."
+// Failure      500  "Is returned when an unexpected error occurs while processing a request"
+// Router       /ehr/{ehr_id}/contribution [post]
 func (h *ContributionHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 

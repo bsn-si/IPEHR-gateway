@@ -107,7 +107,7 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 // @Param    group_id       path    string           true  "User group identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
-// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId    header  string           false "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  model.UserGroup
 // @Failure  400            "The request could not be understood by the server due to incorrect syntax."
 // @Failure  403            "Is returned when userID does not have access to requested group"
@@ -160,7 +160,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 // @Accept   json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
-// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId    header  string           false "The identifier of the system, typically a reverse domain identifier"
 // @Param    group_id       path    string           true  "The identifier of the user group"
 // @Param    user_id        path    string           true  "The identifier of the user to be added"
 // @Param    access_level   path    string           true  "Access Level. One of `admin` or `read`"
@@ -235,7 +235,7 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 // @Accept   json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
-// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId    header  string           false "The identifier of the system, typically a reverse domain identifier"
 // @Param    group_id       path    string           true  "The identifier of the user group"
 // @Param    user_id        path    string           true  "The identifier of the user to be removed"
 // @Success  200            ""
@@ -299,7 +299,7 @@ func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
 // @Produce  json
 // @Param    Authorization  header  string           true  "Bearer AccessToken"
 // @Param    AuthUserId     header  string           true  "UserId"
-// @Param    EhrSystemId    header  string           true  "The identifier of the system, typically a reverse domain identifier"
+// @Param    EhrSystemId    header  string           false "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  []model.UserGroup
 // @Failure  400            "The request could not be understood by the server due to incorrect syntax."
 // @Failure  404            "Is returned when groupID does not exist"

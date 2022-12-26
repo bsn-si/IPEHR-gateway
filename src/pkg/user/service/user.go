@@ -221,31 +221,28 @@ func (s *Service) InfoByCode(ctx context.Context, code int) (*model.UserInfo, er
 }
 
 func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
-	attrs := docModel.AttributesUsers(user.Attrs)
-
-	content := attrs.GetByCode(docModel.AttributeContent)
-	if content == nil {
-		return nil, errors.ErrFieldIsEmpty("AttributeContent")
-	}
-
 	var (
 		userInfo model.UserInfo
+		attrs    = docModel.AttributesUsers(user.Attrs)
 		err      error
 	)
 
-	content, err = compressor.New(compressor.BestCompression).Decompress(content)
-	if err != nil {
-		return nil, fmt.Errorf("DoctorInfo content decompression error: %w", err)
-	}
-
-	err = msgpack.Unmarshal(content, &userInfo)
-	if err != nil {
-		return nil, fmt.Errorf("msgpack.Marshal error: %w", err)
-	}
-
-	userInfo.Role = roles.Role(user.Role).String()
-
 	if user.Role == uint8(roles.Doctor) {
+		content := attrs.GetByCode(docModel.AttributeContent)
+		if content == nil {
+			return nil, errors.ErrFieldIsEmpty("AttributeContent")
+		}
+
+		content, err = compressor.New(compressor.BestCompression).Decompress(content)
+		if err != nil {
+			return nil, fmt.Errorf("DoctorInfo content decompression error: %w", err)
+		}
+
+		err = msgpack.Unmarshal(content, &userInfo)
+		if err != nil {
+			return nil, fmt.Errorf("msgpack.Marshal error: %w", err)
+		}
+
 		codeInt := binary.BigEndian.Uint64(user.IDHash[0:8]) % common.UserCodeMask
 		userInfo.Code = fmt.Sprintf("%08d", codeInt)
 	}
@@ -254,6 +251,8 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 	if timestamp == nil {
 		return nil, errors.ErrFieldIsEmpty("AttributeTimestamp")
 	}
+
+	userInfo.Role = roles.Role(user.Role).String()
 
 	userInfo.TimeCreated = time.Unix(big.NewInt(0).SetBytes(timestamp).Int64(), 0).Format(common.OpenEhrTimeFormat)
 
