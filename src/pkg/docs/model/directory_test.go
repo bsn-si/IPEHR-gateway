@@ -107,7 +107,7 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 					},
 					FeederAudit: base.FeederAudit{},
 					Details:     base.ItemStructure{},
-					Folders: []model.Directory{
+					Folders: []*model.Directory{
 						{
 							Locatable: base.Locatable{
 								Type:            base.FolderItemType,
@@ -116,7 +116,7 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 							},
 							FeederAudit: base.FeederAudit{},
 							Details:     base.ItemStructure{},
-							Folders: []model.Directory{
+							Folders: []*model.Directory{
 								{
 									Locatable: base.Locatable{
 										Type:            base.FolderItemType,
@@ -125,7 +125,7 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 									},
 									FeederAudit: base.FeederAudit{},
 									Details:     base.ItemStructure{},
-									Folders: []model.Directory{
+									Folders: []*model.Directory{
 										{
 											Locatable: base.Locatable{
 												Type:            base.FolderItemType,
@@ -146,7 +146,7 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 									},
 									FeederAudit: base.FeederAudit{},
 									Details:     base.ItemStructure{},
-									Folders: []model.Directory{
+									Folders: []*model.Directory{
 										{
 											Locatable: base.Locatable{
 												Type:            base.FolderItemType,
@@ -169,7 +169,7 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 							},
 							FeederAudit: base.FeederAudit{},
 							Details:     base.ItemStructure{},
-							Folders: []model.Directory{
+							Folders: []*model.Directory{
 								{
 									Locatable: base.Locatable{
 										Type:            base.FolderItemType,
@@ -361,6 +361,174 @@ func TestDirectory_UnmarshalJSON(t *testing.T) {
 			)
 			if diff := cmp.Diff(tt.data.d, got, opts); diff != "" {
 				t.Errorf("Directory.UnmarshalJSON() mismatch{-want;+got}\n\t%s", diff)
+			}
+		})
+	}
+}
+
+func TestDirectory_GetByPath(t *testing.T) {
+	d := &model.Directory{
+		Locatable: base.Locatable{
+			Type:            base.FolderItemType,
+			Name:            base.NewDvText("root"),
+			ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+		},
+		Folders: []*model.Directory{
+			{
+				Locatable: base.Locatable{
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("1"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				},
+				Folders: []*model.Directory{
+					{
+						Locatable: base.Locatable{
+							Type:            base.FolderItemType,
+							Name:            base.NewDvText("1-1"),
+							ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+						},
+						Folders: []*model.Directory{
+							{
+								Locatable: base.Locatable{
+									Type:            base.FolderItemType,
+									Name:            base.NewDvText("1-1-1"),
+									ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+								},
+							},
+							{
+								Locatable: base.Locatable{
+									Type:            base.FolderItemType,
+									Name:            base.NewDvText("1-1-2"),
+									ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+								},
+							},
+						},
+					},
+					{
+						Locatable: base.Locatable{
+							Type:            base.FolderItemType,
+							Name:            base.NewDvText("1-2"),
+							ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+						},
+						FeederAudit: base.FeederAudit{},
+						Details:     base.ItemStructure{},
+						Folders: []*model.Directory{
+							{
+								Locatable: base.Locatable{
+									Type:            base.FolderItemType,
+									Name:            base.NewDvText("1-2-1"),
+									ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+								},
+								FeederAudit: base.FeederAudit{},
+								Details:     base.ItemStructure{},
+								Folders:     nil,
+							},
+						},
+					},
+				},
+			},
+			{
+				Locatable: base.Locatable{
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("2"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				},
+				FeederAudit: base.FeederAudit{},
+				Details:     base.ItemStructure{},
+				Folders: []*model.Directory{
+					{
+						Locatable: base.Locatable{
+							Type:            base.FolderItemType,
+							Name:            base.NewDvText("2-1"),
+							ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+						},
+						FeederAudit: base.FeederAudit{},
+						Details:     base.ItemStructure{},
+						Folders:     nil,
+					},
+				},
+			},
+			{
+				Locatable: base.Locatable{
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("3"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				},
+				FeederAudit: base.FeederAudit{},
+				Details:     base.ItemStructure{},
+				Folders:     nil,
+			},
+		},
+	}
+
+	var tests = []struct {
+		name     string
+		path     string
+		wantName string
+		wantErr  bool
+	}{
+		{
+			name:     "1. Error because path is empty",
+			path:     "",
+			wantName: "",
+			wantErr:  true,
+		}, {
+			name:     "2. Error because path not found",
+			path:     "unknown folder name",
+			wantName: "",
+			wantErr:  true,
+		}, {
+			name:     "3. Successfully find root",
+			path:     "root",
+			wantName: "root",
+			wantErr:  false,
+		}, {
+			name:     "4. Successfully find first sub folder",
+			path:     "root/1",
+			wantName: "1",
+			wantErr:  false,
+		}, {
+			name:     "5. Successfully find last folder",
+			path:     "root/1/1-1/1-1-2",
+			wantName: "1-1-2",
+			wantErr:  false,
+		}, {
+			name:     "6. Successfully find folder in sub folder",
+			path:     "root/2/2-1",
+			wantName: "2-1",
+			wantErr:  false,
+		}, {
+			name:     "7. Successfully find last folder",
+			path:     "root/3",
+			wantName: "3",
+			wantErr:  false,
+		}, {
+			name:     "8. Successfully trim slashes and find folder",
+			path:     "//////////root///3////////",
+			wantName: "3",
+			wantErr:  false,
+		}, {
+			name:     "9. Fail because havent found folder",
+			path:     "root/1/1-1/not exist folder",
+			wantName: "not exist folder",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotD, err := d.GetByPath(tt.path)
+			if err != nil {
+				if tt.wantErr {
+					return
+				}
+
+				t.Errorf("Directory.GetByPath() have error %v", err)
+				return
+			}
+
+			if diff := cmp.Diff(gotD.Name.Value, tt.wantName); diff != "" {
+				t.Errorf("Directory.GetByPath() mismatch{-want;+got}\n\t%s", diff)
 			}
 		})
 	}
