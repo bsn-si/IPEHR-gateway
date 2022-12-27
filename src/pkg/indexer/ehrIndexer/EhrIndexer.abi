@@ -435,7 +435,7 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "ehrId",
+          "name": "userIDHash",
           "type": "bytes32"
         },
         {
@@ -445,7 +445,7 @@
         },
         {
           "internalType": "bytes32",
-          "name": "docBaseUIDHash",
+          "name": "UIDHash",
           "type": "bytes32"
         }
       ],
@@ -508,7 +508,7 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "ehrId",
+          "name": "userIDHash",
           "type": "bytes32"
         },
         {

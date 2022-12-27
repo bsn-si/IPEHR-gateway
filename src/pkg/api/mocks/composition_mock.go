@@ -127,17 +127,23 @@ func (mr *MockCompositionServiceMockRecorder) GetList(ctx, userID, systemID, ehr
 }
 
 // IsExist mocks base method.
-func (m *MockCompositionService) IsExist(ctx context.Context, userID, systemID, ehrUUID, ID string) bool {
+func (m *MockCompositionService) IsExist(ctx context.Context, args ...string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsExist", ctx, userID, systemID, ehrUUID, ID)
+	varargs := []interface{}{ctx}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "IsExist", varargs...)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsExist indicates an expected call of IsExist.
-func (mr *MockCompositionServiceMockRecorder) IsExist(ctx, userID, systemID, ehrUUID, ID interface{}) *gomock.Call {
+func (mr *MockCompositionServiceMockRecorder) IsExist(ctx interface{}, args ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockCompositionService)(nil).IsExist), ctx, userID, systemID, ehrUUID, ID)
+	varargs := append([]interface{}{ctx}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockCompositionService)(nil).IsExist), varargs...)
 }
 
 // Update mocks base method.

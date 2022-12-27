@@ -47,7 +47,7 @@ func (*Parser) Parse(b []byte, mime model.ADLType) (*model.Template, error) {
 			VerADL:      model.VerADL1_4,
 			MimeType:    mime,
 			Body:        b,
-			Concept:     m.Definition.Concept,
+			Concept:     m.Concept,
 		}, nil
 	}
 
@@ -62,6 +62,7 @@ func (p *Parser) ParseWithFill(b []byte, mime model.ADLType) (*model.Template, e
 
 	m.CreatedAt = time.Now().Format(common.OpenEhrTimeFormat)
 	m.Version = "1"
+	m.Body = b
 
 	return m, nil
 }

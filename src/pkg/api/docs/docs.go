@@ -379,6 +379,169 @@ const docTemplate = `{
                 }
             }
         },
+        "/definition/template/adl1.4": {
+            "get": {
+                "description": "List the available ADL 1.4 operational templates (OPT) on the system.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DEFINITION"
+                ],
+                "summary": "Get a list of templates",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Template"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned because of invalid content."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/definition/template/adl1.4/": {
+            "post": {
+                "description": "Upload a new ADL 1.4 operational template (OPT).\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload",
+                "consumes": [
+                    "application/xml"
+                ],
+                "produces": [
+                    "text/plain",
+                    "application/xml"
+                ],
+                "tags": [
+                    "DEFINITION"
+                ],
+                "summary": "Store a template",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "\"return=minimal\"",
+                        "description": "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation.",
+                        "name": "Prefer",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Is returned when the query was successfully uploaded.",
+                        "schema": {
+                            "$ref": "#/definitions/model.Template"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when unable to upload a template, because of invalid content."
+                    },
+                    "409": {
+                        "description": "Is returned when a template with same {template_id} (at given version, if supplied) already exists."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/definition/template/adl1.4/{template_id}": {
+            "get": {
+                "description": "Retrieves the ADL 1.4 operational template (OPT) identified by {template_id} identifier.\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list",
+                "produces": [
+                    "application/xml",
+                    "application/openehr.wt+json"
+                ],
+                "tags": [
+                    "DEFINITION"
+                ],
+                "summary": "Get a template",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Template identifier. Example: Vital Signs",
+                        "name": "template_id",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the request has invalid content."
+                    },
+                    "404": {
+                        "description": "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
+                    },
+                    "406": {
+                        "description": "Is returned when template with certain ID created with other accept header"
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
         "/ehr": {
             "get": {
                 "description": "Retrieve the EHR with the specified subject_id and subject_namespace.\nThese subject parameters will be matched against EHR’s\nEHR_STATUS.subject.external_ref.id.value and EHR_STATUS.subject.external_ref.namespace values.",
@@ -2652,6 +2815,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Template": {
+            "type": "object",
+            "properties": {
+                "archetype_id": {
+                    "type": "string"
+                },
+                "concept": {
+                    "type": "string"
+                },
+                "created_timestamp": {
+                    "type": "string"
+                },
+                "template_id": {
                     "type": "string"
                 },
                 "version": {

@@ -53,19 +53,31 @@ func (s *Service) List(ctx context.Context, userID, systemID, qualifiedQueryName
 
 	var result []*model.StoredQuery
 
-	for i, doc := range list {
-		doc := doc
+	for i, dm := range list {
+		dm := dm
 
-		storedQuery, err := extractFromDocMeta(&doc, userPubKey, userPrivKey)
+		key, err := s.KeyFromAttribures(&dm, userPubKey, userPrivKey)
 		if err != nil {
-			return nil, fmt.Errorf("extractFromDocMeta error: %w index: %d", err, i)
+			return nil, fmt.Errorf("index %d KeyFromAttribures error: %w", i, err)
+		}
+
+		content, err := s.ContentFromAttributes(&dm, key)
+		if err != nil {
+			return nil, fmt.Errorf("index %d ContentFromAttributes error: %w", i, err)
+		}
+
+		var storedQuery model.StoredQuery
+
+		err = msgpack.Unmarshal(content, &storedQuery)
+		if err != nil {
+			return nil, fmt.Errorf("index %d StoredQuery content unmarshal error: %w", i, err)
 		}
 
 		if qualifiedQueryName != "" && storedQuery.Name != qualifiedQueryName {
 			continue
 		}
 
-		result = append(result, storedQuery)
+		result = append(result, &storedQuery)
 	}
 
 	return result, nil
@@ -100,12 +112,24 @@ func (s *Service) GetByVersion(ctx context.Context, userID, systemID, name strin
 		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
 	}
 
-	storedQuery, err := extractFromDocMeta(docMeta, userPubKey, userPrivKey)
+	key, err := s.KeyFromAttribures(docMeta, userPubKey, userPrivKey)
 	if err != nil {
-		return nil, fmt.Errorf("extractFromDocMeta error: %w", err)
+		return nil, fmt.Errorf("KeyFromAttribures error: %w", err)
 	}
 
-	return storedQuery, nil
+	content, err := s.ContentFromAttributes(docMeta, key)
+	if err != nil {
+		return nil, fmt.Errorf("ContentFromAttributes error: %w", err)
+	}
+
+	var storedQuery model.StoredQuery
+
+	err = msgpack.Unmarshal(content, &storedQuery)
+	if err != nil {
+		return nil, fmt.Errorf("StoredQuery content unmarshal error: %w", err)
+	}
+
+	return &storedQuery, nil
 }
 
 func (*Service) Validate(data []byte) bool {
@@ -153,7 +177,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	keyEncr, err := keybox.Seal(key.Bytes(), userPubKey, userPrivKey)
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 	if err != nil {
 		return nil, fmt.Errorf("keybox.SealAnonymous error: %w", err)
 	}
@@ -167,7 +191,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 		Attrs: []ehrIndexer.AttributesAttribute{
 			{Code: model.AttributeKeyEncr, Value: keyEncr},         // encrypted with key
 			{Code: model.AttributeContentEncr, Value: contentEncr}, // encrypted with userPubKey
-			{Code: model.AttributeDocBaseUIDHash, Value: idHash[:]},
+			{Code: model.AttributeDocUIDHash, Value: idHash[:]},
 		},
 	}
 
@@ -199,51 +223,4 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 	}
 
 	return storedQuery, nil
-}
-
-func extractFromDocMeta(docMeta *model.DocumentMeta, userPubKey, userPrivKey *[32]byte) (*model.StoredQuery, error) {
-	var key *chachaPoly.Key
-	{
-		keyEncr := docMeta.GetAttr(model.AttributeKeyEncr)
-		if keyEncr == nil {
-			return nil, fmt.Errorf("%w: KeyEncr of StoredQuery", errors.ErrIsEmpty)
-		}
-
-		keyBytes, err := keybox.Open(keyEncr, userPubKey, userPrivKey)
-		if err != nil {
-			return nil, fmt.Errorf("keybox.Open error: %w", err)
-		}
-
-		key, err = chachaPoly.NewKeyFromBytes(keyBytes)
-		if err != nil {
-			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
-		}
-	}
-
-	var content []byte
-	{
-		contentEncr := docMeta.GetAttr(model.AttributeContentEncr)
-		if contentEncr == nil {
-			return nil, fmt.Errorf("%w: ContentEncr of StoredQuery", errors.ErrIsEmpty)
-		}
-
-		contentCompressed, err := key.Decrypt(contentEncr)
-		if err != nil {
-			return nil, fmt.Errorf("Query content decryption error: %w", err)
-		}
-
-		content, err = compressor.New(compressor.BestCompression).Decompress(contentCompressed)
-		if err != nil {
-			return nil, fmt.Errorf("Query content decompression error: %w", err)
-		}
-	}
-
-	var storedQuery model.StoredQuery
-
-	err := msgpack.Unmarshal(content, &storedQuery)
-	if err != nil {
-		return nil, fmt.Errorf("Query content unmarshal error: %w", err)
-	}
-
-	return &storedQuery, nil
 }

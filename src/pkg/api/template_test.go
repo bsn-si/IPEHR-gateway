@@ -82,7 +82,7 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 			"incorrect",
 			model.VerADL1_4,
 			func(gaSvc *mocks.MockTemplateService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), userID, "incorrect").Return(nil, errors.ErrNotFound)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any(), "incorrect").Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			"",
@@ -93,7 +93,7 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 			templateID,
 			model.VerADL1_4,
 			func(gaSvc *mocks.MockTemplateService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any()).Return(template, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any(), gomock.Any()).Return(template, nil)
 			},
 			http.StatusNotAcceptable,
 			"",
@@ -104,7 +104,7 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 			templateID,
 			model.VerADL1_4,
 			func(gaSvc *mocks.MockTemplateService) {
-				gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any()).Return(template, nil)
+				gaSvc.EXPECT().GetByID(gomock.Any(), userID, gomock.Any(), gomock.Any()).Return(template, nil)
 			},
 			http.StatusOK,
 			string(template.Body),
@@ -163,10 +163,10 @@ func TestTemplateHandler_ListStored(t *testing.T) {
 	var (
 		userID   = uuid.New().String()
 		systemID = uuid.New().String()
-		tM       = make([]*model.TemplateResponse, 1)
+		tM       = make([]*model.Template, 1)
 	)
 
-	tM[0] = &model.TemplateResponse{
+	tM[0] = &model.Template{
 		TemplateID:  "1",
 		Version:     "1.0.1",
 		Concept:     "concept",

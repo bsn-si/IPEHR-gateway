@@ -99,20 +99,15 @@ func (i *Index) ListDocByType(ctx context.Context, userID, systemID string, docT
 	return list, nil
 }
 
-func (i *Index) GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error) {
-	var (
-		callOpts = &bind.CallOpts{Context: ctx}
-		eID      [32]byte
-	)
+func (i *Index) GetDocLastByBaseID(ctx context.Context, userID, systemID string, docType types.DocumentType, UIDHash *[32]byte) (*model.DocumentMeta, error) {
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-	copy(eID[:], ehrUUID[:])
-
-	docMeta, err := i.ehrIndex.GetDocLastByBaseID(callOpts, eID, uint8(docType), *docBaseUIDHash)
+	docMeta, err := i.ehrIndex.GetDocLastByBaseID(&bind.CallOpts{Context: ctx}, IDHash, uint8(docType), *UIDHash)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w", errors.ErrNotFound)
 		}
-		return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w ehrUUID %s docType %s docBaseUIDHash %x", err, ehrUUID.String(), docType.String(), docBaseUIDHash)
+		return nil, fmt.Errorf("ehrIndex.GetDocLastByBaseID error: %w userID %s docType %s docBaseUIDHash %x", err, userID, docType.String(), UIDHash)
 	}
 
 	return (*model.DocumentMeta)(&docMeta), nil

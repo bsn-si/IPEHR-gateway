@@ -37,25 +37,25 @@ func (m *MockTemplateService) EXPECT() *MockTemplateServiceMockRecorder {
 }
 
 // GetByID mocks base method.
-func (m *MockTemplateService) GetByID(ctx context.Context, userID, templateID string) (*model.Template, error) {
+func (m *MockTemplateService) GetByID(ctx context.Context, userID, systemID, templateID string) (*model.Template, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", ctx, userID, templateID)
+	ret := m.ctrl.Call(m, "GetByID", ctx, userID, systemID, templateID)
 	ret0, _ := ret[0].(*model.Template)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockTemplateServiceMockRecorder) GetByID(ctx, userID, templateID interface{}) *gomock.Call {
+func (mr *MockTemplateServiceMockRecorder) GetByID(ctx, userID, systemID, templateID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTemplateService)(nil).GetByID), ctx, userID, templateID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTemplateService)(nil).GetByID), ctx, userID, systemID, templateID)
 }
 
 // GetList mocks base method.
-func (m *MockTemplateService) GetList(ctx context.Context, userID, systemID string) ([]*model.TemplateResponse, error) {
+func (m *MockTemplateService) GetList(ctx context.Context, userID, systemID string) ([]*model.Template, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetList", ctx, userID, systemID)
-	ret0, _ := ret[0].([]*model.TemplateResponse)
+	ret0, _ := ret[0].([]*model.Template)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -67,17 +67,23 @@ func (mr *MockTemplateServiceMockRecorder) GetList(ctx, userID, systemID interfa
 }
 
 // IsExist mocks base method.
-func (m *MockTemplateService) IsExist(ctx context.Context, userID, systemID, ehrUUID, ID string) bool {
+func (m *MockTemplateService) IsExist(ctx context.Context, args ...string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsExist", ctx, userID, systemID, ehrUUID, ID)
+	varargs := []interface{}{ctx}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "IsExist", varargs...)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsExist indicates an expected call of IsExist.
-func (mr *MockTemplateServiceMockRecorder) IsExist(ctx, userID, systemID, ehrUUID, ID interface{}) *gomock.Call {
+func (mr *MockTemplateServiceMockRecorder) IsExist(ctx interface{}, args ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockTemplateService)(nil).IsExist), ctx, userID, systemID, ehrUUID, ID)
+	varargs := append([]interface{}{ctx}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockTemplateService)(nil).IsExist), varargs...)
 }
 
 // Parser mocks base method.

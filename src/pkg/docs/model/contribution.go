@@ -146,7 +146,8 @@ func (c *ContributionVersion) Validate(templateSearcher helper.Searcher) (bool, 
 			return false, errorsPkg.ErrFieldIsEmpty("TemplateID")
 		}
 
-		if !templateSearcher.IsExist(templateID) {
+		ok, err := templateSearcher.IsExist(templateID)
+		if !ok || err != nil {
 			return false, errorsPkg.ErrObjectWithIDIsNotExist("TemplateID", templateID)
 		}
 	}

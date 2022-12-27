@@ -24,6 +24,7 @@ type User struct {
 	ehrID        string
 	ehrStatusID  string
 	compositions []*docModel.Composition
+	templates    []*docModel.Template
 }
 
 type Doctor struct {
