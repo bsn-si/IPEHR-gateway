@@ -34,7 +34,7 @@ type (
 		MultiCallEhrNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
 		GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
 		AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
-		GetDocLastByBaseID(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
+		GetDocLastByBaseID(ctx context.Context, userID, systemID string, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
 		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
 		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
 	}
@@ -253,8 +253,6 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	if err != nil {
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
-	//dealCID := fakeData.Cid()
-	//minerAddr := "123"
 
 	docIDEncrypted, err := key.EncryptWithAuthData([]byte(objectVersionID.String()), ehrUUID[:])
 	if err != nil {
@@ -290,7 +288,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			Attrs: []ehrIndexer.AttributesAttribute{
 				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
-				{Code: model.AttributeDocBaseUIDHash, Value: baseDocumentUIDHash[:]},
+				{Code: model.AttributeDocUIDHash, Value: baseDocumentUIDHash[:]},
 				{Code: model.AttributeDocUIDEncr, Value: docIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
@@ -345,7 +343,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID, systemID string, 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	docMeta, err := s.indexer.GetDocLastByBaseID(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash)
+	docMeta, err := s.indexer.GetDocLastByBaseID(ctx, userID, systemID, types.Composition, &baseDocumentUIDHash)
 	if err != nil {
 		return nil, fmt.Errorf("GetLastVersionDocIndexByBaseID error: %w userID %s objectVersionID %s", err, userID, objectVersionID)
 	}
@@ -517,12 +515,22 @@ func (s *Service) GetList(ctx context.Context, userID, systemID string, ehrUUID 
 	return list, nil
 }
 
-func (s *Service) IsExist(ctx context.Context, userID, systemID, ehrID, versionUID string) bool {
+func (s *Service) IsExist(ctx context.Context, args ...string) (bool, error) {
+	if len(args) != 4 {
+		return false, fmt.Errorf("%w: Expected args: userID, systemID, ehrID, versionUID", errors.ErrCustom)
+	}
+
+	userID, systemID, ehrID, versionUID := args[0], args[1], args[2], args[3]
+
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
-		return false
+		return false, fmt.Errorf("uuid.Parse error: %w", err)
 	}
 
 	ok, err := s.GetLastByBaseID(ctx, userID, systemID, &ehrUUID, versionUID)
-	return (ok != nil && err == nil)
+	if err != nil {
+		return false, fmt.Errorf("GetLastByBaseID error: %w", err)
+	}
+
+	return (ok != nil), nil
 }

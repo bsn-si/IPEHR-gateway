@@ -9,9 +9,11 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/compressor"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
@@ -86,16 +88,23 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 	}
 
 	// Decrypt and decompress
-	var docDecrypted []byte
+	var docUID, docDecrypted []byte
 	{
-		docID, err := docKey.DecryptWithAuthData(docIDEncrypted, authData)
-		if err != nil {
-			return nil, fmt.Errorf("DocIDEncrypted DecryptWithAuthData error: %w", err)
-		}
+		if authData != nil {
+			docUID, err = docKey.DecryptWithAuthData(docIDEncrypted, authData)
+			if err != nil {
+				return nil, fmt.Errorf("DocIDEncrypted DecryptWithAuthData error: %w", err)
+			}
 
-		docDecrypted, err = docKey.DecryptWithAuthData(docEncrypted, docID)
-		if err != nil {
-			return nil, fmt.Errorf("docEncrypted DecryptWithAuthData error: %w", err)
+			docDecrypted, err = docKey.DecryptWithAuthData(docEncrypted, docUID)
+			if err != nil {
+				return nil, fmt.Errorf("docEncrypted DecryptWithAuthData error: %w", err)
+			}
+		} else {
+			docDecrypted, err = docKey.Decrypt(docEncrypted)
+			if err != nil {
+				return nil, fmt.Errorf("docEncrypted Decrypt error: %w", err)
+			}
 		}
 
 		if d.Infra.CompressionEnabled {
@@ -149,4 +158,44 @@ func (d *DefaultDocumentService) DecryptKey(userID string, encryptedKey []byte) 
 	}
 
 	return key, nil
+}
+
+func (d *DefaultDocumentService) KeyFromAttribures(docMeta *model.DocumentMeta, userPubKey, userPrivKey *[32]byte) (*chachaPoly.Key, error) {
+	keyEncr := docMeta.GetAttr(model.AttributeKeyEncr)
+	if keyEncr == nil {
+		return nil, errors.ErrFieldIsEmpty("AttributeKeyEncr")
+	}
+
+	keyBytes, err := keybox.OpenAnonymous(keyEncr, userPubKey, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("keybox.Open error: %w", err)
+	}
+
+	key, err := chachaPoly.NewKeyFromBytes(keyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+	}
+
+	return key, nil
+}
+
+func (d *DefaultDocumentService) ContentFromAttributes(docMeta *model.DocumentMeta, key *chachaPoly.Key) ([]byte, error) {
+	var err error
+
+	content := docMeta.GetAttr(model.AttributeContentEncr)
+	if content == nil {
+		return nil, errors.ErrFieldIsEmpty("AttributeContentEncr")
+	}
+
+	content, err = key.Decrypt(content)
+	if err != nil {
+		return nil, fmt.Errorf("Content decryption error: %w", err)
+	}
+
+	content, err = compressor.New(compressor.BestCompression).Decompress(content)
+	if err != nil {
+		return nil, fmt.Errorf("Content decompression error: %w", err)
+	}
+
+	return content, nil
 }

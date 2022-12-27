@@ -8,6 +8,7 @@ const (
 	EhrStatus
 	Composition
 	Query
+	Template
 )
 
 var typeNames = map[DocumentType]string{
@@ -16,6 +17,7 @@ var typeNames = map[DocumentType]string{
 	EhrStatus:   "EHR_STATUS",
 	Composition: "COMPOSITION",
 	Query:       "QUERY",
+	Template:    "TEMPLATE",
 }
 
 func (t DocumentType) String() string {

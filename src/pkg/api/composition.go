@@ -19,31 +19,33 @@ import (
 	"hms/gateway/pkg/helper"
 )
 
-type CompositionService interface {
-	helper.Finder
-	DefaultGroupAccess() *model.GroupAccess
-	Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
-	Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
-	GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
-	GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
-	DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error)
-	GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error)
-}
+type (
+	CompositionService interface {
+		helper.Finder
+		DefaultGroupAccess() *model.GroupAccess
+		Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
+		Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
+		GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
+		GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
+		DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error)
+		GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error)
+	}
 
-type Indexer interface {
-	GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
-}
+	Indexer interface {
+		GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
+	}
 
-type ProcessingService interface {
-	NewRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (*processing.Request, error)
-}
+	ProcessingService interface {
+		NewRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (*processing.Request, error)
+	}
 
-type CompositionHandler struct {
-	service       CompositionService
-	indexer       Indexer
-	processingSvc ProcessingService
-	baseURL       string
-}
+	CompositionHandler struct {
+		service       CompositionService
+		indexer       Indexer
+		processingSvc ProcessingService
+		baseURL       string
+	}
+)
 
 func NewCompositionHandler(docService *service.DefaultDocumentService, compositionService *composition.Service, baseURL string) *CompositionHandler {
 	return &CompositionHandler{

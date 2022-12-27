@@ -11,7 +11,7 @@ const (
 	AttributeID              Attribute = 1
 	AttributeIDEncr          Attribute = 2
 	AttributeKeyEncr         Attribute = 3
-	AttributeDocBaseUIDHash  Attribute = 4
+	AttributeDocUIDHash      Attribute = 4
 	AttributeDocUIDEncr      Attribute = 5
 	AttributeDealCid         Attribute = 6
 	AttributeMinerAddress    Attribute = 7

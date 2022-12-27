@@ -68,7 +68,8 @@ func (s *Service) Execute(ctx context.Context, req processing.RequestInterface, 
 				}
 
 				if !listReqForCreation[v.PrecedingVersionUID.Value] {
-					if !hComposition.IsExist(v.PrecedingVersionUID.Value) {
+					ok, err := hComposition.IsExist(v.PrecedingVersionUID.Value)
+					if !ok || err != nil {
 						return errors.New("Can not modify composition because its not created")
 					}
 				}

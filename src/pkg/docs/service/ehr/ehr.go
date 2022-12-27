@@ -182,7 +182,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 			Attrs: []ehrIndexer.AttributesAttribute{
 				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
-				{Code: model.AttributeDocBaseUIDHash, Value: make([]byte, 32)},
+				{Code: model.AttributeDocUIDHash, Value: make([]byte, 32)},
 				{Code: model.AttributeDocUIDEncr, Value: ehrIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
@@ -425,7 +425,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			Attrs: []ehrIndexer.AttributesAttribute{
 				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
-				{Code: model.AttributeDocBaseUIDHash, Value: baseDocumentUIDHash[:]},
+				{Code: model.AttributeDocUIDHash, Value: baseDocumentUIDHash[:]},
 				{Code: model.AttributeDocUIDEncr, Value: statusIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},

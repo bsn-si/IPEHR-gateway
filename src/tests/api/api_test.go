@@ -195,6 +195,18 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("DEFINITION Template14 upload", testWrap.definitionTemplate14Upload(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("DEFINITION Template14 get by ID", testWrap.definitionTemplate14GetByID(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("DEFINITION Template14 list stored", testWrap.definitionTemplate14List(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData)) {
 		t.Fatal()
 	}

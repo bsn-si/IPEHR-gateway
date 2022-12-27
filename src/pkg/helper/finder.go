@@ -4,24 +4,26 @@ import (
 	"context"
 )
 
-type Finder interface {
-	IsExist(ctx context.Context, userID, systemID, ehrUUID, ID string) bool
-}
+type (
+	Finder interface {
+		IsExist(ctx context.Context, args ...string) (bool, error)
+	}
 
-type Searcher interface {
-	IsExist(ID string) bool
-}
+	Searcher interface {
+		IsExist(ID string) (bool, error)
+	}
 
-type Search struct {
-	service  Finder
-	ctx      context.Context
-	userID   string
-	ehrUUID  string
-	systemID string
-}
+	Search struct {
+		service  Finder
+		ctx      context.Context
+		userID   string
+		ehrUUID  string
+		systemID string
+	}
+)
 
-func (h *Search) IsExist(ID string) bool {
-	return h.service.IsExist(h.ctx, h.userID, h.systemID, h.ehrUUID, ID)
+func (h *Search) IsExist(ID string) (bool, error) {
+	return h.service.IsExist(h.ctx, h.userID, h.systemID, ID)
 }
 
 func (h *Search) UseService(s Finder) *Search {

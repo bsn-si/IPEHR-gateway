@@ -5,34 +5,26 @@ import "encoding/xml"
 // ADL
 // https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_list
 
-type TemplateResponse struct {
-	TemplateID  string `json:"template_id"`
-	Version     string `json:"version"`
-	Concept     string `json:"concept"`
-	ArchetypeID string `json:"archetype_id"`
-	CreatedAt   string `json:"created_timestamp"`
-}
-
 type TemplateXML struct {
 	XMLName    xml.Name `xml:"template"`
 	TemplateID string   `xml:"template_id>value"`
 	UID        string   `xml:"uid>value"`
+	Concept    string   `xml:"concept"`
 	Definition struct {
 		ArchetypeID string `xml:"archetype_id,attr"` // TODO maybe we should generate it?
-		Concept     string `xml:"concept_name,attr"`
 	} `xml:"definition"`
 }
 
 type Template struct {
-	TemplateID  string
-	UID         string
-	Version     string
-	VerADL      ADLVer
-	MimeType    ADLType
-	Body        []byte
-	Concept     string
-	ArchetypeID string
-	CreatedAt   string
+	TemplateID  string  `json:"template_id"`
+	UID         string  `json:"-" msgpack:"-"`
+	Version     string  `json:"version,omitempty" msgpack:"-"`
+	VerADL      ADLVer  `json:"-" msgpack:"-"`
+	MimeType    ADLType `json:"-" msgpack:"-"`
+	Body        []byte  `json:"-" msgpack:"-"`
+	Concept     string  `json:"concept"`
+	ArchetypeID string  `json:"archetype_id,omitempty" msgpack:",omitempty"`
+	CreatedAt   string  `json:"created_timestamp" msgpack:"-"`
 }
 
 // Version show as which service we should use for parsing template
