@@ -52,6 +52,10 @@ func (ehr *EHRNode) addComposition(cmp model.Composition) error {
 	return nil
 }
 
+func (ehr EHRNode) GetCompositions() Container {
+	return ehr.compositions
+}
+
 func (ehr EHRNode) GetNodeType() NodeType {
 	return EHRNodeType
 }
@@ -64,7 +68,12 @@ func (ehr EHRNode) TryGetChild(key string) Noder {
 	return nil
 }
 
-func (ehr EHRNode) ForEach(func(name string, node Noder) bool) {
+func (ehr EHRNode) ForEach(f func(name string, node Noder) bool) {
+	for key, node := range ehr.attributes {
+		if !f(key, node) {
+			break
+		}
+	}
 }
 
 func (ehr EHRNode) addAttribute(key string, val Noder) {

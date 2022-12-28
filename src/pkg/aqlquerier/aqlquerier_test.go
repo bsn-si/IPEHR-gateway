@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"os"
+	"sort"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/storage/treeindex"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestService_ExecuteQuery(t *testing.T) {
@@ -52,7 +53,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"2. select primitives",
 			`SELECT 123, 1.23, 'hello world',
 				'1984-01-01',
-				'15:35:10.123', 
+				'15:35:10.123',
 				'1984-01-01T15:35:10.123'
 			FROM EHR e`,
 			[]interface{}{},
@@ -82,220 +83,302 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]testDataStruct{{123, 1.23, "hello world", dateVal, timeVal, dateTimeVal}},
 			false,
 		},
-		// {
-		// 	"3. select values",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := []float64{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			if err := rows.Scan(&val); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
-		// 			result = append(result, val)
-		// 		}
+		{
+			"2.1. select values",
+			`SELECT 123
+			FROM EHR e`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []int{}
+				for rows.Next() {
+					var val int
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
 
-		// 		sort.Float64s(result)
-		// 		return result, nil
-		// 	},
-		// 	[]float64{79.9, 940.0, 981.13},
-		// 	false,
-		// },
-		// {
-		// 	"4. select values with WHERE",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := []float64{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			if err := rows.Scan(&val); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
-		// 			result = append(result, val)
-		// 		}
+				sort.Ints(result)
+				return result, nil
+			},
+			[]int{123},
+			false,
+		},
+		{
+			"3. select values",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []*float64{}
+				for rows.Next() {
+					var val any
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
 
-		// 		sort.Float64s(result)
-		// 		return result, nil
-		// 	},
-		// 	[]float64{940.0, 981.13},
-		// 	false,
-		// },
-		// {
-		// 	"5. select values with WHERE AND",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100
-		// 		AND o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 940.0`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := []float64{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			if err := rows.Scan(&val); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
-		// 			result = append(result, val)
-		// 		}
+					if val != nil {
+						f := val.(float64)
+						result = append(result, toRef(f))
+					} else {
+						result = append(result, nil)
+					}
+				}
 
-		// 		sort.Float64s(result)
-		// 		return result, nil
-		// 	},
-		// 	[]float64{940.0},
-		// 	false,
-		// },
-		// {
-		// 	"6. select values with WHERE OR",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
-		// 		OR o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude > 940.0`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := []float64{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			if err := rows.Scan(&val); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
-		// 			result = append(result, val)
-		// 		}
+				sort.Slice(result, func(i, j int) bool {
+					if result[i] != nil && result[j] != nil {
+						return *result[i] < *result[j]
+					}
 
-		// 		sort.Float64s(result)
-		// 		return result, nil
-		// 	},
-		// 	[]float64{79.9, 981.13},
-		// 	false,
-		// },
-		// {
-		// 	"7. select values with WHERE NOT",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		NOT o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := []float64{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			if err := rows.Scan(&val); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
-		// 			result = append(result, val)
-		// 		}
+					if result[i] == nil && result[j] == nil {
+						return false
+					}
 
-		// 		sort.Float64s(result)
-		// 		return result, nil
-		// 	},
-		// 	[]float64{940.0, 981.13},
-		// 	false,
-		// },
-		// {
-		// 	"8. select values with WHERE AND (OR)",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
-		// 		OR
-		// 		(
-		// 			NOT	o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude = 940.0
-		// 		)`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := []float64{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			if err := rows.Scan(&val); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
-		// 			result = append(result, val)
-		// 		}
+					if result[i] == nil {
+						return true
+					}
 
-		// 		sort.Float64s(result)
-		// 		return result, nil
-		// 	},
-		// 	[]float64{79.9, 981.13},
-		// 	false,
-		// },
-		// {
-		// 	"9. select values and int value",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
-		// 	   10
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := [][]any{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			var val2 int
-		// 			if err := rows.Scan(&val, &val2); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
+					return false
+				})
+				return result, nil
+			},
+			[]*float64{nil, nil, nil, nil, nil, toRef(79.9), toRef(940.0), toRef(981.13)},
+			false,
+		},
+		{
+			"4. select values with WHERE",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []float64{}
+				for rows.Next() {
+					var val float64
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
 
-		// 			result = append(result, []any{val, val2})
-		// 		}
+				sort.Float64s(result)
+				return result, nil
+			},
+			[]float64{940.0, 981.13},
+			false,
+		},
+		{
+			"5. select values with WHERE AND",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100
+				AND o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 940.0`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []float64{}
+				for rows.Next() {
+					var val float64
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
 
-		// 		sort.Slice(result, func(i, j int) bool {
-		// 			return result[i][0].(float64) <= result[j][0].(float64)
-		// 		})
-		// 		return result, nil
-		// 	},
-		// 	[][]any{{940.0, 10}, {981.13, 10}},
-		// 	false,
-		// },
-		// {
-		// 	"10. select multipal columns",
-		// 	`SELECT
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
-		// 	   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
-		// 	FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
-		// 	WHERE
-		// 		o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
-		// 	[]interface{}{},
-		// 	[]string{"test_fixtures/composition_2.json"},
-		// 	func(rows *sql.Rows) (interface{}, error) {
-		// 		result := [][]any{}
-		// 		for rows.Next() {
-		// 			var val float64
-		// 			var val2 *string
-		// 			if err := rows.Scan(&val, &val2); err != nil {
-		// 				return nil, errors.Wrap(err, "cannot scan float64 value")
-		// 			}
+				sort.Float64s(result)
+				return result, nil
+			},
+			[]float64{940.0},
+			false,
+		},
+		{
+			"6. select values with WHERE OR",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
+				OR o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude > 940.0`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []float64{}
+				for rows.Next() {
+					var val float64
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
 
-		// 			result = append(result, []any{val, val2})
-		// 		}
+				sort.Float64s(result)
+				return result, nil
+			},
+			[]float64{79.9, 981.13},
+			false,
+		},
+		{
+			"7. select values with WHERE NOT",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				NOT o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []*float64{}
+				for rows.Next() {
+					var val any
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
 
-		// 		sort.Slice(result, func(i, j int) bool {
-		// 			return result[i][0].(float64) <= result[j][0].(float64)
-		// 		})
-		// 		return result, nil
-		// 	},
-		// 	[][]any{{940.0, toRef("/min")}, {981.13, toRef("kg")}},
-		// 	false,
-		// },
+					if val != nil {
+						f := val.(float64)
+						result = append(result, toRef(f))
+					} else {
+						result = append(result, nil)
+					}
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					if result[i] != nil && result[j] != nil {
+						return *result[i] < *result[j]
+					}
+
+					if result[i] == nil && result[j] == nil {
+						return false
+					}
+
+					if result[i] == nil {
+						return true
+					}
+
+					return false
+				})
+				return result, nil
+			},
+			[]*float64{nil, nil, nil, nil, nil, toRef(940.0), toRef(981.13)},
+			false,
+		},
+		{
+			"8. select values with WHERE AND (OR)",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100
+				OR
+				(
+					NOT	o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude = 940.0
+				)`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []*float64{}
+				for rows.Next() {
+					var val any
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					if val != nil {
+						f := val.(float64)
+						result = append(result, toRef(f))
+					} else {
+						result = append(result, nil)
+					}
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					if result[i] != nil && result[j] != nil {
+						return *result[i] < *result[j]
+					}
+
+					if result[i] == nil && result[j] == nil {
+						return false
+					}
+
+					if result[i] == nil {
+						return true
+					}
+
+					return false
+				})
+				return result, nil
+			},
+			[]*float64{nil, nil, nil, nil, nil, toRef(79.9), toRef(981.13)},
+			false,
+		},
+		{
+			"9. select values and int value",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
+			   10
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := [][]any{}
+				for rows.Next() {
+					var val float64
+					var val2 int
+					if err := rows.Scan(&val, &val2); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					result = append(result, []any{val, val2})
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					return result[i][0].(float64) <= result[j][0].(float64)
+				})
+				return result, nil
+			},
+			[][]any{{940.0, 10}, {981.13, 10}},
+			false,
+		},
+		{
+			"10. select multipal columns",
+			`SELECT
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
+			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := [][]any{}
+				for rows.Next() {
+					var val float64
+					var val2 *string
+					if err := rows.Scan(&val, &val2); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					result = append(result, []any{val, val2})
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					return result[i][0].(float64) <= result[j][0].(float64)
+				})
+				return result, nil
+			},
+			[][]any{{940.0, toRef("/min")}, {981.13, toRef("kg")}},
+			false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -323,14 +406,17 @@ func TestService_ExecuteQuery(t *testing.T) {
 			}
 
 			got, err := tt.scan(rows)
-			if err != nil {
-				t.Errorf("Service.ExecQuery() scan rows error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if assert.Nil(t, err) {
+				assert.Equal(t, tt.want, got)
 			}
+			// if err != nil {
+			// 	t.Errorf("Service.ExecQuery() scan rows error = %v, wantErr %v", err, tt.wantErr)
+			// 	return
+			// }
 
-			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Errorf("Service.ExecQuery() = mismatch {-want;+got}\n\t%s", diff)
-			}
+			// if diff := cmp.Diff(tt.want, got); diff != "" {
+			// t.Errorf("Service.ExecQuery() = mismatch {-want;+got}\n\t%s", diff)
+			// }
 		})
 	}
 }
@@ -403,4 +489,8 @@ func getPreparedTreeIndex(filenames ...string) error {
 	}
 
 	return nil
+}
+
+func toRef[T any](val T) *T {
+	return &val
 }

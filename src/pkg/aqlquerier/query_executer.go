@@ -42,12 +42,12 @@ func (exec *executer) run() (*Rows, error) {
 	return exec.limitRows(rows), nil
 }
 
-func (exec *executer) filterSources(sources map[string]dataSource) (map[string]dataSource, error) {
+func (exec *executer) filterSources(rows dataRows) (dataRows, error) {
 	if exec.query.Where == nil {
-		return sources, nil
+		return rows, nil
 	}
 
-	return processWhere(exec.query.Where, sources)
+	return processWhere(exec.query.Where, rows)
 }
 
 func (exec *executer) orderRows(rows *Rows) (*Rows, error) {
