@@ -23,10 +23,10 @@ type Tree struct {
 func NewTree() *Tree {
 	return &Tree{
 		data: map[string]Container{
-			_ACTION:      Container{},
-			_EVALUATION:  Container{},
-			_INSTRUCTION: Container{},
-			_OBSERVATION: Container{},
+			_ACTION:      {},
+			_EVALUATION:  {},
+			_INSTRUCTION: {},
+			_OBSERVATION: {},
 		},
 	}
 }
