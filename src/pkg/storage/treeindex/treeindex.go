@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	_ACTION      = "ACTION"
-	_EVALUATION  = "EVALUATION"
-	_INSTRUCTION = "INSTRUCTION"
-	_OBSERVATION = "OBSERVATION"
+	ACTION      = "ACTION"
+	EVALUATION  = "EVALUATION"
+	INSTRUCTION = "INSTRUCTION"
+	OBSERVATION = "OBSERVATION"
 )
 
 type Tree struct {
@@ -23,10 +23,10 @@ type Tree struct {
 func NewTree() *Tree {
 	return &Tree{
 		data: map[string]Container{
-			_ACTION:      {},
-			_EVALUATION:  {},
-			_INSTRUCTION: {},
-			_OBSERVATION: {},
+			ACTION:      {},
+			EVALUATION:  {},
+			INSTRUCTION: {},
+			OBSERVATION: {},
 		},
 	}
 }
@@ -74,19 +74,19 @@ func (t *Tree) processSection(section *base.Section) error {
 	for _, item := range section.Items {
 		switch obj := item.(type) {
 		case *base.Action:
-			if err := addObjectIntoCollection(t.data[_ACTION], obj); err != nil {
+			if err := addObjectIntoCollection(t.data[ACTION], obj); err != nil {
 				return errors.Wrap(err, "cannot process ACTION in section")
 			}
 		case *base.Evaluation:
-			if err := addObjectIntoCollection(t.data[_EVALUATION], obj); err != nil {
+			if err := addObjectIntoCollection(t.data[EVALUATION], obj); err != nil {
 				return errors.Wrap(err, "cannot process EVALUATION in section")
 			}
 		case *base.Instruction:
-			if err := addObjectIntoCollection(t.data[_INSTRUCTION], obj); err != nil {
+			if err := addObjectIntoCollection(t.data[INSTRUCTION], obj); err != nil {
 				return errors.Wrap(err, "cannot process INSTRUCTION in section")
 			}
 		case *base.Observation:
-			if err := addObjectIntoCollection(t.data[_OBSERVATION], obj); err != nil {
+			if err := addObjectIntoCollection(t.data[OBSERVATION], obj); err != nil {
 				return errors.Wrap(err, "cannot process OBSERVATION in section")
 			}
 		default:
