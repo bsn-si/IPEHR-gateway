@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -97,6 +98,19 @@ type handlerBuilder func(r *gin.RouterGroup)
 
 func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	r := gin.New()
+
+	//TODO complete CORS config
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AddAllowHeaders(
+		"AuthUserId",
+		"Authorization",
+		"GroupAccessId",
+		"EhrSystemId",
+		"Prefer",
+	)
+
+	r.Use(cors.New(config))
 
 	setRedirections(r)
 

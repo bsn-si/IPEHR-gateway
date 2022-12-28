@@ -7,8 +7,6 @@ package main
 import (
 	"flag"
 
-	"github.com/gin-contrib/cors"
-
 	"hms/gateway/pkg/api"
 	_ "hms/gateway/pkg/api/docs"
 	"hms/gateway/pkg/config"
@@ -30,9 +28,6 @@ func main() {
 	infra := infrastructure.New(cfg)
 
 	a := api.New(cfg, infra).Build()
-
-	//TODO complete CORS config
-	a.Use(cors.Default())
 
 	if err = a.Run(cfg.Host); err != nil {
 		panic(err)
