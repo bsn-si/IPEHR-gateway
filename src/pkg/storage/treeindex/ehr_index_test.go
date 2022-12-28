@@ -28,15 +28,6 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 
 				return ehr, nil
 			},
-			// map[string][]any{
-			// 	"7d44b88c-4199-4bad-97dc-d78268e01398": {
-			// 		map[string]any{
-			// 			"id":   "7d44b88c-4199-4bad-97dc-d78268e01398",
-			// 			"name": "",
-			// 			"type": "EHR",
-			// 		},
-			// 	},
-			// },
 			map[string]*EHRNode{
 				"7d44b88c-4199-4bad-97dc-d78268e01398": {
 					baseNode: baseNode{
@@ -74,12 +65,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 									Type: base.CompositionItemType,
 									Name: "International Patient Summary",
 								},
-								Tree: Tree{
-									actions:       Container{},
-									evaluations:   Container{},
-									instructions:  Container{},
-									obeservations: Container{},
-								},
+								Tree: *NewTree(),
 								attributes: map[string]Noder{
 									"language": newNode(&base.CodePhrase{
 										Type: base.CodePhraseItemType,

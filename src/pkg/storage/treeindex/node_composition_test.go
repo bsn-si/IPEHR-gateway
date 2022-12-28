@@ -28,12 +28,7 @@ func Test_processComposition(t *testing.T) {
 					Type: base.CompositionItemType,
 					Name: "International Patient Summary",
 				},
-				Tree: Tree{
-					actions:       Container{},
-					evaluations:   Container{},
-					instructions:  Container{},
-					obeservations: Container{},
-				},
+				Tree: *NewTree(),
 				attributes: map[string]Noder{
 					"language": newNode(&base.CodePhrase{
 						Type: base.CodePhraseItemType,

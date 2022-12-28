@@ -29,10 +29,10 @@ func TestTree_walk(t *testing.T) {
 	err = tree.AddComposition(c)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 4, tree.actions.Len())
-	assert.Equal(t, 21, tree.evaluations.Len())
-	assert.Equal(t, 1, tree.instructions.Len())
-	assert.Equal(t, 12, tree.obeservations.Len())
+	assert.Equal(t, 4, tree.data[_ACTION].Len())
+	assert.Equal(t, 21, tree.data[_EVALUATION].Len())
+	assert.Equal(t, 1, tree.data[_INSTRUCTION].Len())
+	assert.Equal(t, 12, tree.data[_OBSERVATION].Len())
 
 	treeStr := tree.Print()
 	// uncomment next string tp view tre string

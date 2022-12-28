@@ -409,14 +409,6 @@ func TestService_ExecuteQuery(t *testing.T) {
 			if assert.Nil(t, err) {
 				assert.Equal(t, tt.want, got)
 			}
-			// if err != nil {
-			// 	t.Errorf("Service.ExecQuery() scan rows error = %v, wantErr %v", err, tt.wantErr)
-			// 	return
-			// }
-
-			// if diff := cmp.Diff(tt.want, got); diff != "" {
-			// t.Errorf("Service.ExecQuery() = mismatch {-want;+got}\n\t%s", diff)
-			// }
 		})
 	}
 }
