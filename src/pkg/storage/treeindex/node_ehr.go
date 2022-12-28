@@ -18,6 +18,9 @@ func processEHR(ehr model.EHR) (*EHRNode, error) {
 		}
 	}
 
+	node.addAttribute("system_id", newNode(ehr.SystemID))
+	node.addAttribute("ehr_id", newNode(ehr.EhrID))
+
 	// TODO: add logic for other fields
 	return node, nil
 }

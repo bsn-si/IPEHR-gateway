@@ -227,6 +227,14 @@ func newNode(obj any) Noder {
 		return newDataValueNode(obj)
 	case base.CodePhrase:
 		return nodeForCodePhrase(obj)
+	case base.ObjectID:
+		return nodeForObjectID(obj)
+	case base.UIDBasedID:
+		return nodeForObjectID(obj.ObjectID)
+	case base.HierObjectID:
+		return nodeForObjectID(obj.ObjectID)
+	case base.ObjectVersionID:
+		return nodeForObjectID(obj.UID.ObjectID)
 	default:
 		return newValueNode(obj)
 	}
@@ -278,6 +286,15 @@ func nodeForCodePhrase(cp base.CodePhrase) Noder {
 			"code_string":    cp.CodeString,
 			"preferred_term": cp.PreferredTerm,
 		},
+	}
+}
+
+func nodeForObjectID(objectID base.ObjectID) Noder {
+	return &ValueNode{
+		baseNode: baseNode{
+			Type: objectID.Type,
+		},
+		data: objectID.Value,
 	}
 }
 

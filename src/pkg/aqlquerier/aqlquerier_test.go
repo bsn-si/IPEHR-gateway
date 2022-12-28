@@ -352,7 +352,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 		{
 			"10. select multipal columns",
 			`SELECT
-			   e/id AS ID,
+			   e/ehr_id/value AS ID,
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
 			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o

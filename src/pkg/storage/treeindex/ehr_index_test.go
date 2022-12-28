@@ -34,7 +34,14 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 						ID:   "7d44b88c-4199-4bad-97dc-d78268e01398",
 						Type: base.EHRItemType,
 					},
-					attributes:   map[string]Noder{},
+					attributes: map[string]Noder{
+						"system_id": &ValueNode{
+							data: "d60e2348-b083-48ce-93b9-916cef1d3a5a",
+						},
+						"ehr_id": &ValueNode{
+							data: "7d44b88c-4199-4bad-97dc-d78268e01398",
+						},
+					},
 					compositions: Container{},
 				},
 			},
@@ -56,7 +63,14 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 						ID:   "7d44b88c-4199-4bad-97dc-d78268e01398",
 						Type: base.EHRItemType,
 					},
-					attributes: map[string]Noder{},
+					attributes: map[string]Noder{
+						"system_id": &ValueNode{
+							data: "d60e2348-b083-48ce-93b9-916cef1d3a5a",
+						},
+						"ehr_id": &ValueNode{
+							data: "7d44b88c-4199-4bad-97dc-d78268e01398",
+						},
+					},
 					compositions: Container{
 						"openEHR-EHR-COMPOSITION.health_summary.v1": []Noder{
 							&CompositionNode{
