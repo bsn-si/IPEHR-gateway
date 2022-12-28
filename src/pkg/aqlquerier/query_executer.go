@@ -2,6 +2,7 @@ package aqlquerier
 
 import (
 	"database/sql/driver"
+	"log"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -94,7 +95,7 @@ func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, 
 		queue = queue[1:]
 
 		switch node := node.(type) {
-		case *treeindex.ObjectNode:
+		case *treeindex.ObjectNode, *treeindex.EHRNode, *treeindex.CompositionNode, *treeindex.EventContextNode:
 			{
 				nextNode := node.TryGetChild(path.Identifier)
 				if nextNode == nil {
@@ -131,8 +132,8 @@ func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, 
 				queue = append(queue, valueNode)
 			}
 		case *treeindex.ValueNode:
+			log.Println("VALUE NODE", node.GetData())
 			return node.GetData(), true
-		default:
 		}
 	}
 

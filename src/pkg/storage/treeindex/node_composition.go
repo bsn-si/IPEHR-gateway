@@ -59,7 +59,12 @@ func (cmp CompositionNode) GetID() string {
 }
 
 func (cmp CompositionNode) TryGetChild(key string) Noder {
-	return nil
+	n := cmp.baseNode.TryGetChild(key)
+	if n != nil {
+		return n
+	}
+
+	return cmp.attributes[key]
 }
 
 func (cmp CompositionNode) ForEach(foo func(name string, node Noder) bool) {

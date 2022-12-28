@@ -65,7 +65,12 @@ func (ehr EHRNode) GetID() string {
 }
 
 func (ehr EHRNode) TryGetChild(key string) Noder {
-	return nil
+	n := ehr.baseNode.TryGetChild(key)
+	if n != nil {
+		return n
+	}
+
+	return ehr.attributes[key]
 }
 
 func (ehr EHRNode) ForEach(f func(name string, node Noder) bool) {

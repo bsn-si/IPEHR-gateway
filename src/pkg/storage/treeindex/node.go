@@ -36,6 +36,15 @@ type baseNode struct {
 	Name string        `json:"name,omitempty"`
 }
 
+func (node baseNode) TryGetChild(key string) Noder {
+	switch key {
+	case "id":
+		return newNode(node.ID)
+	default:
+		return nil
+	}
+}
+
 type ObjectNode struct {
 	baseNode
 
@@ -52,12 +61,12 @@ func (node ObjectNode) GetID() string {
 }
 
 func (node ObjectNode) TryGetChild(key string) Noder {
-	n, ok := node.attributes[key]
-	if !ok {
-		return nil
+	n := node.baseNode.TryGetChild(key)
+	if n != nil {
+		return n
 	}
 
-	return n
+	return node.attributes[key]
 }
 
 func (node ObjectNode) ForEach(foo func(name string, node Noder) bool) {
@@ -144,12 +153,12 @@ func (node DataValueNode) GetID() string {
 }
 
 func (node DataValueNode) TryGetChild(key string) Noder {
-	n, ok := node.Values[key]
-	if !ok {
-		return nil
+	n := node.baseNode.TryGetChild(key)
+	if n != nil {
+		return n
 	}
 
-	return n
+	return node.Values[key]
 }
 
 func (node DataValueNode) ForEach(foo func(name string, node Noder) bool) {
@@ -182,6 +191,11 @@ func (node ValueNode) GetID() string {
 }
 
 func (node ValueNode) TryGetChild(key string) Noder {
+	n := node.baseNode.TryGetChild(key)
+	if n != nil {
+		return n
+	}
+
 	return nil
 }
 

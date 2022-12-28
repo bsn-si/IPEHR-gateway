@@ -352,6 +352,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 		{
 			"10. select multipal columns",
 			`SELECT
+			   e/id AS ID,
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
 			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
@@ -362,21 +363,22 @@ func TestService_ExecuteQuery(t *testing.T) {
 			func(rows *sql.Rows) (interface{}, error) {
 				result := [][]any{}
 				for rows.Next() {
+					var id *string
 					var val float64
 					var val2 *string
-					if err := rows.Scan(&val, &val2); err != nil {
+					if err := rows.Scan(&id, &val, &val2); err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
 
-					result = append(result, []any{val, val2})
+					result = append(result, []any{id, val, val2})
 				}
 
 				sort.Slice(result, func(i, j int) bool {
-					return result[i][0].(float64) <= result[j][0].(float64)
+					return result[i][1].(float64) <= result[j][1].(float64)
 				})
 				return result, nil
 			},
-			[][]any{{940.0, toRef("/min")}, {981.13, toRef("kg")}},
+			[][]any{{toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 940.0, toRef("/min")}, {toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 981.13, toRef("kg")}},
 			false,
 		},
 	}

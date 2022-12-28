@@ -72,7 +72,7 @@ func (n *EventContextNode) addAttribute(key string, val Noder) {
 }
 
 func (n *EventContextNode) TryGetChild(key string) Noder {
-	return nil
+	return n.attributes[key]
 }
 
 func (n *EventContextNode) ForEach(f func(name string, node Noder) bool) {
