@@ -224,7 +224,7 @@ var expectedComposition = model.Composition{
 				},
 			},
 		},
-		Participations: &[]base.Participation{
+		Participations: []base.Participation{
 			{
 				Function: base.NewDvText("requester"),
 				Mode: toRef(base.NewDvCodedText(

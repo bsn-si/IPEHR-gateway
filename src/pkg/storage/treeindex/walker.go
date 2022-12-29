@@ -2,12 +2,20 @@ package treeindex
 
 import (
 	"fmt"
+
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/errors"
 )
 
 func walk(obj any) (Noder, error) {
 	switch obj := obj.(type) {
+	case model.EHR:
+		return processEHR(obj)
+	case model.Composition:
+		return processComposition(obj)
+	case model.EventContext:
+		return processEventContext(obj)
 	case base.Root:
 		return walkRoot(obj)
 	case base.DataValue:
@@ -57,6 +65,15 @@ func walkBySlice(slice any) (Noder, error) {
 	sliceNode := newSliceNode()
 
 	switch ss := slice.(type) {
+	case []model.Composition:
+		for _, item := range ss {
+			node, err := walk(item)
+			if err != nil {
+				return nil, errors.Wrap(err, "cannot process slice COMPOSITION")
+			}
+
+			sliceNode.addAttribute(node.GetID(), node)
+		}
 	case []base.Root:
 		for _, item := range ss {
 			node, err := walk(item)

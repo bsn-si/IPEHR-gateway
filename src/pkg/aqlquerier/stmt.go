@@ -12,7 +12,7 @@ import (
 
 type Stmt struct {
 	query *aqlprocessor.Query
-	index *treeindex.Tree
+	index *treeindex.EHRIndex
 }
 
 // Close closes the statement.

@@ -9,37 +9,35 @@ import (
 	"github.com/pkg/errors"
 )
 
-var DefaultTree = NewTree()
+const (
+	ACTION      = "ACTION"
+	EVALUATION  = "EVALUATION"
+	INSTRUCTION = "INSTRUCTION"
+	OBSERVATION = "OBSERVATION"
+)
 
 type Tree struct {
-	actions       Container
-	evaluations   Container
-	instructions  Container
-	obeservations Container
+	data map[string]Container
 }
 
 func NewTree() *Tree {
 	return &Tree{
-		actions:       Container{},
-		evaluations:   Container{},
-		instructions:  Container{},
-		obeservations: Container{},
+		data: map[string]Container{
+			ACTION:      {},
+			EVALUATION:  {},
+			INSTRUCTION: {},
+			OBSERVATION: {},
+		},
 	}
 }
 
 func (t *Tree) GetDataSourceByName(name string) (Container, error) {
-	switch name {
-	case "ACTION":
-		return nil, errors.New("ACTION source not implemented")
-	case "EVALUATION":
-		return nil, errors.New("Evaluation source not implemented")
-	case "INSTRUCTION":
-		return nil, errors.New("Instruction source not implemented")
-	case "OBSERVATION":
-		return t.obeservations, nil
-	default:
+	c, ok := t.data[name]
+	if !ok {
 		return nil, fmt.Errorf("unexpected source type: %v", name) //nolint
 	}
+
+	return c, nil
 }
 
 func (t *Tree) AddComposition(com model.Composition) error {
@@ -76,19 +74,19 @@ func (t *Tree) processSection(section *base.Section) error {
 	for _, item := range section.Items {
 		switch obj := item.(type) {
 		case *base.Action:
-			if err := addObjectIntoCollection(t.actions, obj); err != nil {
+			if err := addObjectIntoCollection(t.data[ACTION], obj); err != nil {
 				return errors.Wrap(err, "cannot process ACTION in section")
 			}
 		case *base.Evaluation:
-			if err := addObjectIntoCollection(t.evaluations, obj); err != nil {
+			if err := addObjectIntoCollection(t.data[EVALUATION], obj); err != nil {
 				return errors.Wrap(err, "cannot process EVALUATION in section")
 			}
 		case *base.Instruction:
-			if err := addObjectIntoCollection(t.instructions, obj); err != nil {
+			if err := addObjectIntoCollection(t.data[INSTRUCTION], obj); err != nil {
 				return errors.Wrap(err, "cannot process INSTRUCTION in section")
 			}
 		case *base.Observation:
-			if err := addObjectIntoCollection(t.obeservations, obj); err != nil {
+			if err := addObjectIntoCollection(t.data[OBSERVATION], obj); err != nil {
 				return errors.Wrap(err, "cannot process OBSERVATION in section")
 			}
 		default:

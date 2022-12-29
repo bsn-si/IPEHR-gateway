@@ -17,7 +17,7 @@ func GetRandomStringWithLength(lengthOfString int) string {
 	return strings.Join(r, "")
 }
 
-//nolint
+// nolint
 func GetRandomLetter() string {
 	cNum := 97 + rand.Intn(25)
 

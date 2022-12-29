@@ -12,7 +12,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/storage/treeindex"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestService_ExecuteQuery(t *testing.T) {
@@ -53,9 +53,9 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"2. select primitives",
 			`SELECT 123, 1.23, 'hello world',
 				'1984-01-01',
-				'15:35:10.123', 
+				'15:35:10.123',
 				'1984-01-01T15:35:10.123'
-			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o`,
+			FROM EHR e`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_1.json"},
 			func(rows *sql.Rows) (interface{}, error) {
@@ -84,6 +84,28 @@ func TestService_ExecuteQuery(t *testing.T) {
 			false,
 		},
 		{
+			"2.1. select values",
+			`SELECT 123
+			FROM EHR e`,
+			[]interface{}{},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := []int{}
+				for rows.Next() {
+					var val int
+					if err := rows.Scan(&val); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+					result = append(result, val)
+				}
+
+				sort.Ints(result)
+				return result, nil
+			},
+			[]int{123},
+			false,
+		},
+		{
 			"3. select values",
 			`SELECT
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude
@@ -91,19 +113,39 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
 			func(rows *sql.Rows) (interface{}, error) {
-				result := []float64{}
+				result := []*float64{}
 				for rows.Next() {
-					var val float64
+					var val any
 					if err := rows.Scan(&val); err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
-					result = append(result, val)
+
+					if val != nil {
+						f := val.(float64)
+						result = append(result, toRef(f))
+					} else {
+						result = append(result, nil)
+					}
 				}
 
-				sort.Float64s(result)
+				sort.Slice(result, func(i, j int) bool {
+					if result[i] != nil && result[j] != nil {
+						return *result[i] < *result[j]
+					}
+
+					if result[i] == nil && result[j] == nil {
+						return false
+					}
+
+					if result[i] == nil {
+						return true
+					}
+
+					return false
+				})
 				return result, nil
 			},
-			[]float64{79.9, 940.0, 981.13},
+			[]*float64{nil, nil, nil, nil, nil, toRef(79.9), toRef(940.0), toRef(981.13)},
 			false,
 		},
 		{
@@ -193,19 +235,39 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
 			func(rows *sql.Rows) (interface{}, error) {
-				result := []float64{}
+				result := []*float64{}
 				for rows.Next() {
-					var val float64
+					var val any
 					if err := rows.Scan(&val); err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
-					result = append(result, val)
+
+					if val != nil {
+						f := val.(float64)
+						result = append(result, toRef(f))
+					} else {
+						result = append(result, nil)
+					}
 				}
 
-				sort.Float64s(result)
+				sort.Slice(result, func(i, j int) bool {
+					if result[i] != nil && result[j] != nil {
+						return *result[i] < *result[j]
+					}
+
+					if result[i] == nil && result[j] == nil {
+						return false
+					}
+
+					if result[i] == nil {
+						return true
+					}
+
+					return false
+				})
 				return result, nil
 			},
-			[]float64{940.0, 981.13},
+			[]*float64{nil, nil, nil, nil, nil, toRef(940.0), toRef(981.13)},
 			false,
 		},
 		{
@@ -222,19 +284,39 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
 			func(rows *sql.Rows) (interface{}, error) {
-				result := []float64{}
+				result := []*float64{}
 				for rows.Next() {
-					var val float64
+					var val any
 					if err := rows.Scan(&val); err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
-					result = append(result, val)
+
+					if val != nil {
+						f := val.(float64)
+						result = append(result, toRef(f))
+					} else {
+						result = append(result, nil)
+					}
 				}
 
-				sort.Float64s(result)
+				sort.Slice(result, func(i, j int) bool {
+					if result[i] != nil && result[j] != nil {
+						return *result[i] < *result[j]
+					}
+
+					if result[i] == nil && result[j] == nil {
+						return false
+					}
+
+					if result[i] == nil {
+						return true
+					}
+
+					return false
+				})
 				return result, nil
 			},
-			[]float64{79.9, 981.13},
+			[]*float64{nil, nil, nil, nil, nil, toRef(79.9), toRef(981.13)},
 			false,
 		},
 		{
@@ -270,6 +352,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 		{
 			"10. select multipal columns",
 			`SELECT
+			   e/ehr_id/value AS ID,
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
 			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
 			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o
@@ -280,21 +363,22 @@ func TestService_ExecuteQuery(t *testing.T) {
 			func(rows *sql.Rows) (interface{}, error) {
 				result := [][]any{}
 				for rows.Next() {
+					var id *string
 					var val float64
 					var val2 *string
-					if err := rows.Scan(&val, &val2); err != nil {
+					if err := rows.Scan(&id, &val, &val2); err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
 
-					result = append(result, []any{val, val2})
+					result = append(result, []any{id, val, val2})
 				}
 
 				sort.Slice(result, func(i, j int) bool {
-					return result[i][0].(float64) <= result[j][0].(float64)
+					return result[i][1].(float64) <= result[j][1].(float64)
 				})
 				return result, nil
 			},
-			[][]any{{940.0, toRef("/min")}, {981.13, toRef("kg")}},
+			[][]any{{toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 940.0, toRef("/min")}, {toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 981.13, toRef("kg")}},
 			false,
 		},
 	}
@@ -324,13 +408,8 @@ func TestService_ExecuteQuery(t *testing.T) {
 			}
 
 			got, err := tt.scan(rows)
-			if err != nil {
-				t.Errorf("Service.ExecQuery() scan rows error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if diff := cmp.Diff(tt.want, got); diff != "" {
-				t.Errorf("Service.ExecQuery() = mismatch {-want;+got}\n\t%s", diff)
+			if assert.Nil(t, err) {
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}
@@ -366,8 +445,26 @@ func TestService_ExecuteQuery(t *testing.T) {
 // 	// t.Fail()
 // }
 
+const ehrFile = "./../../../data/mock/ehr/ehr.json"
+
 func getPreparedTreeIndex(filenames ...string) error {
-	treeindex.DefaultTree = treeindex.NewTree()
+	treeindex.DefaultEHRIndex = treeindex.NewEHRIndex()
+
+	ehr := model.EHR{}
+	{
+		data, err := os.ReadFile(ehrFile)
+		if err != nil {
+			return err
+		}
+
+		if err := json.Unmarshal(data, &ehr); err != nil {
+			return err
+		}
+
+		if err := treeindex.AddEHR(ehr); err != nil {
+			return errors.Wrap(err, "cannot add ehr into index")
+		}
+	}
 
 	for _, filename := range filenames {
 		data, err := os.ReadFile(filename)
@@ -380,14 +477,14 @@ func getPreparedTreeIndex(filenames ...string) error {
 			return errors.Wrap(err, "cannot unmarshal composition")
 		}
 
-		if err := treeindex.DefaultTree.AddComposition(comp); err != nil {
-			return errors.Wrap(err, "cannot add Composition into TreeIndex")
+		if err := treeindex.AddComposition(ehr.EhrID.Value, comp); err != nil {
+			return errors.Wrap(err, "cannot add Composition into EHRIndex")
 		}
 	}
 
 	return nil
 }
 
-func toRef[T any](v T) *T {
-	return &v
+func toRef[T any](val T) *T {
+	return &val
 }

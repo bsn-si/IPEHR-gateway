@@ -12,7 +12,7 @@ type executer struct {
 	query  *aqlprocessor.Query
 	params map[string]driver.Value
 
-	index *treeindex.Tree
+	index *treeindex.EHRIndex
 }
 
 func (exec *executer) run() (*Rows, error) {
@@ -42,12 +42,12 @@ func (exec *executer) run() (*Rows, error) {
 	return exec.limitRows(rows), nil
 }
 
-func (exec *executer) filterSources(sources map[string]dataSource) (map[string]dataSource, error) {
+func (exec *executer) filterSources(rows dataRows) (dataRows, error) {
 	if exec.query.Where == nil {
-		return sources, nil
+		return rows, nil
 	}
 
-	return processWhere(exec.query.Where, sources)
+	return processWhere(exec.query.Where, rows)
 }
 
 func (exec *executer) orderRows(rows *Rows) (*Rows, error) {
@@ -94,7 +94,7 @@ func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, 
 		queue = queue[1:]
 
 		switch node := node.(type) {
-		case *treeindex.ObjectNode:
+		case *treeindex.ObjectNode, *treeindex.EHRNode, *treeindex.CompositionNode, *treeindex.EventContextNode:
 			{
 				nextNode := node.TryGetChild(path.Identifier)
 				if nextNode == nil {
@@ -132,7 +132,6 @@ func getValueForPath(path *aqlprocessor.ObjectPath, node treeindex.Noder) (any, 
 			}
 		case *treeindex.ValueNode:
 			return node.GetData(), true
-		default:
 		}
 	}
 

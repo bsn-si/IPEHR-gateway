@@ -17,14 +17,14 @@ type AQLDriver struct{}
 
 func (svc *AQLDriver) Open(name string) (driver.Conn, error) {
 	conn := &AQLConn{
-		index: treeindex.DefaultTree,
+		index: treeindex.DefaultEHRIndex,
 	}
 
 	return conn, nil
 }
 
 type AQLConn struct {
-	index *treeindex.Tree
+	index *treeindex.EHRIndex
 }
 
 // Prepare returns a prepared statement, bound to this connection.

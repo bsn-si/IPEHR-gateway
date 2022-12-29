@@ -6,71 +6,60 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-func (exec *executer) queryData(sources map[string]dataSource) (*Rows, error) {
-	rows := []Row{}
-	//TODO: add DISTINCT handling
-	// exec.query.Select.Distinct
-
-	// for _, source := range sources {
-	// log.Println(source.name, source.alias, source.data)
-
-	for sourceName, source := range sources {
-		for _, indexNodes := range source.data {
-			for _, indexNode := range indexNodes {
-				row := Row{
-					values: []interface{}{},
-				}
-
-				anyNotNillValue := false
-
-				for _, selectExpr := range exec.query.Select.SelectExprs {
-					switch slct := selectExpr.Value.(type) {
-					case *aqlprocessor.IdentifiedPathSelectValue:
-						{
-							ip := slct.Val
-							var val any
-							if sourceName == ip.Identifier {
-								if ip.ObjectPath != nil {
-									ok := false
-									val, ok = getValueForPath(ip.ObjectPath, indexNode)
-									if !ok {
-										val = nil
-									} else {
-										anyNotNillValue = true
-									}
-								}
-							}
-
-							row.values = append(row.values, val)
-						}
-					case *aqlprocessor.PrimitiveSelectValue:
-						{
-							anyNotNillValue = true
-							val := exec.getPrimitiveColumnValue(slct)
-							row.values = append(row.values, val)
-						}
-					case *aqlprocessor.AggregateFunctionCallSelectValue:
-						{
-							return nil, errors.New("Aggregation function call not implemented")
-						}
-					case *aqlprocessor.FunctionCallSelectValue:
-						{
-							return nil, errors.New("Function call not implemented")
-						}
-					default:
-						return nil, errors.New("Unexpected SelectExpr type")
-					}
-				}
-
-				if anyNotNillValue {
-					rows = append(rows, row)
-				}
-			}
-		}
+func (exec *executer) queryData(sources dataRows) (*Rows, error) {
+	if len(sources) == 0 {
+		return &Rows{}, nil
 	}
 
 	result := &Rows{
-		rows: rows,
+		rows: []Row{},
+	}
+
+	//TODO: add DISTINCT handling
+	// exec.query.Select.Distinct
+
+	for _, dataRow := range sources {
+		row := Row{
+			values: []interface{}{},
+		}
+
+		for _, selectExpr := range exec.query.Select.SelectExprs {
+			switch slct := selectExpr.Value.(type) {
+			case *aqlprocessor.IdentifiedPathSelectValue:
+				{
+					var val any
+					ip := slct.Val
+
+					indexNode, ok := dataRow.cells[slct.Val.Identifier]
+					if ok {
+						if ip.ObjectPath != nil {
+							val, _ = getValueForPath(ip.ObjectPath, indexNode.data)
+						} else {
+							return nil, errors.New("unsupported select expresion format")
+						}
+					}
+
+					row.values = append(row.values, val)
+				}
+			case *aqlprocessor.PrimitiveSelectValue:
+				{
+					val := exec.getPrimitiveColumnValue(slct)
+					row.values = append(row.values, val)
+				}
+			case *aqlprocessor.AggregateFunctionCallSelectValue:
+				{
+					return nil, errors.New("Aggregation function call not implemented")
+				}
+			case *aqlprocessor.FunctionCallSelectValue:
+				{
+					return nil, errors.New("Function call not implemented")
+				}
+			default:
+				return nil, errors.New("Unexpected SelectExpr type")
+			}
+		}
+
+		result.rows = append(result.rows, row)
 	}
 
 	return exec.fillColumns(result), nil
