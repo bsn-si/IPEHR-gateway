@@ -35,7 +35,6 @@ func (d *Directory) GetByPath(p string) (*Directory, error) {
 	}
 
 	if len(paths) == 2 {
-
 		for _, dd := range d.Folders {
 			if dt, err := dd.GetByPath(paths[1]); err == nil {
 				return dt, nil

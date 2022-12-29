@@ -24,9 +24,8 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-// TODO
 func (s *Service) NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error) {
-	return nil, errors.ErrNotImplemented
+	return s.Proc.NewRequest(reqID, userID, ehrUUID, kind)
 }
 
 // TODO
@@ -51,5 +50,10 @@ func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.
 
 // TODO
 func (s *Service) GetByVersion(ctx context.Context, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (*model.Directory, error) {
+	return nil, errors.ErrNotImplemented
+}
+
+// TODO
+func (s *Service) GetByID(ctx context.Context, userID string, versionUID string) (*model.Directory, error) {
 	return nil, errors.ErrNotImplemented
 }

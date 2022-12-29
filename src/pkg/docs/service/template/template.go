@@ -23,10 +23,12 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
+	"hms/gateway/pkg/helper"
 )
 
 type Service struct {
-	*service.DefaultDocumentService
+	helper.Finder
+	docSvc  *service.DefaultDocumentService
 	parsers map[string]ADLParser
 }
 
@@ -48,8 +50,8 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 
 	return &Service{
-		docService,
-		ps,
+		docSvc:  docService,
+		parsers: ps,
 	}
 }
 

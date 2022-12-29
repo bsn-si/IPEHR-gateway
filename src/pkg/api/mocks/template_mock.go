@@ -11,6 +11,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockTemplateService is a mock of TemplateService interface.
@@ -49,6 +50,21 @@ func (m *MockTemplateService) GetByID(ctx context.Context, userID, systemID, tem
 func (mr *MockTemplateServiceMockRecorder) GetByID(ctx, userID, systemID, templateID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockTemplateService)(nil).GetByID), ctx, userID, systemID, templateID)
+}
+
+// GetEhrUUIDByUserID mocks base method.
+func (m *MockTemplateService) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEhrUUIDByUserID", ctx, userID, systemID)
+	ret0, _ := ret[0].(*uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEhrUUIDByUserID indicates an expected call of GetEhrUUIDByUserID.
+func (mr *MockTemplateServiceMockRecorder) GetEhrUUIDByUserID(ctx, userID, systemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEhrUUIDByUserID", reflect.TypeOf((*MockTemplateService)(nil).GetEhrUUIDByUserID), ctx, userID, systemID)
 }
 
 // GetList mocks base method.

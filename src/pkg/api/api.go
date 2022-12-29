@@ -80,7 +80,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		Request:      NewRequestHandler(docService),
 		User:         NewUserHandler(user),
 		Contribution: NewContributionHandler(contribution, user, templateService, compositionService, cfg.BaseURL),
-		Directory:    NewDirectoryHandler(directory, user, templateService, compositionService, cfg.BaseURL),
+		Directory:    NewDirectoryHandler(directory, user, docService.Infra.Index, cfg.BaseURL),
 	}
 }
 

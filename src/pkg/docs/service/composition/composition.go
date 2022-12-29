@@ -21,6 +21,7 @@ import (
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/ehrIndexer"
 )
@@ -61,6 +62,7 @@ type (
 	}
 
 	Service struct {
+		helper.Finder
 		indexer            Indexer
 		ipfs               IpfsService
 		fileCoin           FileCoinService
