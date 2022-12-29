@@ -249,7 +249,10 @@ func newObjectNode(obj base.Root) Noder {
 			Type: l.Type,
 			Name: l.Name.Value,
 		},
-		attributes: map[string]Noder{},
+		attributes: map[string]Noder{
+			"name":              newNode(l.Name),
+			"archetype_node_id": newNode(l.ArchetypeNodeID),
+		},
 	}
 }
 
