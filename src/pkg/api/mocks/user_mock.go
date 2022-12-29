@@ -186,18 +186,18 @@ func (mr *MockUserServiceMockRecorder) GroupRemoveUser(ctx, userID, systemID, re
 }
 
 // Info mocks base method.
-func (m *MockUserService) Info(ctx context.Context, userID string) (*model.UserInfo, error) {
+func (m *MockUserService) Info(ctx context.Context, userID, systemID string) (*model.UserInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Info", ctx, userID)
+	ret := m.ctrl.Call(m, "Info", ctx, userID, systemID)
 	ret0, _ := ret[0].(*model.UserInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Info indicates an expected call of Info.
-func (mr *MockUserServiceMockRecorder) Info(ctx, userID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) Info(ctx, userID, systemID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockUserService)(nil).Info), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Info", reflect.TypeOf((*MockUserService)(nil).Info), ctx, userID, systemID)
 }
 
 // InfoByCode mocks base method.
