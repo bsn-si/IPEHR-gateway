@@ -37,17 +37,17 @@ The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of 
 This work is being done under the FileCoin development grant program RFP. See our proposal [here](https://github.com/filecoin-project/devgrants/issues/418)
 
 The solution is being developed with 7 milestones:
-* Development of MH-ORM and structure of storage of medical data
-* The functionality of encryption and saving/reading personal data to/from Filecoin
-* Access rights management on a blockchain - **delivery**
+* Development of MH-ORM and structure of storage of medical data - **completed**
+* The functionality of encryption and saving/reading personal data to/from Filecoin - **completed**
+* Access rights management on a blockchain - **completed**
 * BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **work in progress**
-* Public data publishing features using the Chainlink network - **work in progress**
-* Application to manage your own medical data and access - **work in progress**
+* Public data publishing features using the Chainlink network - **delivery**
+* Application to manage your own medical data and access - **delivery**
 * Testing, documentation and deployment
 
 ### Milestone 1
 
-On Milestone 1 we develop the IPEHR-gateway to provide benefits of decentralized architecture to common HMS solutions using standard APIs.
+On Milestone 1 we've developed the IPEHR-gateway to provide benefits of decentralized architecture to common HMS solutions using standard APIs.
  
 <p align="center">
   <img width="75%" src="https://user-images.githubusercontent.com/98888366/170698968-56ee7efe-e882-4236-b170-e9680ea12135.png">
@@ -132,6 +132,24 @@ List of methods:
 - getUserAccessList - Get a list of documents to which the user has access
 
 For more information see [Milestone 3 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_3)
+
+### Milestone 5
+
+On Milestone 5 we've developed a service that pushes public statistical data collected by the ipEHR system from stored EHRs to Chainlink network. The service implements an open API with specified metrics. The data is collected and processed by [IPEHR-blockchain-indexes](https://github.com/bsn-si/IPEHR-blockchain-indexes) smart contracts.
+
+EHR stats can be collected by the service through:
+
+-   transaction analysis of contracts [IPEHR-blockchain-indexes](https://github.com/bsn-si/IPEHR-blockchain-indexes)
+-   periodic direct invocation of contract methods [IPEHR-blockchain-indexes](https://github.com/bsn-si/IPEHR-blockchain-indexes)
+-   making AQL queries to IPEHR-gateway
+
+We have implemented two types of statistical data delivery:
+
+-   Direct delivery. Is implemented as a task in Chainlink that receives requests from outside by listening to the Oracle contract. When the Consumer contract sends a request for the statistical data to Oracle, the job collects a small fee in Chainlink tokens and returns the result from the statistics server. For this case, we have an open API for statistics and documented schema of job for Chainlink. The contract for this request is not a library but a sample contract in which we request statistical data via Oracle from the certain job of Chainlink
+
+-   Scheduled delivery. It consists of two contracts and the schema of a Chainlink job. This job automatically requests statistical data within the specified interval and sends it to a storage contract. All other external contracts can request statistical data from the storage contract. The implementation includes two contracts. The first is the storage itself. We publish it and pay for its updates. The second is the contract of a Consumer. It is a sample of a simple contract that requests statistical data from storage.
+
+For more information see [Milestone 5 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_5)
 
 ## How to
 
@@ -252,3 +270,7 @@ After building the image, start the container
 docker run -d --restart always -p 8080:8080 --name ipehr-gateway ipehr:gtw
 ```
 
+### Related repositories
+A [mobile app](https://github.com/bsn-si/IPEHR-access-control-app) for access management to user's (patient's) EHRs.
+A [Chainlink publisher](https://github.com/bsn-si/IPEHR-stat) for public EHR stats.
+An [ipEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) for access management, indexes storage and obtaining EHR stats.
