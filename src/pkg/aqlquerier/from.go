@@ -2,6 +2,7 @@ package aqlquerier
 
 import (
 	"fmt"
+	"reflect"
 
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
@@ -115,18 +116,25 @@ func (exec *executer) processRowsContainsExpr(rootCell *dataCell, containsExpr *
 }
 
 func (exec *executer) getDataForClassExpr(node treeindex.Noder, operand aqlprocessor.ClassExpression) ([]dataCell, error) {
+	var (
+		result []dataCell
+		err    error
+	)
+
 	if node == nil {
-		return exec.getDataForClassExpression(operand)
+		result, err = exec.getDataForClassExpression(operand)
+	} else {
+		result, err = exec.getDataForClassExpressionnFromNode(node, operand)
 	}
 
-	return getDataForClassExpressionnFromNode(node, operand)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (exec *executer) getDataForClassExpression(operand aqlprocessor.ClassExpression) ([]dataCell, error) {
-	if operand.PathPredicate != nil {
-		return nil, errors.New("not implemented")
-	}
-
 	cells := []dataCell{}
 
 	switch name := operand.Identifiers[0]; name {
@@ -137,6 +145,15 @@ func (exec *executer) getDataForClassExpression(operand aqlprocessor.ClassExpres
 		}
 
 		for _, ehrNode := range ehrs {
+			ok, err := exec.checkNodeByPathPredicate(ehrNode, operand.PathPredicate)
+			if err != nil {
+				return nil, err
+			}
+
+			if !ok {
+				continue
+			}
+
 			dc := dataCell{
 				name: operand.Identifiers[0],
 				data: ehrNode,
@@ -155,7 +172,7 @@ func (exec *executer) getDataForClassExpression(operand aqlprocessor.ClassExpres
 	return cells, nil
 }
 
-func getDataForClassExpressionnFromNode(node treeindex.Noder, from aqlprocessor.ClassExpression) ([]dataCell, error) {
+func (exec *executer) getDataForClassExpressionnFromNode(node treeindex.Noder, from aqlprocessor.ClassExpression) ([]dataCell, error) {
 	result := []dataCell{}
 
 	name := from.Identifiers[0]
@@ -181,12 +198,17 @@ func getDataForClassExpressionnFromNode(node treeindex.Noder, from aqlprocessor.
 		return nil, fmt.Errorf("not imlemented error for: %T", node) //nolint
 	}
 
-	if from.PathPredicate != nil {
-		return nil, errors.New("not imlemented error")
-	}
-
 	for _, nodes := range container {
 		for _, node := range nodes {
+			ok, err := exec.checkNodeByPathPredicate(node, from.PathPredicate)
+			if err != nil {
+				return nil, err
+			}
+
+			if !ok {
+				continue
+			}
+
 			dc := dataCell{
 				name:  name,
 				alias: alias,
@@ -198,4 +220,82 @@ func getDataForClassExpressionnFromNode(node treeindex.Noder, from aqlprocessor.
 	}
 
 	return result, nil
+}
+
+func (exec *executer) checkNodeByPathPredicate(node treeindex.Noder, pathPredicate *aqlprocessor.PathPredicate) (bool, error) {
+	if pathPredicate == nil {
+		return true, nil
+	}
+
+	switch pathPredicate.Type {
+	case aqlprocessor.StandartPathPredicate:
+		return exec.checkNodeByStandartPathPredicate(node, pathPredicate.StandartPredicate)
+	case aqlprocessor.ArchetypedPathPredicate:
+		return exec.checkNodeByArchetypePredicate(node, pathPredicate.Archetype)
+	case aqlprocessor.NodePathPredicate:
+	default:
+		return false, fmt.Errorf("unexpected PathPredicate Type: %v", pathPredicate.Type) //nolint
+	}
+
+	return false, errors.New("not implemented")
+}
+
+func (exec *executer) checkNodeByStandartPathPredicate(node treeindex.Noder, predicate *aqlprocessor.StandartPredicate) (bool, error) {
+	val, ok := getValueForPath(predicate.ObjectPath, node)
+	if !ok {
+		return false, nil
+	}
+
+	if predicate.Operand != nil {
+		if param := predicate.Operand.Parameter; param != nil {
+			paramVal, ok := exec.params[string(*param)]
+			if !ok {
+				return false, nil
+			}
+
+			if reflect.TypeOf(paramVal) == reflect.TypeOf(val) {
+				switch pv := paramVal.(type) {
+				case string:
+					return pv == val.(string), nil
+				default:
+					return false, fmt.Errorf("unexpected type: %T", paramVal) //nolint
+				}
+			}
+		}
+
+		return false, errors.New("standart predicate operand operations are not implemented")
+	}
+
+	return false, errors.New("unexpected standart predicate state")
+}
+
+func (exec *executer) checkNodeByArchetypePredicate(node treeindex.Noder, predicate *aqlprocessor.ArchetypePathPredicate) (bool, error) {
+	targetArchetypeID := ""
+	if predicate.ArchetypeHRID != nil {
+		targetArchetypeID = *predicate.ArchetypeHRID
+	} else if predicate.Parameter != nil {
+		paramVal, ok := exec.params[string(*predicate.Parameter)]
+		if !ok {
+			return false, nil
+		}
+
+		targetArchetypeID, ok = paramVal.(string)
+		if !ok {
+			return false, nil
+		}
+	} else {
+		return false, errors.New("unexpected archetype predicate state")
+	}
+
+	nodeArchetypeID := node.TryGetChild("archetype_node_id")
+	if nodeArchetypeID == nil {
+		return false, nil
+	}
+
+	valueNode, ok := nodeArchetypeID.(*treeindex.ValueNode)
+	if !ok {
+		return false, errors.New("invalid  archetype_node_id type")
+	}
+
+	return valueNode.GetData().(string) == targetArchetypeID, nil
 }

@@ -381,6 +381,85 @@ func TestService_ExecuteQuery(t *testing.T) {
 			[][]any{{toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 940.0, toRef("/min")}, {toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 981.13, toRef("kg")}},
 			false,
 		},
+		{
+			"11. select with filter by EHR id",
+			`SELECT
+			   e/ehr_id/value AS ID,
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
+			FROM EHR e [ehr_id/value=$ehrUid]
+				CONTAINS COMPOSITION c
+					CONTAINS OBSERVATION o
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{
+				sql.Named("ehrUid", "7d44b88c-4199-4bad-97dc-d78268e01398"),
+			},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := [][]any{}
+				for rows.Next() {
+					var id *string
+					var val float64
+					var val2 *string
+					if err := rows.Scan(&id, &val, &val2); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					result = append(result, []any{id, val, val2})
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					return result[i][1].(float64) <= result[j][1].(float64)
+				})
+				return result, nil
+			},
+			[][]any{
+				{toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 940.0, toRef("/min")},
+				{toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), 981.13, toRef("kg")},
+			},
+			false,
+		},
+		{
+			"12. select with filter by EHR id and observations version",
+			`SELECT
+			   e/ehr_id/value AS ID,
+			   o/archetype_node_id,
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude,
+			   o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units
+			FROM EHR e [ehr_id/value=$ehrUid]
+				CONTAINS COMPOSITION c
+					CONTAINS OBSERVATION o [openEHR-EHR-OBSERVATION.pulse.v2]
+			WHERE
+				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
+			[]interface{}{
+				sql.Named("ehrUid", "7d44b88c-4199-4bad-97dc-d78268e01398"),
+			},
+			[]string{"test_fixtures/composition_2.json"},
+			func(rows *sql.Rows) (interface{}, error) {
+				result := [][]any{}
+				for rows.Next() {
+					var id *string
+					var archetypeID *string
+					var val float64
+					var val2 *string
+					if err := rows.Scan(&id, &archetypeID, &val, &val2); err != nil {
+						return nil, errors.Wrap(err, "cannot scan float64 value")
+					}
+
+					result = append(result, []any{id, archetypeID, val, val2})
+				}
+
+				sort.Slice(result, func(i, j int) bool {
+					return result[i][2].(float64) <= result[j][2].(float64)
+				})
+				return result, nil
+			},
+			[][]any{
+				{toRef("7d44b88c-4199-4bad-97dc-d78268e01398"), toRef("openEHR-EHR-OBSERVATION.pulse.v2"), 940.0, toRef("/min")},
+			},
+			false,
+		},
 	}
 
 	for _, tt := range tests {
