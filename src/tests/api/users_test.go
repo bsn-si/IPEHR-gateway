@@ -285,6 +285,10 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 			t.Fatal(err)
 		}
 
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+		request.Header.Set("AuthUserId", doctor.id)
+		request.Header.Set("Authorization", "Bearer "+doctor.accessToken)
+
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
@@ -334,6 +338,10 @@ func (testWrap *testWrap) userInfo(testData *TestData) func(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+		request.Header.Set("AuthUserId", doctor.id)
+		request.Header.Set("Authorization", "Bearer "+doctor.accessToken)
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {

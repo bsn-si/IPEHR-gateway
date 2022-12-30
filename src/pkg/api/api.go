@@ -230,7 +230,6 @@ func (a *API) buildUserAPI() handlerBuilder {
 		r = r.Group("user")
 		r.Use(gzip.Gzip(gzip.DefaultCompression))
 
-		r.GET("/:user_id", a.User.Info)
 		r.GET("/code/:code", a.User.InfoByCode)
 
 		r.Use(ehrSystemID)
@@ -240,6 +239,7 @@ func (a *API) buildUserAPI() handlerBuilder {
 		r.GET("/refresh", a.User.RefreshToken)
 
 		r.Use(auth(a))
+		r.GET("/:user_id", a.User.Info)
 		r.POST("/logout", a.User.Logout)
 
 		r = r.Group("group")

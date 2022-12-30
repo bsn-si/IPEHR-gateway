@@ -200,7 +200,7 @@ func (s *Service) Info(ctx context.Context, userID, systemID string) (*model.Use
 		return nil, fmt.Errorf("extractUserInfo error: %w", err)
 	}
 
-	if userInfo.Role == roles.Doctor.String() {
+	if userInfo.Role == roles.Patient.String() {
 		ehrID, err := s.Infra.Index.GetEhrUUIDByUserID(ctx, userID, systemID)
 		if err != nil {
 			return nil, fmt.Errorf("Info.GetEhrUUIDByID error: %w", err)

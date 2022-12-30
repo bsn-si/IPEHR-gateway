@@ -30,14 +30,7 @@ func TestUserHandler_Info(t *testing.T) {
 		want       string
 	}{
 		{
-			"1. empty user_id",
-			"",
-			func(svc *mocks.MockUserService) {},
-			http.StatusNotFound,
-			"",
-		},
-		{
-			"2. error on get user info",
+			"1. error on get user info",
 			userID,
 			func(svc *mocks.MockUserService) {
 				svc.EXPECT().Info(gomock.Any(), userID, systemID).Return(nil, errors.New("some error"))
@@ -46,7 +39,7 @@ func TestUserHandler_Info(t *testing.T) {
 			"",
 		},
 		{
-			"3. error not found",
+			"2. error not found",
 			userID,
 			func(svc *mocks.MockUserService) {
 				svc.EXPECT().Info(gomock.Any(), userID, systemID).Return(nil, errors.ErrNotFound)
@@ -55,7 +48,7 @@ func TestUserHandler_Info(t *testing.T) {
 			"",
 		},
 		{
-			"4. success return doctor",
+			"3. success return doctor",
 			userID,
 			func(svc *mocks.MockUserService) {
 				doctor := &model.UserInfo{
@@ -68,9 +61,8 @@ func TestUserHandler_Info(t *testing.T) {
 			http.StatusOK,
 			`{"role":"Doctor","name":"some_name","timeCreated":"123"}`,
 		},
-
 		{
-			"5. success return patient",
+			"4. success return patient",
 			userID,
 			func(svc *mocks.MockUserService) {
 				ehrID := uuid.MustParse("09b8e497-c9d8-4562-99a7-a2f614037971")
@@ -92,6 +84,7 @@ func TestUserHandler_Info(t *testing.T) {
 			defer ctrl.Finish()
 
 			userSvc := mocks.NewMockUserService(ctrl)
+			userSvc.EXPECT().VerifyAccess(userID, "Bearer AccessKey").Return(nil)
 			tt.prepare(userSvc)
 
 			api := API{
@@ -101,6 +94,8 @@ func TestUserHandler_Info(t *testing.T) {
 			router := api.setupRouter(api.buildUserAPI())
 
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/user/%s", tt.userID), nil)
+			req.Header.Set("Authorization", "Bearer AccessKey")
+			req.Header.Set("AuthUserId", userID)
 			req.Header.Set("EhrSystemId", systemID)
 
 			recorder := httptest.NewRecorder()
