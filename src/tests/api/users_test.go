@@ -277,7 +277,6 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 			t.Fatal("registerPatient requestWait error: ", err)
 		}
 
-		doctor = testData.doctors[0]
 		if doctor.accessToken == "" {
 			err := doctor.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
 			if err != nil {
