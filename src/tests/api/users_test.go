@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
 	"hms/gateway/pkg/common/fakeData"
 	docModel "hms/gateway/pkg/docs/model"
@@ -324,7 +325,7 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 	}
 }
 
-func (testWrap *testWrap) userInfo(testData *TestData) func(t *testing.T) {
+func (testWrap *testWrap) userInfoDoctor(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.doctors) == 0 {
 			testWrap.doctorRegister(testData)(t)
@@ -375,6 +376,59 @@ func (testWrap *testWrap) userInfo(testData *TestData) func(t *testing.T) {
 		if doctor2.Name != doctor.Name {
 			t.Fatalf("Expected Name: %s, received: %s", doctor.Name, doctor2.Name)
 		}
+	}
+}
+
+func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		if len(testData.users) == 0 {
+			t.Fatal("empty test users litst")
+		}
+
+		user := testData.users[0]
+
+		if user.accessToken == "" {
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		url := testWrap.server.URL + "/v1/user/" + user.id
+
+		request, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request.Header.Set("EhrSystemId", testData.ehrSystemID)
+		request.Header.Set("AuthUserId", user.id)
+		request.Header.Set("Authorization", "Bearer "+user.accessToken)
+
+		response, err := testWrap.httpClient.Do(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Fatalf("Response body read error: %v", err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			t.Fatalf("Expected: %d, received: %d, body: %s", http.StatusOK, response.StatusCode, data)
+		}
+
+		var user2 model.UserInfo
+
+		err = json.Unmarshal(data, &user2)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, user.ehrID, user2.EhrID)
+		assert.Equal(t, "patient", user2.Role)
 	}
 }
 

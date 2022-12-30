@@ -66,13 +66,13 @@ func TestUserHandler_Info(t *testing.T) {
 			userID,
 			func(svc *mocks.MockUserService) {
 				ehrID := uuid.MustParse("09b8e497-c9d8-4562-99a7-a2f614037971")
-				doctor := &model.UserInfo{
+				user := &model.UserInfo{
 					Role:        roles.Patient.String(),
 					TimeCreated: "123",
 					Name:        "some_name",
 					EhrID:       &ehrID,
 				}
-				svc.EXPECT().Info(gomock.Any(), userID, systemID).Return(doctor, nil)
+				svc.EXPECT().Info(gomock.Any(), userID, systemID).Return(user, nil)
 			},
 			http.StatusOK,
 			`{"role":"Patient","timeCreated":"123","ehrID":"09b8e497-c9d8-4562-99a7-a2f614037971"}`,
