@@ -380,6 +380,8 @@ definitions:
         type: string
       description:
         type: string
+      ehrID:
+        type: string
       name:
         type: string
       pictureURL:
@@ -1717,12 +1719,16 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get information about the doctor by user_id
+      description: Get information about the user by user_id
       parameters:
       - description: The identifier of the requested user
         in: path
         name: user_id
         required: true
+        type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
         type: string
       produces:
       - application/json
@@ -1738,7 +1744,7 @@ paths:
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
-      summary: Get doctor info
+      summary: Get user info
       tags:
       - USER
   /user/code/{code}:
