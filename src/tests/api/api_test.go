@@ -82,7 +82,7 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
-	if !t.Run("User get info", testWrap.userInfo(testData)) {
+	if !t.Run("User get info doctor", testWrap.userInfoDoctor(testData)) {
 		t.Fatal()
 	}
 
@@ -126,6 +126,10 @@ func Test_API(t *testing.T) {
 	}
 
 	if !t.Run("EHR_STATUS update", testWrap.ehrStatusUpdate(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("User get info patient", testWrap.userInfoPatient(testData)) {
 		t.Fatal()
 	}
 

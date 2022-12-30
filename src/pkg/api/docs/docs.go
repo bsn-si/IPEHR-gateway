@@ -2278,7 +2278,7 @@ const docTemplate = `{
         },
         "/user/{user_id}": {
             "get": {
-                "description": "Get information about the doctor by user_id",
+                "description": "Get information about the user by user_id",
                 "consumes": [
                     "application/json"
                 ],
@@ -2288,7 +2288,7 @@ const docTemplate = `{
                 "tags": [
                     "USER"
                 ],
-                "summary": "Get doctor info",
+                "summary": "Get user info",
                 "parameters": [
                     {
                         "type": "string",
@@ -2296,6 +2296,12 @@ const docTemplate = `{
                         "name": "user_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header"
                     }
                 ],
                 "responses": {
@@ -2909,6 +2915,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "description": {
+                    "type": "string"
+                },
+                "ehrID": {
                     "type": "string"
                 },
                 "name": {

@@ -181,7 +181,7 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 	return nil
 }
 
-func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, error) {
+func (s *Service) Info(ctx context.Context, userID, systemID string) (*model.UserInfo, error) {
 	address, err := s.getUserAddress(userID)
 	if err != nil {
 		return nil, fmt.Errorf("s.getUserAddress error: %w", err)
@@ -198,6 +198,15 @@ func (s *Service) Info(ctx context.Context, userID string) (*model.UserInfo, err
 	userInfo, err := extractUserInfo(user)
 	if err != nil {
 		return nil, fmt.Errorf("extractUserInfo error: %w", err)
+	}
+
+	if userInfo.Role == roles.Patient.String() {
+		ehrID, err := s.Infra.Index.GetEhrUUIDByUserID(ctx, userID, systemID)
+		if err != nil {
+			return nil, fmt.Errorf("Info.GetEhrUUIDByID error: %w", err)
+		}
+
+		userInfo.EhrID = ehrID
 	}
 
 	return userInfo, nil

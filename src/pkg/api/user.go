@@ -26,7 +26,7 @@ type UserService interface {
 	NewProcRequest(reqID, userID string, kind processing.RequestKind) (processing.RequestInterface, error)
 	Register(ctx context.Context, user *userModel.UserCreateRequest, systemID, reqID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
-	Info(ctx context.Context, userID string) (*model.UserInfo, error)
+	Info(ctx context.Context, userID, systemID string) (*model.UserInfo, error)
 	InfoByCode(ctx context.Context, code int) (*model.UserInfo, error)
 	CreateToken(userID string) (*userService.TokenDetails, error)
 	ExtractToken(bearToken string) string
@@ -268,12 +268,13 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 }
 
 // Info
-// @Summary  Get doctor info
-// @Description Get information about the doctor by user_id
+// @Summary  Get user info
+// @Description Get information about the user by user_id
 // @Tags     USER
 // @Accept   json
 // @Produce  json
 // @Param    user_id        path      string  true  "The identifier of the requested user"
+// @Param    EhrSystemId    header    string  false "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  model.UserInfo
 // @Failure  400            "`user_id` is incorrect or requested user is not a doctor"
 // @Failure  404            "User with ID not exist"
@@ -286,7 +287,9 @@ func (h *UserHandler) Info(c *gin.Context) {
 		return
 	}
 
-	userInfo, err := h.service.Info(c, userID)
+	systemID := c.GetString("ehrSystemID")
+
+	userInfo, err := h.service.Info(c, userID, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -298,9 +301,12 @@ func (h *UserHandler) Info(c *gin.Context) {
 		return
 	}
 
-	if userInfo.Role != roles.Doctor.String() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Info only available for users with the 'Doctor' role"})
-		return
+	if userInfo.Role == roles.Patient.String() {
+		userInfo = &userModel.UserInfo{
+			Role:        userInfo.Role,
+			TimeCreated: userInfo.TimeCreated,
+			EhrID:       userInfo.EhrID,
+		}
 	}
 
 	c.JSON(http.StatusOK, userInfo)

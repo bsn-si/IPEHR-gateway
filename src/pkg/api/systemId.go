@@ -9,7 +9,7 @@ import (
 func ehrSystemID(c *gin.Context) {
 	ehrSystemID := c.Request.Header.Get("EhrSystemId")
 
-	if ehrSystemID != "" {
+	if ehrSystemID == "" {
 		ehrSystemID = common.EhrSystemID
 	}
 

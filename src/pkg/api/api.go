@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -118,19 +117,19 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 		c.AbortWithStatus(404)
 	})
 
-	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		// your custom format
-		return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
-			param.TimeStamp.Format("2006-01-02 15:04:05"),
-			param.Keys["reqID"],
-			param.StatusCode,
-			param.Latency,
-			param.ClientIP,
-			param.Method,
-			param.Path,
-			param.ErrorMessage,
-		)
-	}))
+	// r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+	// 	// your custom format
+	// 	return fmt.Sprintf("[GIN] %19s | %6s | %3d | %13v | %15s | %-7s %#v %s\n",
+	// 		param.TimeStamp.Format("2006-01-02 15:04:05"),
+	// 		param.Keys["reqID"],
+	// 		param.StatusCode,
+	// 		param.Latency,
+	// 		param.ClientIP,
+	// 		param.Method,
+	// 		param.Path,
+	// 		param.ErrorMessage,
+	// 	)
+	// }))
 
 	r.Use(requestID)
 
@@ -231,7 +230,6 @@ func (a *API) buildUserAPI() handlerBuilder {
 		r = r.Group("user")
 		r.Use(gzip.Gzip(gzip.DefaultCompression))
 
-		r.GET("/:user_id", a.User.Info)
 		r.GET("/code/:code", a.User.InfoByCode)
 
 		r.Use(ehrSystemID)
@@ -241,6 +239,7 @@ func (a *API) buildUserAPI() handlerBuilder {
 		r.GET("/refresh", a.User.RefreshToken)
 
 		r.Use(auth(a))
+		r.GET("/:user_id", a.User.Info)
 		r.POST("/logout", a.User.Logout)
 
 		r = r.Group("group")

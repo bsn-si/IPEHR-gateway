@@ -199,7 +199,7 @@ func TestContributionHandler_Create(t *testing.T) {
 				gaSvc.EXPECT().NewProcRequest(gomock.Any(), userID, ehrUUID, processing.RequestContributionCreate)
 				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(nil)
 				u := &userModel.UserInfo{}
-				userSvc.EXPECT().Info(gomock.Any(), userID).Return(u, nil)
+				userSvc.EXPECT().Info(gomock.Any(), userID, systemID).Return(u, nil)
 				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), systemID, u, gomock.Any()).Return(errors.ErrCustom)
 			},
 			c.cJSON,
@@ -215,7 +215,7 @@ func TestContributionHandler_Create(t *testing.T) {
 				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(nil)
 
 				u := &userModel.UserInfo{}
-				userSvc.EXPECT().Info(gomock.Any(), userID).Return(u, nil)
+				userSvc.EXPECT().Info(gomock.Any(), userID, systemID).Return(u, nil)
 				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), systemID, u, gomock.Any()).Return(nil)
 				gaSvc.EXPECT().PrepareResponse(gomock.Any(), systemID, gomock.Any()).Return(nil, errors.ErrNotImplemented)
 			},
@@ -231,7 +231,7 @@ func TestContributionHandler_Create(t *testing.T) {
 				gaSvc.EXPECT().Execute(gomock.Any(), gomock.Any(), userID, ehrUUID, gomock.Any(), gomock.Any()).Return(nil)
 
 				u := &userModel.UserInfo{}
-				userSvc.EXPECT().Info(gomock.Any(), userID).Return(u, nil)
+				userSvc.EXPECT().Info(gomock.Any(), userID, systemID).Return(u, nil)
 				gaSvc.EXPECT().Store(gomock.Any(), gomock.Any(), systemID, u, gomock.Any()).Return(nil)
 				gaSvc.EXPECT().PrepareResponse(gomock.Any(), systemID, gomock.Any()).Return(cR.c, nil)
 			},
