@@ -428,7 +428,7 @@ func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T)
 		}
 
 		assert.Equal(t, user.ehrID, user2.EhrID)
-		assert.Equal(t, "patient", user2.Role)
+		assert.Equal(t, "Patient", user2.Role)
 	}
 }
 
