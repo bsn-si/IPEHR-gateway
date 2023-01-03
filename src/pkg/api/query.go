@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -78,4 +79,49 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 
 	//TODO make real job
 	c.Data(http.StatusOK, "application/json", fakeData.QueryExecResponse(queryRequest.Query))
+}
+
+// Get
+// @Summary      Execute stored AQL
+// @Description  Execute a stored query, identified by the supplied qualified_query_name (at latest version), fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.
+// @Description  See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
+// @Description  Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
+// @Tags         QUERY
+// @Accept       json
+// @Produce      json
+// @Param        Authorization         header    string              true  "Bearer AccessToken"
+// @Param        AuthUserId            header    string              true  "UserId UUID"
+// @Param        qualified_query_name  path      string  true   "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
+// @Param        ehr_id            	   query     string  false  "An optional parameter to execute the query within an EHR context."
+// @Param        offset            	   query     string  false  "The row number in result-set to start result-set from (0-based), default is 0."
+// @Param        fetch            	   query     string  false  "Number of rows to fetch (the default depends on the implementation)."
+// @Success      200                   {object}  model.QueryResponse
+// @Header       200                   {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+// @Failure      400                   "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
+// @Failure      404                   "Is returned when a stored query with qualified_query_name does not exists."
+// @Failure      408                   "Is returned when there is a query execution timeout"
+// @Router       /query/{qualified_query_name} [get]
+func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
+	ehrID := c.Query("ehr_id")
+	offset := c.Query("offset")
+	fetch := c.Query("fetch")
+
+	m := map[string]string{}
+
+	if err := c.BindQuery(&m); err != nil {
+		log.Println("ERRROROOROROOORO: ", err)
+		http.Error(c.Writer, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	queryName := c.Param("qualified_query_name")
+
+	log.Println("!@!!!!!!!!!!!!!!!!!!!")
+	log.Println("PARAMS", queryName)
+
+	log.Println("QUERY", c.Request.URL.RawQuery)
+	log.Println(ehrID, offset, fetch)
+	log.Println("MAP: ", m)
+	c.Writer.WriteString("hello world!")
 }
