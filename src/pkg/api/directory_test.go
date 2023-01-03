@@ -189,7 +189,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 	)
 
 	directoryVersionUID, _ := base.NewObjectVersionID(directoryID.String(), systemID)
-	nextDirectoryVersionUID := *directoryVersionUID
+	nextDirectoryVersionUID, _ := base.NewObjectVersionID(directoryVersionUID.String(), systemID)
 	_, _ = nextDirectoryVersionUID.IncreaseUIDVersion()
 
 	tests := []struct {
@@ -306,7 +306,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 
 				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 				uS.EXPECT().Info(gomock.Any(), userUUID.String()).Return(&userModel.UserInfo{}, nil)
-				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryCreate).Return(&MockRequest{}, nil)
+				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryUpdate).Return(&MockRequest{}, nil)
 				dS.EXPECT().Update(gomock.Any(), gomock.Any(), systemID, &ehrUUID, &userModel.UserInfo{}, gomock.Any()).Return(nil)
 			},
 			http.StatusOK,
@@ -377,6 +377,153 @@ func TestDirectoryHandler_Update(t *testing.T) {
 				etag := req.Header.Get("ETag")
 				if diff := cmp.Diff(etag, fmt.Sprintf("\"%s\"", tt.wantVersionID)); diff != "" {
 					t.Errorf("DirectoryHandler.Update() etag {-want;+got}\n%s", diff)
+				}
+			}
+		})
+	}
+}
+
+func TestDirectoryHandler_Delete(t *testing.T) {
+	var (
+		userUUID    = uuid.New()
+		ehrUUID     = uuid.New()
+		directoryID = uuid.New()
+		systemID    = common.EhrSystemID
+	)
+
+	directoryVersionUID, _ := base.NewObjectVersionID(directoryID.String(), systemID)
+	nextDirectoryVersionUID, _ := base.NewObjectVersionID(directoryVersionUID.String(), systemID)
+	_, _ = nextDirectoryVersionUID.IncreaseUIDVersion()
+
+	tests := []struct {
+		name          string
+		directoryID   string
+		prepare       func(dSvc *mocks.MockDirectoryService, iSvc *mocks.MockIndexer)
+		wantStatus    int
+		wantResp      *model.Directory
+		wantVersionID string
+	}{
+		{
+			"1. failed because EhrID is not belong to current user",
+			directoryVersionUID.String(),
+			func(_ *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			nil,
+			"",
+		},
+		{
+			"2. failed because DIRECTORY with current version was not found",
+			directoryVersionUID.String(),
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			nil,
+			"",
+		},
+		{
+			"3. failed because DIRECTORY with current {version_id} is not match with {version_id} stored in DB",
+			directoryVersionUID.String(),
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+
+				d := &model.Directory{
+					Locatable: base.Locatable{
+						ObjectVersionID: *nextDirectoryVersionUID,
+					},
+				}
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+			},
+			http.StatusPreconditionFailed,
+			nil,
+			"",
+		},
+		{
+			"4. Success DIRECTORY deleted",
+			directoryID.String(),
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				d := &model.Directory{
+					Locatable: base.Locatable{
+						ObjectVersionID: *directoryVersionUID,
+					},
+				}
+
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryDelete).Return(&MockRequest{}, nil)
+				dS.EXPECT().Delete(gomock.Any(), gomock.Any(), systemID, &ehrUUID, directoryVersionUID.String(), userUUID.String()).Return(d.String(), nil)
+			},
+			http.StatusNoContent,
+			nil,
+			nextDirectoryVersionUID.String(),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			svc := mocks.NewMockDirectoryService(ctrl)
+			indexer := mocks.NewMockIndexer(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
+			tt.prepare(svc, indexer)
+
+			// Mock for auth user service
+			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
+
+			api := API{
+				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
+				User:      NewUserHandler(userSvc),
+			}
+
+			router := api.setupRouter(api.buildEhrDirectoryAPI())
+
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/v1/ehr/%s/directory/", ehrUUID.String()), nil)
+			req.Header.Set("Authorization", "Bearer emptyJWTkey")
+			req.Header.Set("AuthUserId", userUUID.String())
+			req.Header.Set("EhrSystemId", systemID)
+			req.Header.Set("If-Match", directoryVersionUID.String())
+			req.Header.Set("Prefer", "return=representation")
+
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+
+			resp := recorder.Result()
+			defer resp.Body.Close()
+
+			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
+				t.Errorf("DirectoryHandler.Delete() status code mismatch {-want;+got}\n\t%s", diff)
+				return
+			}
+
+			if tt.wantResp == nil {
+				return
+			}
+
+			var got *model.Directory
+			respBody, _ := io.ReadAll(resp.Body)
+
+			err := json.Unmarshal(respBody, &got)
+			if err != nil {
+				t.Errorf("Cant unmarshal JSON: %v", err)
+			}
+
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+
+			if diff := cmp.Diff(tt.wantResp, got, opts); diff != "" {
+				t.Errorf("DirectoryHandler.Delete() body response {-want;+got}\n%s", diff)
+			}
+
+			if resp.StatusCode == http.StatusNoContent {
+				etag := req.Header.Get("ETag")
+				if diff := cmp.Diff(etag, fmt.Sprintf("\"%s\"", tt.wantVersionID)); diff != "" {
+					t.Errorf("DirectoryHandler.Delete() etag {-want;+got}\n%s", diff)
 				}
 			}
 		})

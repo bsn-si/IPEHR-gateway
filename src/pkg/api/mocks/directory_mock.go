@@ -54,11 +54,12 @@ func (mr *MockDirectoryServiceMockRecorder) Create(ctx, req, systemID, ehrUUID, 
 }
 
 // Delete mocks base method.
-func (m *MockDirectoryService) Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) error {
+func (m *MockDirectoryService) Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, req, systemID, ehrUUID, versionUID, userID)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Delete indicates an expected call of Delete.
@@ -95,21 +96,6 @@ func (m *MockDirectoryService) GetByTime(ctx context.Context, systemID string, e
 func (mr *MockDirectoryServiceMockRecorder) GetByTime(ctx, systemID, ehrUUID, userID, versionTime interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTime", reflect.TypeOf((*MockDirectoryService)(nil).GetByTime), ctx, systemID, ehrUUID, userID, versionTime)
-}
-
-// GetByVersion mocks base method.
-func (m *MockDirectoryService) GetByVersion(ctx context.Context, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (*model.Directory, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByVersion", ctx, systemID, ehrUUID, versionUID, userID)
-	ret0, _ := ret[0].(*model.Directory)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByVersion indicates an expected call of GetByVersion.
-func (mr *MockDirectoryServiceMockRecorder) GetByVersion(ctx, systemID, ehrUUID, versionUID, userID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByVersion", reflect.TypeOf((*MockDirectoryService)(nil).GetByVersion), ctx, systemID, ehrUUID, versionUID, userID)
 }
 
 // NewProcRequest mocks base method.

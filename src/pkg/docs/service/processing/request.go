@@ -79,6 +79,8 @@ const (
 	RequestContributionCreate
 	RequestTemplateCreate
 	RequestDirectoryCreate
+	RequestDirectoryUpdate
+	RequestDirectoryDelete
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {

@@ -6,9 +6,8 @@ package mocks
 
 import (
 	context "context"
-	reflect "reflect"
-
 	helper "hms/gateway/pkg/helper"
+	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"

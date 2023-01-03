@@ -3,9 +3,12 @@ package directory
 import (
 	"context"
 	"fmt"
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/types"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
@@ -45,18 +48,39 @@ func (s *Service) Update(ctx context.Context, req processing.RequestInterface, s
 	return errors.ErrNotImplemented
 }
 
-// TODO
-func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) error {
-	return errors.ErrNotImplemented
+func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error) {
+	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
+	if err != nil {
+		return "", fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, systemID)
+	}
+
+	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return "", fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
+
+	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey, nil)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return "", err
+		}
+		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
+	}
+
+	req.AddEthereumTx(processing.TxDeleteDoc, txHash)
+
+	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
+		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())
+	}
+
+	return objectVersionID.String(), nil
 }
 
 // TODO
 func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error) {
-	return nil, errors.ErrNotImplemented
-}
-
-// TODO
-func (s *Service) GetByVersion(ctx context.Context, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (*model.Directory, error) {
 	return nil, errors.ErrNotImplemented
 }
 
