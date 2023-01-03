@@ -468,4 +468,79 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &d)
 }
 
-func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {}
+// Get folder in DIRECTORY version
+// @Summary      Get folder in DIRECTORY by version.
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_get_at_time
+// @Description  Retrieves a particular version of the directory FOLDER identified by {version_uid} and associated with the EHR identified by {ehr_id}. If {path} is supplied, retrieves from the directory only the sub-FOLDER that is associated with that path.
+// @Tags         DIRECTORY
+// @Param        Authorization  header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        version_uid    query   string  true  "Example: 6cb19121-4307-4648-9da0-d62e4d51f19b::openEHRSys.example.com::2 VERSION identifier taken from VERSION.uid.value"
+// @Param        path  query     string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
+// @Produce      json
+// @Success      200  {object}  model.Directory "Is returned when the FOLDER is successfully retrieved"
+// @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
+// @Failure      400  "Is returned when the request has invalid content"
+// @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or when a directory does not exist at the specified {version_at_time}, or when {path} does not exists within the directory"
+// @Failure      500  "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr/{ehr_id}/directory/{version_uid} [get]
+func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
+	errResponse := model.ErrorResponse{}
+
+	userID := ctx.GetString("userID")
+	if userID == "" {
+		errResponse.SetMessage("Header required").
+			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	ehrID := ctx.Param("ehrid")
+
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		errResponse.SetMessage("Incorrect param").
+			AddError(errors.ErrFieldIsIncorrect("ehr_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	systemID := ctx.GetString("ehrSystemID")
+	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
+
+	if !searcher.IsEhrBelongsToUser() {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	versionUID := ctx.Param("version_uid")
+
+	directoryVersion, err := h.service.GetByID(ctx, userID, versionUID)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			ctx.AbortWithStatus(http.StatusNotFound)
+			return
+		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
+			ctx.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		log.Println("directoryService.GetByTime error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	path := ctx.Query("path")
+
+	d, err := directoryVersion.GetByPath(path)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &d)
+}
