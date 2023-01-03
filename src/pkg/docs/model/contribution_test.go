@@ -43,6 +43,50 @@ func TestContribution_UnmarshalJSON(t *testing.T) {
 				{expectedComposition, []byte(compositionJSON)},
 			}),
 			false,
+		}, {
+			"4. contribution with composition and folder",
+			newContributionWithVersions([]contributionVersionTestData{
+				{expectedComposition, []byte(compositionJSON)},
+				{&model.Directory{
+					Locatable: base.Locatable{
+						Type:            base.FolderItemType,
+						Name:            base.NewDvText("root"),
+						ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1"},
+					FeederAudit: base.FeederAudit{},
+					Folders:     nil,
+					Details:     base.ItemStructure{},
+					Items: []model.DirectoryItem{
+						{
+							ID: base.UIDBasedID{
+								ObjectID: base.ObjectID{
+									Type:  base.HierObjectIDItemType,
+									Value: "replaceme",
+								},
+							},
+							Type:      base.VersionCompositionItemType,
+							Namespace: "my.system.id",
+						},
+					},
+				}, []byte(`{
+					  "_type": "FOLDER",
+					  "name": {
+						"_type": "DV_TEXT",
+						"value": "root"
+					  },
+					  "archetype_node_id": "openEHR-EHR-FOLDER.generic.v1",
+					  "items": [
+						{
+							"id": {
+								"_type": "HIER_OBJECT_ID",
+								"value": "replaceme"
+							},
+							"namespace": "my.system.id",
+							"type": "VERSIONED_COMPOSITION"
+						}
+					  ]
+					}`)},
+			}),
+			false,
 		},
 	}
 	for _, tt := range tests {
