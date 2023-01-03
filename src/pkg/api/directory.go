@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
@@ -50,6 +51,7 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Param        Authorization  header    string  true   "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -159,6 +161,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 // @Param        Authorization  header    string  true   "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -281,6 +284,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 // @Param        Authorization  header    string  true   "Bearer AccessToken"
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Header       204            {string}  RequestID  "Request identifier"
 // @Header       412            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       412            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
@@ -378,5 +382,90 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h *DirectoryHandler) GetByTime(ctx *gin.Context)    {}
+// Get folder in DIRECTORY
+// @Summary      Get folder in DIRECTORY version at time.
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_get_at_time
+// @Description  Retrieves the version of the directory FOLDER associated with the EHR identified by {ehr_id}. If {version_at_time} is supplied, retrieves the version extant at specified time, otherwise retrieves the latest directory FOLDER version. If path is supplied, retrieves from the directory only the sub-FOLDER that is associated with that path.
+// @Tags         DIRECTORY
+// @Param        Authorization  header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        version_at_time  query     string  true  "Example: version_at_time=2015-01-20T19:30:22.765+01:00 A given time in the extended ISO 8601 format"
+// @Param        path  query     string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
+// @Produce      json
+// @Success      200  {object}  model.Directory "Is returned when the FOLDER is successfully retrieved"
+// @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
+// @Failure      400  "Is returned when the request has invalid content"
+// @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or when a directory does not exist at the specified {version_at_time}, or when {path} does not exists within the directory"
+// @Failure      500  "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr/{ehr_id}/directory [get]
+func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
+	errResponse := model.ErrorResponse{}
+
+	userID := ctx.GetString("userID")
+	if userID == "" {
+		errResponse.SetMessage("Header required").
+			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	ehrID := ctx.Param("ehrid")
+
+	ehrUUID, err := uuid.Parse(ehrID)
+	if err != nil {
+		errResponse.SetMessage("Incorrect param").
+			AddError(errors.ErrFieldIsIncorrect("ehr_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	systemID := ctx.GetString("ehrSystemID")
+	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
+
+	if !searcher.IsEhrBelongsToUser() {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	versionAtTime := ctx.Query("version_at_time")
+
+	statusTime, err := time.Parse(common.OpenEhrTimeFormat, versionAtTime)
+	if err != nil {
+		errResponse.SetMessage(fmt.Sprintf("Incorrect format of time option, use %s", common.OpenEhrTimeFormat)).
+			AddError(errors.ErrFieldIsIncorrect("version_at_time"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	directoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, userID, statusTime)
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			ctx.AbortWithStatus(http.StatusNotFound)
+			return
+		} else if errors.Is(err, errors.ErrAlreadyDeleted) {
+			ctx.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		log.Println("directoryService.GetByTime error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	path := ctx.Query("path")
+
+	d, err := directoryVersion.GetByPath(path)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &d)
+}
+
 func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {}

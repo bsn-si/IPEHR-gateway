@@ -7,7 +7,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
@@ -527,5 +529,278 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestDirectoryHandler_GetByTime(t *testing.T) {
+	var (
+		userUUID    = uuid.New()
+		ehrUUID     = uuid.New()
+		directoryID = uuid.New()
+		systemID    = common.EhrSystemID
+	)
+
+	directoryVersionUID, _ := base.NewObjectVersionID(directoryID.String(), systemID)
+	d := newDirectoryWithFolders(directoryVersionUID)
+
+	tests := []struct {
+		name         string
+		timeVersion  string
+		path         string
+		prepare      func(dSvc *mocks.MockDirectoryService, iSvc *mocks.MockIndexer)
+		wantStatus   int
+		wantResp     bool
+		wantPathName string
+	}{
+		{
+			"1. failed because EhrID is not belong to current user",
+			"",
+			"",
+			func(_ *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			false,
+			"",
+		},
+		{
+			"2. failed because time has incorrect format",
+			"incorrect_time_format",
+			"",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+			},
+			http.StatusBadRequest,
+			false,
+			"",
+		},
+		{
+			"3. failed because DIRECTORY by exact time was not found",
+			time.Now().Format(common.OpenEhrTimeFormat),
+			"",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
+			},
+			http.StatusNotFound,
+			false,
+			"",
+		},
+		{
+			"4. failed because DIRECTORY by time was deleted",
+			time.Now().Format(common.OpenEhrTimeFormat),
+			"",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrAlreadyDeleted)
+			},
+			http.StatusNoContent,
+			false,
+			"",
+		},
+		{
+			"5. failed because DIRECTORY by {path} was not found",
+			time.Now().Format(common.OpenEhrTimeFormat),
+			"not_exist_path",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+			},
+			http.StatusNotFound,
+			false,
+			"",
+		},
+		{
+			"6. success return root folder from DIRECTORY by {version_at_time} and {path}",
+			time.Now().Format(common.OpenEhrTimeFormat),
+			"root",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+			},
+			http.StatusOK,
+			true,
+			"root",
+		},
+		{
+			"7. success return sub folder from DIRECTORY by {version_at_time} and {path}",
+			time.Now().Format(common.OpenEhrTimeFormat),
+			"root/1",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+			},
+			http.StatusOK,
+			true,
+			"1",
+		},
+		{
+			"8. success return last sub folder from DIRECTORY by {version_at_time} and {path}",
+			time.Now().Format(common.OpenEhrTimeFormat),
+			"root/1/1-1/1-1-2",
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
+				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+			},
+			http.StatusOK,
+			true,
+			"1-1-2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			svc := mocks.NewMockDirectoryService(ctrl)
+			indexer := mocks.NewMockIndexer(ctrl)
+			userSvc := mocks.NewMockUserService(ctrl)
+			tt.prepare(svc, indexer)
+
+			// Mock for auth user service
+			userSvc.EXPECT().VerifyAccess(gomock.Any(), gomock.Any()).Return(nil)
+
+			api := API{
+				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
+				User:      NewUserHandler(userSvc),
+			}
+
+			router := api.setupRouter(api.buildEhrDirectoryAPI())
+
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/ehr/%s/directory/?version_at_time=%s&path=%s", ehrUUID.String(), url.QueryEscape(tt.timeVersion), url.QueryEscape(tt.path)), nil)
+			req.Header.Set("Authorization", "Bearer emptyJWTkey")
+			req.Header.Set("AuthUserId", userUUID.String())
+			req.Header.Set("EhrSystemId", systemID)
+
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+
+			resp := recorder.Result()
+			defer resp.Body.Close()
+
+			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
+				t.Errorf("DirectoryHandler.GetByTime() status code mismatch {-want;+got}\n\t%s", diff)
+				return
+			}
+
+			if tt.wantResp == false {
+				return
+			}
+
+			var got *model.Directory
+			respBody, _ := io.ReadAll(resp.Body)
+
+			err := json.Unmarshal(respBody, &got)
+			if err != nil {
+				t.Errorf("Cant unmarshal JSON: %v", err)
+			}
+
+			opts := cmp.AllowUnexported(
+				base.ObjectVersionID{},
+				base.PartyProxy{},
+			)
+
+			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
+				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
+			}
+
+		})
+	}
+}
+
+func newDirectoryWithFolders(id *base.ObjectVersionID) *model.Directory {
+	return &model.Directory{
+		Locatable: base.Locatable{
+			ObjectVersionID: *id,
+			Type:            base.FolderItemType,
+			Name:            base.NewDvText("root"),
+			ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+		},
+		Folders: []*model.Directory{
+			{
+				Locatable: base.Locatable{
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("1"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				},
+				Folders: []*model.Directory{
+					{
+						Locatable: base.Locatable{
+							Type:            base.FolderItemType,
+							Name:            base.NewDvText("1-1"),
+							ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+						},
+						Folders: []*model.Directory{
+							{
+								Locatable: base.Locatable{
+									Type:            base.FolderItemType,
+									Name:            base.NewDvText("1-1-1"),
+									ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+								},
+							},
+							{
+								Locatable: base.Locatable{
+									Type:            base.FolderItemType,
+									Name:            base.NewDvText("1-1-2"),
+									ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+								},
+							},
+						},
+					},
+					{
+						Locatable: base.Locatable{
+							Type:            base.FolderItemType,
+							Name:            base.NewDvText("1-2"),
+							ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+						},
+						FeederAudit: base.FeederAudit{},
+						Details:     base.ItemStructure{},
+						Folders: []*model.Directory{
+							{
+								Locatable: base.Locatable{
+									Type:            base.FolderItemType,
+									Name:            base.NewDvText("1-2-1"),
+									ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+								},
+								FeederAudit: base.FeederAudit{},
+								Details:     base.ItemStructure{},
+								Folders:     nil,
+							},
+						},
+					},
+				},
+			},
+			{
+				Locatable: base.Locatable{
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("2"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				},
+				FeederAudit: base.FeederAudit{},
+				Details:     base.ItemStructure{},
+				Folders: []*model.Directory{
+					{
+						Locatable: base.Locatable{
+							Type:            base.FolderItemType,
+							Name:            base.NewDvText("2-1"),
+							ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+						},
+						FeederAudit: base.FeederAudit{},
+						Details:     base.ItemStructure{},
+						Folders:     nil,
+					},
+				},
+			},
+			{
+				Locatable: base.Locatable{
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("3"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				},
+				FeederAudit: base.FeederAudit{},
+				Details:     base.ItemStructure{},
+				Folders:     nil,
+			},
+		},
 	}
 }
