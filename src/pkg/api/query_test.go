@@ -18,7 +18,8 @@ import (
 func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 	var (
 		queryName = "some_aql_query"
-		userID    = uuid.New().String()
+		userID    = "5d44b88c-4199-4bad-97dc-d78268e01398"
+		systemID  = "6d44b88c-4199-4bad-97dc-d78268e01398"
 		ehrID     = uuid.MustParse("7d44b88c-4199-4bad-97dc-d78268e01398")
 	)
 
@@ -64,7 +65,7 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 					},
 				}
 
-				svc.EXPECT().ExecStoredQuery(gomock.Any(), queryName, r).Return(nil, errors.New("some error"))
+				svc.EXPECT().ExecStoredQuery(gomock.Any(), userID, systemID, queryName, r).Return(nil, errors.New("some error"))
 			},
 			500,
 			`{"error":"internal server error"}`,
@@ -84,7 +85,7 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 				}
 				resp := &model.QueryResponse{}
 
-				svc.EXPECT().ExecStoredQuery(gomock.Any(), queryName, r).Return(resp, nil)
+				svc.EXPECT().ExecStoredQuery(gomock.Any(), userID, systemID, queryName, r).Return(resp, nil)
 			},
 			200,
 			`{"meta":{"_href":"","_type":"","_schema_version":"","_created":"","_generator":"","_executed_aql":""},"name":"","q":"","columns":null,"rows":null}`,
@@ -112,6 +113,7 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/query/%s?%s", queryName, tt.queryParams), nil)
 			req.Header.Set("Authorization", "Bearer AccessKey")
 			req.Header.Set("AuthUserId", userID)
+			req.Header.Set("EhrSystemId", systemID)
 
 			recorder := httptest.NewRecorder()
 			router.ServeHTTP(recorder, req)

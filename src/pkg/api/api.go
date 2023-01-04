@@ -193,6 +193,8 @@ func (a *API) buildQueryAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("query")
 		r.Use(auth(a))
+
+		r.Use(ehrSystemID)
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/aql", a.Query.ExecPost)
 	}

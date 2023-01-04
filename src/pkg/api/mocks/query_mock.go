@@ -37,18 +37,18 @@ func (m *MockQueryService) EXPECT() *MockQueryServiceMockRecorder {
 }
 
 // ExecStoredQuery mocks base method.
-func (m *MockQueryService) ExecStoredQuery(ctx context.Context, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error) {
+func (m *MockQueryService) ExecStoredQuery(ctx context.Context, userID, systemID, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecStoredQuery", ctx, qualifiedQueryName, query)
+	ret := m.ctrl.Call(m, "ExecStoredQuery", ctx, userID, systemID, qualifiedQueryName, query)
 	ret0, _ := ret[0].(*model.QueryResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExecStoredQuery indicates an expected call of ExecStoredQuery.
-func (mr *MockQueryServiceMockRecorder) ExecStoredQuery(ctx, qualifiedQueryName, query interface{}) *gomock.Call {
+func (mr *MockQueryServiceMockRecorder) ExecStoredQuery(ctx, userID, systemID, qualifiedQueryName, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecStoredQuery", reflect.TypeOf((*MockQueryService)(nil).ExecStoredQuery), ctx, qualifiedQueryName, query)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecStoredQuery", reflect.TypeOf((*MockQueryService)(nil).ExecStoredQuery), ctx, userID, systemID, qualifiedQueryName, query)
 }
 
 // GetByVersion mocks base method.
