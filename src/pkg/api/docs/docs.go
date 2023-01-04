@@ -2290,7 +2290,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "The identifier of the requested user",
+                        "description": "The identifier of the requested user info",
                         "name": "user_id",
                         "in": "path",
                         "required": true
@@ -2299,6 +2299,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Bearer AccessToken",
                         "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
                         "in": "header",
                         "required": true
                     },

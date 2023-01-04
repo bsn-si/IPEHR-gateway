@@ -273,8 +273,9 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 // @Tags     USER
 // @Accept   json
 // @Produce  json
-// @Param    user_id        path      string  true  "The identifier of the requested user"
+// @Param    user_id        path      string  true  "The identifier of the requested user info"
 // @Param    Authorization  header    string  true  "Bearer AccessToken"
+// @Param    AuthUserId     header    string  true  "UserId"
 // @Param    EhrSystemId    header    string  false "The identifier of the system, typically a reverse domain identifier"
 // @Success  200            {object}  model.UserInfo
 // @Failure  400            "`user_id` is incorrect or requested user is not a doctor"

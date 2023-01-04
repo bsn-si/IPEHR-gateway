@@ -1718,7 +1718,7 @@ paths:
       - application/json
       description: Get information about the user by user_id
       parameters:
-      - description: The identifier of the requested user
+      - description: The identifier of the requested user info
         in: path
         name: user_id
         required: true
@@ -1726,6 +1726,11 @@ paths:
       - description: Bearer AccessToken
         in: header
         name: Authorization
+        required: true
+        type: string
+      - description: UserId
+        in: header
+        name: AuthUserId
         required: true
         type: string
       - description: The identifier of the system, typically a reverse domain identifier
