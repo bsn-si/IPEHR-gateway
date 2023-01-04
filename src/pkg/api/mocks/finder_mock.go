@@ -52,17 +52,23 @@ func (mr *MockFinderMockRecorder) GetEhrUUIDByUserID(ctx, userID, systemID inter
 }
 
 // IsExist mocks base method.
-func (m *MockFinder) IsExist(ctx context.Context, userID, systemID, ehrUUID, ID string) bool {
+func (m *MockFinder) IsExist(ctx context.Context, args ...string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsExist", ctx, userID, systemID, ehrUUID, ID)
+	varargs := []interface{}{ctx}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "IsExist", varargs...)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsExist indicates an expected call of IsExist.
-func (mr *MockFinderMockRecorder) IsExist(ctx, userID, systemID, ehrUUID, ID interface{}) *gomock.Call {
+func (mr *MockFinderMockRecorder) IsExist(ctx interface{}, args ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockFinder)(nil).IsExist), ctx, userID, systemID, ehrUUID, ID)
+	varargs := append([]interface{}{ctx}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockFinder)(nil).IsExist), varargs...)
 }
 
 // MockSearcher is a mock of Searcher interface.
@@ -118,11 +124,12 @@ func (mr *MockSearcherMockRecorder) IsEhrBelongsToUser() *gomock.Call {
 }
 
 // IsExist mocks base method.
-func (m *MockSearcher) IsExist(ID string) bool {
+func (m *MockSearcher) IsExist(ID string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsExist", ID)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsExist indicates an expected call of IsExist.

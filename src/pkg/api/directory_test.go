@@ -25,6 +25,7 @@ import (
 )
 
 //
+//go:generate mockgen -source composition.go -package mocks -destination mocks/composition_mock.go
 //go:generate mockgen -source directory.go -package mocks -destination mocks/directory_mock.go
 //go:generate mockgen -source user.go -package mocks -destination mocks/user_mock.go
 //go:generate mockgen -source ../helper/finder.go -package mocks -destination mocks/finder_mock.go
@@ -113,7 +114,7 @@ func TestDirectoryHandler_Create(t *testing.T) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), gomock.Any(), gomock.Any()).Return(&ehrUUID, nil)
 				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), directoryVersionUID.String()).Return(nil, nil)
 
-				uS.EXPECT().Info(gomock.Any(), userUUID.String()).Return(&userModel.UserInfo{}, nil)
+				uS.EXPECT().Info(gomock.Any(), userUUID.String(), systemID).Return(&userModel.UserInfo{}, nil)
 
 				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryCreate).Return(&MockRequest{}, nil)
 				dS.EXPECT().Create(gomock.Any(), gomock.Any(), systemID, &ehrUUID, &userModel.UserInfo{}, gomock.Any()).Return(nil)
@@ -307,7 +308,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 				}
 
 				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
-				uS.EXPECT().Info(gomock.Any(), userUUID.String()).Return(&userModel.UserInfo{}, nil)
+				uS.EXPECT().Info(gomock.Any(), userUUID.String(), systemID).Return(&userModel.UserInfo{}, nil)
 				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryUpdate).Return(&MockRequest{}, nil)
 				dS.EXPECT().Update(gomock.Any(), gomock.Any(), systemID, &ehrUUID, &userModel.UserInfo{}, gomock.Any()).Return(nil)
 			},
@@ -703,7 +704,6 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
 				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
 			}
-
 		})
 	}
 }
@@ -883,7 +883,6 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
 				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
 			}
-
 		})
 	}
 }

@@ -7,7 +7,7 @@ func (cit ItemType) ToString() string {
 }
 
 const (
-	EHRItemType             ItemType = "EHR"
+	EHRItemType                ItemType = "EHR"
 	ActionItemType             ItemType = "ACTION"
 	AuditDetailsType           ItemType = "AUDIT_DETAILS"
 	ActivityItemType           ItemType = "ACTIVITY"

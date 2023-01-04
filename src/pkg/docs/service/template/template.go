@@ -18,12 +18,12 @@ import (
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
 	"hms/gateway/pkg/indexer/ehrIndexer"
 
 	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
-	"hms/gateway/pkg/helper"
 )
 
 type Service struct {
@@ -67,7 +67,7 @@ func (s *Service) Parser(version string) (ADLParser, error) {
 func (s *Service) GetByID(ctx context.Context, userID, systemID, templateID string) (*model.Template, error) {
 	tmplIDHash := sha3.Sum256([]byte(templateID))
 
-	docMeta, err := s.Infra.Index.GetDocLastByBaseID(ctx, userID, systemID, types.Template, &tmplIDHash)
+	docMeta, err := s.docSvc.Infra.Index.GetDocLastByBaseID(ctx, userID, systemID, types.Template, &tmplIDHash)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
@@ -86,7 +86,7 @@ func (s *Service) GetByID(ctx context.Context, userID, systemID, templateID stri
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, []byte(templateID), docUIDEncrypted)
+	docDecrypted, err := s.docSvc.GetDocFromStorageByID(ctx, userID, systemID, &CID, []byte(templateID), docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -109,7 +109,7 @@ func (s *Service) GetByID(ctx context.Context, userID, systemID, templateID stri
 }
 
 func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error {
-	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := s.docSvc.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
@@ -121,8 +121,8 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 	docBytes := make([]byte, len(m.Body))
 	copy(docBytes, m.Body)
 
-	if s.Infra.Compressor != nil {
-		docBytes, err = s.Infra.Compressor.Compress(docBytes)
+	if s.docSvc.Infra.Compressor != nil {
+		docBytes, err = s.docSvc.Infra.Compressor.Compress(docBytes)
 		if err != nil {
 			return fmt.Errorf("Compress error: %w", err)
 		}
@@ -138,13 +138,13 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 	}
 
 	// IPFS saving
-	CID, err := s.Infra.IpfsClient.Add(ctx, docEncrypted)
+	CID, err := s.docSvc.Infra.IpfsClient.Add(ctx, docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
 	// Filecoin saving
-	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+	dealCID, minerAddr, err := s.docSvc.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
 	if err != nil {
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
@@ -169,7 +169,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 		return fmt.Errorf("key.Encrypt content error: %w", err)
 	}
 
-	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestTemplateCreate)
+	procRequest, err := s.docSvc.Proc.NewRequest(reqID, userID, "", processing.RequestTemplateCreate)
 	if err != nil {
 		return fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
@@ -177,7 +177,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 	// Add filecoin tx
 	procRequest.AddFilecoinTx(processing.TxSaveTemplate, CID.String(), dealCID.String(), minerAddr)
 
-	multiCallTx, err := s.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
+	multiCallTx, err := s.docSvc.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
 	}
@@ -212,7 +212,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Template, docMeta, userPrivKey, nil)
+	packed, err := s.docSvc.Infra.Index.AddEhrDoc(ctx, types.Template, docMeta, userPrivKey, nil)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -236,12 +236,12 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 }
 
 func (s *Service) GetList(ctx context.Context, userID, systemID string) ([]*model.Template, error) {
-	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := s.docSvc.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	list, err := s.Infra.Index.ListDocByType(ctx, userID, systemID, types.Template)
+	list, err := s.docSvc.Infra.Index.ListDocByType(ctx, userID, systemID, types.Template)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
@@ -259,12 +259,12 @@ func (s *Service) GetList(ctx context.Context, userID, systemID string) ([]*mode
 
 		dm := dm
 
-		key, err := s.KeyFromAttribures(&dm, userPubKey, userPrivKey)
+		key, err := s.docSvc.KeyFromAttribures(&dm, userPubKey, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("index %d KeyFromAttribures error: %w", i, err)
 		}
 
-		content, err := s.ContentFromAttributes(&dm, key)
+		content, err := s.docSvc.ContentFromAttributes(&dm, key)
 		if err != nil {
 			return nil, fmt.Errorf("index %d ContentFromAttributes error: %w", i, err)
 		}

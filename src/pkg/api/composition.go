@@ -33,8 +33,8 @@ type (
 
 	Indexer interface {
 		helper.Finder
-	GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
-}
+		GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
+	}
 
 	ProcessingService interface {
 		NewRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (*processing.Request, error)

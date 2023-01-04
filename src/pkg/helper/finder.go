@@ -9,15 +9,15 @@ import (
 type (
 	Finder interface {
 		IsExist(ctx context.Context, args ...string) (bool, error)
-	GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
-}
+		GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
+	}
 
 	Searcher interface {
 		UseService(s Finder) *Search
-	IsExist(ID string) (bool, error)
-	GetEhrUUIDByUserID() (*uuid.UUID, error)
-	IsEhrBelongsToUser() bool
-}
+		IsExist(ID string) (bool, error)
+		GetEhrUUIDByUserID() (*uuid.UUID, error)
+		IsEhrBelongsToUser() bool
+	}
 
 	Search struct {
 		service  Finder

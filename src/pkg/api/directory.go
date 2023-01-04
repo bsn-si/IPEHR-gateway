@@ -122,7 +122,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	userInfo, err := h.userService.Info(ctx, userID)
+	userInfo, err := h.userService.Info(ctx, userID, systemID)
 	if err != nil {
 		log.Println("userService.Info error: ", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
@@ -244,7 +244,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	userInfo, err := h.userService.Info(ctx, userID)
+	userInfo, err := h.userService.Info(ctx, userID, systemID)
 	if err != nil {
 		log.Println("userService.Info error: ", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
