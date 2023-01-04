@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 	"hms/gateway/pkg/api/mocks"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +19,7 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 	var (
 		queryName = "some_aql_query"
 		userID    = uuid.New().String()
+		ehrID     = uuid.MustParse("7d44b88c-4199-4bad-97dc-d78268e01398")
 	)
 
 	tests := []struct {
@@ -27,11 +30,64 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 		want        string
 	}{
 		{
-			"1. empty params",
-			"ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&offset=1&fetch=10&some_val1=1&some_vak2=afasd",
+			"1. invalid ehr_id",
+			"ehr_id=invalid_ehr",
 			func(svc *mocks.MockQueryService) {},
 			400,
-			"",
+			`{"error":"ehr_id bad format"}`,
+		},
+		{
+			"2. invalid offset",
+			"offset=invalid_offset",
+			func(svc *mocks.MockQueryService) {},
+			400,
+			`{"error":"offset bad format"}`,
+		},
+		{
+			"3. invalid limit",
+			"fetch=invalid",
+			func(svc *mocks.MockQueryService) {},
+			400,
+			`{"error":"fetch bad format"}`,
+		},
+		{
+			"4. error on get data",
+			"ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&offset=1&fetch=10&some_val1=1&some_val2=some_str",
+			func(svc *mocks.MockQueryService) {
+				r := &model.QueryRequest{
+					Offset: 1,
+					Fetch:  10,
+					QueryParameters: map[string]interface{}{
+						"ehr_id":    ehrID,
+						"some_val1": "1",
+						"some_val2": "some_str",
+					},
+				}
+
+				svc.EXPECT().ExecStoredQuery(gomock.Any(), queryName, r).Return(nil, errors.New("some error"))
+			},
+			500,
+			`{"error":"internal server error"}`,
+		},
+		{
+			"5. success",
+			"ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&offset=1&fetch=10&some_val1=1&some_val2=some_str",
+			func(svc *mocks.MockQueryService) {
+				r := &model.QueryRequest{
+					Offset: 1,
+					Fetch:  10,
+					QueryParameters: map[string]interface{}{
+						"ehr_id":    ehrID,
+						"some_val1": "1",
+						"some_val2": "some_str",
+					},
+				}
+				resp := &model.QueryResponse{}
+
+				svc.EXPECT().ExecStoredQuery(gomock.Any(), queryName, r).Return(resp, nil)
+			},
+			200,
+			`{"meta":{"_href":"","_type":"","_schema_version":"","_created":"","_generator":"","_executed_aql":""},"name":"","q":"","columns":null,"rows":null}`,
 		},
 	}
 	for _, tt := range tests {

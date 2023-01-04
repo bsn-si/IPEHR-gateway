@@ -224,3 +224,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 
 	return storedQuery, nil
 }
+
+func (s *Service) ExecStoredQuery(ctx context.Context, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error) {
+	return nil, errors.New("Not implemented")
+}
