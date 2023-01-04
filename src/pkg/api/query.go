@@ -6,8 +6,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/docs/model"
@@ -20,6 +22,8 @@ type QueryService interface {
 	Validate(data []byte) bool
 	Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error)
 	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error)
+
+	ExecStoredQuery(ctx context.Context, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
 type QueryHandler struct {
@@ -103,25 +107,79 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 // @Failure      408                   "Is returned when there is a query execution timeout"
 // @Router       /query/{qualified_query_name} [get]
 func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
-	ehrID := c.Query("ehr_id")
-	offset := c.Query("offset")
-	fetch := c.Query("fetch")
+	qualifiedQueryName := c.Param("qualified_query_name")
 
 	m := map[string]string{}
 
 	if err := c.BindQuery(&m); err != nil {
-		log.Println("ERRROROOROROOORO: ", err)
-		http.Error(c.Writer, err.Error(), http.StatusBadRequest)
+		log.Printf("cannot bind query params to map: %f", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
 		return
 	}
 
-	queryName := c.Param("qualified_query_name")
+	req := &model.QueryRequest{
+		QueryParameters: map[string]interface{}{},
+	}
 
-	log.Println("!@!!!!!!!!!!!!!!!!!!!")
-	log.Println("PARAMS", queryName)
+	for key, val := range m {
+		if key == "ehr_id" {
+			ehrID, err := uuid.Parse(val)
+			if err != nil {
+				log.Printf("cannot parse ehr_id uuid: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
+				return
+			}
 
-	log.Println("QUERY", c.Request.URL.RawQuery)
-	log.Println(ehrID, offset, fetch)
-	log.Println("MAP: ", m)
-	c.Writer.WriteString("hello world!")
+			req.QueryParameters["ehr_id"] = ehrID
+
+			continue
+		}
+
+		if key == "offset" {
+			offset, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'offset' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
+				return
+			}
+
+			if offset < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
+				return
+			}
+
+			req.Offset = offset
+
+			continue
+		}
+
+		if key == "fetch" {
+			fetch, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'fetch' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
+				return
+			}
+
+			if fetch < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
+				return
+			}
+
+			req.Fetch = fetch
+
+			continue
+		}
+
+		req.QueryParameters[key] = val
+	}
+
+	resp, err := h.service.ExecStoredQuery(c, qualifiedQueryName, req)
+	if err != nil {
+		log.Printf("cannot exec stored query: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
