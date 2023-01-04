@@ -23,7 +23,7 @@ type QueryService interface {
 	Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error)
 	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error)
 
-	ExecStoredQuery(ctx context.Context, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error)
+	ExecStoredQuery(ctx context.Context, userID, systemID, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
 type QueryHandler struct {
@@ -107,6 +107,9 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 // @Failure      408                   "Is returned when there is a query execution timeout"
 // @Router       /query/{qualified_query_name} [get]
 func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
+	userID := c.GetString("userID")
+	systemID := c.GetString("ehrSystemID")
+
 	qualifiedQueryName := c.Param("qualified_query_name")
 
 	m := map[string]string{}
@@ -174,7 +177,7 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 		req.QueryParameters[key] = val
 	}
 
-	resp, err := h.service.ExecStoredQuery(c, qualifiedQueryName, req)
+	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, req)
 	if err != nil {
 		log.Printf("cannot exec stored query: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
