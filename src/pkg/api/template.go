@@ -137,7 +137,7 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 // @Failure      400  "Is returned when unable to upload a template, because of invalid content."
 // @Failure      409  "Is returned when a template with same {template_id} (at given version, if supplied) already exists."
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
-// @Router       /definition/template/adl1.4/ [post]
+// @Router       /definition/template/adl1.4 [post]
 func (h *TemplateHandler) Store(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {

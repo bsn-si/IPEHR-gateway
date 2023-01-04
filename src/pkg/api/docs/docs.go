@@ -422,9 +422,7 @@ const docTemplate = `{
                         "description": "Is returned when an unexpected error occurs while processing a request"
                     }
                 }
-            }
-        },
-        "/definition/template/adl1.4/": {
+            },
             "post": {
                 "description": "Upload a new ADL 1.4 operational template (OPT).\nhttps://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/ADL1.4/operation/definition_template_adl1.4_upload",
                 "consumes": [
@@ -2299,6 +2297,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "The identifier of the system, typically a reverse domain identifier",
                         "name": "EhrSystemId",
                         "in": "header"
@@ -2717,9 +2722,6 @@ const docTemplate = `{
                     }
                 },
                 "namespace": {
-                    "type": "string"
-                },
-                "scheme": {
                     "type": "string"
                 },
                 "type": {

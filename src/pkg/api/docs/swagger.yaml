@@ -251,8 +251,6 @@ definitions:
         type: object
       namespace:
         type: string
-      scheme:
-        type: string
       type:
         type: string
     type: object
@@ -750,7 +748,6 @@ paths:
       summary: Get a list of templates
       tags:
       - DEFINITION
-  /definition/template/adl1.4/:
     post:
       consumes:
       - application/xml
@@ -1724,6 +1721,11 @@ paths:
       - description: The identifier of the requested user
         in: path
         name: user_id
+        required: true
+        type: string
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
         required: true
         type: string
       - description: The identifier of the system, typically a reverse domain identifier

@@ -8,5 +8,4 @@ type ExternalRef struct {
 	} `json:"id"`
 	Namespace string `json:"namespace"`
 	Type      string `json:"type"`
-	Scheme    string `json:"scheme,omitempty"`
 }
