@@ -2,6 +2,7 @@ package aqlquerier
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"hms/gateway/pkg/aqlprocessor"
 	"hms/gateway/pkg/errors"
 )
@@ -74,8 +75,17 @@ func (exec *executer) getPrimitiveColumnValue(prim *aqlprocessor.PrimitiveSelect
 }
 
 func (exec *executer) fillColumns(rows *Rows) *Rows {
-	for _, se := range exec.query.Select.SelectExprs {
-		rows.columns = append(rows.columns, se.AliasName)
+	for i, se := range exec.query.Select.SelectExprs {
+		c := Column{
+			Path: se.Path,
+			Name: se.AliasName,
+		}
+
+		if c.Name == "" {
+			c.Name = fmt.Sprintf("#%d", i)
+		}
+
+		rows.columns = append(rows.columns, c)
 	}
 
 	return rows

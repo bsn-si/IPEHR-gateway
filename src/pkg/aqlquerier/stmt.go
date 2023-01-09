@@ -35,7 +35,7 @@ func (stmt *Stmt) Close() error {
 // its number of placeholders. In that case, the sql package
 // will not sanity check Exec or Query argument counts.
 func (stmt *Stmt) NumInput() int {
-	return stmt.query.ParametersCount() // TODO: Implement
+	return stmt.query.ParametersCount()
 }
 
 // Exec executes a query that doesn't return rows, such
