@@ -67,14 +67,6 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	if userID == "" {
-		errResponse.SetMessage("Header required").
-			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
-
 	ehrID := ctx.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
@@ -178,14 +170,6 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	if userID == "" {
-		errResponse.SetMessage("Header required").
-			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
-
 	ehrID := ctx.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
@@ -298,14 +282,6 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	if userID == "" {
-		errResponse.SetMessage("Header required").
-			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
-
 	ehrID := ctx.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
@@ -404,14 +380,6 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	if userID == "" {
-		errResponse.SetMessage("Header required").
-			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
-
 	ehrID := ctx.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
@@ -490,14 +458,6 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	if userID == "" {
-		errResponse.SetMessage("Header required").
-			AddError(errors.ErrFieldIsIncorrect("AuthUserId"))
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
-		return
-	}
-
 	ehrID := ctx.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)

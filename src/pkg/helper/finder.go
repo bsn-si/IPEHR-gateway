@@ -43,11 +43,7 @@ func (h *Search) IsEhrBelongsToUser() bool {
 		return false
 	}
 
-	if h.ehrUUID != ehrUUID.String() {
-		return false
-	}
-
-	return true
+	return h.ehrUUID == ehrUUID.String()
 }
 
 func (h *Search) UseService(s Finder) *Search {
