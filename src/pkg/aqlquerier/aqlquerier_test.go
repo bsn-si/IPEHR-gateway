@@ -12,6 +12,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/storage/treeindex"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,7 +35,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 		query     string
 		args      []interface{}
 		dataFiles []string
-		scan      func(rows *sql.Rows) (interface{}, error)
+		scan      func(rows *sqlx.Rows) (interface{}, error)
 		want      interface{}
 		wantErr   bool
 	}{
@@ -43,7 +44,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			"invaid query",
 			[]interface{}{},
 			nil,
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				return nil, nil
 			},
 			nil,
@@ -58,7 +59,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			FROM EHR e`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_1.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				values := []testDataStruct{}
 
 				for rows.Next() {
@@ -89,7 +90,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			FROM EHR e`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []int{}
 				for rows.Next() {
 					var val int
@@ -112,7 +113,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 			FROM EHR e CONTAINS COMPOSITION c CONTAINS OBSERVATION o`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []*float64{}
 				for rows.Next() {
 					var val any
@@ -157,7 +158,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []float64{}
 				for rows.Next() {
 					var val float64
@@ -183,7 +184,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				AND o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 940.0`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []float64{}
 				for rows.Next() {
 					var val float64
@@ -209,7 +210,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				OR o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude > 940.0`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []float64{}
 				for rows.Next() {
 					var val float64
@@ -234,7 +235,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				NOT o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude <= 100`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []*float64{}
 				for rows.Next() {
 					var val any
@@ -283,7 +284,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				)`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := []*float64{}
 				for rows.Next() {
 					var val any
@@ -329,7 +330,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := [][]any{}
 				for rows.Next() {
 					var val float64
@@ -360,7 +361,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude >= 100`,
 			[]interface{}{},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := [][]any{}
 				for rows.Next() {
 					var id *string
@@ -396,7 +397,7 @@ func TestService_ExecuteQuery(t *testing.T) {
 				sql.Named("ehrUid", "7d44b88c-4199-4bad-97dc-d78268e01398"),
 			},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := [][]any{}
 				for rows.Next() {
 					var id *string
@@ -436,18 +437,22 @@ func TestService_ExecuteQuery(t *testing.T) {
 				sql.Named("ehrUid", "7d44b88c-4199-4bad-97dc-d78268e01398"),
 			},
 			[]string{"test_fixtures/composition_2.json"},
-			func(rows *sql.Rows) (interface{}, error) {
+			func(rows *sqlx.Rows) (interface{}, error) {
 				result := [][]any{}
 				for rows.Next() {
-					var id *string
-					var archetypeID *string
-					var val float64
-					var val2 *string
-					if err := rows.Scan(&id, &archetypeID, &val, &val2); err != nil {
+					row, err := rows.SliceScan()
+					if err != nil {
 						return nil, errors.Wrap(err, "cannot scan float64 value")
 					}
 
-					result = append(result, []any{id, archetypeID, val, val2})
+					r := []any{
+						toRef(row[0].(string)),
+						toRef(row[1].(string)),
+						row[2].(float64),
+						row[3].(*string),
+					}
+
+					result = append(result, r)
 				}
 
 				sort.Slice(result, func(i, j int) bool {
@@ -470,14 +475,14 @@ func TestService_ExecuteQuery(t *testing.T) {
 				return
 			}
 
-			conn, err := sql.Open("aql", "")
+			conn, err := sqlx.Open("aql", "")
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			defer conn.Close()
 
-			rows, err := conn.Query(tt.query, tt.args...)
+			rows, err := conn.Queryx(tt.query, tt.args...)
 			if err != nil {
 				if (err != nil) != tt.wantErr {
 					t.Errorf("Service.ExecQuery() error = %v, wantErr %v", err, tt.wantErr)

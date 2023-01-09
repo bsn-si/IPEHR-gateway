@@ -49,12 +49,12 @@ type API struct {
 	Contribution *ContributionHandler
 }
 
-func New(cfg *config.Config, infra *infrastructure.Infra) *API {
+func New(cfg *config.Config, infra *infrastructure.Infra, qExec query.QueryExecuter) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 
 	templateService := template.NewService(docService)
-	queryService := query.NewService(docService)
+	queryService := query.NewService(docService, qExec)
 	user := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 

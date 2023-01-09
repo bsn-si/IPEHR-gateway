@@ -9,12 +9,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 
 	"hms/gateway/pkg/api"
+	_ "hms/gateway/pkg/aqlquerier"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/common/fakeData"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/infrastructure"
 	"hms/gateway/pkg/storage"
 	userModel "hms/gateway/pkg/user/model"
@@ -253,7 +256,17 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	cfg.DefaultUserID = uuid.New().String()
 
 	infra := infrastructure.New(cfg)
-	apiHandler := api.New(cfg, infra)
+
+	conn, err := sqlx.Open("aql", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer conn.Close()
+
+	executer := query.NewQueryExecuterService(conn)
+
+	apiHandler := api.New(cfg, infra, executer)
 
 	r := apiHandler.Build()
 	ts = httptest.NewServer(r)

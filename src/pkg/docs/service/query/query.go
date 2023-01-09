@@ -9,6 +9,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	_ "hms/gateway/pkg/aqlquerier"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/compressor"
 	"hms/gateway/pkg/crypto/chachaPoly"
@@ -26,13 +27,20 @@ import (
 
 const defaultVersion = "1.0.1"
 
-type Service struct {
-	*service.DefaultDocumentService
+type QueryExecuter interface {
+	ExecQueryContext(ctx context.Context, query string, offset, limit int, params map[string]any) ([]string, []any, error)
 }
 
-func NewService(docService *service.DefaultDocumentService) *Service {
+type Service struct {
+	*service.DefaultDocumentService
+
+	qExec QueryExecuter
+}
+
+func NewService(docService *service.DefaultDocumentService, qExec QueryExecuter) *Service {
 	return &Service{
-		docService,
+		DefaultDocumentService: docService,
+		qExec:                  qExec,
 	}
 }
 
@@ -226,5 +234,29 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 }
 
 func (s *Service) ExecStoredQuery(ctx context.Context, userID, systemID, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error) {
-	return nil, errors.New("Not implemented")
+	v, _ := base.NewVersionTreeID(defaultVersion)
+
+	storedQuery, err := s.GetByVersion(ctx, userID, systemID, qualifiedQueryName, v)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot find stored query")
+	}
+
+	query.Query = storedQuery.Query
+
+	columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot exec query")
+	}
+
+	resp := &model.QueryResponse{
+		Name:  qualifiedQueryName,
+		Query: query.Query,
+		Rows:  result,
+	}
+
+	for _, c := range columns {
+		resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
+	}
+
+	return resp, nil
 }
