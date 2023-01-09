@@ -293,7 +293,7 @@ func (h *UserHandler) Info(c *gin.Context) {
 
 	userInfo, err := h.service.Info(c, userID, systemID)
 	if err != nil {
-		if errors.Is(err, errors.ErrNotFound) {
+		if errors.Is(err, errors.ErrNotFound) || errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return
 		}
