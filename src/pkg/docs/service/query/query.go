@@ -27,7 +27,7 @@ import (
 
 const defaultVersion = "1.0.1"
 
-type QueryExecuter interface {
+type QueryExecuter interface { //nolint
 	ExecQueryContext(ctx context.Context, query string, offset, limit int, params map[string]any) ([]string, []any, error)
 }
 
