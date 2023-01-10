@@ -187,3 +187,50 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+// Post
+// @Summary      Execute stored AQL (POST)
+// @Description  Execute a stored query, identified by the supplied {qualified_query_name} (at latest version).
+// @Description  See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
+// @Description  Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
+// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
+// @Tags         QUERY
+// @Accept       json
+// @Produce      json
+// @Param        Authorization         header    string              true  "Bearer AccessToken"
+// @Param        AuthUserId            header    string              true  "UserId UUID"
+// @Param        qualified_query_name  path      string  true   "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
+// @Param    	 Request               body      model.QueryRequest  true  "Query Request"
+// @Success      200                   {object}  model.QueryResponse
+// @Header       200                   {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+// @Failure      400                   "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
+// @Failure      404                   "Is returned when a stored query with qualified_query_name does not exists."
+// @Failure      408                   "Is returned when there is a query execution timeout"
+// @Router       /query/{qualified_query_name} [post]
+func (h QueryHandler) PostExecStoredQuery(c *gin.Context) {
+	userID := c.GetString("userID")
+	systemID := c.GetString("ehrSystemID")
+
+	qualifiedQueryName := c.Param("qualified_query_name")
+
+	req := model.QueryRequest{
+		QueryParameters: map[string]interface{}{},
+	}
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
+		log.Printf("cannot parse request body: %f", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "body bad format"})
+		return
+	}
+
+	defer c.Request.Body.Close()
+
+	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, &req)
+	if err != nil {
+		log.Printf("cannot exec stored query: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
