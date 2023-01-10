@@ -1683,6 +1683,59 @@ paths:
       summary: Execute stored AQL
       tags:
       - QUERY
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Execute a stored query, identified by the supplied {qualified_query_name} (at latest version).
+        See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
+        Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
+        https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
+      parameters:
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId UUID
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: 'If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    '
+        in: path
+        name: qualified_query_name
+        required: true
+        type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.QueryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            ETag:
+              description: 'A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b'
+              type: string
+          schema:
+            $ref: '#/definitions/model.QueryResponse'
+        "400":
+          description: Is returned when the server was unable to execute the query
+            due to invalid input, e.g. a required parameter is missing, or at least
+            one of the parameters has invalid syntax
+        "404":
+          description: Is returned when a stored query with qualified_query_name does
+            not exists.
+        "408":
+          description: Is returned when there is a query execution timeout
+      summary: Execute stored AQL (POST)
+      tags:
+      - QUERY
   /query/aql:
     post:
       consumes:
