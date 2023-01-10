@@ -40,6 +40,7 @@ LIMIT 3`,
 				Select: Select{
 					SelectExprs: []SelectExpr{
 						{
+							Path:      "o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude",
 							AliasName: "temperature",
 							Value: &IdentifiedPathSelectValue{
 								Val: IdentifiedPath{
@@ -94,6 +95,7 @@ LIMIT 3`,
 							},
 						},
 						{
+							Path:      "o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units",
 							AliasName: "unit",
 							Value: &IdentifiedPathSelectValue{
 								Val: IdentifiedPath{

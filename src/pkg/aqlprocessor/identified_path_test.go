@@ -18,6 +18,7 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 			`SELECT field FROM EHR`,
 			Select{
 				SelectExprs: []SelectExpr{{
+					Path: "field",
 					Value: &IdentifiedPathSelectValue{
 						Val: IdentifiedPath{
 							Identifier: "field",
@@ -32,6 +33,7 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 			`SELECT field[at0003] FROM EHR`,
 			Select{
 				SelectExprs: []SelectExpr{{
+					Path: "field[at0003]",
 					Value: &IdentifiedPathSelectValue{
 						Val: IdentifiedPath{
 							Identifier: "field",
@@ -74,6 +76,7 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 							},
 						},
 					},
+					Path: "field[at0003]/value",
 				}},
 			},
 			false,
@@ -106,6 +109,7 @@ func TestProcessor_SelectIdentifiedPath(t *testing.T) {
 						},
 					},
 					AliasName: "new_name",
+					Path:      "o/field[at0003]/value1/value2",
 				}},
 			},
 			false,
