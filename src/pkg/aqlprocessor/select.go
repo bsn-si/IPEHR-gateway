@@ -63,6 +63,7 @@ func getSelectExpr(ctx *aqlparser.SelectExprContext) (SelectExpr, error) {
 
 	if ctx.ColumnExpr() != nil {
 		selectExpr.Path = ctx.ColumnExpr().GetText()
+
 		columVal, err := getColumnExpr(ctx.ColumnExpr().(*aqlparser.ColumnExprContext))
 		if err != nil {
 			return SelectExpr{}, errors.Wrap(err, "cannot get SelectExpr.ColumnExpr")
