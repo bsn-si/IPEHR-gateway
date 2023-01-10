@@ -9,7 +9,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
-	_ "hms/gateway/pkg/aqlquerier"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/compressor"
 	"hms/gateway/pkg/crypto/chachaPoly"
