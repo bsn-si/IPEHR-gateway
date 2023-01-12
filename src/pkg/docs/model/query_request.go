@@ -9,9 +9,5 @@ type QueryRequest struct {
 }
 
 func (q *QueryRequest) Validate() bool {
-	if len(q.Query) == 0 {
-		return false
-	}
-
-	return true
+	return len(q.Query) != 0
 }

@@ -286,6 +286,7 @@ func (s *Service) ExecQueryWithTimeout(ctx *gin.Context, query *model.QueryReque
 	}
 
 	ch := make(chan wr, 1)
+
 	go func() {
 		resp, err := s.ExecQuery(ctx, query)
 		ch <- wr{
