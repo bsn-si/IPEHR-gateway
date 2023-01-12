@@ -3,6 +3,7 @@ module hms/gateway
 go 1.19
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/akyoto/cache v1.0.6
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20221202181307-76fa05c21b12
 	github.com/ethereum/go-ethereum v1.10.24-0.20221116142212-add337e0f7ba
