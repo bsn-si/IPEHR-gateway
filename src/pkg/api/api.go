@@ -197,6 +197,7 @@ func (a *API) buildQueryAPI() handlerBuilder {
 		r.Use(ehrSystemID)
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
+		r.GET("/aql", a.Query.ExecGetQuery)
 		r.POST("/aql", a.Query.ExecPostQuery)
 	}
 }

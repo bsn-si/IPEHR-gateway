@@ -95,6 +95,124 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// ExecGetQuery
+// @Summary      Execute ad-hoc (non-stored) AQL query
+// @Description  Execute a given ad-hoc AQL query, supplied by {q} parameter, fetching {fetch} numbers of rows from offset and passing {query_parameters} to the underlying query engine.
+// @Description  See also details on usage of [Execute ad-hoc AQL](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_adhoc_query).
+// @Description
+// @Tags     QUERY
+// @Produce  json
+// @Param    Authorization  header    string              true  "Bearer AccessToken"
+// @Param    AuthUserId     header    string              true  "UserId UUID"
+// @Param    q                     query     string  false  "The AQL query to be executed. Example: q=SELECT e/ehr_id/value, c/context/start_time/value as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp"
+// @Param    ehr_id            	   query     string  false  "An optional parameter to execute the query within an EHR context."
+// @Param    offset            	   query     string  false  "The row number in result-set to start result-set from (0-based), default is 0."
+// @Param    fetch            	   query     string  false  "Number of rows to fetch (the default depends on the implementation)."
+// @Param    query_parameters      query     string  false  "Example: ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&systolic_bp=140"
+// @Success  200            {object}  model.QueryResponse
+// @Header   200            {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+// @Failure  400            "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
+// @Failure  408            "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /query/aql [get]
+func (h QueryHandler) ExecGetQuery(c *gin.Context) {
+	m := map[string]string{}
+
+	if err := c.BindQuery(&m); err != nil {
+		log.Printf("cannot bind query params to map: %f", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		return
+	}
+
+	req := &model.QueryRequest{
+		QueryParameters: map[string]interface{}{},
+	}
+
+	for key, val := range m {
+		if key == "q" {
+			req.Query = val
+
+			continue
+		}
+
+		if key == "ehr_id" {
+			ehrID, err := uuid.Parse(val)
+			if err != nil {
+				log.Printf("cannot parse ehr_id uuid: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
+				return
+			}
+
+			req.QueryParameters["ehr_id"] = ehrID
+
+			continue
+		}
+
+		if key == "offset" {
+			offset, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'offset' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
+				return
+			}
+
+			if offset < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
+				return
+			}
+
+			req.Offset = offset
+
+			continue
+		}
+
+		if key == "fetch" {
+			fetch, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'fetch' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
+				return
+			}
+
+			if fetch < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
+				return
+			}
+
+			req.Fetch = fetch
+
+			continue
+		}
+
+		req.QueryParameters[key] = val
+	}
+
+	if !req.Validate() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), common.QueryExecutionTimeout)
+	defer cancel()
+
+	c.Request = c.Request.WithContext(ctx)
+
+	resp, err := h.service.ExecQueryWithTimeout(c, req)
+	if err != nil {
+		log.Printf("cannot exec query: %v", err)
+
+		if errors.Is(err, errors.ErrTimeout) {
+			c.JSON(http.StatusRequestTimeout, gin.H{"error": "timeout exceeded"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // Get
 // @Summary      Execute stored AQL
 // @Description  Execute a stored query, identified by the supplied qualified_query_name (at latest version), fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.
