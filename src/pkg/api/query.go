@@ -82,10 +82,12 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 	resp, err := h.service.ExecQueryWithTimeout(c, &req)
 	if err != nil {
 		log.Printf("cannot exec query: %v", err)
+
 		if errors.Is(err, errors.ErrTimeout) {
 			c.JSON(http.StatusRequestTimeout, gin.H{"error": "timeout exceeded"})
 			return
 		}
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
