@@ -14,13 +14,11 @@ const signatureLength = 65
 func makeSignature(data []byte, nonce *big.Int, pk *ecdsa.PrivateKey) ([]byte, error) {
 	data = data[:len(data)-(signatureLength+32)]
 
-	hash := crypto.Keccak256Hash(data)
-
 	nonceBytes, _ := abi.Arguments{{Type: Uint256}}.Pack(nonce)
 
 	prefixedHash := crypto.Keccak256Hash(
 		[]byte("\x19Ethereum Signed Message:\n32"),
-		hash.Bytes(),
+		crypto.Keccak256(data),
 		nonceBytes,
 	)
 

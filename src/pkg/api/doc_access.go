@@ -35,7 +35,7 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 // @Param        Authorization  header  string  true  "Bearer AccessToken"
 // @Param        AuthUserId     header  string  true  "UserId UUID"
 // @Param        EhrSystemId    header    string                 false   "The identifier of the system, typically a reverse domain identifier"
-// @Success      200            ""
+// @Success      200            {object} model.DocAccessListResponse ""
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /access/document/ [get]
@@ -48,40 +48,11 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	acl, err := h.service.List(c, userID, systemID)
+	resp, err := h.service.List(c, userID, systemID)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
-	}
-
-	type item struct {
-		CID         string `json:"CID"`
-		Level       string `json:"level"`
-		Description string `json:"description"`
-	}
-
-	resp := []item{}
-
-	for _, a := range acl {
-		CID, ok := a.Fields["CID"]
-		if !ok {
-			log.Printf("Error: Doc ACL field CID required")
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-
-		level, ok := a.Fields["level"]
-		if !ok {
-			log.Printf("Error: Doc ACL field 'level' required")
-			c.AbortWithStatus(http.StatusInternalServerError)
-			return
-		}
-
-		resp = append(resp, item{
-			CID:   string(CID),
-			Level: string(level),
-		})
 	}
 
 	c.JSON(http.StatusOK, resp)

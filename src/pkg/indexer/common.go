@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"hms/gateway/pkg/errors"
 )
 
-func Keccak256(data []byte) []byte {
-	data, _ = abi.Arguments{{Type: Bytes}}.Pack(data)
+func Keccak256(data []byte) *[32]byte {
+	var b [32]byte
 
-	return crypto.Keccak256Hash(data).Bytes()
+	copy(b[:], crypto.Keccak256(data))
+
+	return &b
 }
 
 func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {

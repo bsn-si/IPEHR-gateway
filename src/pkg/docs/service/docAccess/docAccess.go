@@ -1,15 +1,18 @@
 package docAccess
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
+	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/crypto/keybox"
+	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
@@ -26,68 +29,162 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, userID, systemID string) (access.List, error) {
+func (s *Service) List(ctx context.Context, userID, systemID string) (*model.DocAccessListResponse, error) {
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
 	}
 
-	acl, err := s.Infra.Index.GetAccessList(ctx, userID, systemID, access.Doc)
-	if err != nil {
-		if errors.Is(err, errors.ErrNotFound) {
-			return nil, err
-		}
-
-		return nil, fmt.Errorf("Index.GetAccessList error: %w userID: %s", err, userID)
+	result := model.DocAccessListResponse{
+		Documents:      []*model.DocAccessDocument{},
+		DocumentGroups: []*model.DocAccessDocumentGroup{},
 	}
 
-	for _, a := range acl {
-		idHash, ok := a.Fields["idHash"]
-		if !ok {
-			return nil, fmt.Errorf("%w ACL filed 'idHash' required", errors.ErrIncorrectFormat)
-		}
+	IDHash := sha3.Sum256([]byte(userID + systemID))
 
-		idEncr, ok := a.Fields["idEncr"]
-		if !ok {
-			return nil, fmt.Errorf("%w ACL filed 'idEncr' required", errors.ErrIncorrectFormat)
-		}
-
-		_, ok = a.Fields["level"]
-		if !ok {
-			return nil, fmt.Errorf("%w ACL filed 'level' required", errors.ErrIncorrectFormat)
-		}
-
-		if len(a.Fields["level"]) == 0 {
-			return nil, fmt.Errorf("%w ACL filed 'level' is empty", errors.ErrIncorrectFormat)
-		}
-
-		idDecr, err := keybox.OpenAnonymous(idEncr, userPubKey, userPrivKey)
+	// Documents access
+	{
+		acl, err := s.Infra.Index.GetAccessList(ctx, &IDHash, access.Doc)
 		if err != nil {
-			return nil, fmt.Errorf("keybox.Open error: %w idHash: %x", err, idHash)
+			if errors.Is(err, errors.ErrNotFound) {
+				return nil, err
+			}
+
+			return nil, fmt.Errorf("Index.GetAccessList documents error: %w userID: %s", err, userID)
 		}
 
-		idDecrHash := indexer.Keccak256(idDecr)
+		for i, a := range acl {
+			id, _, level, err := access.ExtractWithUserKey(a, userPubKey, userPrivKey)
+			if err != nil {
+				return nil, fmt.Errorf("index: %d access.Extract doc error: %w", i, err)
+			}
 
-		if !bytes.Equal(idHash, idDecrHash) {
-			return nil, fmt.Errorf("%w: mismatch idHash: %x keccak256(idDecr): %x", errors.ErrCustom, idHash, idDecrHash)
-		}
+			CID, err := cid.Parse(id)
+			if err != nil {
+				return nil, fmt.Errorf("cid.Parse error: %w id: %x", err, id)
+			}
 
-		CID, err := cid.Parse(idDecr)
-		if err != nil {
-			return nil, fmt.Errorf("cid.Parse error: %w idDecr: %x", err, idDecr)
-		}
+			//TODO doc description
 
-		level := access.LevelToString(a.Fields["level"][0])
-
-		//TODO doc description
-
-		a.Fields = map[string][]byte{
-			"CID":   []byte(CID.String()),
-			"level": []byte(level),
+			result.Documents = append(result.Documents, &model.DocAccessDocument{
+				CID:   CID.String(),
+				Level: level,
+			})
 		}
 	}
 
-	return acl, nil
+	// Document groups access
+	{
+		acl, err := s.Infra.Index.GetAccessList(ctx, &IDHash, access.DocGroup)
+		if err != nil {
+			if errors.Is(err, errors.ErrNotFound) {
+				return nil, err
+			}
+
+			return nil, fmt.Errorf("Index.GetAccessList document groups error: %w userID: %s", err, userID)
+		}
+
+		for i, a := range acl {
+			id, _, level, err := access.ExtractWithUserKey(a, userPubKey, userPrivKey)
+			if err != nil {
+				return nil, fmt.Errorf("index: %d access.Extract doc groups error: %w", i, err)
+			}
+
+			groupID, err := uuid.FromBytes(id)
+			if err != nil {
+				return nil, fmt.Errorf("groupID UUID parse error: %w", err)
+			}
+
+			result.DocumentGroups = append(result.DocumentGroups, &model.DocAccessDocumentGroup{
+				GroupID: groupID.String(),
+				Level:   level,
+			})
+		}
+	}
+
+	// User groups access
+	{
+		acl, err := s.Infra.Index.GetAccessList(ctx, &IDHash, access.UserGroup)
+		if err != nil {
+			if errors.Is(err, errors.ErrNotFound) {
+				return nil, err
+			}
+
+			return nil, fmt.Errorf("Index.GetAccessList user groups error: %w userID: %s", err, userID)
+		}
+
+		for i, a := range acl {
+			userGroupIDBytes, userGroupKey, _, err := access.ExtractWithUserKey(a, userPubKey, userPrivKey)
+			if err != nil {
+				if errors.Is(err, errors.ErrAccessDenied) {
+					continue
+				}
+
+				return nil, fmt.Errorf("index: %d access.Extract user groups error: %w", i, err)
+			}
+
+			userGroupID, err := uuid.FromBytes(userGroupIDBytes)
+			if err != nil {
+				return nil, fmt.Errorf("userGroupID uuid.FromBytes error: %w", err)
+			}
+
+			IDHash = sha3.Sum256(userGroupID[:])
+
+			docGroupACL, err := s.Infra.Index.GetAccessList(ctx, &IDHash, access.DocGroup)
+			if err != nil {
+				if errors.Is(err, errors.ErrNotFound) {
+					return nil, err
+				}
+
+				return nil, fmt.Errorf("Index.GetAccessList document groups error: %w userID: %s", err, userID)
+			}
+
+			for j, ga := range docGroupACL {
+				// Getting docGroup IDs
+				groupIDBytes, groupKey, level, err := access.ExtractWithGroupKey(ga, userGroupKey)
+				if err != nil {
+					return nil, fmt.Errorf("index %d: access.ExtractWithGroupKey error: %w", j, err)
+				}
+
+				groupID, err := uuid.FromBytes(groupIDBytes)
+				if err != nil {
+					return nil, fmt.Errorf("index %d: uuid.FromBytes error: %w", j, err)
+				}
+
+				docGroup := &model.DocAccessDocumentGroup{
+					GroupID:       groupID.String(),
+					Level:         level,
+					ParentGroupID: userGroupID.String(),
+				}
+
+				// Getting doc IDs from doGroups
+				CIDsEncr, err := s.Infra.Index.DocGroupGetDocs(ctx, &groupID)
+				if err != nil {
+					return nil, fmt.Errorf("Index.DocGroupGetDocs error: %w", err)
+				}
+
+				log.Println("CIDsEncr len:", len(CIDsEncr))
+
+				for k, CIDEncr := range CIDsEncr {
+					CIDBytes, err := groupKey.Decrypt(CIDEncr)
+					if err != nil {
+						return nil, fmt.Errorf("index %d CID decryption error: %w", k, err)
+					}
+
+					CID, err := cid.Parse(CIDBytes)
+					if err != nil {
+						return nil, fmt.Errorf("index %d cid.Parse error: %w CIDBytes: %x", k, err, CIDBytes)
+					}
+
+					docGroup.Documents = append(docGroup.Documents, CID.String())
+				}
+
+				result.DocumentGroups = append(result.DocumentGroups, docGroup)
+			}
+		}
+	}
+
+	return &result, nil
 }
 
 func (s *Service) Set(ctx context.Context, userID, systemID, toUserID, reqID string, CID *cid.Cid, accessLevel uint8) error {

@@ -193,8 +193,8 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 		return
 	}
 
-	addingUserID := c.Param("user_id")
-	if addingUserID == "" {
+	addUserID := c.Param("user_id")
+	if addUserID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is empty"})
 		return
 	}
@@ -207,7 +207,8 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	err = h.service.GroupAddUser(c, userID, systemID, addingUserID, reqID, level, &groupID)
+	//TODO split systemID and adding user SystemID
+	err = h.service.GroupAddUser(c, userID, systemID, addUserID, systemID, reqID, level, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -266,15 +267,15 @@ func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
 		return
 	}
 
-	removingUserID := c.Param("user_id")
-	if removingUserID == "" {
+	removeUserID := c.Param("user_id")
+	if removeUserID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id is empty"})
 		return
 	}
 
 	reqID := c.GetString("reqID")
 
-	err = h.service.GroupRemoveUser(c, userID, systemID, removingUserID, reqID, &groupID)
+	err = h.service.GroupRemoveUser(c, userID, systemID, removeUserID, systemID, reqID, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

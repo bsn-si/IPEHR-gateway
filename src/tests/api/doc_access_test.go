@@ -1,7 +1,7 @@
 package api_test
 
 /*
-func (testWrap *testWrap) docGrantAccessSuccess(testData *TestData) func(t *testing.T) {
+func (testWrap *testWrap) docSetAccessSuccess(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")
@@ -10,24 +10,28 @@ func (testWrap *testWrap) docGrantAccessSuccess(testData *TestData) func(t *test
 		user1 := testData.users[0]
 		user2 := testData.users[1]
 
-		url := testWrap.server.URL + "/v1/access/document/manage"
+		url := testWrap.server.URL + "/v1/access/document"
 
-		req := model.DocAccessManageRequest{
-			ToUserID:    user2.id,
+		req := model.DocAccessSetRequest{
+			UserID:      user2.id,
 			CID:         "",
-			AccessLevel: access.Read.String(),
+			AccessLevel: access.LevelToString(access.Read),
 		}
 
-		request, err := http.NewRequest(http.MethodGet, url, nil)
+		reqJSON, err := json.Marshal(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(reqJSON))
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		request.Header.Set("Content-type", "application/json")
-		request.Header.Set("AuthUserId", user.id)
-		request.Header.Set("Authorization", "Bearer "+user.accessToken)
+		request.Header.Set("AuthUserId", user1.id)
+		request.Header.Set("Authorization", "Bearer "+user1.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
-		request.Header.Set("Prefer", "return=representation")
 
 		response, err := testWrap.httpClient.Do(request)
 		if err != nil {
@@ -41,7 +45,7 @@ func (testWrap *testWrap) docGrantAccessSuccess(testData *TestData) func(t *test
 		}
 
 		if response.StatusCode != http.StatusOK {
-			t.Fatal(err)
+			t.Fatal(response.Status, "Body:", string(data))
 		}
 
 		var ehrDoc model.EHR
@@ -51,8 +55,8 @@ func (testWrap *testWrap) docGrantAccessSuccess(testData *TestData) func(t *test
 			t.Fatal(err)
 		}
 
-		if ehrDoc.EhrID.Value != user.ehrID {
-			t.Fatalf("Expected %s, received %s", user.ehrID, ehrDoc.EhrID.Value)
+		if ehrDoc.EhrID.Value != user1.ehrID {
+			t.Fatalf("Expected %s, received %s", user1.ehrID, ehrDoc.EhrID.Value)
 		}
 	}
 }

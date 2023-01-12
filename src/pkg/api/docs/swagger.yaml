@@ -126,6 +126,41 @@ definitions:
             type: string
         type: object
     type: object
+  model.DocAccessDocument:
+    properties:
+      CID:
+        type: string
+      description:
+        type: string
+      level:
+        type: string
+    type: object
+  model.DocAccessDocumentGroup:
+    properties:
+      description:
+        type: string
+      documents:
+        items:
+          type: string
+        type: array
+      groupID:
+        type: string
+      level:
+        type: string
+      parentGroupID:
+        type: string
+    type: object
+  model.DocAccessListResponse:
+    properties:
+      documentGroups:
+        items:
+          $ref: '#/definitions/model.DocAccessDocumentGroup'
+        type: array
+      documents:
+        items:
+          $ref: '#/definitions/model.DocAccessDocument'
+        type: array
+    type: object
   model.DocAccessSetRequest:
     properties:
       accessLevel:
@@ -521,7 +556,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: ""
+          description: OK
+          schema:
+            $ref: '#/definitions/model.DocAccessListResponse'
         "400":
           description: Is returned when the request has invalid content.
         "500":

@@ -122,15 +122,18 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 	multiCallTx.Add(uint8(proc.TxUserNew), userNewPacked)
 
 	if user.Role == uint8(roles.Patient) {
-		groupName := "doctors"
-		groupDescription := ""
+		// 'doctors' userGroup creating
+		{
+			groupName := common.DefaultGroupDoctors
+			groupDescription := ""
 
-		userGroupCreatePacked, _, err := s.groupCreatePack(ctx, user.UserID, groupName, groupDescription, nil)
-		if err != nil {
-			return fmt.Errorf("service.GroupCreate error: %w", err)
+			userGroupCreatePacked, _, err := s.groupCreatePack(ctx, user.UserID, groupName, groupDescription, nil)
+			if err != nil {
+				return fmt.Errorf("service.GroupCreate error: %w", err)
+			}
+
+			multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupCreatePacked)
 		}
-
-		multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupCreatePacked)
 	}
 
 	txHash, err := multiCallTx.Commit()
