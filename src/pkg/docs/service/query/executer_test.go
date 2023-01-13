@@ -13,7 +13,8 @@ import (
 func TestNewQueryExecuterService(t *testing.T) {
 	t.Parallel()
 
-	ctx, _ := context.WithTimeout(context.TODO(), 0)
+	ctx, cancel := context.WithTimeout(context.TODO(), 0)
+	defer cancel()
 
 	type args struct {
 		ctx    context.Context
