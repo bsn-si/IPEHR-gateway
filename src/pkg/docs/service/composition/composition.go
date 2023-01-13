@@ -23,6 +23,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/storage/treeindex"
 )
 
 type (
@@ -119,6 +120,10 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, groupAccess, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
+	}
+
+	if err := treeindex.AddComposition(ehrUUID.String(), *composition); err != nil {
+		return nil, fmt.Errorf("Composition %s save into tree index error: %w", composition.UID.Value, err)
 	}
 
 	txHash, err := multiCallTx.Commit()

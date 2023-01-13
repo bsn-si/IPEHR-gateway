@@ -22,6 +22,7 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/storage/treeindex"
 )
 
 type Service struct {
@@ -94,6 +95,10 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 	err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr)
 	if err != nil {
 		return nil, fmt.Errorf("SaveEhr error: %w", err)
+	}
+
+	if err := treeindex.AddEHR(ehr); err != nil {
+		return nil, fmt.Errorf("Add EHR into tree index error: %w", err)
 	}
 
 	txHash, err := multiCallTx.Commit()
