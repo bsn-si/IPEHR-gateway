@@ -15,6 +15,7 @@ const (
 	UserCodeMask              uint64 = 99999999 // (8 digits)
 	DefaultGroupAllDocuments         = "all documents"
 	DefaultGroupDoctors              = "doctors"
+	QueryExecutionTimeout            = time.Second * 60
 
 	ScryptKeyLen  = 32
 	ScryptSaltLen = 16

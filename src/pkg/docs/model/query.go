@@ -9,8 +9,7 @@ type QueryRequest struct {
 }
 
 func (q *QueryRequest) Validate() bool {
-	//TODO
-	return true
+	return len(q.Query) != 0
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
