@@ -106,8 +106,5 @@ func New(cfg *config.Config) *Infra {
 }
 
 func (infra *Infra) Close() {
-	infra.IpfsClient.Close()
-	infra.EthClient.Close()
-	infra.FilecoinClient.Close()
 	infra.AqlDB.Close()
 }
