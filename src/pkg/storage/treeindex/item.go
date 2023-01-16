@@ -7,7 +7,7 @@ import (
 
 func processElement(node Noder, obj *base.Element) (Noder, error) {
 	if obj.Value != nil {
-		valueNode, err := walk(*obj.Value)
+		valueNode, err := walk(obj.Value)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot handle ELEMENT.Value object")
 		}

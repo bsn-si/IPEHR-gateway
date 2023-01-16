@@ -32,6 +32,7 @@ type (
 	}
 
 	Indexer interface {
+		helper.Finder
 		GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
 	}
 
