@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/jmoiron/sqlx"
 	"gorm.io/gorm"
 
+	_ "hms/gateway/pkg/aqlquerier" //nolint
 	"hms/gateway/pkg/compressor"
 	"hms/gateway/pkg/config"
 	"hms/gateway/pkg/docs/service/processing"
@@ -28,6 +30,7 @@ type Infra struct {
 	Index              *indexer.Index
 	LocalStorage       storage.Storager
 	Compressor         compressor.Interface
+	AqlDB              *sqlx.DB
 	CompressionEnabled bool
 }
 
@@ -75,6 +78,11 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
+	aqlDB, err := sqlx.Open("aql", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return &Infra{
 		LocalDB:        db,
 		Keystore:       ks,
@@ -93,5 +101,13 @@ func New(cfg *config.Config) *Infra {
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,
+		AqlDB:              aqlDB,
 	}
+}
+
+func (infra *Infra) Close() {
+	infra.IpfsClient.Close()
+	infra.EthClient.Close()
+	infra.FilecoinClient.Close()
+	infra.AqlDB.Close()
 }
