@@ -58,7 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	queryService := query.NewService(docService)
 	user := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
-	directory := directoryService.NewService(docService)
+	directory := directoryService.NewService(infra, docService.Proc)
 
 	compositionService := composition.NewCompositionService(
 		docService.Infra.Index,

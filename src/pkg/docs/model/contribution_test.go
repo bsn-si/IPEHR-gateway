@@ -47,7 +47,7 @@ func TestContribution_UnmarshalJSON(t *testing.T) {
 			"4. contribution with composition and folder",
 			newContributionWithVersions([]contributionVersionTestData{
 				{expectedComposition, []byte(compositionJSON)},
-				{&model.Directory{
+				{model.Directory{
 					Locatable: base.Locatable{
 						Type:            base.FolderItemType,
 						Name:            base.NewDvText("root"),

@@ -3,27 +3,29 @@ package directory
 import (
 	"context"
 	"fmt"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/types"
 	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service/processing"
+	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/infrastructure"
 	userModel "hms/gateway/pkg/user/model"
 )
 
 type Service struct {
-	*service.DefaultDocumentService
+	Infra *infrastructure.Infra
+	Proc  *processing.Proc
 }
 
-func NewService(docService *service.DefaultDocumentService) *Service {
+func NewService(infra *infrastructure.Infra, p *processing.Proc) *Service {
 	return &Service{
-		docService,
+		Infra: infra,
+		Proc:  p,
 	}
 }
 
@@ -62,7 +64,7 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey, nil)
+	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Directory, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err
