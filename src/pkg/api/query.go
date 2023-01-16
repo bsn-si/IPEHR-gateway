@@ -124,43 +124,57 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 		QueryParameters: map[string]interface{}{},
 	}
 
-	var err error
+	for key, val := range m {
+		if key == "ehr_id" {
+			ehrID, err := uuid.Parse(val)
+			if err != nil {
+				log.Printf("cannot parse ehr_id uuid: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
+				return
+			}
 
-	if ehrIDstr := c.Query("ehr_id"); ehrIDstr != "" {
-		req.QueryParameters["ehr_id"], err = uuid.Parse(ehrIDstr)
-		if err != nil {
-			log.Printf("cannot parse ehr_id uuid: %f", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
-			return
-		}
-	}
+			req.QueryParameters["ehr_id"] = ehrID
 
-	if offsetStr := c.Query("offset"); offsetStr != "" {
-		req.Offset, err = strconv.Atoi(offsetStr)
-		if err != nil {
-			log.Printf("cannot parse 'offset' from string: %f", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
-			return
+			continue
 		}
 
-		if req.Offset < 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
-			return
-		}
-	}
+		if key == "offset" {
+			offset, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'offset' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
+				return
+			}
 
-	if fetchStr := c.Query("fetch"); fetchStr != "" {
-		req.Fetch, err = strconv.Atoi(c.Query("fetch"))
-		if err != nil {
-			log.Printf("cannot parse 'fetch' from string: %f", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
-			return
+			if offset < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
+				return
+			}
+
+			req.Offset = offset
+
+			continue
 		}
 
-		if req.Fetch < 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
-			return
+		if key == "fetch" {
+			fetch, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'fetch' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
+				return
+			}
+
+			if fetch < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
+				return
+			}
+
+			req.Fetch = fetch
+
+			continue
 		}
+
+		req.QueryParameters[key] = val
 	}
 
 	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, req)
