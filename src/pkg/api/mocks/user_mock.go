@@ -112,17 +112,17 @@ func (mr *MockUserServiceMockRecorder) GetTokenHash(tokenRaw interface{}) *gomoc
 }
 
 // GroupAddUser mocks base method.
-func (m *MockUserService) GroupAddUser(ctx context.Context, userID, systemID, addUserID, addSystemID, reqID string, level access.Level, groupID *uuid.UUID) error {
+func (m *MockUserService) GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupAddUser", ctx, userID, systemID, addUserID, addSystemID, reqID, level, groupID)
+	ret := m.ctrl.Call(m, "GroupAddUser", ctx, userID, systemID, addingUserID, reqID, level, groupID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // GroupAddUser indicates an expected call of GroupAddUser.
-func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, systemID, addUserID, addSystemID, reqID, level, groupID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, systemID, addingUserID, reqID, level, groupID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupAddUser", reflect.TypeOf((*MockUserService)(nil).GroupAddUser), ctx, userID, systemID, addUserID, addSystemID, reqID, level, groupID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupAddUser", reflect.TypeOf((*MockUserService)(nil).GroupAddUser), ctx, userID, systemID, addingUserID, reqID, level, groupID)
 }
 
 // GroupCreate mocks base method.
@@ -172,17 +172,17 @@ func (mr *MockUserServiceMockRecorder) GroupGetList(ctx, userID, systemID interf
 }
 
 // GroupRemoveUser mocks base method.
-func (m *MockUserService) GroupRemoveUser(ctx context.Context, userID, systemID, removeUserID, removeSystemID, reqID string, groupID *uuid.UUID) error {
+func (m *MockUserService) GroupRemoveUser(ctx context.Context, userID, systemID, removingUserID, removeSystemID, reqID string, groupID *uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupRemoveUser", ctx, userID, systemID, removeUserID, removeSystemID, reqID, groupID)
+	ret := m.ctrl.Call(m, "GroupRemoveUser", ctx, userID, systemID, removingUserID, removeSystemID, reqID, groupID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // GroupRemoveUser indicates an expected call of GroupRemoveUser.
-func (mr *MockUserServiceMockRecorder) GroupRemoveUser(ctx, userID, systemID, removeUserID, removeSystemID, reqID, groupID interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupRemoveUser(ctx, userID, systemID, removingUserID, removeSystemID, reqID, groupID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupRemoveUser", reflect.TypeOf((*MockUserService)(nil).GroupRemoveUser), ctx, userID, systemID, removeUserID, removeSystemID, reqID, groupID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupRemoveUser", reflect.TypeOf((*MockUserService)(nil).GroupRemoveUser), ctx, userID, systemID, removingUserID, removeSystemID, reqID, groupID)
 }
 
 // Info mocks base method.
