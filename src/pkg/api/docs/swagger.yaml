@@ -261,6 +261,13 @@ definitions:
       refresh_token:
         type: string
     type: object
+  model.QueryColumn:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
   model.QueryRequest:
     properties:
       fetch:
@@ -277,12 +284,7 @@ definitions:
     properties:
       columns:
         items:
-          properties:
-            name:
-              type: string
-            path:
-              type: string
-          type: object
+          $ref: '#/definitions/model.QueryColumn'
         type: array
       meta:
         properties:

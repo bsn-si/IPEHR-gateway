@@ -2826,6 +2826,17 @@ const docTemplate = `{
                 }
             }
         },
+        "model.QueryColumn": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
         "model.QueryRequest": {
             "type": "object",
             "properties": {
@@ -2850,15 +2861,7 @@ const docTemplate = `{
                 "columns": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "path": {
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/model.QueryColumn"
                     }
                 },
                 "meta": {

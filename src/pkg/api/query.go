@@ -100,6 +100,7 @@ func (h QueryHandler) ExecPost(c *gin.Context) {
 // @Param        ehr_id            	   query     string  false  "An optional parameter to execute the query within an EHR context."
 // @Param        offset            	   query     string  false  "The row number in result-set to start result-set from (0-based), default is 0."
 // @Param        fetch            	   query     string  false  "Number of rows to fetch (the default depends on the implementation)."
+// @Param        query_parameters      query     any  false  "Query parameters (can appear multiple times)."
 // @Success      200                   {object}  model.QueryResponse
 // @Header       200                   {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
 // @Failure      400                   "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"

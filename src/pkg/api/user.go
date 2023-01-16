@@ -17,14 +17,13 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/user/model"
-	userModel "hms/gateway/pkg/user/model"
 	"hms/gateway/pkg/user/roles"
 	userService "hms/gateway/pkg/user/service"
 )
 
 type UserService interface {
 	NewProcRequest(reqID, userID string, kind processing.RequestKind) (processing.RequestInterface, error)
-	Register(ctx context.Context, user *userModel.UserCreateRequest, systemID, reqID string) (err error)
+	Register(ctx context.Context, user *model.UserCreateRequest, systemID, reqID string) (err error)
 	Login(ctx context.Context, userID, systemID, password string) (err error)
 	Info(ctx context.Context, userID, systemID string) (*model.UserInfo, error)
 	InfoByCode(ctx context.Context, code int) (*model.UserInfo, error)
@@ -38,7 +37,7 @@ type UserService interface {
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
 	GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error)
-	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*userModel.UserGroup, error)
+	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*model.UserGroup, error)
 	GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error
 	GroupRemoveUser(ctx context.Context, userID, systemID, removingUserID, reqID string, groupID *uuid.UUID) error
 	GroupGetList(ctx context.Context, userID, systemID string) ([]*model.UserGroup, error)
@@ -91,7 +90,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	var userCreateRequest userModel.UserCreateRequest
+	var userCreateRequest model.UserCreateRequest
 	if err = json.Unmarshal(data, &userCreateRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
@@ -135,7 +134,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 // @Router   /user/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
-	var u userModel.UserAuthRequest
+	var u model.UserAuthRequest
 	if err := c.ShouldBindJSON(&u); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
 		return
@@ -173,7 +172,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &userModel.JWT{
+	c.JSON(http.StatusOK, &model.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
@@ -204,7 +203,7 @@ func (h *UserHandler) Logout(c *gin.Context) {
 		return
 	}
 
-	var jwt userModel.JWT
+	var jwt model.JWT
 	if err := c.ShouldBindJSON(&jwt); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, "Invalid json provided")
 		return
@@ -261,7 +260,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, &userModel.JWT{
+	c.JSON(http.StatusOK, &model.JWT{
 		AccessToken:  ts.AccessToken,
 		RefreshToken: ts.RefreshToken,
 	})
@@ -304,7 +303,7 @@ func (h *UserHandler) Info(c *gin.Context) {
 	}
 
 	if userInfo.Role == roles.Patient.String() {
-		userInfo = &userModel.UserInfo{
+		userInfo = &model.UserInfo{
 			Role:        userInfo.Role,
 			TimeCreated: userInfo.TimeCreated,
 			EhrID:       userInfo.EhrID,
