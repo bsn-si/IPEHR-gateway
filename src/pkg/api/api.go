@@ -140,7 +140,7 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	return r
 }
 
@@ -197,7 +197,7 @@ func (a *API) buildQueryAPI() handlerBuilder {
 		r.Use(ehrSystemID)
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
-		r.POST("/aql", a.Query.ExecPost)
+		r.POST("/aql", a.Query.ExecPostQuery)
 	}
 }
 

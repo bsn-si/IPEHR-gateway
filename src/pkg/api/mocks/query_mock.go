@@ -10,6 +10,7 @@ import (
 	base "hms/gateway/pkg/docs/model/base"
 	reflect "reflect"
 
+	gin "github.com/gin-gonic/gin"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -34,6 +35,36 @@ func NewMockQueryService(ctrl *gomock.Controller) *MockQueryService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockQueryService) EXPECT() *MockQueryServiceMockRecorder {
 	return m.recorder
+}
+
+// ExecQuery mocks base method.
+func (m *MockQueryService) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecQuery", ctx, query)
+	ret0, _ := ret[0].(*model.QueryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecQuery indicates an expected call of ExecQuery.
+func (mr *MockQueryServiceMockRecorder) ExecQuery(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecQuery", reflect.TypeOf((*MockQueryService)(nil).ExecQuery), ctx, query)
+}
+
+// ExecQueryWithTimeout mocks base method.
+func (m *MockQueryService) ExecQueryWithTimeout(ctx *gin.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExecQueryWithTimeout", ctx, query)
+	ret0, _ := ret[0].(*model.QueryResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecQueryWithTimeout indicates an expected call of ExecQueryWithTimeout.
+func (mr *MockQueryServiceMockRecorder) ExecQueryWithTimeout(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecQueryWithTimeout", reflect.TypeOf((*MockQueryService)(nil).ExecQueryWithTimeout), ctx, query)
 }
 
 // ExecStoredQuery mocks base method.

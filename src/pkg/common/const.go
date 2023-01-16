@@ -13,6 +13,7 @@ const (
 	CacheCleanerTimeout              = 5 * time.Minute
 	RegisterRequestTimeout           = time.Second * 60
 	UserCodeMask              uint64 = 99999999 // (8 digits)
+	QueryExecutionTimeout            = time.Second * 60
 
 	ScryptKeyLen  = 32
 	ScryptSaltLen = 16
