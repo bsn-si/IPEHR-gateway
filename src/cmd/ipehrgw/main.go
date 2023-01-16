@@ -6,16 +6,11 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"hms/gateway/pkg/api"
 	_ "hms/gateway/pkg/api/docs"
-	_ "hms/gateway/pkg/aqlquerier"
 	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/infrastructure"
-
-	"github.com/jmoiron/sqlx"
 )
 
 func main() {
@@ -32,17 +27,9 @@ func main() {
 
 	infra := infrastructure.New(cfg)
 
-	conn, err := sqlx.Open("aql", "")
-	if err != nil {
-		log.Fatal(err)
-	}
+	defer infra.Close()
 
-	defer conn.Close()
-
-	executer := query.NewQueryExecuterService(conn)
-
-	a := api.New(cfg, infra, executer).Build()
-
+	a := api.New(cfg, infra).Build()
 	if err = a.Run(cfg.Host); err != nil {
 		panic(err)
 	}
