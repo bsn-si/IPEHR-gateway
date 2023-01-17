@@ -8,17 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
-	"golang.org/x/crypto/sha3"
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer/accessStore"
 )
 
-func (i *Index) GetAccessList(ctx context.Context, userID, systemID string, kind access.Kind) (access.List, error) {
-	IDHash := sha3.Sum256([]byte(userID + systemID))
-
-	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(IDHash, kind)
+func (i *Index) GetAccessList(ctx context.Context, IDHash *[32]byte, kind access.Kind) (access.List, error) {
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*IDHash, kind)
 	if err != nil {
 		return nil, fmt.Errorf("args.Pack error: %w", err)
 	}

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -45,7 +44,14 @@ func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, gro
 	var err error
 
 	if groupKey == nil {
-		groupKey, err = s.getAccessKey(ctx, userID, systemID, access.UserGroup, groupID[:])
+		userIDHash := sha3.Sum256([]byte(userID + systemID))
+
+		userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+		if err != nil {
+			return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+		}
+
+		groupKey, err = s.Infra.Index.GetAccessKey(ctx, &userIDHash, access.UserGroup, groupID[:], userPubKey, userPrivKey)
 		if err != nil {
 			if errors.Is(err, errors.ErrAccessDenied) {
 				return nil, err
@@ -92,15 +98,24 @@ func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, gro
 		userGroupResult.Members = append(userGroupResult.Members, string(uID))
 	}
 
+	copy(userGroupResult.GroupKey[:], groupKey.Bytes())
+
 	return &userGroupResult, nil
 }
 
-func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUserID, reqID string, level access.Level, groupID *uuid.UUID) error {
+func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID, addSystemID, reqID string, level access.Level, groupID *uuid.UUID) error {
 	var auID [32]byte
 
-	copy(auID[:], addingUserID)
+	copy(auID[:], addUserID)
 
-	groupKey, err := s.getAccessKey(ctx, userID, systemID, access.UserGroup, groupID[:])
+	userIDHash := sha3.Sum256([]byte(userID + systemID))
+
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	if err != nil {
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+	}
+
+	groupKey, err := s.Infra.Index.GetAccessKey(ctx, &userIDHash, access.UserGroup, groupID[:], userPubKey, userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -111,25 +126,20 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 
 	userIDEncr, err := groupKey.Encrypt(auID[:])
 	if err != nil {
-		return fmt.Errorf("key.Encrypt addingUserID error: %w", err)
+		return fmt.Errorf("key.Encrypt addUserID error: %w", err)
 	}
 
-	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	addUserPubKey, _, err := s.Infra.Keystore.Get(addUserID)
 	if err != nil {
-		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
+		return fmt.Errorf("Keystore.Get error: %w userID %s", err, addUserID)
 	}
 
-	addingUserPubKey, addingUserPrivKey, err := s.Infra.Keystore.Get(addingUserID)
-	if err != nil {
-		return fmt.Errorf("Keystore.Get error: %w userID %s", err, addingUserID)
-	}
-
-	groupKeyEncr, err := keybox.Seal(groupKey.Bytes(), addingUserPubKey, addingUserPrivKey)
+	groupKeyEncr, err := keybox.SealAnonymous(groupKey.Bytes(), addUserPubKey)
 	if err != nil {
 		return fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, addingUserID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
+	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, addUserID, addSystemID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -154,13 +164,13 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addingUser
 	return nil
 }
 
-func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removingUserID, reqID string, groupID *uuid.UUID) error {
+func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeUserID, removeSystemID, reqID string, groupID *uuid.UUID) error {
 	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupRemoveUser(ctx, removingUserID, groupID, userPrivKey, nil)
+	txHash, err := s.Infra.Index.UserGroupRemoveUser(ctx, removeUserID, removeSystemID, groupID, userPrivKey, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -191,7 +201,9 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
 	}
 
-	acl, err := s.Infra.Index.GetAccessList(ctx, userID, systemID, access.UserGroup)
+	IDHash := sha3.Sum256([]byte(userID + systemID))
+
+	acl, err := s.Infra.Index.GetAccessList(ctx, &IDHash, access.UserGroup)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
@@ -203,48 +215,21 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 	var userGroupList []*model.UserGroup
 
 	for i, a := range acl {
-		groupIDHash, ok := a.Fields["idHash"]
-		if !ok {
-			return nil, fmt.Errorf("%w ACL filed 'idHash' required", errors.ErrIncorrectFormat)
-		}
-
-		keyEncr, ok := a.Fields["keyEncr"]
-		if !ok {
-			return nil, fmt.Errorf("%w ACL filed 'keyEncr' required", errors.ErrIncorrectFormat)
-		}
-
-		keyDecr, err := keybox.Open(keyEncr, userPubKey, userPrivKey)
+		err := access.ExtractWithUserKey(a, userPubKey, userPrivKey)
 		if err != nil {
-			return nil, fmt.Errorf("keybox.Open error: %w groupIDHash: %x", err, groupIDHash)
+			if errors.Is(err, errors.ErrAccessDenied) {
+				continue
+			}
+
+			return nil, fmt.Errorf("index: %d access.Extract error: %w", i, err)
 		}
 
-		groupKey, err := chachaPoly.NewKeyFromBytes(keyDecr)
+		groupUUID, err := uuid.FromBytes(a.ID)
 		if err != nil {
-			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+			return nil, fmt.Errorf("groupID %d uuid.ParseBytes error: %w idDecr: %x", i, err, a.ID)
 		}
 
-		groupIDEncr, ok := a.Fields["idEncr"]
-		if !ok {
-			return nil, fmt.Errorf("%w ACL filed 'idEncr' required", errors.ErrIncorrectFormat)
-		}
-
-		groupIDDecr, err := groupKey.Decrypt(groupIDEncr)
-		if err != nil {
-			return nil, fmt.Errorf("UserGroup ID decrypt error: %w", err)
-		}
-
-		groupIDDecrHash := sha3.Sum256(groupIDDecr)
-
-		if !bytes.Equal(groupIDHash, groupIDDecrHash[:]) {
-			return nil, fmt.Errorf("%w: mismatch idHash: %x keccak256(idDecr): %x", errors.ErrCustom, groupIDHash, groupIDDecrHash)
-		}
-
-		groupUUID, err := uuid.FromBytes(groupIDDecr)
-		if err != nil {
-			return nil, fmt.Errorf("groupID %d uuid.ParseBytes error: %w idDecr: %x", i, err, groupIDDecr)
-		}
-
-		userGroup, err := s.GroupGetByID(ctx, userID, systemID, &groupUUID, groupKey)
+		userGroup, err := s.GroupGetByID(ctx, userID, systemID, &groupUUID, a.Key)
 		if err != nil {
 			return nil, fmt.Errorf("GroupGetByID error: %w groupUUID: %s", err, groupUUID)
 		}
@@ -291,7 +276,8 @@ func (s *Service) groupCreatePack(ctx context.Context, userID, name, description
 		return nil, nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	keyEncr, err := keybox.Seal(key.Bytes(), userPubKey, userPrivKey)
+	//keyEncr, err := keybox.Seal(key.Bytes(), userPubKey, userPrivKey)
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("keybox.Seal error: %w", err)
 	}
@@ -302,32 +288,4 @@ func (s *Service) groupCreatePack(ctx context.Context, userID, name, description
 	}
 
 	return packed, userGroup.GroupID, nil
-}
-
-func (s *Service) getAccessKey(ctx context.Context, userID, systemID string, kind access.Kind, accessID []byte) (*chachaPoly.Key, error) {
-	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
-	if err != nil {
-		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
-	}
-
-	keyEncr, level, err := s.Infra.Index.GetUserAccess(ctx, userID, systemID, kind, accessID)
-	if err != nil {
-		return nil, fmt.Errorf("Index.UserGroupGetByID error: %w", err)
-	}
-
-	if level == access.NoAccess {
-		return nil, errors.ErrAccessDenied
-	}
-
-	keyDecr, err := keybox.Open(keyEncr, userPubKey, userPrivKey)
-	if err != nil {
-		return nil, fmt.Errorf("keybox.Open error: %w", err)
-	}
-
-	key, err := chachaPoly.NewKeyFromBytes(keyDecr)
-	if err != nil {
-		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
-	}
-
-	return key, nil
 }

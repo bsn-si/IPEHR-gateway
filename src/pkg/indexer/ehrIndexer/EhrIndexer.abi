@@ -151,17 +151,17 @@
       "inputs": [
         {
           "internalType": "bytes32",
-          "name": "groupIdHash",
+          "name": "groupIDHash",
           "type": "bytes32"
         },
         {
           "internalType": "bytes32",
-          "name": "CIDHash",
+          "name": "docCIDHash",
           "type": "bytes32"
         },
         {
           "internalType": "bytes",
-          "name": "CIDEncr",
+          "name": "docCIDEncr",
           "type": "bytes"
         },
         {
@@ -186,23 +186,8 @@
           "components": [
             {
               "internalType": "bytes32",
-              "name": "groupIdHash",
+              "name": "groupIDHash",
               "type": "bytes32"
-            },
-            {
-              "internalType": "bytes",
-              "name": "groupIdEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "keyEncr",
-              "type": "bytes"
-            },
-            {
-              "internalType": "bytes",
-              "name": "userIdEncr",
-              "type": "bytes"
             },
             {
               "components": [
@@ -240,6 +225,37 @@
       "name": "docGroupCreate",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "docGroupGetAttrs",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Attributes.Code",
+              "name": "code",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "value",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attributes.Attribute[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {

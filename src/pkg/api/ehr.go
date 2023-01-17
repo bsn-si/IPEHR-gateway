@@ -11,10 +11,12 @@ import (
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/service"
+	docGroupService "hms/gateway/pkg/docs/service/docGroup"
 	"hms/gateway/pkg/docs/service/ehr"
 	"hms/gateway/pkg/docs/service/processing"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
+	userService "hms/gateway/pkg/user/service"
 )
 
 type EhrHandler struct {
@@ -22,9 +24,9 @@ type EhrHandler struct {
 	baseURL string
 }
 
-func NewEhrHandler(docService *service.DefaultDocumentService, baseURL string) *EhrHandler {
+func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, baseURL string) *EhrHandler {
 	return &EhrHandler{
-		service: ehr.NewService(docService),
+		service: ehr.NewService(docSvc, userSvc, docGroupSvc, docSvc.Infra),
 		baseURL: baseURL,
 	}
 }
@@ -99,7 +101,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	ehrUUIDnew := uuid.New()
 	reqID := c.GetString("reqID")
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
+	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
 		log.Println("EHR create NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -198,7 +200,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
+	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
 		log.Println("Ehr createWithID NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

@@ -59,6 +59,7 @@ const (
 	TxSetEhrBySubject
 	TxSetEhrDocs
 	TxSetDocAccess
+	TxSetDocGroupAccess
 	TxDeleteDoc
 	TxFilecoinStartDeal
 	TxEhrCreateWithID
@@ -74,6 +75,8 @@ const (
 	TxUserGroupCreate
 	TxUserGroupAddUser
 	TxUserGroupRemoveUser
+	TxDocGroupCreate
+	TxDocGroupAddDoc
 )
 
 var (
@@ -91,23 +94,25 @@ var (
 		TxSetEhrBySubject:     "SetEhrBySubject",
 		TxSetEhrDocs:          "SetEhrDocs",
 		TxSetDocAccess:        "SetDocAccess",
+		TxSetDocGroupAccess:   "SetDocGroupAccess",
 		TxDeleteDoc:           "DeleteDoc",
 		TxFilecoinStartDeal:   "FilecoinStartDeal",
 		TxEhrCreateWithID:     "EhrCreateWithID",
 		TxUpdateEhrStatus:     "UpdateEhrStatus",
 		TxAddEhrDoc:           "AddEhrDoc",
 		TxSetDocKeyEncrypted:  "SetDocKeyEncrypted",
-		TxSaveEhr:             "TxSaveEhr",
-		TxSaveEhrStatus:       "TxSaveEhrStatus",
-		TxSaveComposition:     "TxSaveComposition",
-		TxSaveTemplate:        "TxSaveTemplate",
-		TxUserRegister:        "TxUserRegister",
-		TxUserNew:             "TxUserNew",
-		TxUserGroupCreate:     "TxUserGroupCreate",
-		TxUserGroupAddUser:    "TxUserGroupAddUser",
-		TxUserGroupRemoveUser: "TxUserGroupRemoveUser",
-
-		TxUnknown: "Unknown",
+		TxSaveEhr:             "SaveEhr",
+		TxSaveEhrStatus:       "SaveEhrStatus",
+		TxSaveComposition:     "SaveComposition",
+		TxSaveTemplate:        "SaveTemplate",
+		TxUserRegister:        "UserRegister",
+		TxUserNew:             "UserNew",
+		TxUserGroupCreate:     "UserGroupCreate",
+		TxUserGroupAddUser:    "UserGroupAddUser",
+		TxUserGroupRemoveUser: "UserGroupRemoveUser",
+		TxDocGroupCreate:      "DocGroupCreate",
+		TxDocGroupAddDoc:      "DocGroupAddDoc",
+		TxUnknown:             "Unknown",
 	}
 
 	reqKinds = map[RequestKind]string{

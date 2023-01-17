@@ -14,9 +14,11 @@ import (
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
+	docGroupService "hms/gateway/pkg/docs/service/docGroup"
 	"hms/gateway/pkg/docs/service/ehr"
 	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
+	userService "hms/gateway/pkg/user/service"
 )
 
 type EhrStatusHandler struct {
@@ -24,9 +26,9 @@ type EhrStatusHandler struct {
 	baseURL string
 }
 
-func NewEhrStatusHandler(docService *service.DefaultDocumentService, baseURL string) *EhrStatusHandler {
+func NewEhrStatusHandler(docSvc *service.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, baseURL string) *EhrStatusHandler {
 	return &EhrStatusHandler{
-		service: ehr.NewService(docService),
+		service: ehr.NewService(docSvc, userSvc, docGroupSvc, docSvc.Infra),
 		baseURL: baseURL,
 	}
 }
@@ -120,7 +122,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusBadRequest)
 	}
 
-	procRequest, err := h.service.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrStatusUpdate)
+	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrStatusUpdate)
 	if err != nil {
 		log.Println("EhrStatus update NewRequest error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

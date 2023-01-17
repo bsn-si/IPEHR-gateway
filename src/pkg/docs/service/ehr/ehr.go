@@ -10,27 +10,39 @@ import (
 	"github.com/ipfs/go-cid"
 	"golang.org/x/crypto/sha3"
 
+	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/docs/service"
+	docService "hms/gateway/pkg/docs/service"
+	docGroupService "hms/gateway/pkg/docs/service/docGroup"
 	proc "hms/gateway/pkg/docs/service/processing"
 	docStatus "hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/ehrIndexer"
+	"hms/gateway/pkg/infrastructure"
+	userModel "hms/gateway/pkg/user/model"
+	userService "hms/gateway/pkg/user/service"
 )
 
 type Service struct {
-	*service.DefaultDocumentService
+	Doc      *service.DefaultDocumentService
+	DocGroup *docGroupService.Service
+	User     *userService.Service
+	Infra    *infrastructure.Infra
 }
 
-func NewService(docService *service.DefaultDocumentService) *Service {
+func NewService(docSvc *docService.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, infra *infrastructure.Infra) *Service {
 	return &Service{
-		docService,
+		Doc:      docSvc,
+		DocGroup: docGroupSvc,
+		User:     userSvc,
+		Infra:    infra,
 	}
 }
 
@@ -63,7 +75,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 		return nil, fmt.Errorf("create status error: %w", err)
 	}
 
-	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
@@ -83,7 +95,38 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 		multiCallTx.Add(uint8(proc.TxSetEhrUser), packed)
 	}
 
-	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, doc)
+	// 'All documents' docGroup creating
+	allDocsGroup := &model.DocumentGroup{
+		GroupID:  uuid.New(),
+		GroupKey: chachaPoly.GenerateKey(),
+		Name:     common.DefaultGroupAllDocuments,
+	}
+
+	{
+		groupIDEncr, err := allDocsGroup.GroupKey.Encrypt(allDocsGroup.GroupID[:])
+		if err != nil {
+			return nil, fmt.Errorf("gallDocsGroupID encryption error: %w", err)
+		}
+
+		groupNameEncr, err := allDocsGroup.GroupKey.Encrypt([]byte(allDocsGroup.Name))
+		if err != nil {
+			return nil, fmt.Errorf("groupName encryption error: %w", err)
+		}
+
+		groupKeyEncr, err := keybox.SealAnonymous(allDocsGroup.GroupKey.Bytes(), userPubKey)
+		if err != nil {
+			return nil, fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.DocGroupCreate(ctx, &allDocsGroup.GroupID, groupIDEncr, groupKeyEncr, groupNameEncr, userPrivKey, multiCallTx.Nonce())
+		if err != nil {
+			return nil, fmt.Errorf("Index.DocGroupCreate error: %w", err)
+		}
+
+		multiCallTx.Add(uint8(proc.TxDocGroupCreate), packed)
+	}
+
+	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, doc, allDocsGroup)
 	if err != nil {
 		return nil, fmt.Errorf("SaveStatus error: %w. ehrID: %s userID: %s", err, ehrUUID.String(), userID)
 	}
@@ -91,7 +134,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 	ehr.EhrStatus.ID = doc.UID.ObjectID
 	ehr.EhrStatus.Type = "EHR_STATUS"
 
-	err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr)
+	err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr, allDocsGroup)
 	if err != nil {
 		return nil, fmt.Errorf("SaveEhr error: %w", err)
 	}
@@ -105,10 +148,57 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
+	// Granting access to the group 'All documents' for the 'Doctors' group
+	{
+		userGroupList, err := s.User.GroupGetList(ctx, userID, systemID)
+		if err != nil {
+			return nil, fmt.Errorf("DocAccess.List error: %w", err)
+		}
+
+		var doctorsGroup *userModel.UserGroup
+
+		for _, ug := range userGroupList {
+			if ug.Name == common.DefaultGroupDoctors {
+				doctorsGroup = ug
+				break
+			}
+		}
+
+		if doctorsGroup == nil {
+			return nil, fmt.Errorf("user default group 'doctors' %w", errors.ErrNotFound)
+		}
+
+		IDHash := indexer.Keccak256(allDocsGroup.GroupID[:])
+
+		objectID := sha3.Sum256(doctorsGroup.GroupID[:])
+
+		doctorsGroupKey, err := chachaPoly.NewKeyFromBytes(doctorsGroup.GroupKey[:])
+		if err != nil {
+			return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
+		}
+
+		IDEncr, err := allDocsGroup.GroupKey.Encrypt(allDocsGroup.GroupID[:])
+		if err != nil {
+			return nil, fmt.Errorf("doctorsGroup.GroupID encrypt error: %w", err)
+		}
+
+		keyEncr, err := doctorsGroupKey.Encrypt(allDocsGroup.GroupKey.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("allDocsGroupKey encryption error: %w", err)
+		}
+
+		txHash, err := s.Infra.Index.SetAccess(ctx, IDHash, &objectID, IDEncr, keyEncr, access.DocGroup, access.Read)
+		if err != nil {
+			return nil, fmt.Errorf("Index.SetAccess doctorsGroup to allDocsGroup error: %w", err)
+		}
+
+		procRequest.AddEthereumTx(proc.TxSetDocGroupAccess, txHash)
+	}
+
 	return &ehr, nil
 }
 
-func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, doc *model.EHR) error {
+func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID string, doc *model.EHR, allDocsGroup *model.DocumentGroup) error {
 	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
 	if err != nil {
 		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
@@ -163,9 +253,9 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s", err, ehrUUID.String())
 		}
 
-		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		CIDEncr, err := key.Encrypt(CID.Bytes())
 		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+			return fmt.Errorf("CID encryption error: %w", err)
 		}
 
 		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
@@ -197,6 +287,23 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 	}
 
+	// Adding EHR_STATUS doc into 'all documents'
+	{
+		docCIDHash := indexer.Keccak256(CID.Bytes())
+
+		docCIDEncr, err := allDocsGroup.GroupKey.Encrypt(CID.Bytes())
+		if err != nil {
+			return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, multiCallTx.Nonce())
+		if err != nil {
+			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
+		}
+
+		multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
+	}
+
 	return nil
 }
 
@@ -216,7 +323,7 @@ func (s *Service) GetByID(ctx context.Context, userID, systemID string, ehrUUID 
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.Doc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -250,7 +357,7 @@ func (s *Service) GetDocBySubject(ctx context.Context, userID, systemID, subject
 	}
 
 	// Getting doc from storage
-	docDecrypted, err = s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err = s.Doc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -297,7 +404,7 @@ func (s *Service) CreateStatus(ehrStatusID string, subject base.PartySelf) (doc 
 	return doc, nil
 }
 
-func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
+func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus, allDocsGroup *model.DocumentGroup) error {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -313,7 +420,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 		return errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	ehrDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	ehrDecrypted, err := s.Doc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return err
 	} else if err != nil {
@@ -327,7 +434,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 
 	if status.UID.Value != ehr.EhrStatus.ID.Value {
 		ehr.EhrStatus.ID.Value = status.UID.Value
-		if err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr); err != nil {
+		if err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, &ehr, allDocsGroup); err != nil {
 			return fmt.Errorf("ehr save error: %w", err)
 		}
 	}
@@ -335,7 +442,7 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 	return nil
 }
 
-func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
+func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus, allDocsGroup *model.DocumentGroup) error {
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -406,9 +513,14 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s statusUid: %s", err, ehrUUID.String(), status.UID.Value)
 		}
 
-		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		//CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		//if err != nil {
+		//	return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		//}
+
+		CIDEncr, err := key.Encrypt(CID.Bytes())
 		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+			return fmt.Errorf("CID encryption error: %w", err)
 		}
 
 		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
@@ -440,6 +552,23 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 	}
 
+	// Adding EHR_STATUS doc into 'all documents'
+	{
+		docCIDHash := indexer.Keccak256(CID.Bytes())
+
+		docCIDEncr, err := allDocsGroup.GroupKey.Encrypt(CID.Bytes())
+		if err != nil {
+			return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, multiCallTx.Nonce())
+		if err != nil {
+			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
+		}
+
+		multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
+	}
+
 	return nil
 }
 
@@ -449,17 +578,38 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
+	// Searching 'all documents' group
+	var allDocGroup *model.DocumentGroup
+	{
+		docGroups, err := s.DocGroup.GroupGetList(ctx, userID, systemID)
+		if err != nil {
+			return fmt.Errorf("DocGroup.GroupGetList error: %w", err)
+		}
+
+		for _, dg := range docGroups {
+			if dg.Name == common.DefaultGroupAllDocuments {
+				allDocGroup = dg
+				break
+			}
+		}
+
+		if allDocGroup == nil {
+			return fmt.Errorf("user 'all documents' group not found: %w", errors.ErrNotFound)
+		}
+	}
+
 	multiCallTx, err := s.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("MultiCallEhrNew error: %w", err)
 	}
 
-	if err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status); err != nil {
+	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status, allDocGroup)
+	if err != nil {
 		return fmt.Errorf("SaveStatus error: %w", err)
 	}
 
 	// TODO i dont like this logic, because in method GetByID we always grab whole data from filecoin, which contain last status id. It need fix it.
-	if err := s.UpdateEhr(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status); err != nil {
+	if err := s.UpdateEhr(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status, allDocGroup); err != nil {
 		return fmt.Errorf("UpdateEhr error: %w", err)
 	}
 
@@ -492,7 +642,7 @@ func (s *Service) GetStatus(ctx context.Context, userID, systemID string, ehrUUI
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.Doc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
@@ -530,7 +680,7 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID, systemID str
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.Doc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsInProcessing) {
 			return nil, err
@@ -562,7 +712,7 @@ func (s *Service) GetStatusByNearestTime(ctx context.Context, userID, systemID s
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.Doc.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {

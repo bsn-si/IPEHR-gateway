@@ -15,6 +15,7 @@ import (
 	"hms/gateway/pkg/docs/service/composition"
 	contributionService "hms/gateway/pkg/docs/service/contribution"
 	directoryService "hms/gateway/pkg/docs/service/directory"
+	docGroupService "hms/gateway/pkg/docs/service/docGroup"
 	"hms/gateway/pkg/docs/service/groupAccess"
 	"hms/gateway/pkg/docs/service/query"
 	"hms/gateway/pkg/docs/service/template"
@@ -53,11 +54,12 @@ type API struct {
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
+	docGroupSvc := docGroupService.NewService(docService)
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 
 	templateService := template.NewService(docService)
 	queryService := query.NewService(docService)
-	user := userService.NewService(infra, docService.Proc)
+	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 	directory := directoryService.NewService(infra, docService.Proc)
 
@@ -71,17 +73,17 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		groupAccessService)
 
 	return &API{
-		Ehr:         NewEhrHandler(docService, cfg.BaseURL),
-		EhrStatus:   NewEhrStatusHandler(docService, cfg.BaseURL),
+		Ehr:         NewEhrHandler(docService, userSvc, docGroupSvc, cfg.BaseURL),
+		EhrStatus:   NewEhrStatusHandler(docService, userSvc, docGroupSvc, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, compositionService, cfg.BaseURL),
 		Query:       NewQueryHandler(queryService, cfg.BaseURL),
 		Template:    NewTemplateHandler(templateService, cfg.BaseURL),
 		//GroupAccess: NewGroupAccessHandler(docService, groupAccessService, cfg.BaseURL),
 		DocAccess:    NewDocAccessHandler(docService),
 		Request:      NewRequestHandler(docService),
-		User:         NewUserHandler(user),
-		Contribution: NewContributionHandler(contribution, user, templateService, compositionService, cfg.BaseURL),
-		Directory:    NewDirectoryHandler(directory, user, docService.Infra.Index, cfg.BaseURL),
+		User:         NewUserHandler(userSvc),
+		Contribution: NewContributionHandler(contribution, userSvc, templateService, compositionService, cfg.BaseURL),
+		Directory:    NewDirectoryHandler(directory, userSvc, docService.Infra.Index, cfg.BaseURL),
 	}
 }
 
@@ -200,6 +202,7 @@ func (a *API) buildAccessAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("access")
 		r.Use(auth(a))
+		r.Use(ehrSystemID)
 		//r.GET("/group/:group_id", a.GroupAccess.Get)
 		//r.POST("/group", a.GroupAccess.Create)
 

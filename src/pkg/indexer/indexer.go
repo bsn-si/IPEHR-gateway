@@ -203,7 +203,6 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string,
 	}
 
 	accessID := crypto.Keccak256Hash(data)
-
 	CIDHash := crypto.Keccak256Hash(CID)
 
 	callOpts := &bind.CallOpts{

@@ -114,9 +114,6 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
-	//if !t.Run("EHR grant access to another User", testWrap.docGrantAccessSuccess(testData)) {
-	//}
-
 	if !t.Run("EHR_STATUS getting", testWrap.ehrStatusGet(testData)) {
 		t.Fatal()
 	}
@@ -134,6 +131,10 @@ func Test_API(t *testing.T) {
 	}
 
 	/*
+		if !t.Run("Document access set", testWrap.docSetAccessSuccess(testData)) {
+			t.Fatal()
+		}
+
 		if !t.Run("Access group create", testWrap.accessGroupCreate(testData)) {
 			t.Fatal()
 		}

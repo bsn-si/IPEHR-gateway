@@ -121,7 +121,10 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.DocAccessListResponse"
+                        }
                     },
                     "400": {
                         "description": "Is returned when the request has invalid content."
@@ -2532,6 +2535,60 @@ const docTemplate = `{
                         "value": {
                             "type": "string"
                         }
+                    }
+                }
+            }
+        },
+        "model.DocAccessDocument": {
+            "type": "object",
+            "properties": {
+                "CID": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.DocAccessDocumentGroup": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "groupID": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "string"
+                },
+                "parentGroupID": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.DocAccessListResponse": {
+            "type": "object",
+            "properties": {
+                "documentGroups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.DocAccessDocumentGroup"
+                    }
+                },
+                "documents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.DocAccessDocument"
                     }
                 }
             }
