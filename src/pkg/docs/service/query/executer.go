@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"hms/gateway/pkg/errors"
 
 	"github.com/jmoiron/sqlx"
@@ -77,11 +78,11 @@ func (svc *ExecuterService) ExecQueryContext(ctx context.Context, queryStr strin
 	}
 
 	if offset != 0 {
-		args = append(args, sql.Named("offset", offset))
+		queryStr = fmt.Sprintf("%s OFFSET %d", queryStr, offset)
 	}
 
 	if limit != 0 {
-		args = append(args, sql.Named("limit", limit))
+		queryStr = fmt.Sprintf("%s LIMIT %d", queryStr, limit)
 	}
 
 	var (
