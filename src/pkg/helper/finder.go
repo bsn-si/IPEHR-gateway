@@ -2,15 +2,21 @@ package helper
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type (
 	Finder interface {
 		IsExist(ctx context.Context, args ...string) (bool, error)
+		GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error)
 	}
 
 	Searcher interface {
+		UseService(s Finder) *Search
 		IsExist(ID string) (bool, error)
+		GetEhrUUIDByUserID() (*uuid.UUID, error)
+		IsEhrBelongsToUser() bool
 	}
 
 	Search struct {
@@ -24,6 +30,20 @@ type (
 
 func (h *Search) IsExist(ID string) (bool, error) {
 	return h.service.IsExist(h.ctx, h.userID, h.systemID, ID)
+}
+
+func (h *Search) GetEhrUUIDByUserID() (*uuid.UUID, error) {
+	return h.service.GetEhrUUIDByUserID(h.ctx, h.userID, h.systemID)
+}
+
+func (h *Search) IsEhrBelongsToUser() bool {
+	ehrUUID, err := h.service.GetEhrUUIDByUserID(h.ctx, h.userID, h.systemID)
+
+	if err != nil {
+		return false
+	}
+
+	return h.ehrUUID == ehrUUID.String()
 }
 
 func (h *Search) UseService(s Finder) *Search {

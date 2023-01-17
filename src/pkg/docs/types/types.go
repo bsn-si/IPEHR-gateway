@@ -9,6 +9,7 @@ const (
 	Composition
 	Query
 	Template
+	Directory
 )
 
 var typeNames = map[DocumentType]string{
@@ -18,6 +19,7 @@ var typeNames = map[DocumentType]string{
 	Composition: "COMPOSITION",
 	Query:       "QUERY",
 	Template:    "TEMPLATE",
+	Directory:   "DIRECTORY",
 }
 
 func (t DocumentType) String() string {

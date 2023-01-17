@@ -96,6 +96,21 @@ func (mr *MockCompositionServiceMockRecorder) GetByID(ctx, userID, systemID, ehr
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockCompositionService)(nil).GetByID), ctx, userID, systemID, ehrUUID, versionUID)
 }
 
+// GetEhrUUIDByUserID mocks base method.
+func (m *MockCompositionService) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEhrUUIDByUserID", ctx, userID, systemID)
+	ret0, _ := ret[0].(*uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEhrUUIDByUserID indicates an expected call of GetEhrUUIDByUserID.
+func (mr *MockCompositionServiceMockRecorder) GetEhrUUIDByUserID(ctx, userID, systemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEhrUUIDByUserID", reflect.TypeOf((*MockCompositionService)(nil).GetEhrUUIDByUserID), ctx, userID, systemID)
+}
+
 // GetLastByBaseID mocks base method.
 func (m *MockCompositionService) GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error) {
 	m.ctrl.T.Helper()
@@ -197,6 +212,26 @@ func (m *MockIndexer) GetEhrUUIDByUserID(ctx context.Context, userID, systemID s
 func (mr *MockIndexerMockRecorder) GetEhrUUIDByUserID(ctx, userID, systemID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEhrUUIDByUserID", reflect.TypeOf((*MockIndexer)(nil).GetEhrUUIDByUserID), ctx, userID, systemID)
+}
+
+// IsExist mocks base method.
+func (m *MockIndexer) IsExist(ctx context.Context, args ...string) (bool, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "IsExist", varargs...)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsExist indicates an expected call of IsExist.
+func (mr *MockIndexerMockRecorder) IsExist(ctx interface{}, args ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockIndexer)(nil).IsExist), varargs...)
 }
 
 // MockProcessingService is a mock of ProcessingService interface.

@@ -20,12 +20,14 @@ import (
 
 	"hms/gateway/pkg/access"
 	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
 	"hms/gateway/pkg/indexer/accessStore"
 	"hms/gateway/pkg/indexer/ehrIndexer"
 	"hms/gateway/pkg/indexer/users"
 )
 
 type Index struct {
+	helper.Finder
 	sync.RWMutex
 	client        *ethclient.Client
 	ehrIndex      *ehrIndexer.EhrIndexer

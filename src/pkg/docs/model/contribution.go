@@ -91,7 +91,13 @@ func (w *contributionVersionDataWrapper) UnmarshalJSON(data []byte) error {
 	}
 
 	switch tmp.Type {
-	// TODO need add DIRECTORY/FOLDER type after it will be realized and write tests
+	case base.FolderItemType:
+		d := Directory{}
+		if err := json.Unmarshal(data, &d); err != nil {
+			return errors.Wrapf(err, "cannot unmarshal contribution content item: '%v'", tmp.Type)
+		}
+
+		w.item = d
 	case base.CompositionItemType:
 		c := Composition{}
 		if err := c.UnmarshalJSON(data); err != nil {
