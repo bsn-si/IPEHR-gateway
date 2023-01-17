@@ -13,9 +13,9 @@ func QueryExecRequest(ehrID string) []byte {
 	  			   c/context/start_time/value as startTime, 
 				   c/uid/value as cid, 
 				   c/name 
-	  		FROM EHR e [ehr_id/value=$ehr_id]] 
-			CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] 
-				CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] 
+	  		FROM EHR e[ehr_id/value=$ehr_id] 
+			CONTAINS COMPOSITION c [openEHR-EHR-COMPOSITION.encounter.v1] 
+				CONTAINS OBSERVATION obs [openEHR-EHR-OBSERVATION.blood_pressure.v1] 
 			WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp
 			LIMIT $fetch",	
 	  "offset": 0,
