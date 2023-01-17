@@ -253,11 +253,6 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s", err, ehrUUID.String())
 		}
 
-		//CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
-		//if err != nil {
-		//	return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		//}
-
 		CIDEncr, err := key.Encrypt(CID.Bytes())
 		if err != nil {
 			return fmt.Errorf("CID encryption error: %w", err)

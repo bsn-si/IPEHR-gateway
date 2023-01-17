@@ -63,14 +63,14 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 	var docGroupList []*model.DocumentGroup
 
 	for i, a := range acl {
-		id, _, _, err := access.ExtractWithUserKey(a, userPubKey, userPrivKey)
+		err = access.ExtractWithUserKey(a, userPubKey, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("index: %d access.Extract error: %w", i, err)
 		}
 
-		groupUUID, err := uuid.FromBytes(id)
+		groupUUID, err := uuid.FromBytes(a.ID)
 		if err != nil {
-			return nil, fmt.Errorf("groupID %d uuid.ParseBytes error: %w idDecr: %x", i, err, id)
+			return nil, fmt.Errorf("groupID %d uuid.ParseBytes error: %w idDecr: %x", i, err, a.ID)
 		}
 
 		docGroup, err := s.GroupGetByID(ctx, userID, systemID, &groupUUID)

@@ -2,16 +2,16 @@ package model
 
 type DocAccessDocument struct {
 	CID         string `json:"CID"`
-	Level       string `json:"level"`
-	Description string `json:"description"`
+	Level       string `json:"level,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 type DocAccessDocumentGroup struct {
-	GroupID       string   `json:"groupID"`
-	Level         string   `json:"level"`
-	Description   string   `json:"description"`
-	ParentGroupID string   `json:"parentGroupID,omitempty"`
-	Documents     []string `json:"documents"`
+	GroupID       string               `json:"groupID"`
+	Level         string               `json:"level"`
+	Description   string               `json:"description"`
+	ParentGroupID string               `json:"parentGroupID,omitempty"`
+	Documents     []*DocAccessDocument `json:"documents"`
 }
 
 type DocAccessSetRequest struct {
