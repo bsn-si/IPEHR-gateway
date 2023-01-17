@@ -9,8 +9,7 @@ type QueryRequest struct {
 }
 
 func (q *QueryRequest) Validate() bool {
-	//TODO
-	return true
+	return len(q.Query) != 0
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
@@ -23,16 +22,18 @@ type QueryResponse struct {
 		Generator     string `json:"_generator"`
 		ExecutedAql   string `json:"_executed_aql"`
 	} `json:"meta"`
-	Name    string `json:"name"`
-	Query   string `json:"q"`
-	Columns []struct {
-		Name string `json:"name"`
-		Path string `json:"path"`
-	} `json:"columns"`
-	Rows []interface{} `json:"rows"`
+	Name    string        `json:"name"`
+	Query   string        `json:"q"`
+	Columns []QueryColumn `json:"columns"`
+	Rows    []interface{} `json:"rows"`
 }
 
 func (q *QueryResponse) Validate() bool {
 	//TODO
 	return true
+}
+
+type QueryColumn struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
 }

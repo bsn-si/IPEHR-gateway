@@ -8,6 +8,7 @@ import (
 )
 
 func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testing.T) {
+	// TODO should be realize after AQL inserts will done
 	return func(t *testing.T) {
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")

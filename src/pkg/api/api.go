@@ -58,7 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 
 	templateService := template.NewService(docService)
-	queryService := query.NewService(docService)
+	queryService := query.NewService(docService, query.NewQueryExecuterService(infra.AqlDB))
 	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 	directory := directoryService.NewService(infra, docService.Proc)
@@ -147,7 +147,7 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
+	gin.SetMode(gin.ReleaseMode)
 	return r
 }
 
@@ -215,7 +215,11 @@ func (a *API) buildQueryAPI() handlerBuilder {
 	return func(r *gin.RouterGroup) {
 		r = r.Group("query")
 		r.Use(auth(a))
-		r.POST("/aql", a.Query.ExecPost)
+
+		r.Use(ehrSystemID)
+		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
+		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
+		r.POST("/aql", a.Query.ExecPostQuery)
 	}
 }
 

@@ -1578,6 +1578,153 @@ const docTemplate = `{
                 }
             }
         },
+        "/query/{qualified_query_name}": {
+            "get": {
+                "description": "Execute a stored query, identified by the supplied qualified_query_name (at latest version), fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).\nQueries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).\nhttps://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "QUERY"
+                ],
+                "summary": "Execute stored AQL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    ",
+                        "name": "qualified_query_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "An optional parameter to execute the query within an EHR context.",
+                        "name": "ehr_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The row number in result-set to start result-set from (0-based), default is 0.",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Number of rows to fetch (the default depends on the implementation).",
+                        "name": "fetch",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryResponse"
+                        },
+                        "headers": {
+                            "ETag": {
+                                "type": "string",
+                                "description": "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
+                    },
+                    "404": {
+                        "description": "Is returned when a stored query with qualified_query_name does not exists."
+                    },
+                    "408": {
+                        "description": "Is returned when there is a query execution timeout"
+                    }
+                }
+            },
+            "post": {
+                "description": "Execute a stored query, identified by the supplied {qualified_query_name} (at latest version).\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).\nQueries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).\nhttps://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "QUERY"
+                ],
+                "summary": "Execute stored AQL (POST)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId UUID",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    ",
+                        "name": "qualified_query_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Query Request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryResponse"
+                        },
+                        "headers": {
+                            "ETag": {
+                                "type": "string",
+                                "description": "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
+                    },
+                    "404": {
+                        "description": "Is returned when a stored query with qualified_query_name does not exists."
+                    },
+                    "408": {
+                        "description": "Is returned when there is a query execution timeout"
+                    }
+                }
+            }
+        },
         "/requests/": {
             "get": {
                 "description": "It is returning only transactions which in progress\n",
@@ -2804,6 +2951,17 @@ const docTemplate = `{
                 }
             }
         },
+        "model.QueryColumn": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
         "model.QueryRequest": {
             "type": "object",
             "properties": {
@@ -2828,15 +2986,7 @@ const docTemplate = `{
                 "columns": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "name": {
-                                "type": "string"
-                            },
-                            "path": {
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/model.QueryColumn"
                     }
                 },
                 "meta": {

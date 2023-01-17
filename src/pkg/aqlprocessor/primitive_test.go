@@ -19,7 +19,10 @@ func TestProcessor_SelectNull(t *testing.T) {
 			`SELECT NULL FROM EHR`,
 			Select{
 				SelectExprs: []SelectExpr{
-					{Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}}},
+					{
+						Path:  "NULL",
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}},
+					},
 				},
 			},
 			false,
@@ -56,7 +59,10 @@ func TestProcessor_SelectString(t *testing.T) {
 			`SELECT 'hello_world' FROM EHR`,
 			Select{
 				SelectExprs: []SelectExpr{
-					{Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}}},
+					{
+						Path:  `'hello_world'`,
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}},
+					},
 				},
 			},
 			false,
@@ -66,7 +72,10 @@ func TestProcessor_SelectString(t *testing.T) {
 			`SELECT "hello_world" FROM EHR`,
 			Select{
 				SelectExprs: []SelectExpr{
-					{Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}}},
+					{
+						Path:  `"hello_world"`,
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}},
+					},
 				},
 			},
 			false,
@@ -76,7 +85,10 @@ func TestProcessor_SelectString(t *testing.T) {
 			`SELECT '"hello_world"' FROM EHR`,
 			Select{
 				SelectExprs: []SelectExpr{
-					{Value: &PrimitiveSelectValue{Val: Primitive{Val: `"hello_world"`}}},
+					{
+						Path:  `'"hello_world"'`,
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: `"hello_world"`}},
+					},
 				},
 			},
 			false,
@@ -159,6 +171,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
+						Path:  "0",
 						Value: &PrimitiveSelectValue{Val: Primitive{0}},
 					},
 				},
@@ -171,6 +184,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
+						Path:  "-1",
 						Value: &PrimitiveSelectValue{Val: Primitive{-1}},
 					},
 				},
@@ -183,6 +197,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
+						Path:  "123.5e+10",
 						Value: &PrimitiveSelectValue{Val: Primitive{123.5e+10}},
 					},
 				},
@@ -225,6 +240,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
+						Path:  "'2020-10-11'",
 						Value: &PrimitiveSelectValue{Val: Primitive{date}},
 					},
 				},
@@ -237,6 +253,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
+						Path:  "'23:58:58.123'",
 						Value: &PrimitiveSelectValue{Val: Primitive{timeValue}},
 					},
 				},
@@ -249,6 +266,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 			Select{
 				SelectExprs: []SelectExpr{
 					{
+						Path:  "'2020-10-11T23:58:58.123'",
 						Value: &PrimitiveSelectValue{Val: Primitive{dateTimeValue}},
 					},
 				},

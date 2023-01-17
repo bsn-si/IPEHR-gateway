@@ -3,8 +3,9 @@ module hms/gateway
 go 1.19
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/akyoto/cache v1.0.6
-	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20220911224424-aa1f1f12a846
+	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20221202181307-76fa05c21b12
 	github.com/ethereum/go-ethereum v1.10.24-0.20221116142212-add337e0f7ba
 	github.com/filecoin-project/go-address v1.0.0
 	github.com/filecoin-project/go-fil-markets v1.23.2
@@ -18,6 +19,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/ipfs/go-cid v0.2.0
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/multiformats/go-multihash v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0
@@ -25,7 +27,7 @@ require (
 	github.com/swaggo/swag v1.8.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	golang.org/x/crypto v0.2.0
-	golang.org/x/exp v0.0.0-20221212164502-fae10dda9338
+	golang.org/x/exp v0.0.0-20230116083435-1de6713980de
 	gorm.io/driver/sqlite v1.3.6
 	gorm.io/gorm v1.23.8
 )

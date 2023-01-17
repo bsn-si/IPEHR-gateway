@@ -254,6 +254,7 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	cfg.DefaultUserID = uuid.New().String()
 
 	infra := infrastructure.New(cfg)
+
 	apiHandler := api.New(cfg, infra)
 
 	r := apiHandler.Build()

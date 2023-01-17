@@ -2,7 +2,7 @@ package main
 
 // Generating swagger doc spec//
 //go:generate swag fmt -g ../../pkg/api/api.go
-//go:generate swag init --parseDependency -g ../../pkg/api/api.go -d ../../pkg/api -o ../../pkg/api/docs
+//go:generate swag init --parseDepth 1 -g ./../../pkg/api/api.go -d ./../../pkg/api,./../../pkg/docs/model,./../../pkg/docs/service/processing,./../../pkg/user/model  -o ./../../pkg/api/docs
 
 import (
 	"flag"
@@ -27,8 +27,9 @@ func main() {
 
 	infra := infrastructure.New(cfg)
 
-	a := api.New(cfg, infra).Build()
+	defer infra.Close()
 
+	a := api.New(cfg, infra).Build()
 	if err = a.Run(cfg.Host); err != nil {
 		panic(err)
 	}
