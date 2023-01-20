@@ -261,7 +261,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
 
-	docIDEncrypted, err := key.EncryptWithAuthData([]byte(objectVersionID.String()), ehrUUID[:])
+	docIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
 	if err != nil {
 		return fmt.Errorf("EncryptWithAuthData error: %w", err)
 	}
@@ -281,9 +281,9 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		CIDEncr, err := key.Encrypt(CID.Bytes())
 		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+			return fmt.Errorf("CID encryption error error: %w", err)
 		}
 
 		docMeta := &model.DocumentMeta{
@@ -467,7 +467,7 @@ func (s *Service) DefaultGroupAccess() *model.GroupAccess {
 	return s.groupAccessService.Default()
 }
 
-func (s *Service) GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error) {
+func (s *Service) GetList(ctx context.Context, userID, systemID string) ([]*model.EhrDocumentItem, error) {
 	compositions, err := s.indexer.ListDocByType(ctx, userID, systemID, types.Composition)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
@@ -505,7 +505,7 @@ func (s *Service) GetList(ctx context.Context, userID, systemID string, ehrUUID 
 			return nil, fmt.Errorf("Composition %x Name decryption error: %w", c.Id, err)
 		}
 
-		uid, err := docKey.DecryptWithAuthData(uidEncr, ehrUUID[:])
+		uid, err := docKey.Decrypt(uidEncr)
 		if err != nil {
 			return nil, fmt.Errorf("Composition %x UID decryption error: %w", c.Id, err)
 		}

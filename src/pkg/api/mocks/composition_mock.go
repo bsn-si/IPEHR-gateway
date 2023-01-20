@@ -127,18 +127,18 @@ func (mr *MockCompositionServiceMockRecorder) GetLastByBaseID(ctx, userID, syste
 }
 
 // GetList mocks base method.
-func (m *MockCompositionService) GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error) {
+func (m *MockCompositionService) GetList(ctx context.Context, userID, systemID string) ([]*model.EhrDocumentItem, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetList", ctx, userID, systemID, ehrUUID)
+	ret := m.ctrl.Call(m, "GetList", ctx, userID, systemID)
 	ret0, _ := ret[0].([]*model.EhrDocumentItem)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetList indicates an expected call of GetList.
-func (mr *MockCompositionServiceMockRecorder) GetList(ctx, userID, systemID, ehrUUID interface{}) *gomock.Call {
+func (mr *MockCompositionServiceMockRecorder) GetList(ctx, userID, systemID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockCompositionService)(nil).GetList), ctx, userID, systemID, ehrUUID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockCompositionService)(nil).GetList), ctx, userID, systemID)
 }
 
 // IsExist mocks base method.
