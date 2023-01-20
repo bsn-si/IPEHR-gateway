@@ -52,7 +52,7 @@ func ExtractWithUserKey(item *Item, userPubKey, userPrivKey *[32]byte) error {
 	if err != nil {
 		log.Printf("keyEncr: %x key: %x IDEncr: %x", keyEncr, item.Key[:], idEncr)
 
-		return fmt.Errorf("keybox.Open error: %w idDecr: %x", err, idEncr)
+		return fmt.Errorf("Key.Decrypt error: %w idDecr: %x", err, idEncr)
 	}
 
 	idDecrHash := crypto.Keccak256(item.ID)

@@ -253,7 +253,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 
 	// Index Docs ehr_id -> doc_meta
 	{
-		ehrIDEncrypted, err := key.EncryptWithAuthData(ehrUUID[:], ehrUUID[:])
+		ehrIDEncrypted, err := key.Encrypt(ehrUUID[:])
 		if err != nil {
 			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s", err, ehrUUID.String())
 		}
@@ -513,7 +513,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 
 	// Index Docs ehr_id -> doc_meta
 	{
-		statusIDEncrypted, err := key.EncryptWithAuthData([]byte(objectVersionID.String()), ehrUUID[:])
+		statusIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
 		if err != nil {
 			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s statusUid: %s", err, ehrUUID.String(), status.UID.Value)
 		}

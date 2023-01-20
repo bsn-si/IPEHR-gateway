@@ -149,7 +149,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
 
-	docIDEncrypted, err := key.EncryptWithAuthData([]byte(m.UID), []byte(m.TemplateID))
+	docIDEncrypted, err := key.Encrypt([]byte(m.UID))
 	if err != nil {
 		return fmt.Errorf("key.Encrypt error: %w", err)
 	}

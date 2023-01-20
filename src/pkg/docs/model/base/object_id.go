@@ -2,12 +2,14 @@ package base
 
 import (
 	"fmt"
-	"hms/gateway/pkg/errors"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
+
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/errors"
 )
 
 // ObjectID
@@ -124,34 +126,45 @@ func (o *ObjectVersionID) setVersionTreeID(ver string) {
 }
 
 func (o *ObjectVersionID) parseUID(UID string) error {
-	re := regexp.MustCompile(uidDelimiter)
-	parts := re.Split(UID, -1)
+	parts := strings.Split(UID, uidDelimiter)
 
-	if length := len(parts); length == 0 {
+	switch len(parts) {
+	case 0:
 		return nil
-	} else if length == 1 {
+	case 1:
 		o.setVersionTreeID("")
-	} else if length == 2 {
-		ver := strings.Join(parts[1:2], "")
+	case 2:
+		ver := parts[1]
 		if !o.isVersion(ver) {
+			// Using default systemID if it is empty
+			if ver == "" {
+				ver = common.EhrSystemID
+			}
+
 			if o.creatingSystemID != ver {
 				return fmt.Errorf("%w creatingSystemID mismatch", errors.ErrIncorrectFormat)
 			}
 
 			ver = ""
 		}
+
 		o.setVersionTreeID(ver)
-	} else if length == 3 {
-		creatingSystemID := strings.Join(parts[1:2], "")
+	case 3:
+		creatingSystemID := parts[1]
+
+		// Using default systemID if it is empty
+		if creatingSystemID == "" {
+			creatingSystemID = common.EhrSystemID
+		}
 
 		if o.creatingSystemID != creatingSystemID {
 			return fmt.Errorf("%w creatingSystemID mismatch", errors.ErrIncorrectFormat)
 		}
 
-		o.setVersionTreeID(strings.Join(parts[2:3], ""))
+		o.setVersionTreeID(parts[2])
 	}
 
-	objectID := strings.Join(parts[0:1], "")
+	objectID := parts[0]
 
 	objectUUID, err := uuid.Parse(objectID)
 	if err != nil {

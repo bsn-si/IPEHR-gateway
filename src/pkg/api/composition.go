@@ -28,7 +28,7 @@ type (
 		GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 		GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 		DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error)
-		GetList(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]*model.EhrDocumentItem, error)
+		GetList(ctx context.Context, userID, systemID string) ([]*model.EhrDocumentItem, error)
 	}
 
 	Indexer interface {
@@ -516,23 +516,10 @@ func (h CompositionHandler) Update(c *gin.Context) {
 // @Failure  500            "Is returned when an unexpected error occurs while processing a request"
 // @Router   /ehr/{ehr_id}/composition [get]
 func (h CompositionHandler) GetList(c *gin.Context) {
-	ehrID := c.Param("ehrid")
-
 	systemID := c.GetString("ehrSystemID")
-
-	ehrUUID, err := uuid.Parse(ehrID)
-	if err != nil {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
 	userID := c.GetString("userID")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "userID is empty"})
-		return
-	}
 
-	list, err := h.service.GetList(c, userID, systemID, &ehrUUID)
+	list, err := h.service.GetList(c, userID, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

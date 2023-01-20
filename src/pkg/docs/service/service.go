@@ -91,7 +91,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 	var docUID, docDecrypted []byte
 	{
 		if authData != nil {
-			docUID, err = docKey.DecryptWithAuthData(docIDEncrypted, authData)
+			docUID, err = docKey.Decrypt(docIDEncrypted)
 			if err != nil {
 				return nil, fmt.Errorf("DocIDEncrypted DecryptWithAuthData error: %w", err)
 			}
