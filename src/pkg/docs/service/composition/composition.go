@@ -281,9 +281,9 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+		CIDEncr, err := key.Encrypt(CID.Bytes())
 		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+			return fmt.Errorf("CID encryption error error: %w", err)
 		}
 
 		docMeta := &model.DocumentMeta{
