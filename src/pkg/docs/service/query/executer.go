@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"hms/gateway/pkg/errors"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/jmoiron/sqlx"
 )

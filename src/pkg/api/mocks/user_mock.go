@@ -6,11 +6,11 @@ package mocks
 
 import (
 	context "context"
-	access "hms/gateway/pkg/access"
-	chachaPoly "hms/gateway/pkg/crypto/chachaPoly"
-	processing "hms/gateway/pkg/docs/service/processing"
-	model "hms/gateway/pkg/user/model"
-	service "hms/gateway/pkg/user/service"
+	access "github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	chachaPoly "github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	processing "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	model "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	service "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
 	reflect "reflect"
 
 	jwt "github.com/golang-jwt/jwt"

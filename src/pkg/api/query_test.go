@@ -3,13 +3,14 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"

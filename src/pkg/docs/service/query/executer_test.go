@@ -2,8 +2,9 @@ package query
 
 import (
 	"context"
-	"hms/gateway/pkg/errors"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jmoiron/sqlx"

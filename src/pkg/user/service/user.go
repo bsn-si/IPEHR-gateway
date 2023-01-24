@@ -18,16 +18,16 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/compressor"
-	docModel "hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service/processing"
-	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/users"
-	"hms/gateway/pkg/infrastructure"
-	"hms/gateway/pkg/user/model"
-	"hms/gateway/pkg/user/roles"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
+	docModel "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 )
 
 type Service struct {

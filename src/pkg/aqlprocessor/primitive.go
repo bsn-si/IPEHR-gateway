@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"hms/gateway/pkg/aqlprocessor/aqlparser"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"golang.org/x/exp/constraints"
 

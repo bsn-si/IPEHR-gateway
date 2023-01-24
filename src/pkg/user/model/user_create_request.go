@@ -1,8 +1,8 @@
 package model
 
 import (
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/user/roles"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 )
 
 // Fields Name, Address, Description are required for Doctor role

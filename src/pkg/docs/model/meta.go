@@ -1,6 +1,6 @@
 package model
 
-import "hms/gateway/pkg/indexer/ehrIndexer"
+import "github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 
 type DocumentMeta ehrIndexer.DocsDocumentMeta
 

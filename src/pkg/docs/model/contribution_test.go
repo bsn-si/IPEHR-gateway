@@ -3,9 +3,10 @@ package model_test
 import (
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
 	"strings"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 
 	"testing"
 

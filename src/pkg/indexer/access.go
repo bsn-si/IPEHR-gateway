@@ -7,11 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/accessStore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
 )
 
 func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind access.Kind, accessID []byte) ([]byte, access.Level, error) {

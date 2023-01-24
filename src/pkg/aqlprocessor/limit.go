@@ -1,9 +1,10 @@
 package aqlprocessor
 
 import (
-	"hms/gateway/pkg/aqlprocessor/aqlparser"
-	"hms/gateway/pkg/errors"
 	"strconv"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Limit struct {

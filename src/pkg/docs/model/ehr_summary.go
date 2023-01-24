@@ -1,6 +1,6 @@
 package model
 
-import "hms/gateway/pkg/docs/model/base"
+import "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 
 type EhrSummary struct {
 	SystemID  base.ObjectID `json:"system_id"`

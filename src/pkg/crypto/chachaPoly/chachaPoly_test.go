@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 )
 
 func TestEncryptWith(t *testing.T) {

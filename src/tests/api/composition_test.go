@@ -12,10 +12,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common/utils"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 func (testWrap *testWrap) compositionCreateFail(testData *TestData) func(t *testing.T) {

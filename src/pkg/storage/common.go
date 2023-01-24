@@ -1,8 +1,9 @@
 package storage
 
 import (
-	"hms/gateway/pkg/storage/localfile"
 	"log"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/localfile"
 )
 
 var storage Storager

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"hms/gateway/pkg/storage"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage"
 )
 
 type pathTest struct {

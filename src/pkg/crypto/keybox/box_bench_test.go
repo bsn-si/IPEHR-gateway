@@ -7,8 +7,8 @@ import (
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/crypto/keybox"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
 )
 
 func BenchmarkCrypt(b *testing.B) {

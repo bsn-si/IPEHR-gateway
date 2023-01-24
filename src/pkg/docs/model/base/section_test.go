@@ -2,8 +2,9 @@ package base_test
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/model/base"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 
 	"github.com/google/go-cmp/cmp"
 )

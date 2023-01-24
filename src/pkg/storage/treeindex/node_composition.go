@@ -1,8 +1,8 @@
 package treeindex
 
 import (
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 func processComposition(cmp model.Composition) (Noder, error) {

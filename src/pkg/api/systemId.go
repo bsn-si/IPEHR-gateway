@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 
-	"hms/gateway/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 )
 
 func ehrSystemID(c *gin.Context) {

@@ -7,10 +7,10 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Service struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/docs/parser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/parser"
 )
 
 func TestParseEhr(t *testing.T) {

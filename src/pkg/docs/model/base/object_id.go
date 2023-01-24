@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 // ObjectID

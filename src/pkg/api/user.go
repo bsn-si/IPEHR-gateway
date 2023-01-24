@@ -12,13 +12,13 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/user/model"
-	"hms/gateway/pkg/user/roles"
-	userService "hms/gateway/pkg/user/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
+	userService "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
 )
 
 type UserService interface {

@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 // ProjectRootDir Get path to this project root

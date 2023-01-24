@@ -2,14 +2,15 @@ package api
 
 import (
 	"fmt"
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/user/model"
-	"hms/gateway/pkg/user/roles"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"

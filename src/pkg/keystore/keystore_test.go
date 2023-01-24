@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/keystore"
-	"hms/gateway/pkg/storage"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/keystore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage"
 )
 
 const testStorePath string = "/tmp/localfiletest"

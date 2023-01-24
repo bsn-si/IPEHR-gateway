@@ -10,9 +10,9 @@ import (
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage"
 )
 
 type KeyStore struct {

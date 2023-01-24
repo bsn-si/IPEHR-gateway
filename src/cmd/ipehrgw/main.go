@@ -7,10 +7,10 @@ package main
 import (
 	"flag"
 
-	"hms/gateway/pkg/api"
-	_ "hms/gateway/pkg/api/docs"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/infrastructure"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api"
+	_ "github.com/bsn-si/IPEHR-gateway/src/pkg/api/docs"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 )
 
 func main() {

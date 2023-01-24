@@ -4,9 +4,9 @@ import (
 	"encoding/xml"
 	"time"
 
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Parser struct{}

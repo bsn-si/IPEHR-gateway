@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage/treeindex"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/treeindex"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"

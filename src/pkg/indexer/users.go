@@ -10,11 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/users"
-	userModel "hms/gateway/pkg/user/model"
-	"hms/gateway/pkg/user/roles"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 )
 
 func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
