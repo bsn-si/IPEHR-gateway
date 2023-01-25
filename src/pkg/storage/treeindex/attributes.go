@@ -53,7 +53,7 @@ func (nw *NodeWrapper) UnmarshalMsgpack(data []byte) error {
 	case EventContextNodeType:
 		nw.data = &EventContextNode{}
 	default:
-		fmt.Errorf("unexpected node type: %v", tmp.NodeType)
+		return fmt.Errorf("unexpected node type: %v", tmp.NodeType) //nolint
 	}
 
 	if err := msgpack.Unmarshal(data, &nw.data); err != nil {
