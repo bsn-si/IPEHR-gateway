@@ -5,6 +5,10 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"strings"
+
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/errors"
 )
 
 type Directory struct {
@@ -22,6 +26,27 @@ type DirectoryItem struct {
 }
 
 const _directorySeparator = "/"
+
+func (d *Directory) Validate() error {
+	var err error
+
+	var errs []error
+
+	if d.UID == nil || d.UID.Value == "" {
+		errs = append(errs, errors.ErrFieldIsEmpty("uid"))
+	}
+
+	for i, e := range errs {
+		if i == 0 {
+			err = e
+			continue
+		}
+
+		err = errors.Wrap(err, e.Error())
+	}
+
+	return err
+}
 
 func (d *Directory) GetByPath(p string) (*Directory, error) {
 	p = d.sanitize(p)

@@ -40,17 +40,17 @@ func (m *MockDirectoryService) EXPECT() *MockDirectoryServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockDirectoryService) Create(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, user *model0.UserInfo, d *model.Directory) error {
+func (m *MockDirectoryService) Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, dirUID string, d *model.Directory) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, req, systemID, ehrUUID, user, d)
+	ret := m.ctrl.Call(m, "Create", ctx, req, ehrUUID, patientID, dirUID, d)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDirectoryServiceMockRecorder) Create(ctx, req, systemID, ehrUUID, user, d interface{}) *gomock.Call {
+func (mr *MockDirectoryServiceMockRecorder) Create(ctx, req, ehrUUID, patientID, dirUID, d interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDirectoryService)(nil).Create), ctx, req, systemID, ehrUUID, user, d)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDirectoryService)(nil).Create), ctx, req, ehrUUID, patientID, dirUID, d)
 }
 
 // Delete mocks base method.
@@ -69,18 +69,18 @@ func (mr *MockDirectoryServiceMockRecorder) Delete(ctx, req, systemID, ehrUUID, 
 }
 
 // GetByID mocks base method.
-func (m *MockDirectoryService) GetByID(ctx context.Context, userID, versionUID string) (*model.Directory, error) {
+func (m *MockDirectoryService) GetByID(ctx context.Context, userID, ehrUUID, versionUID string) (*model.Directory, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", ctx, userID, versionUID)
+	ret := m.ctrl.Call(m, "GetByID", ctx, userID, ehrUUID, versionUID)
 	ret0, _ := ret[0].(*model.Directory)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockDirectoryServiceMockRecorder) GetByID(ctx, userID, versionUID interface{}) *gomock.Call {
+func (mr *MockDirectoryServiceMockRecorder) GetByID(ctx, userID, ehrUUID, versionUID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDirectoryService)(nil).GetByID), ctx, userID, versionUID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDirectoryService)(nil).GetByID), ctx, userID, ehrUUID, versionUID)
 }
 
 // GetByTime mocks base method.

@@ -16,15 +16,22 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service/processing"
+	"hms/gateway/pkg/errors"
+	"hms/gateway/pkg/helper"
+	userModel "hms/gateway/pkg/user/model"
 )
 
 type DirectoryService interface {
 	NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error)
-	Create(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, user *userModel.UserInfo, d *model.Directory) error
+	Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, dirUID string, d *model.Directory) error
 	Update(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, user *userModel.UserInfo, d *model.Directory) error
 	Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error)
 	GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error)
-	GetByID(ctx context.Context, userID string, versionUID string) (*model.Directory, error)
+	GetByID(ctx context.Context, userID string, ehrUUID, versionUID string) (*model.Directory, error)
 }
 
 type DirectoryHandler struct {
@@ -61,10 +68,11 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Failure      404  "Is returned when an EHR with {ehr_id}  does not exist"
 // @Failure      409  "Is returned when a resource with same identifier(s) already exists"
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
-// @Router       /ehr/{ehr_id}/directory [post]
+// @Router       /ehr/{ehr_id}/directory/patient_id [post]
 func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
+	patientID := ctx.Param("patient_id")
 	userID := ctx.GetString("userID")
 	systemID := ctx.GetString("ehrSystemID")
 	ehrID := ctx.Param("ehrid")
@@ -78,9 +86,11 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, patientID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
-		ctx.AbortWithStatus(http.StatusNotFound)
+		errResponse.SetMessage("Incorrect patient ID")
+
+		ctx.JSON(http.StatusNotFound, errResponse)
 		return
 	} else if err != nil {
 		log.Println("GetEhrUUIDByUserID error: ", err)
@@ -96,7 +106,33 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	exist, err := h.service.GetByID(ctx, userID, d.UID.Value)
+	dUID := ""
+	if d.UID == nil || d.UID.Value == "" {
+		dUID = uuid.New().String()
+	}
+
+	directoryVersionUID, err := base.NewObjectVersionID(dUID, systemID)
+	if err != nil {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("uid"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+	}
+
+	d.UID = &base.UIDBasedID{
+		ObjectID: base.ObjectID{
+			Type:  base.HierObjectIDItemType,
+			Value: directoryVersionUID.String(),
+		},
+	}
+
+	if err = d.Validate(); err != nil {
+		errResponse.SetMessage("Request validation error").AddError(err)
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	exist, err := h.service.GetByID(ctx, patientID, ehrUUID.String(), d.String())
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		log.Println("directoryService.GetByID error: ", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
@@ -116,17 +152,11 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	userInfo, err := h.userService.Info(ctx, userID, systemID)
-	if err != nil {
-		log.Println("userService.Info error: ", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
+	if err := h.service.Create(ctx, procRequest, ehrID, patientID, d.String(), d); err != nil {
+		log.Println("directoryService.Create error: ", err)
+		errResponse.SetMessage("Execute failed")
 
-	if err := h.service.Create(ctx, procRequest, systemID, &ehrUUID, userInfo, d); err != nil {
-		errResponse.SetMessage("Execute failed").AddError(err)
-
-		ctx.JSON(http.StatusBadRequest, errResponse)
+		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return
 	}
 
@@ -172,6 +202,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
+	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 
@@ -205,6 +236,13 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 	precedingVersionUID := ctx.GetHeader("If-Match")
 	if precedingVersionUID == "" {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "If-Match is empty"})
+		return
+	}
+
+	if err = d.Validate(); err != nil {
+		errResponse.SetMessage("Request validation error").AddError(err)
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
@@ -287,6 +325,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
+	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 
@@ -388,6 +427,7 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
+	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 	versionAtTime := ctx.Query("version_at_time")
@@ -468,6 +508,7 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
+	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 	versionUID := ctx.Param("version_uid")
@@ -491,6 +532,18 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 		return
 	}
 
+	versionUID := ctx.Param("version_uid")
+
+	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
+	if err != nil || !objectVersionID.Equal(versionUID) {
+		errResponse.SetMessage("Incorrect param").
+			AddError(errors.ErrFieldIsIncorrect("version_uid"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	directoryVersion, err := h.service.GetByID(ctx, userID, ehrID, objectVersionID.String())
 	directoryVersion, err := h.service.GetByID(ctx, userID, versionUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {

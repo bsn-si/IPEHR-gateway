@@ -26,6 +26,7 @@ type TestData struct {
 	requests      []*Request
 	groupsAccess  []*model.GroupAccess
 	storedQueries []*model.StoredQuery
+	directories   []*model.Directory
 	userGroups    []*userModel.UserGroup
 	doctors       []*Doctor
 }
@@ -164,7 +165,7 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
-	if !t.Run("COMPOSITION update", testWrap.compositionUpdate(testData)) {
+	if !t.Run("DIRECTORY create", testWrap.directoryCreate(testData)) {
 		t.Fatal()
 	}
 
