@@ -1,15 +1,9 @@
-# Milestone 6
+# Design and development of an application to manage personal medical data and its’ access rights
 
-## Deliverables 1 and 2
+## Application design compatible with web and mobile platforms
 
-  
-
-### Application design compatible with web and mobile platforms
-
-  
 
 To enable Patients to control access to their medical data we designed web and mobile applications.
-
   
 
 The Patient should be able to:
@@ -21,28 +15,22 @@ The Patient should be able to:
 -   See the list of Doctors who have access to Patient’s EHR Documents
     
 -   Manage access of Doctors to personal EHR Documents
-    
 
   
 
 To ensure cross-platform compatibility we used PWA (progressive web app) technology.
 
   
-
-### UI/UX design
-
+## UI/UX design
   
 
 We developed a set of [wireframes](https://miro.com/app/board/uXjVPwaRjjY=/?share_link_id=25084805149) and [specification](https://docs.google.com/document/d/1aIDZMmukk8Y0d_b_e3eD0CrBj9kCnacKaGxKX1iDer4/edit?usp=sharing) according to the planned functionality. Based on these artifacts a [design layout](https://www.figma.com/file/TSKmYUCG3pHjDGtkCoB62Y/%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D1%8C%D0%BA%D0%B0-ipehr?node-id=0%3A1&t=cDnGRxraxnS0eXoM-0) was developed.
 
   
 
-## Deliverable 3
-
-### Frontend development.
+## Frontend development.
 
 To ensure cross-platform compatibility we used PWA (progressive web app) technology.
-
   
 
 The only user of the application is the Patient.
@@ -60,15 +48,10 @@ Available functionality:
 -   Removing Doctors from the list of Doctors
     
 
-  
+For now all blockchain operations are carried out on the Backend side. The stack of the application does not include any Web3 technologies. It is built on Next.js, Nextauth. In Nextjs we use out-of-the-box React, Typescript, SCSS, server-side-rendering, and others.
 
-All blockchain operations are carried out on the Backend side. The stack of the application does not include any Web3 technologies. It is built on Next.js, Nextauth. In Nextjs we use out-of-the-box React, Typescript, SCSS, server-side-rendering, and others.
 
-  
-
-## Deliverable 4
-
-### Blockchain integration to manage rights.
+## Blockchain integration to manage rights.
 
 To control access to EHR Documents the following smart contracts are used:
 
@@ -78,36 +61,25 @@ To control access to EHR Documents the following smart contracts are used:
 
 [AccessStore]([https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol))
 
-  
 
 For each Patient during registration, a group of documents `All documents` and a group of users `Doctors` are created.
 
-  
 
 -   All new documents of the Patient are assigned to the group `All documents`.
     
--   All members of the `Doctors` group have read-only access to the documents assigned to the `All documents' group.
+-   All members of the `Doctors` group have access to the documents assigned to the `All documents' group.
     
 -   The Patient can add Doctors to the `Doctors` group and they automatically get access to all Patient's Documents.
     
 -   When a Doctor is removed from the 'Doctors' group, their access to document keys is terminated.
     
 
-  
-  
+## Test case design and development + Testing
 
-## Deliverables 5 and 6
-
-  
-
-### Test case design and development + Testing
-
-  
 
 To ensure the quality of the application we developed a test case:
 
   
-
 Precondition:
 
 -   A Patient is registered (swagger POST /user/register)
@@ -118,8 +90,6 @@ Precondition:
     
 -   Doctor’s QR-code is generated
     
-
-  
   
 
 Main flow:
@@ -156,7 +126,6 @@ Main flow:
     
 -   We use Swagger to check if the Doctor is stripped of access to the Patient’s Documents
     
-
   
   
 Here is a [video](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4) to demonstrate the process.
