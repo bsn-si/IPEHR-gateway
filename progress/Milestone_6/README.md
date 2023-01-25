@@ -53,13 +53,7 @@ For now all blockchain operations are carried out on the Backend side. The stack
 
 ## Blockchain integration to manage rights.
 
-To control access to EHR Documents the following smart contracts are used:
-
-[EhrIndexer]([https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol)),
-
-[Users]([https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/Users.sol](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/Users.sol)),
-
-[AccessStore]([https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol))
+To control access to EHR Documents the following smart contracts are used: [EhrIndexer](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol), [Users](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/Users.sol), [AccessStore](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol)
 
 
 For each Patient during registration, a group of documents `All documents` and a group of users `Doctors` are created.
