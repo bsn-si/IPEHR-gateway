@@ -3,6 +3,43 @@
 ## Application design compatible with web and mobile platforms
 
 
+As described in the ["users identity"](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_3/2_Users_identity.md) section there are two roles used in the current implementation of ipEHR: a `Patient` and a `Doctor`.
+
+The `user` is the following structure:
+
+```
+struct User {
+    bytes32   id;
+    bytes32   systemID;
+    Role      role;
+    bytes     pwdHash;
+  }
+```
+
+User groups:
+
+```
+struct UserGroup {
+    mapping(bytes32 => bytes) params;
+    mapping(address => AccessLevel) members;
+    uint membersCount;
+}
+```
+
+Only a member with `Owner` or `Admin` access rights can add users to a group.
+
+
+Users and user groups are stored in [IPEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes)
+
+```
+mapping (address => User)      users;
+mapping (bytes32 => UserGroup) userGroups;
+```
+
+Pre-registration is required to work with the IPEHR system.
+  
+ 
+ 
 To enable Patients to control access to their medical data we designed web and mobile applications.
   
 
@@ -55,6 +92,16 @@ For now all blockchain operations are carried out on the Backend side. The stack
 
 To control access to EHR Documents the following smart contracts are used: [EhrIndexer](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol), [Users](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/Users.sol), [AccessStore](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol)
 
+### Algorithm of changing document access rights
+
+![doc_access](https://user-images.githubusercontent.com/8058268/190620811-fd433f0b-44b7-4e04-a425-d77f62b55835.svg)
+
+In case of revoking access to an EHR, re-encrypting (and hence re-writing) all documents would be quite an inexpedient challenge, taking into account how much time and financial resources it will take. In addition, deleting files from FC is not currently implemented. The most reasonable method for revoking access is re-encrypting (hence re-writing) access keys!
+
+Each EHR document is symmetrically encrypted with a unique access key. User access to documents is controlled by the `docAccess` smart-contract index.
+
+
+You can get more information in the ["revoking access"](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_2/3_Revoking_access.md) section.
 
 For each Patient during registration, a group of documents `All documents` and a group of users `Doctors` are created.
 
@@ -67,6 +114,8 @@ For each Patient during registration, a group of documents `All documents` and a
     
 -   When a Doctor is removed from the 'Doctors' group, their access to document keys is terminated.
     
+
+To read more info about access rights management, please visit the ["docs access management"](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_3/3_Docs_access_mgmt.md) section.
 
 ## Test case design and development + Testing
 
