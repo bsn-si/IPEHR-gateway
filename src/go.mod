@@ -1,4 +1,4 @@
-module hms/gateway
+module github.com/bsn-si/IPEHR-gateway/src
 
 go 1.19
 

@@ -1,7 +1,7 @@
 package treeindex
 
 import (
-	"hms/gateway/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 )
 
 func processEventContext(ctx model.EventContext) (Noder, error) {

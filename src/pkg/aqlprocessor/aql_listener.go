@@ -3,7 +3,7 @@ package aqlprocessor
 import (
 	"log"
 
-	"hms/gateway/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )

@@ -2,9 +2,10 @@ package aqlprocessor
 
 import (
 	"fmt"
-	"hms/gateway/pkg/aqlprocessor/aqlparser"
-	"hms/gateway/pkg/errors"
 	"strings"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )

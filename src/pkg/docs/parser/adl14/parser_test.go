@@ -1,8 +1,9 @@
 package adl14
 
 import (
-	"hms/gateway/pkg/docs/model"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 )
 
 func TestParser_Validate(t *testing.T) {

@@ -2,7 +2,8 @@ package aqlquerier
 
 import (
 	"database/sql/driver"
-	"hms/gateway/pkg/errors"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type AQLRowser interface {

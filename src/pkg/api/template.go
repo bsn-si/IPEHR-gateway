@@ -9,10 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service/template"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/helper"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/template"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 )
 
 type TemplateService interface {

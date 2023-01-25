@@ -3,7 +3,7 @@ package model
 import (
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 )
 
 type GroupAccess struct {

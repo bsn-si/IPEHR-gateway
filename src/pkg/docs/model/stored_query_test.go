@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"hms/gateway/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 )
 
 func TestStoredQuery_Validate(t *testing.T) {

@@ -1,6 +1,6 @@
 package model
 
-import "hms/gateway/pkg/docs/model/base"
+import "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 
 // EventContext
 // Documents the context information of a healthcare event involving the subject of care and the health

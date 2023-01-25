@@ -6,8 +6,8 @@ package mocks
 
 import (
 	context "context"
-	model "hms/gateway/pkg/docs/model"
-	template "hms/gateway/pkg/docs/service/template"
+	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	template "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/template"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

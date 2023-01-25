@@ -10,9 +10,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 const version123 = "1.2.3"

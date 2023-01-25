@@ -5,13 +5,14 @@ import (
 	"crypto/rand"
 	"flag"
 	"fmt"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/infrastructure"
-	"hms/gateway/pkg/user/roles"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 
 	"golang.org/x/crypto/scrypt"
 )

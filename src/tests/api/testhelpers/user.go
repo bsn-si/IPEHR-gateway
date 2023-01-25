@@ -1,6 +1,6 @@
 package testhelpers
 
-import "hms/gateway/pkg/user/model"
+import "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 
 type UserHelper struct {
 }

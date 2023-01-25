@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/errors"
 	"io"
 	"log"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/google/uuid"
 )

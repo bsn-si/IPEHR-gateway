@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 //	Version tree identifier for one version. Lexical form: trunk_version [ '.' branch_number '.' branch_version ]

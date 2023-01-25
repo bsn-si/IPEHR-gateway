@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Config struct {

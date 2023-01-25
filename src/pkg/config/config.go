@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"hms/gateway/pkg/common/utils"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Config struct {

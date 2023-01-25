@@ -9,14 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	docGroupService "hms/gateway/pkg/docs/service/docGroup"
-	"hms/gateway/pkg/docs/service/ehr"
-	"hms/gateway/pkg/docs/service/processing"
-	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	userService "hms/gateway/pkg/user/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
+	docGroupService "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/docGroup"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/ehr"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	userService "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
 )
 
 type EhrHandler struct {

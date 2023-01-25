@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/crypto/chacha20poly1305"
 
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 const (

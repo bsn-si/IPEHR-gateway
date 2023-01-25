@@ -10,11 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"hms/gateway/pkg/common/fakeData"
-	docModel "hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/user/model"
-	"hms/gateway/pkg/user/roles"
-	"hms/gateway/tests/api/testhelpers"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	docModel "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
+	"github.com/bsn-si/IPEHR-gateway/src/tests/api/testhelpers"
 )
 
 type User struct {

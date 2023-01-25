@@ -8,13 +8,13 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/docs/types"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/infrastructure"
-	userModel "hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/types"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 type Service struct {

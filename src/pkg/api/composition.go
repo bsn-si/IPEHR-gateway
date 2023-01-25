@@ -10,13 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/composition"
-	"hms/gateway/pkg/docs/service/processing"
-	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/helper"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/composition"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 )
 
 type (

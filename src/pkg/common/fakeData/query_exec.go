@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"hms/gateway/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 )
 
 func QueryExecRequest(ehrID string) []byte {

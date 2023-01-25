@@ -7,8 +7,8 @@ import (
 
 	"github.com/ipfs/go-cid"
 
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/storage/filecoin"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/filecoin"
 )
 
 func TestStartDeal(t *testing.T) {

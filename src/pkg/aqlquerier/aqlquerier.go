@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"hms/gateway/pkg/aqlprocessor"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage/treeindex"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/treeindex"
 )
 
 func init() {

@@ -6,9 +6,9 @@ package mocks
 
 import (
 	context "context"
-	model "hms/gateway/pkg/docs/model"
-	processing "hms/gateway/pkg/docs/service/processing"
-	model0 "hms/gateway/pkg/user/model"
+	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	processing "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	model0 "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 	reflect "reflect"
 	time "time"
 

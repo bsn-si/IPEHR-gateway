@@ -1,8 +1,8 @@
 package treeindex
 
 import (
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 func processElement(node Noder, obj *base.Element) (Noder, error) {

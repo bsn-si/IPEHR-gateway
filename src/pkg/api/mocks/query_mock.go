@@ -6,8 +6,8 @@ package mocks
 
 import (
 	context "context"
-	model "hms/gateway/pkg/docs/model"
-	base "hms/gateway/pkg/docs/model/base"
+	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	base "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	reflect "reflect"
 
 	gin "github.com/gin-gonic/gin"

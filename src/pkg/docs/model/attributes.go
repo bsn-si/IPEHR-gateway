@@ -1,8 +1,8 @@
 package model
 
 import (
-	"hms/gateway/pkg/indexer/ehrIndexer"
-	"hms/gateway/pkg/indexer/users"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
 )
 
 type Attribute = uint8

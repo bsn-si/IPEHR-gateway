@@ -8,17 +8,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/compressor"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service/processing"
-	proc "hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/infrastructure"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 )
 
 type DefaultDocumentService struct {

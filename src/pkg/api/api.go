@@ -10,17 +10,17 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/composition"
-	contributionService "hms/gateway/pkg/docs/service/contribution"
-	directoryService "hms/gateway/pkg/docs/service/directory"
-	docGroupService "hms/gateway/pkg/docs/service/docGroup"
-	"hms/gateway/pkg/docs/service/groupAccess"
-	"hms/gateway/pkg/docs/service/query"
-	"hms/gateway/pkg/docs/service/template"
-	"hms/gateway/pkg/infrastructure"
-	userService "hms/gateway/pkg/user/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/composition"
+	contributionService "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/contribution"
+	directoryService "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/directory"
+	docGroupService "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/docGroup"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/groupAccess"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/query"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/template"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
+	userService "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
 )
 
 // @title        IPEHR Gateway API

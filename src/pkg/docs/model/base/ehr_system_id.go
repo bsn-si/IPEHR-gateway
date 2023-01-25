@@ -2,7 +2,8 @@ package base
 
 import (
 	"fmt"
-	"hms/gateway/pkg/errors"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 // EhrSystemID used in a different places like the identifier of the system, e.g. in OBJECT_VERSION_ID this identifier

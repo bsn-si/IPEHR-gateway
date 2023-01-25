@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type RequestInterface interface {

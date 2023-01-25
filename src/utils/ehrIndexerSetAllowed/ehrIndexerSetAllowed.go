@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/indexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer"
 )
 
 func main() {

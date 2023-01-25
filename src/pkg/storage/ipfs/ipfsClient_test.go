@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/storage/ipfs"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/ipfs"
 
 	"github.com/ipfs/go-cid"
 )

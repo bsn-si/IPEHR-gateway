@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"hms/gateway/pkg/common/utils"
-	"hms/gateway/pkg/storage/localfile"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/localfile"
 )
 
 func TestLocalfileStorage(t *testing.T) {

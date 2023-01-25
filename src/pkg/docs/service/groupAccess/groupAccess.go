@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 )
 
 type Service struct {

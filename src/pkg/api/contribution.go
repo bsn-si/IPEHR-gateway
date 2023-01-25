@@ -10,11 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/helper"
-	userModel "hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 type ContributionService interface {

@@ -7,9 +7,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 func ExtractWithUserKey(item *Item, userPubKey, userPrivKey *[32]byte) error {

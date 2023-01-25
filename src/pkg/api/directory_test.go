@@ -15,13 +15,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	userModel "hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 //

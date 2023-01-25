@@ -3,11 +3,12 @@ package api_test
 import (
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 const (

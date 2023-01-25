@@ -3,8 +3,8 @@ package treeindex
 import (
 	"fmt"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 
 	"github.com/pkg/errors"
 )

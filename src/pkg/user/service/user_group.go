@@ -10,14 +10,14 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/compressor"
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer"
-	"hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 func (s *Service) GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error) {

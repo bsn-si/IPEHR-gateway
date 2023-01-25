@@ -3,8 +3,8 @@ package aqlquerier
 import (
 	"fmt"
 
-	"hms/gateway/pkg/aqlprocessor"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 func processWhere(where *aqlprocessor.Where, sources dataRows) (dataRows, error) {

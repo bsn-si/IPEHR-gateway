@@ -2,8 +2,9 @@ package model
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/model/base"
-	errorsPkg "hms/gateway/pkg/errors"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	errorsPkg "github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/pkg/errors"
 )

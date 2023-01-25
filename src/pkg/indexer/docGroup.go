@@ -9,11 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/crypto/chachaPoly"
-	"hms/gateway/pkg/crypto/keybox"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/ehrIndexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 )
 
 func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKeyEncr, gNameEncr []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {

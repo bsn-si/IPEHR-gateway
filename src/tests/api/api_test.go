@@ -10,14 +10,14 @@ import (
 
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/api"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/infrastructure"
-	"hms/gateway/pkg/storage"
-	userModel "hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 type TestData struct {

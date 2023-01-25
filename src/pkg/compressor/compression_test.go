@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/compressor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 )
 
 func TestCompression(t *testing.T) {

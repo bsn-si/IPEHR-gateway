@@ -15,10 +15,10 @@ import (
 	"github.com/ipfs/go-cid"
 	"gorm.io/gorm"
 
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/storage/filecoin"
-	"hms/gateway/pkg/storage/ipfs"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/filecoin"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/ipfs"
 )
 
 type (

@@ -2,16 +2,17 @@ package contribution
 
 import (
 	"context"
-	"hms/gateway/pkg/common"
 	"time"
 
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/helper"
-	userModel "hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 type Service struct {

@@ -1,6 +1,6 @@
 package access
 
-import "hms/gateway/pkg/crypto/chachaPoly"
+import "github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 
 type Item struct {
 	ID     []byte

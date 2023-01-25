@@ -1,7 +1,7 @@
 package request
 
 import (
-	"hms/gateway/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 )
 
 type Service struct {

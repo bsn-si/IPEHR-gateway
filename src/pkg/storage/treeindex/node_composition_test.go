@@ -2,10 +2,11 @@ package treeindex
 
 import (
 	"encoding/json"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
 	"os"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 
 	"github.com/stretchr/testify/assert"
 )

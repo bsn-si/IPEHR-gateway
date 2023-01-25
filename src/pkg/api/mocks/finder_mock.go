@@ -6,7 +6,7 @@ package mocks
 
 import (
 	context "context"
-	helper "hms/gateway/pkg/helper"
+	helper "github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

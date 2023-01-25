@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"testing"
 
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 func (testWrap *testWrap) userGroupCreate(testData *TestData) func(t *testing.T) {

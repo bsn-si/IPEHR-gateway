@@ -8,16 +8,16 @@ import (
 	"github.com/jmoiron/sqlx"
 	"gorm.io/gorm"
 
-	_ "hms/gateway/pkg/aqlquerier" //nolint
-	"hms/gateway/pkg/compressor"
-	"hms/gateway/pkg/config"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/indexer"
-	"hms/gateway/pkg/keystore"
-	"hms/gateway/pkg/localDB"
-	"hms/gateway/pkg/storage"
-	"hms/gateway/pkg/storage/filecoin"
-	"hms/gateway/pkg/storage/ipfs"
+	_ "github.com/bsn-si/IPEHR-gateway/src/pkg/aqlquerier" //nolint
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/keystore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/localDB"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/filecoin"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/ipfs"
 )
 
 type Infra struct {

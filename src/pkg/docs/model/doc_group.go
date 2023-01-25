@@ -1,7 +1,7 @@
 package model
 
 import (
-	"hms/gateway/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 
 	"github.com/google/uuid"
 )

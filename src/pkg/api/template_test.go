@@ -14,10 +14,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/parser/adl14"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/parser/adl14"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 //

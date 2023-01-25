@@ -11,11 +11,11 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/indexer/users"
-	userModel "hms/gateway/pkg/user/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
+	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
 func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {

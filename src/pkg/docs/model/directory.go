@@ -1,9 +1,10 @@
 package model
 
 import (
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/errors"
 	"strings"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Directory struct {

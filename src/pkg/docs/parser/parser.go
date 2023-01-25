@@ -3,7 +3,7 @@ package parser
 import (
 	"encoding/json"
 
-	"hms/gateway/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 )
 
 func ParseEhr(inDocument []byte) (doc *model.EHR, err error) {

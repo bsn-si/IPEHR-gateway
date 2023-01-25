@@ -15,7 +15,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 const (

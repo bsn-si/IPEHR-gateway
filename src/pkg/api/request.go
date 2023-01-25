@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/docs/service"
-	"hms/gateway/pkg/docs/service/request"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/request"
 )
 
 type RequestHandler struct {

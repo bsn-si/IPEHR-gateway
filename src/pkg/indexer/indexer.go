@@ -18,12 +18,12 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
-	"hms/gateway/pkg/access"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/helper"
-	"hms/gateway/pkg/indexer/accessStore"
-	"hms/gateway/pkg/indexer/ehrIndexer"
-	"hms/gateway/pkg/indexer/users"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
 )
 
 type Index struct {

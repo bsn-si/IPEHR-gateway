@@ -2,9 +2,10 @@ package api_test
 
 import (
 	"bytes"
-	"hms/gateway/pkg/common/fakeData"
 	"net/http"
 	"testing"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
 )
 
 func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"hms/gateway/pkg/common/utils"
-	"hms/gateway/pkg/compressor"
-	"hms/gateway/pkg/crypto/chachaPoly"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 )
 
 func BenchmarkCompression(b *testing.B) {

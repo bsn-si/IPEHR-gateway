@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"hms/gateway/pkg/common/fakeData"
-	"hms/gateway/pkg/common/utils"
-	docModel "hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
+	docModel "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 func (testWrap *testWrap) definitionTemplate14Upload(testData *TestData) func(t *testing.T) {
