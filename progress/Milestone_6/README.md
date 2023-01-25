@@ -171,5 +171,6 @@ Main flow:
     
   
   
-Here is a [video](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4) to demonstrate the process.
+Here is the demonstration video:
+[![Дизайн без названия (1)](https://user-images.githubusercontent.com/98888366/214616759-e0c84f22-b524-4879-acdd-68b81e775676.png)](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4)
 
