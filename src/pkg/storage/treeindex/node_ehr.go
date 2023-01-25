@@ -29,18 +29,19 @@ func processEHR(ehr model.EHR) (*EHRNode, error) {
 type EHRNode struct {
 	baseNode
 
-	attributes   map[string]Noder `json:"-"`
-	compositions Container
+	Attributes   Attributes `json:"-"`
+	Compositions Container
 }
 
 func newEHRNode(ehr model.EHR) *EHRNode {
 	node := EHRNode{
 		baseNode: baseNode{
-			ID:   ehr.EhrID.Value,
-			Type: base.EHRItemType,
+			ID:       ehr.EhrID.Value,
+			Type:     base.EHRItemType,
+			NodeType: EHRNodeType,
 		},
-		attributes:   map[string]Noder{},
-		compositions: Container{},
+		Attributes:   Attributes{},
+		Compositions: Container{},
 	}
 
 	return &node
@@ -52,16 +53,12 @@ func (ehr *EHRNode) addComposition(cmp model.Composition) error {
 		return errors.Wrap(err, "cannot add Composition node into EHRNode")
 	}
 
-	ehr.compositions[cmpNode.GetID()] = append(ehr.compositions[cmpNode.GetID()], cmpNode)
+	ehr.Compositions[cmpNode.GetID()] = append(ehr.Compositions[cmpNode.GetID()], cmpNode)
 	return nil
 }
 
 func (ehr EHRNode) GetCompositions() Container {
-	return ehr.compositions
-}
-
-func (ehr EHRNode) GetNodeType() NodeType {
-	return EHRNodeType
+	return ehr.Compositions
 }
 
 func (ehr EHRNode) GetID() string {
@@ -74,19 +71,11 @@ func (ehr EHRNode) TryGetChild(key string) Noder {
 		return n
 	}
 
-	return ehr.attributes[key]
-}
-
-func (ehr EHRNode) ForEach(f func(name string, node Noder) bool) {
-	for key, node := range ehr.attributes {
-		if !f(key, node) {
-			break
-		}
-	}
+	return ehr.Attributes[key]
 }
 
 func (ehr EHRNode) addAttribute(key string, val Noder) {
-	ehr.attributes[key] = val
+	ehr.Attributes[key] = val
 }
 
 func (ehr EHRNode) MarshalJSON() ([]byte, error) {
@@ -96,9 +85,9 @@ func (ehr EHRNode) MarshalJSON() ([]byte, error) {
 	fmt.Fprintf(buffer, `"name":"%s",`, ehr.Name)
 	fmt.Fprintf(buffer, `"type":"%s"`, ehr.Type)
 
-	if l := ehr.compositions.Len(); l > 0 {
+	if l := ehr.Compositions.Len(); l > 0 {
 		cmps := make([]Noder, 0, l)
-		for _, nodes := range ehr.compositions {
+		for _, nodes := range ehr.Compositions {
 			cmps = append(cmps, nodes...)
 		}
 
@@ -110,7 +99,7 @@ func (ehr EHRNode) MarshalJSON() ([]byte, error) {
 		fmt.Fprintf(buffer, `,"compositions":%s`, string(cmpsData))
 	}
 
-	for k, v := range ehr.attributes {
+	for k, v := range ehr.Attributes {
 		data, err := json.Marshal(v)
 		if err != nil {
 			return nil, err

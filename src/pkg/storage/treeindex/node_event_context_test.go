@@ -21,7 +21,10 @@ func Test_processEventContext(t *testing.T) {
 			"1. parse simple contex",
 			getEventContext,
 			&EventContextNode{
-				attributes: map[string]Noder{
+				baseNode: baseNode{
+					NodeType: EventContextNodeType,
+				},
+				Attributes: Attributes{
 					"start_time": newNode(&base.DvDateTime{
 						DvTemporal: base.DvTemporal{
 							DvValueBase: base.DvValueBase{

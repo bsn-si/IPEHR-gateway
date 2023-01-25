@@ -48,19 +48,19 @@ func processEventContext(ctx model.EventContext) (Noder, error) {
 }
 
 type EventContextNode struct {
-	attributes map[string]Noder `json:"-"`
+	baseNode
+	Attributes Attributes `json:"-"`
 }
 
 func NewEventContextNode(ctx model.EventContext) *EventContextNode {
 	node := EventContextNode{
-		attributes: map[string]Noder{},
+		baseNode: baseNode{
+			NodeType: EventContextNodeType,
+		},
+		Attributes: Attributes{},
 	}
 
 	return &node
-}
-
-func (n *EventContextNode) GetNodeType() NodeType {
-	return EventContextNodeType
 }
 
 func (n *EventContextNode) GetID() string {
@@ -68,17 +68,9 @@ func (n *EventContextNode) GetID() string {
 }
 
 func (n *EventContextNode) addAttribute(key string, val Noder) {
-	n.attributes[key] = val
+	n.Attributes[key] = val
 }
 
 func (n *EventContextNode) TryGetChild(key string) Noder {
-	return n.attributes[key]
-}
-
-func (n *EventContextNode) ForEach(f func(name string, node Noder) bool) {
-	for k, v := range n.attributes {
-		if !f(k, v) {
-			break
-		}
-	}
+	return n.Attributes[key]
 }
