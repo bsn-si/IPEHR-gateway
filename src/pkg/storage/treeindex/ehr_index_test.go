@@ -8,6 +8,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -32,18 +33,15 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 			map[string]*EHRNode{
 				"7d44b88c-4199-4bad-97dc-d78268e01398": {
 					baseNode: baseNode{
-						ID:   "7d44b88c-4199-4bad-97dc-d78268e01398",
-						Type: base.EHRItemType,
+						ID:       "7d44b88c-4199-4bad-97dc-d78268e01398",
+						Type:     base.EHRItemType,
+						NodeType: EHRNodeType,
 					},
-					attributes: map[string]Noder{
-						"system_id": &ValueNode{
-							data: "d60e2348-b083-48ce-93b9-916cef1d3a5a",
-						},
-						"ehr_id": &ValueNode{
-							data: "7d44b88c-4199-4bad-97dc-d78268e01398",
-						},
+					Attributes: Attributes{
+						"system_id": newValueNode("d60e2348-b083-48ce-93b9-916cef1d3a5a"),
+						"ehr_id":    newValueNode("7d44b88c-4199-4bad-97dc-d78268e01398"),
 					},
-					compositions: Container{},
+					Compositions: Container{},
 				},
 			},
 			false,
@@ -61,27 +59,25 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 			map[string]*EHRNode{
 				"7d44b88c-4199-4bad-97dc-d78268e01398": {
 					baseNode: baseNode{
-						ID:   "7d44b88c-4199-4bad-97dc-d78268e01398",
-						Type: base.EHRItemType,
+						ID:       "7d44b88c-4199-4bad-97dc-d78268e01398",
+						Type:     base.EHRItemType,
+						NodeType: EHRNodeType,
 					},
-					attributes: map[string]Noder{
-						"system_id": &ValueNode{
-							data: "d60e2348-b083-48ce-93b9-916cef1d3a5a",
-						},
-						"ehr_id": &ValueNode{
-							data: "7d44b88c-4199-4bad-97dc-d78268e01398",
-						},
+					Attributes: Attributes{
+						"system_id": newValueNode("d60e2348-b083-48ce-93b9-916cef1d3a5a"),
+						"ehr_id":    newValueNode("7d44b88c-4199-4bad-97dc-d78268e01398"),
 					},
-					compositions: Container{
+					Compositions: Container{
 						"openEHR-EHR-COMPOSITION.health_summary.v1": []Noder{
 							&CompositionNode{
 								baseNode: baseNode{
-									ID:   "openEHR-EHR-COMPOSITION.health_summary.v1",
-									Type: base.CompositionItemType,
-									Name: "International Patient Summary",
+									ID:       "openEHR-EHR-COMPOSITION.health_summary.v1",
+									Type:     base.CompositionItemType,
+									Name:     "International Patient Summary",
+									NodeType: CompostionNodeType,
 								},
 								Tree: *NewTree(),
-								attributes: map[string]Noder{
+								Attributes: Attributes{
 									"language": newNode(&base.CodePhrase{
 										Type: base.CodePhraseItemType,
 										TerminologyID: base.ObjectID{
@@ -128,13 +124,55 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 				t.Errorf("EHRIndex.AddEHR() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// dataWant, _ := json.Marshal(tt.want)
-			// data, _ := json.Marshal(idx)
+			assert.Equal(t, tt.want, idx.Ehrs)
+		})
+	}
+}
 
-			// assert.Equal(t, string(dataWant), string(data))
-			// got := map[string]any{}
-			// _ = json.Unmarshal(data, &got)
-			assert.Equal(t, tt.want, idx.ehrs)
+func TestEHRIndex_MessagePack(t *testing.T) {
+	tests := []struct {
+		name    string
+		getEHR  func() (model.EHR, error)
+		wantErr bool
+	}{
+		{
+			"1. success add new EHR object",
+			func() (model.EHR, error) {
+				ehr, err := loadEHRFromFile("./../../../../data/mock/ehr/ehr.json")
+				if err != nil {
+					return model.EHR{}, err
+				}
+
+				return ehr, nil
+			},
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idx := NewEHRIndex()
+			ehr, err := tt.getEHR()
+			if err != nil {
+				t.Errorf("EHRIndex.AddEHR(), cannot get EHR: %v", err)
+				return
+			}
+
+			if err := idx.AddEHR(ehr); (err != nil) != tt.wantErr {
+				t.Errorf("EHRIndex.AddEHR() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			data, err := msgpack.Marshal(idx)
+			if err != nil {
+				t.Errorf("EHRIndex.Marshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			gotIdx := NewEHRIndex()
+			if err := msgpack.Unmarshal(data, &gotIdx); err != nil {
+				t.Errorf("EHRIndex.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			assert.Equal(t, idx, gotIdx)
 		})
 	}
 }

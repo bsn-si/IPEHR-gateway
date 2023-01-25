@@ -12,7 +12,8 @@ import (
 type NodeType byte
 
 const (
-	ObjectNodeType NodeType = iota
+	NoneNodeType NodeType = iota
+	ObjectNodeType
 	SliceNodeType
 	DataValueNodeType
 	ValueNodeType
@@ -28,13 +29,17 @@ type Noder interface {
 
 	addAttribute(key string, val Noder)
 	TryGetChild(key string) Noder
-	ForEach(func(name string, node Noder) bool)
 }
 
 type baseNode struct {
-	ID   string        `json:"id,omitempty"`
-	Type base.ItemType `json:"type,omitempty"`
-	Name string        `json:"name,omitempty"`
+	ID       string        `json:"id,omitempty" msgpack:"id,omitempty"`
+	Type     base.ItemType `json:"type,omitempty" msgpack:"type,omitempty"`
+	Name     string        `json:"name,omitempty" msgpack:"name,omitempty"`
+	NodeType NodeType      `json:"node_type" msgpack:"node_type"`
+}
+
+func (node baseNode) GetNodeType() NodeType {
+	return node.NodeType
 }
 
 func (node baseNode) TryGetChild(key string) Noder {
@@ -49,12 +54,8 @@ func (node baseNode) TryGetChild(key string) Noder {
 type ObjectNode struct {
 	baseNode
 
-	attributesOrder []string
-	attributes      map[string]Noder `json:"-"`
-}
-
-func (node ObjectNode) GetNodeType() NodeType {
-	return ObjectNodeType
+	AttributesOrder []string
+	Attributes      Attributes `json:"-"`
 }
 
 func (node ObjectNode) GetID() string {
@@ -67,20 +68,12 @@ func (node ObjectNode) TryGetChild(key string) Noder {
 		return n
 	}
 
-	return node.attributes[key]
-}
-
-func (node ObjectNode) ForEach(foo func(name string, node Noder) bool) {
-	for key, node := range node.attributes {
-		if !foo(key, node) {
-			break
-		}
-	}
+	return node.Attributes[key]
 }
 
 func (node *ObjectNode) addAttribute(key string, val Noder) {
-	node.attributesOrder = append(node.attributesOrder, key)
-	node.attributes[key] = val
+	node.AttributesOrder = append(node.AttributesOrder, key)
+	node.Attributes[key] = val
 }
 
 func (node ObjectNode) MarshalJSON() ([]byte, error) {
@@ -90,8 +83,8 @@ func (node ObjectNode) MarshalJSON() ([]byte, error) {
 	fmt.Fprintf(buffer, `"name":"%s",`, node.Name)
 	fmt.Fprintf(buffer, `"type":"%s"`, node.Type)
 
-	for _, k := range node.attributesOrder {
-		data, err := json.Marshal(node.attributes[k])
+	for _, k := range node.AttributesOrder {
+		data, err := json.Marshal(node.Attributes[k])
 		if err != nil {
 			return nil, err
 		}
@@ -104,11 +97,8 @@ func (node ObjectNode) MarshalJSON() ([]byte, error) {
 }
 
 type SliceNode struct {
-	data map[string]Noder
-}
-
-func (node SliceNode) GetNodeType() NodeType {
-	return SliceNodeType
+	baseNode
+	Data Attributes
 }
 
 func (node SliceNode) GetID() string {
@@ -116,7 +106,7 @@ func (node SliceNode) GetID() string {
 }
 
 func (node SliceNode) TryGetChild(key string) Noder {
-	n, ok := node.data[key]
+	n, ok := node.Data[key]
 	if !ok {
 		return nil
 	}
@@ -124,29 +114,17 @@ func (node SliceNode) TryGetChild(key string) Noder {
 	return n
 }
 
-func (node SliceNode) ForEach(foo func(name string, node Noder) bool) {
-	for key, node := range node.data {
-		if !foo(key, node) {
-			break
-		}
-	}
-}
-
 func (node SliceNode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(node.data)
+	return json.Marshal(node.Data)
 }
 
 func (node *SliceNode) addAttribute(key string, val Noder) {
-	node.data[val.GetID()] = val
+	node.Data[val.GetID()] = val
 }
 
 type DataValueNode struct {
 	baseNode
-	Values map[string]Noder `json:"values,omitempty"`
-}
-
-func (node DataValueNode) GetNodeType() NodeType {
-	return DataValueNodeType
+	Values Attributes `json:"values,omitempty"`
 }
 
 func (node DataValueNode) GetID() string {
@@ -162,29 +140,17 @@ func (node DataValueNode) TryGetChild(key string) Noder {
 	return node.Values[key]
 }
 
-func (node DataValueNode) ForEach(foo func(name string, node Noder) bool) {
-	for key, node := range node.Values {
-		if !foo(key, node) {
-			break
-		}
-	}
-}
-
 func (node *DataValueNode) addAttribute(key string, val Noder) {
 	node.Values[key] = val
 }
 
 type ValueNode struct {
 	baseNode
-	data any
+	Data any
 }
 
 func (node ValueNode) GetData() any {
-	return node.data
-}
-
-func (node ValueNode) GetNodeType() NodeType {
-	return ValueNodeType
+	return node.Data
 }
 
 func (node ValueNode) GetID() string {
@@ -200,11 +166,8 @@ func (node ValueNode) TryGetChild(key string) Noder {
 	return nil
 }
 
-func (node ValueNode) ForEach(foo func(name string, node Noder) bool) {
-}
-
 func (node *ValueNode) addAttribute(key string, val Noder) {
-	noderInstance, ok := node.data.(Noder)
+	noderInstance, ok := node.Data.(Noder)
 	if !ok {
 		return
 	}
@@ -213,7 +176,7 @@ func (node *ValueNode) addAttribute(key string, val Noder) {
 }
 
 func (node ValueNode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(node.data)
+	return json.Marshal(node.Data)
 }
 
 func newNode(obj any) Noder {
@@ -226,6 +189,8 @@ func newNode(obj any) Noder {
 		return newObjectNode(obj)
 	case base.DataValue:
 		return newDataValueNode(obj)
+	case *base.CodePhrase:
+		return nodeForCodePhrase(*obj)
 	case base.CodePhrase:
 		return nodeForCodePhrase(obj)
 	case base.ObjectID:
@@ -246,11 +211,12 @@ func newObjectNode(obj base.Root) Noder {
 
 	return &ObjectNode{
 		baseNode: baseNode{
-			ID:   l.ArchetypeNodeID,
-			Type: l.Type,
-			Name: l.Name.Value,
+			ID:       l.ArchetypeNodeID,
+			Type:     l.Type,
+			Name:     l.Name.Value,
+			NodeType: ObjectNodeType,
 		},
-		attributes: map[string]Noder{
+		Attributes: Attributes{
 			"name":              newNode(l.Name),
 			"archetype_node_id": newNode(l.ArchetypeNodeID),
 		},
@@ -259,36 +225,33 @@ func newObjectNode(obj base.Root) Noder {
 
 func newSliceNode() Noder {
 	return &SliceNode{
-		data: make(map[string]Noder),
+		baseNode: baseNode{
+			NodeType: SliceNodeType,
+		},
+		Data: make(Attributes),
 	}
 }
 
 func newDataValueNode(dv base.DataValue) Noder {
 	return &DataValueNode{
 		baseNode: baseNode{
-			ID:   "",
-			Type: dv.GetType(),
+			Type:     dv.GetType(),
+			NodeType: DataValueNodeType,
 		},
-		Values: make(map[string]Noder),
+		Values: make(Attributes),
 	}
 }
 
 func nodeForCodePhrase(cp base.CodePhrase) Noder {
-	return &ValueNode{
+	return &ObjectNode{
 		baseNode: baseNode{
-			Type: cp.Type,
+			Type:     cp.Type,
+			NodeType: ObjectNodeType,
 		},
-		data: map[string]interface{}{
-			"terminology_id": &ValueNode{
-				baseNode: baseNode{
-					Type: cp.TerminologyID.Type,
-				},
-				data: map[string]interface{}{
-					"value": cp.TerminologyID.Value,
-				},
-			},
-			"code_string":    cp.CodeString,
-			"preferred_term": cp.PreferredTerm,
+		Attributes: Attributes{
+			"terminology_id": nodeForObjectID(cp.TerminologyID),
+			"code_string":    newValueNode(cp.CodeString),
+			"preferred_term": newValueNode(cp.PreferredTerm),
 		},
 	}
 }
@@ -296,14 +259,18 @@ func nodeForCodePhrase(cp base.CodePhrase) Noder {
 func nodeForObjectID(objectID base.ObjectID) Noder {
 	return &ValueNode{
 		baseNode: baseNode{
-			Type: objectID.Type,
+			Type:     objectID.Type,
+			NodeType: ValueNodeType,
 		},
-		data: objectID.Value,
+		Data: objectID.Value,
 	}
 }
 
 func newValueNode(val any) Noder {
 	return &ValueNode{
-		data: val,
+		baseNode: baseNode{
+			NodeType: ValueNodeType,
+		},
+		Data: val,
 	}
 }

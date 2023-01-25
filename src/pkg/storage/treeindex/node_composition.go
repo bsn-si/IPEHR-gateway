@@ -8,9 +8,9 @@ import (
 func processComposition(cmp model.Composition) (Noder, error) {
 	node := newCompositionNode(cmp)
 
-	node.addAttribute("language", newNode(&cmp.Language))
-	node.addAttribute("territory", newNode(&cmp.Territory))
-	node.addAttribute("category", newNode(&cmp.Category))
+	node.addAttribute("language", newNode(cmp.Language))
+	node.addAttribute("territory", newNode(cmp.Territory))
+	node.addAttribute("category", newNode(cmp.Category))
 
 	if cmp.Context != nil {
 		ctxNode, err := walk(*cmp.Context)
@@ -32,26 +32,23 @@ func processComposition(cmp model.Composition) (Noder, error) {
 type CompositionNode struct {
 	baseNode
 	Tree
-	attributes map[string]Noder
+	Attributes Attributes
 }
 
 func newCompositionNode(cmp model.Composition) *CompositionNode {
 	l := cmp.Locatable
 	node := &CompositionNode{
 		baseNode: baseNode{
-			ID:   l.ArchetypeNodeID,
-			Type: l.Type,
-			Name: l.Name.Value,
+			ID:       l.ArchetypeNodeID,
+			Type:     l.Type,
+			Name:     l.Name.Value,
+			NodeType: CompostionNodeType,
 		},
 		Tree:       *NewTree(),
-		attributes: map[string]Noder{},
+		Attributes: Attributes{},
 	}
 
 	return node
-}
-
-func (cmp CompositionNode) GetNodeType() NodeType {
-	return CompostionNodeType
 }
 
 func (cmp CompositionNode) GetID() string {
@@ -64,16 +61,9 @@ func (cmp CompositionNode) TryGetChild(key string) Noder {
 		return n
 	}
 
-	return cmp.attributes[key]
-}
-
-func (cmp CompositionNode) ForEach(foo func(name string, node Noder) bool) {
-	for k, n := range cmp.attributes {
-		for foo(k, n) {
-		}
-	}
+	return cmp.Attributes[key]
 }
 
 func (cmp CompositionNode) addAttribute(key string, val Noder) {
-	cmp.attributes[key] = val
+	cmp.Attributes[key] = val
 }

@@ -10,12 +10,12 @@ import (
 var DefaultEHRIndex = NewEHRIndex()
 
 type EHRIndex struct {
-	ehrs map[string]*EHRNode
+	Ehrs map[string]*EHRNode `msgpack:"ehr,omitempty"`
 }
 
 func NewEHRIndex() *EHRIndex {
 	idx := EHRIndex{
-		ehrs: map[string]*EHRNode{},
+		Ehrs: map[string]*EHRNode{},
 	}
 
 	return &idx
@@ -36,22 +36,22 @@ func (idx *EHRIndex) AddEHR(ehr model.EHR) error {
 		return errors.Wrap(err, "cannot add EHR object")
 	}
 
-	idx.ehrs[node.GetID()] = node
+	idx.Ehrs[node.GetID()] = node
 
 	return nil
 }
 
 func (idx EHRIndex) GetEHRs(id string) ([]*EHRNode, error) {
 	if id == "" {
-		result := make([]*EHRNode, 0, len(idx.ehrs))
-		for _, ehrNode := range idx.ehrs {
+		result := make([]*EHRNode, 0, len(idx.Ehrs))
+		for _, ehrNode := range idx.Ehrs {
 			result = append(result, ehrNode)
 		}
 
 		return result, nil
 	}
 
-	ehrNode, ok := idx.ehrs[id]
+	ehrNode, ok := idx.Ehrs[id]
 	if !ok {
 		return nil, errors.New("cannot get EHR by id")
 	}
@@ -60,7 +60,7 @@ func (idx EHRIndex) GetEHRs(id string) ([]*EHRNode, error) {
 }
 
 func (idx *EHRIndex) AddComposition(ehrID string, cmp model.Composition) error {
-	ehrNode, ok := idx.ehrs[ehrID]
+	ehrNode, ok := idx.Ehrs[ehrID]
 	if !ok {
 		return errors.New("EHR not found")
 	}
@@ -69,5 +69,5 @@ func (idx *EHRIndex) AddComposition(ehrID string, cmp model.Composition) error {
 }
 
 func (idx EHRIndex) MarshalJSON() ([]byte, error) {
-	return json.Marshal(idx.ehrs)
+	return json.Marshal(idx.Ehrs)
 }

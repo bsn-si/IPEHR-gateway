@@ -7,6 +7,7 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,12 +26,13 @@ func Test_processComposition(t *testing.T) {
 			},
 			&CompositionNode{
 				baseNode: baseNode{
-					ID:   "openEHR-EHR-COMPOSITION.health_summary.v1",
-					Type: base.CompositionItemType,
-					Name: "International Patient Summary",
+					ID:       "openEHR-EHR-COMPOSITION.health_summary.v1",
+					Type:     base.CompositionItemType,
+					Name:     "International Patient Summary",
+					NodeType: CompostionNodeType,
 				},
 				Tree: *NewTree(),
-				attributes: map[string]Noder{
+				Attributes: Attributes{
 					"language": newNode(&base.CodePhrase{
 						Type: base.CodePhraseItemType,
 						TerminologyID: base.ObjectID{
@@ -56,7 +58,10 @@ func Test_processComposition(t *testing.T) {
 						CodeString: "443",
 					})),
 					"context": &EventContextNode{
-						attributes: map[string]Noder{
+						baseNode: baseNode{
+							NodeType: EventContextNodeType,
+						},
+						Attributes: Attributes{
 							"start_time": newNode(&base.DvDateTime{
 								DvTemporal: base.DvTemporal{
 									DvValueBase: base.DvValueBase{
@@ -97,6 +102,25 @@ func Test_processComposition(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func Test_EncodeDecodeComposition(t *testing.T) {
+	t.Parallel()
+
+	composition, err := loadComposition("./test_fixtures/simple_composition.json")
+	assert.Nil(t, err)
+
+	node, err := processComposition(composition)
+	assert.Nil(t, err)
+
+	origin := node.(*CompositionNode)
+
+	data, err := msgpack.Marshal(node)
+	assert.Nil(t, err)
+
+	got := &CompositionNode{}
+	assert.Nil(t, msgpack.Unmarshal(data, &got))
+	assert.Equal(t, origin, got)
 }
 
 func loadComposition(name string) (model.Composition, error) {

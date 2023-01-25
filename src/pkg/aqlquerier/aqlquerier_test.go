@@ -499,36 +499,6 @@ func TestService_ExecuteQuery(t *testing.T) {
 	}
 }
 
-// func Test_GSJON(t *testing.T) {
-// 	data, err := ioutil.ReadFile("test_fixtures/composition_2.json")
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-
-// 	observations := gjson.GetBytes(data,
-// 		`content.#(_type=="SECTION")#.items.#(_type=="OBSERVATION")#.data`,
-// 	)
-// 	// o/data[at0001]/events[at0006]/data[at0003]/items[at0005]/value/magnitude
-
-// 	for _, o := range observations.Array() {
-// 		o.ForEach(func(key, value gjson.Result) bool {
-// 			if value.Get("archetype_node_id").String() == "at0002" {
-// 				r := value.Get(`events.#(archetype_node_id="at0003")#.data`)
-// 				r.ForEach(func(key, value gjson.Result) bool {
-// 					if value.Get("archetype_node_id").String() == "at0001" {
-// 						val := value.Get(`items.#(archetype_node_id="at0004")#.value.magnitude`)
-// 						log.Println(val)
-// 					}
-// 					return true
-// 				})
-// 			}
-// 			return true
-// 		})
-// 	}
-// 	// t.Fail()
-// }
-
 const ehrFile = "./../../../data/mock/ehr/ehr.json"
 
 func getPreparedTreeIndex(filenames ...string) error {
