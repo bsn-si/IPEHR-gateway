@@ -27,7 +27,7 @@ func processEHR(ehr model.EHR) (*EHRNode, error) {
 }
 
 type EHRNode struct {
-	baseNode
+	BaseNode
 
 	Attributes   Attributes `json:"-"`
 	Compositions Container
@@ -35,7 +35,7 @@ type EHRNode struct {
 
 func newEHRNode(ehr model.EHR) *EHRNode {
 	node := EHRNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			ID:       ehr.EhrID.Value,
 			Type:     base.EHRItemType,
 			NodeType: EHRNodeType,
@@ -66,7 +66,7 @@ func (ehr EHRNode) GetID() string {
 }
 
 func (ehr EHRNode) TryGetChild(key string) Noder {
-	n := ehr.baseNode.TryGetChild(key)
+	n := ehr.BaseNode.TryGetChild(key)
 	if n != nil {
 		return n
 	}

@@ -10,7 +10,7 @@ import (
 
 func TestEHRNode_EncodeDecodeMsgpack(t *testing.T) {
 	origin := EHRNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			ID:   "some_id",
 			Type: base.EHRItemType,
 			Name: "some_name",

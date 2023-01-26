@@ -75,19 +75,19 @@ func processDvQuantity(node Noder, value *base.DvQuantity) (Noder, error) {
 	node.addAttribute("magnitude", newNode(value.Magnitude))
 
 	if value.Precision != nil {
-		node.addAttribute("precision", newNode(value.Precision))
+		node.addAttribute("precision", newNode(*value.Precision))
 	}
 
 	if value.Units != nil {
-		node.addAttribute("units", newNode(value.Units))
+		node.addAttribute("units", newNode(*value.Units))
 	}
 
 	if value.UnitsSystem != nil {
-		node.addAttribute("units_system", newNode(value.UnitsSystem))
+		node.addAttribute("units_system", newNode(*value.UnitsSystem))
 	}
 
 	if value.UnitsDisplayName != nil {
-		node.addAttribute("units_display_name", newNode(value.UnitsDisplayName))
+		node.addAttribute("units_display_name", newNode(*value.UnitsDisplayName))
 	}
 
 	//todo: add processing for DvQuantity.NormalRange and DvQuantity.OtherReferenceRanges fields
@@ -163,7 +163,7 @@ func processDvProportion(node Noder, value *base.DvProportion) (Noder, error) {
 	node.addAttribute("type", newNode(value.Type))
 
 	if value.Precision != nil {
-		node.addAttribute("precision", newNode(value.Precision))
+		node.addAttribute("precision", newNode(*value.Precision))
 	}
 
 	//todo: add processing for value.NormalRange and value.OtherReferenceRanges
@@ -302,10 +302,7 @@ func processDvText(node Noder, value *base.DvText) (Noder, error) {
 	}
 
 	node.addAttribute("value", newNode(value.Value))
-
-	if value.Formatting != "" {
-		node.addAttribute("formatting", newNode(value.Formatting))
-	}
+	node.addAttribute("formatting", newNode(value.Formatting))
 
 	if value.Hyperlink != nil {
 		hyperlinkNode, err := processDvURI(node, value.Hyperlink)
