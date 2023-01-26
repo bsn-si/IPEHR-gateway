@@ -13,6 +13,7 @@ require (
 	github.com/filecoin-project/lotus v1.17.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/gzip v0.0.5
+	github.com/gin-contrib/timeout v0.0.3
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0

@@ -108,7 +108,7 @@ func (svc *ExecuterService) ExecQueryContext(ctx context.Context, queryStr strin
 	svc.queriesChan <- q
 	select {
 	case <-ctx.Done():
-		return nil, nil, errors.New("timeout")
+		return nil, nil, errors.ErrTimeout
 	case <-done:
 		if resultErr != nil {
 			return nil, nil, resultErr

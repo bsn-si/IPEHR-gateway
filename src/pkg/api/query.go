@@ -24,7 +24,6 @@ type QueryService interface {
 	StoreVersion(ctx context.Context, userID, systemID, reqID, qType, name string, version *base.VersionTreeID, q string) (*model.StoredQuery, error)
 
 	ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error)
-	ExecQueryWithTimeout(ctx *gin.Context, query *model.QueryRequest) (*model.QueryResponse, error)
 	ExecStoredQuery(ctx context.Context, userID, systemID, qualifiedQueryName string, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
@@ -79,7 +78,7 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 
 	c.Request = c.Request.WithContext(ctx)
 
-	resp, err := h.service.ExecQueryWithTimeout(c, &req)
+	resp, err := h.service.ExecQuery(c.Request.Context(), &req)
 	if err != nil {
 		log.Printf("cannot exec query: %v", err)
 

@@ -217,7 +217,8 @@ func (a *API) buildQueryAPI() handlerBuilder {
 		r = r.Group("query")
 		r.Use(auth(a))
 
-		r.Use(ehrSystemID)
+		r.Use(ehrSystemID, timeoutMiddleware())
+
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
 		r.POST("/aql", a.Query.ExecPostQuery)
