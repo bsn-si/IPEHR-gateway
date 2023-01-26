@@ -31,7 +31,6 @@ func AddComposition(ehrID string, cmp model.Composition) error {
 
 func (idx *EHRIndex) AddEHR(ehr model.EHR) error {
 	node, err := processEHR(ehr)
-
 	if err != nil {
 		return errors.Wrap(err, "cannot add EHR object")
 	}

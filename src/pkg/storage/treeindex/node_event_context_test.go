@@ -21,7 +21,7 @@ func Test_processEventContext(t *testing.T) {
 			"1. parse simple contex",
 			getEventContext,
 			&EventContextNode{
-				baseNode: baseNode{
+				BaseNode: BaseNode{
 					NodeType: EventContextNodeType,
 				},
 				Attributes: Attributes{

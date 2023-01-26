@@ -7,6 +7,7 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type NodeType byte
@@ -31,18 +32,18 @@ type Noder interface {
 	TryGetChild(key string) Noder
 }
 
-type baseNode struct {
+type BaseNode struct {
 	ID       string        `json:"id,omitempty" msgpack:"id,omitempty"`
 	Type     base.ItemType `json:"type,omitempty" msgpack:"type,omitempty"`
 	Name     string        `json:"name,omitempty" msgpack:"name,omitempty"`
 	NodeType NodeType      `json:"node_type" msgpack:"node_type"`
 }
 
-func (node baseNode) GetNodeType() NodeType {
+func (node BaseNode) GetNodeType() NodeType {
 	return node.NodeType
 }
 
-func (node baseNode) TryGetChild(key string) Noder {
+func (node BaseNode) TryGetChild(key string) Noder {
 	switch key {
 	case "id":
 		return newNode(node.ID)
@@ -52,7 +53,7 @@ func (node baseNode) TryGetChild(key string) Noder {
 }
 
 type ObjectNode struct {
-	baseNode
+	BaseNode
 
 	AttributesOrder []string
 	Attributes      Attributes `json:"-"`
@@ -63,7 +64,7 @@ func (node ObjectNode) GetID() string {
 }
 
 func (node ObjectNode) TryGetChild(key string) Noder {
-	n := node.baseNode.TryGetChild(key)
+	n := node.BaseNode.TryGetChild(key)
 	if n != nil {
 		return n
 	}
@@ -97,7 +98,7 @@ func (node ObjectNode) MarshalJSON() ([]byte, error) {
 }
 
 type SliceNode struct {
-	baseNode
+	BaseNode
 	Data Attributes
 }
 
@@ -123,7 +124,7 @@ func (node *SliceNode) addAttribute(key string, val Noder) {
 }
 
 type DataValueNode struct {
-	baseNode
+	BaseNode
 	Values Attributes `json:"values,omitempty"`
 }
 
@@ -132,7 +133,7 @@ func (node DataValueNode) GetID() string {
 }
 
 func (node DataValueNode) TryGetChild(key string) Noder {
-	n := node.baseNode.TryGetChild(key)
+	n := node.BaseNode.TryGetChild(key)
 	if n != nil {
 		return n
 	}
@@ -145,7 +146,7 @@ func (node *DataValueNode) addAttribute(key string, val Noder) {
 }
 
 type ValueNode struct {
-	baseNode
+	BaseNode
 	Data any
 }
 
@@ -158,7 +159,7 @@ func (node ValueNode) GetID() string {
 }
 
 func (node ValueNode) TryGetChild(key string) Noder {
-	n := node.baseNode.TryGetChild(key)
+	n := node.BaseNode.TryGetChild(key)
 	if n != nil {
 		return n
 	}
@@ -177,6 +178,35 @@ func (node *ValueNode) addAttribute(key string, val Noder) {
 
 func (node ValueNode) MarshalJSON() ([]byte, error) {
 	return json.Marshal(node.Data)
+}
+
+func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
+	tmp := struct {
+		BaseNode
+		Data any
+	}{}
+
+	if err := msgpack.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	node.BaseNode = tmp.BaseNode
+	switch v := tmp.Data.(type) {
+	case int8:
+		node.Data = int(v)
+	case int16:
+		node.Data = int(v)
+	case uint16:
+		node.Data = int(v)
+	case int32:
+		node.Data = int(v)
+	case uint32:
+		node.Data = int(v)
+	default:
+		node.Data = tmp.Data
+	}
+
+	return nil
 }
 
 func newNode(obj any) Noder {
@@ -210,7 +240,7 @@ func newObjectNode(obj base.Root) Noder {
 	l := obj.GetLocatable()
 
 	return &ObjectNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			ID:       l.ArchetypeNodeID,
 			Type:     l.Type,
 			Name:     l.Name.Value,
@@ -225,7 +255,7 @@ func newObjectNode(obj base.Root) Noder {
 
 func newSliceNode() Noder {
 	return &SliceNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			NodeType: SliceNodeType,
 		},
 		Data: make(Attributes),
@@ -234,7 +264,7 @@ func newSliceNode() Noder {
 
 func newDataValueNode(dv base.DataValue) Noder {
 	return &DataValueNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			Type:     dv.GetType(),
 			NodeType: DataValueNodeType,
 		},
@@ -244,7 +274,7 @@ func newDataValueNode(dv base.DataValue) Noder {
 
 func nodeForCodePhrase(cp base.CodePhrase) Noder {
 	return &ObjectNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			Type:     cp.Type,
 			NodeType: ObjectNodeType,
 		},
@@ -258,7 +288,7 @@ func nodeForCodePhrase(cp base.CodePhrase) Noder {
 
 func nodeForObjectID(objectID base.ObjectID) Noder {
 	return &ValueNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			Type:     objectID.Type,
 			NodeType: ValueNodeType,
 		},
@@ -268,7 +298,7 @@ func nodeForObjectID(objectID base.ObjectID) Noder {
 
 func newValueNode(val any) Noder {
 	return &ValueNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			NodeType: ValueNodeType,
 		},
 		Data: val,

@@ -48,13 +48,13 @@ func processEventContext(ctx model.EventContext) (Noder, error) {
 }
 
 type EventContextNode struct {
-	baseNode
+	BaseNode
 	Attributes Attributes `json:"-"`
 }
 
 func NewEventContextNode(ctx model.EventContext) *EventContextNode {
 	node := EventContextNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			NodeType: EventContextNodeType,
 		},
 		Attributes: Attributes{},

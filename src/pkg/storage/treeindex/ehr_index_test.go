@@ -32,7 +32,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 			},
 			map[string]*EHRNode{
 				"7d44b88c-4199-4bad-97dc-d78268e01398": {
-					baseNode: baseNode{
+					BaseNode: BaseNode{
 						ID:       "7d44b88c-4199-4bad-97dc-d78268e01398",
 						Type:     base.EHRItemType,
 						NodeType: EHRNodeType,
@@ -58,7 +58,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 			},
 			map[string]*EHRNode{
 				"7d44b88c-4199-4bad-97dc-d78268e01398": {
-					baseNode: baseNode{
+					BaseNode: BaseNode{
 						ID:       "7d44b88c-4199-4bad-97dc-d78268e01398",
 						Type:     base.EHRItemType,
 						NodeType: EHRNodeType,
@@ -70,7 +70,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 					Compositions: Container{
 						"openEHR-EHR-COMPOSITION.health_summary.v1": []Noder{
 							&CompositionNode{
-								baseNode: baseNode{
+								BaseNode: BaseNode{
 									ID:       "openEHR-EHR-COMPOSITION.health_summary.v1",
 									Type:     base.CompositionItemType,
 									Name:     "International Patient Summary",

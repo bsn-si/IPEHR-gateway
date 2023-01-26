@@ -30,7 +30,7 @@ func processComposition(cmp model.Composition) (Noder, error) {
 }
 
 type CompositionNode struct {
-	baseNode
+	BaseNode
 	Tree
 	Attributes Attributes
 }
@@ -38,7 +38,7 @@ type CompositionNode struct {
 func newCompositionNode(cmp model.Composition) *CompositionNode {
 	l := cmp.Locatable
 	node := &CompositionNode{
-		baseNode: baseNode{
+		BaseNode: BaseNode{
 			ID:       l.ArchetypeNodeID,
 			Type:     l.Type,
 			Name:     l.Name.Value,
@@ -56,7 +56,7 @@ func (cmp CompositionNode) GetID() string {
 }
 
 func (cmp CompositionNode) TryGetChild(key string) Noder {
-	n := cmp.baseNode.TryGetChild(key)
+	n := cmp.BaseNode.TryGetChild(key)
 	if n != nil {
 		return n
 	}

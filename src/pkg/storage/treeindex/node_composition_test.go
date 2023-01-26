@@ -13,6 +13,8 @@ import (
 )
 
 func Test_processComposition(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		getCmp  func() (model.Composition, error)
@@ -25,7 +27,7 @@ func Test_processComposition(t *testing.T) {
 				return loadComposition("./test_fixtures/simple_composition.json")
 			},
 			&CompositionNode{
-				baseNode: baseNode{
+				BaseNode: BaseNode{
 					ID:       "openEHR-EHR-COMPOSITION.health_summary.v1",
 					Type:     base.CompositionItemType,
 					Name:     "International Patient Summary",
@@ -58,7 +60,7 @@ func Test_processComposition(t *testing.T) {
 						CodeString: "443",
 					})),
 					"context": &EventContextNode{
-						baseNode: baseNode{
+						BaseNode: BaseNode{
 							NodeType: EventContextNodeType,
 						},
 						Attributes: Attributes{
@@ -107,20 +109,41 @@ func Test_processComposition(t *testing.T) {
 func Test_EncodeDecodeComposition(t *testing.T) {
 	t.Parallel()
 
-	composition, err := loadComposition("./test_fixtures/simple_composition.json")
-	assert.Nil(t, err)
+	tests := []struct {
+		name     string
+		filepath string
+	}{
+		{
+			"1. simple file",
+			"./test_fixtures/simple_composition.json",
+		},
+		{
+			"2. large composition file",
+			"./../../../../data/mock/ehr/composition.json",
+		},
+	}
 
-	node, err := processComposition(composition)
-	assert.Nil(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			composition, err := loadComposition(tt.filepath)
+			assert.Nil(t, err)
 
-	origin := node.(*CompositionNode)
+			node, err := processComposition(composition)
+			assert.Nil(t, err)
 
-	data, err := msgpack.Marshal(node)
-	assert.Nil(t, err)
+			origin := node.(*CompositionNode)
 
-	got := &CompositionNode{}
-	assert.Nil(t, msgpack.Unmarshal(data, &got))
-	assert.Equal(t, origin, got)
+			data, err := msgpack.Marshal(node)
+			assert.Nil(t, err)
+
+			t.Logf("data size: %d", len(data))
+
+			got := &CompositionNode{}
+			assert.Nil(t, msgpack.Unmarshal(data, &got))
+
+			assert.Equal(t, origin, got)
+		})
+	}
 }
 
 func loadComposition(name string) (model.Composition, error) {
