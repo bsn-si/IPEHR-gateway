@@ -25,7 +25,10 @@ type DirectoryItem struct {
 	Namespace string          `json:"namespace"`
 }
 
-const _directorySeparator = "/"
+const (
+	_directorySeparator      = "/"
+	_directoryRootFolderName = "root"
+)
 
 func (d *Directory) Validate() error {
 	var err error
@@ -51,7 +54,7 @@ func (d *Directory) Validate() error {
 func (d *Directory) GetByPath(p string) (*Directory, error) {
 	p = d.sanitize(p)
 	if p == "" {
-		return nil, errors.ErrIsEmpty
+		p = _directoryRootFolderName
 	}
 
 	paths := strings.SplitN(p, _directorySeparator, 2)

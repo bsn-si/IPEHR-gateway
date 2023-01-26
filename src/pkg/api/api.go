@@ -60,7 +60,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	queryService := query.NewService(docService, query.NewQueryExecuterService(infra.AqlDB))
 	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
-	directory := directoryService.NewService(docService)
+	directory := directoryService.NewService(docService, docGroupSvc)
 
 	compositionService := composition.NewCompositionService(
 		docService.Infra.Index,
@@ -191,10 +191,9 @@ func (a *API) buildEhrDirectoryAPI() handlerBuilder {
 		r.Use(auth(a))
 		r.Use(ehrSystemID)
 		// TODO check permission only doctor can do it
-		r.POST("/:ehrid/directory/:patient_id", a.Directory.Create)
+		r.POST("/:ehrid/directory/", a.Directory.Create)
 		r.PUT("/:ehrid/directory/", a.Directory.Update)
 		r.DELETE("/:ehrid/directory/", a.Directory.Delete)
-		// TODO check permission only doctor can do it and patient
 		r.GET("/:ehrid/directory/", a.Directory.GetByTime)
 		r.GET("/:ehrid/directory/:version_uid", a.Directory.GetByVersion)
 	}

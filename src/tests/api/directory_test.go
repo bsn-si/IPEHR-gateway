@@ -3,11 +3,14 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"hms/gateway/pkg/common/utils"
 	"io"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/errors"
@@ -39,7 +42,7 @@ func (testWrap *testWrap) directoryCreate(testData *TestData) func(t *testing.T)
 			}
 		}
 
-		// TODO who will pay for it?
+		// TODO who will pay for it patient or doctor?
 		d, reqID, err := createDirectory(doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
@@ -49,6 +52,13 @@ func (testWrap *testWrap) directoryCreate(testData *TestData) func(t *testing.T)
 		if err != nil {
 			t.Fatal(err)
 		}
+
+		dCreated, err := getDirectory(doctor, user, testData.ehrSystemID, doctor.accessToken, d.UID.Value, d.Name.Value, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, d, dCreated)
 
 		testData.directories = append(testData.directories, d)
 	}
@@ -60,7 +70,7 @@ func createDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, baseU
 		return nil, "", errors.Wrap(err, "cannot create composition body request")
 	}
 
-	url := baseURL + "/v1/ehr/" + user.ehrID + "/directory/" + user.id
+	url := baseURL + "/v1/ehr/" + user.ehrID + "/directory/?patient_id=" + user.id
 
 	request, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
@@ -97,6 +107,44 @@ func createDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, baseU
 	requestID := response.Header.Get("RequestId")
 
 	return &d, requestID, nil
+}
+
+func getDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, versionID, path, baseURL string, client *http.Client) (*model.Directory, error) {
+	url := baseURL + "/v1/ehr/" + user.ehrID + "/directory/" + versionID + "/?&patient_id=" + user.id + "&path=" + path
+
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", doctor.id)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", ehrSystemID)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot do create request")
+	}
+	defer response.Body.Close()
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot read response body")
+	}
+
+	if response.StatusCode != http.StatusOK {
+		err := fmt.Sprintf("response with status - %s, body contain %s", response.Status, data)
+		return nil, errors.New(err)
+	}
+
+	var d model.Directory
+	if err = json.Unmarshal(data, &d); err != nil {
+		return nil, errors.Wrap(err, "cannot unmarshal DIRECTORY model")
+	}
+
+	return &d, nil
 }
 
 func directoryWithEmptyBody(ehrSystemID string) (*bytes.Reader, error) {

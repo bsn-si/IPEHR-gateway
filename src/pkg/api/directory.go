@@ -27,11 +27,11 @@ import (
 
 type DirectoryService interface {
 	NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error)
-	Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, dirUID string, d *model.Directory) error
+	Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, systemID, dirUID string, d *model.Directory) error
 	Update(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, user *userModel.UserInfo, d *model.Directory) error
 	Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error)
 	GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error)
-	GetByID(ctx context.Context, userID string, ehrUUID, versionUID string) (*model.Directory, error)
+	GetByID(ctx context.Context, patientID string, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error)
 }
 
 type DirectoryHandler struct {
@@ -55,9 +55,10 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_create
 // @Tags         DIRECTORY
 // @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        AuthUserId     header    string  true   "Doctor UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        patient_id     query     string  true  "patient id UUID"
 // @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -68,14 +69,21 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Failure      404  "Is returned when an EHR with {ehr_id}  does not exist"
 // @Failure      409  "Is returned when a resource with same identifier(s) already exists"
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
-// @Router       /ehr/{ehr_id}/directory/patient_id [post]
+// @Router       /ehr/{ehr_id}/directory/ [post]
 func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
-	patientID := ctx.Param("patient_id")
+	patientID := ctx.Query("patient_id")
 	userID := ctx.GetString("userID")
 	systemID := ctx.GetString("ehrSystemID")
 	ehrID := ctx.Param("ehrid")
+
+	if patientID == "" {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("patient_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -132,7 +140,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	exist, err := h.service.GetByID(ctx, patientID, ehrUUID.String(), d.String())
+	exist, err := h.service.GetByID(ctx, patientID, systemID, &ehrUUID, directoryVersionUID)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		log.Println("directoryService.GetByID error: ", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
@@ -152,7 +160,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	if err := h.service.Create(ctx, procRequest, ehrID, patientID, d.String(), d); err != nil {
+	if err := h.service.Create(ctx, procRequest, ehrID, patientID, systemID, d.UID.Value, d); err != nil {
 		log.Println("directoryService.Create error: ", err)
 		errResponse.SetMessage("Execute failed")
 
@@ -166,7 +174,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s", h.baseURL, ehrUUID.String(), d.UID.Value))
+	ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?&patient_id=", h.baseURL, ehrUUID.String(), d.UID.Value, patientID))
 	ctx.Header("ETag", fmt.Sprintf("\"%s\"", d.UID.Value))
 
 	prefer := ctx.Request.Header.Get("Prefer")
@@ -497,6 +505,7 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid    query   string  true  "Example: 6cb19121-4307-4648-9da0-d62e4d51f19b::openEHRSys.example.com::2 VERSION identifier taken from VERSION.uid.value"
 // @Param        path  query     string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
+// @Param        patient_id     query     string  true  "patient id UUID"
 // @Produce      json
 // @Success      200  {object}  model.Directory "Is returned when the FOLDER is successfully retrieved"
 // @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
@@ -507,11 +516,19 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
-	userID := ctx.GetString("userID")
-	//patientID := ctx.Param("patient_id") TODO
+	// TODO check permission what its doctor
+	//userID := ctx.GetString("userID")
+	patientID := ctx.Query("patient_id")
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 	versionUID := ctx.Param("version_uid")
+
+	if patientID == "" {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("patient_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -535,9 +552,8 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 	versionUID := ctx.Param("version_uid")
 
 	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
-	if err != nil || !objectVersionID.Equal(versionUID) {
-		errResponse.SetMessage("Incorrect param").
-			AddError(errors.ErrFieldIsIncorrect("version_uid"))
+	if err != nil || objectVersionID.String() != versionUID {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("version_uid"))
 
 		ctx.JSON(http.StatusBadRequest, errResponse)
 		return

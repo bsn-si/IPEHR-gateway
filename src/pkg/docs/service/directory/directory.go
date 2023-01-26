@@ -2,13 +2,14 @@ package directory
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/docs/service"
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/google/uuid"
-	"github.com/vmihailenco/msgpack/v5"
+	"github.com/ipfs/go-cid"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
@@ -18,12 +19,15 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
-	"hms/gateway/pkg/compressor"
+	"hms/gateway/pkg/common"
 	"hms/gateway/pkg/crypto/chachaPoly"
 	"hms/gateway/pkg/crypto/keybox"
 	"hms/gateway/pkg/docs/model"
 	"hms/gateway/pkg/docs/model/base"
+	"hms/gateway/pkg/docs/service"
+	docGroupService "hms/gateway/pkg/docs/service/docGroup"
 	"hms/gateway/pkg/docs/service/processing"
+	proc "hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/docs/status"
 	"hms/gateway/pkg/docs/types"
 	"hms/gateway/pkg/errors"
@@ -34,79 +38,173 @@ import (
 
 type Service struct {
 	*service.DefaultDocumentService
+	DocGroup *docGroupService.Service
 }
 
-func NewService(docService *service.DefaultDocumentService) *Service {
+func NewService(docService *service.DefaultDocumentService, docGroupSvc *docGroupService.Service) *Service {
 	return &Service{
 		docService,
+		docGroupSvc,
 	}
 }
 func (s *Service) NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error) {
 	return s.Proc.NewRequest(reqID, userID, ehrUUID, kind)
 }
 
-func (s *Service) Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, dirUID string, d *model.Directory) error {
-	timestamp := time.Now()
-
-	id := []byte(ehrUUID + patientID + dirUID)
-	idHash := sha3.Sum256(id)
+func (s *Service) Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, systemID, dirUID string, d *model.Directory) error {
 	key := chachaPoly.GenerateKey()
-
-	content, err := msgpack.Marshal(d)
-	if err != nil {
-		return fmt.Errorf("msgpack.Marshal error: %w", err)
-	}
-
-	contentCompresed, err := compressor.New(compressor.BestCompression).Compress(content)
-	if err != nil {
-		return fmt.Errorf("Query Compress error: %w", err)
-	}
-
-	contentEncr, err := key.Encrypt(contentCompresed)
-	if err != nil {
-		return fmt.Errorf("key.Encrypt content error: %w", err)
-	}
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(patientID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, patientID)
 	}
 
-	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+	objectVersionID, err := base.NewObjectVersionID(dirUID, systemID)
 	if err != nil {
-		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID, systemID)
 	}
 
-	docMeta := &model.DocumentMeta{
-		Status:    uint8(status.ACTIVE),
-		Id:        idHash[:],
-		Version:   []byte(d.UID.Value),
-		Timestamp: uint32(timestamp.Unix()),
-		IsLast:    true,
-		Attrs: []ehrIndexer.AttributesAttribute{
-			{Code: model.AttributeKeyEncr, Value: keyEncr},         // encrypted with key
-			{Code: model.AttributeContentEncr, Value: contentEncr}, // encrypted with userPubKey
-			{Code: model.AttributeDocUIDHash, Value: idHash[:]},
-		},
-	}
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Directory, docMeta, userPrivKey, nil)
-	if err != nil {
-		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
-	}
-
-	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return errors.ErrNotFound
-		} else if strings.Contains(err.Error(), "AEX") {
-			return errors.ErrAlreadyExist
+	// Searching 'all documents' group
+	var allDocGroup *model.DocumentGroup
+	{
+		docGroups, err := s.DocGroup.GroupGetList(ctx, patientID, systemID)
+		if err != nil {
+			return fmt.Errorf("DocGroup.GroupGetList error: %w", err)
 		}
 
-		return fmt.Errorf("Index.SendSingle error: %w", err)
+		for _, dg := range docGroups {
+			if dg.Name == common.DefaultGroupAllDocuments {
+				allDocGroup = dg
+				break
+			}
+		}
+
+		if allDocGroup == nil {
+			return fmt.Errorf("user 'all documents' group not found: %w", errors.ErrNotFound)
+		}
 	}
 
-	req.AddEthereumTx(processing.TxAddEhrDoc, txHash)
+	docBytes, err := json.Marshal(d)
+	if err != nil {
+		return fmt.Errorf("DIRECTORY marshal error: %w", err)
+	}
+
+	if s.Infra.CompressionEnabled {
+		docBytes, err = s.Infra.Compressor.Compress(docBytes)
+		if err != nil {
+			return fmt.Errorf("DIRECTORY compress error: %w", err)
+		}
+	}
+
+	// Document encryption
+	log.Info("enc with: " + objectVersionID.String())
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(objectVersionID.String()))
+	//docEncrypted, err := key.EncryptWithAuthData(docBytes, baseDocumentUID)
+	if err != nil {
+		return fmt.Errorf("DIRECTORY encryption error: %w", err)
+	}
+
+	// IPFS saving
+	CID, err := s.Infra.IpfsClient.Add(ctx, docEncrypted)
+	if err != nil {
+		return fmt.Errorf("IpfsClient.Add error: %w", err)
+	}
+
+	// Filecoin saving
+	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
+	if err != nil {
+		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+	}
+
+	req.AddFilecoinTx(proc.TxCreateDirectory, CID.String(), dealCID.String(), minerAddr)
+
+	{
+		docIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
+		if err != nil {
+			return fmt.Errorf("EncryptWithAuthData error: %w", err)
+		}
+
+		CIDEncr, err := key.Encrypt(CID.Bytes())
+		if err != nil {
+			return fmt.Errorf("CID encryption error: %w", err)
+		}
+
+		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+		if err != nil {
+			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		}
+
+		nameEncr, err := key.Encrypt([]byte(d.Name.Value))
+		if err != nil {
+			return fmt.Errorf("Encrypt name error: %w", err)
+		}
+
+		docMeta := &model.DocumentMeta{
+			Status:    uint8(status.ACTIVE),
+			Id:        CID.Bytes(),
+			Version:   objectVersionID.VersionBytes()[:],
+			Timestamp: uint32(time.Now().Unix()),
+			IsLast:    true,
+			Attrs: []ehrIndexer.AttributesAttribute{
+				{Code: model.AttributeIDEncr, Value: CIDEncr},
+				{Code: model.AttributeKeyEncr, Value: keyEncr},
+				{Code: model.AttributeDocUIDHash, Value: baseDocumentUIDHash[:]},
+				{Code: model.AttributeDocUIDEncr, Value: docIDEncrypted},
+				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
+				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
+				{Code: model.AttributeNameEncr, Value: nameEncr},
+			},
+		}
+
+		packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Directory, docMeta, userPrivKey, nil)
+		if err != nil {
+			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
+		}
+
+		txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
+		if err != nil {
+			if strings.Contains(err.Error(), "NFD") {
+				return errors.ErrNotFound
+			} else if strings.Contains(err.Error(), "AEX") {
+				return errors.ErrAlreadyExist
+			}
+
+			return fmt.Errorf("Index.SendSingle error: %w", err)
+		}
+
+		req.AddEthereumTx(processing.TxAddEhrDoc, txHash)
+	}
+
+	//{
+	//	docCIDHash := indexer.Keccak256(CID.Bytes())
+	//
+	//	docCIDEncr, err := allDocGroup.GroupKey.Encrypt(CID.Bytes())
+	//	if err != nil {
+	//		return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
+	//	}
+	//
+	//	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, nil)
+	//	if err != nil {
+	//		return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
+	//	}
+	//
+	//	//multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
+	//	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
+	//	if err != nil {
+	//		if strings.Contains(err.Error(), "NFD") {
+	//			return errors.ErrNotFound
+	//		} else if strings.Contains(err.Error(), "AEX") {
+	//			return errors.ErrAlreadyExist
+	//		}
+	//
+	//		return fmt.Errorf("Index.SendSingle error: %w", err)
+	//	}
+	//
+	//	req.AddEthereumTx(processing.TxDocGroupAddDoc, txHash)
+	//}
 
 	return nil
 }
@@ -159,43 +257,39 @@ func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.
 	return nil, errors.ErrNotImplemented
 }
 
-func (s *Service) GetByID(ctx context.Context, patientID string, ehrUUID, versionUID string) (*model.Directory, error) {
-	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(patientID)
-	if err != nil {
-		return nil, fmt.Errorf("Keystore.Get error: %w patientID %s", err, patientID)
-	}
+func (s *Service) GetByID(ctx context.Context, patientID string, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error) {
+	baseDocumentUID := versionID.BasedID()
+	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 
-	id := []byte(ehrUUID + patientID + versionUID)
-
-	idHash := sha3.Sum256(id)
-
-	var vID [32]byte
-
-	copy(vID[:], versionUID)
-
-	e := uuid.MustParse(ehrUUID)
-
-	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, &e, types.Directory, &idHash, &vID)
+	docMeta, err := s.Infra.Index.GetDocByVersion(ctx, ehrUUID, types.Directory, &baseDocumentUIDHash, versionID.VersionBytes())
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return nil, err
 		}
+
 		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
 	}
 
-	key, err := s.KeyFromAttribures(docMeta, userPubKey, userPrivKey)
+	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
-		return nil, fmt.Errorf("KeyFromAttribures error: %w", err)
+		return nil, fmt.Errorf("cid.Parse error: %w", err)
 	}
 
-	content, err := s.ContentFromAttributes(docMeta, key)
-	if err != nil {
-		return nil, fmt.Errorf("ContentFromAttributes error: %w", err)
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
+	if docUIDEncrypted == nil {
+		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
+	}
+
+	docDecrypted, err := s.DocGroup.GetDocFromStorageByID(ctx, patientID, systemID, &CID, []byte(versionID.String()), docUIDEncrypted)
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("GetDocFromStorageByID error: %w", err)
 	}
 
 	var d model.Directory
 
-	err = msgpack.Unmarshal(content, &d)
+	err = json.Unmarshal(docDecrypted, &d)
 	if err != nil {
 		return nil, fmt.Errorf("DIRECTORY content unmarshal error: %w", err)
 	}
