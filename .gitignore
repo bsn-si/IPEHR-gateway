@@ -4,3 +4,4 @@ config.json
 /bin
 *.antlr
 *.DS_Store
+./data/storage*

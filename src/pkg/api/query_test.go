@@ -280,7 +280,7 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 					},
 				}
 
-				svc.EXPECT().ExecQueryWithTimeout(gomock.Any(), r).Return(nil, errors.New("some error"))
+				svc.EXPECT().ExecQuery(gomock.Any(), r).Return(nil, errors.New("some error"))
 			},
 			http.StatusInternalServerError,
 			`{"error":"internal server error"}`,
@@ -298,7 +298,7 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 					},
 				}
 
-				svc.EXPECT().ExecQueryWithTimeout(gomock.Any(), r).Return(nil, errors.ErrTimeout)
+				svc.EXPECT().ExecQuery(gomock.Any(), r).Return(nil, errors.ErrTimeout)
 			},
 			http.StatusRequestTimeout,
 			`{"error":"timeout exceeded"}`,
@@ -317,7 +317,7 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 				}
 				resp := &model.QueryResponse{}
 
-				svc.EXPECT().ExecQueryWithTimeout(gomock.Any(), r).Return(resp, nil)
+				svc.EXPECT().ExecQuery(gomock.Any(), r).Return(resp, nil)
 			},
 			200,
 			`{"meta":{"_href":"","_type":"","_schema_version":"","_created":"","_generator":"","_executed_aql":""},"name":"","q":"","columns":null,"rows":null}`,

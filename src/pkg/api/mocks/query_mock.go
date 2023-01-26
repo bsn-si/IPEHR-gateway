@@ -6,11 +6,10 @@ package mocks
 
 import (
 	context "context"
-	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
-	base "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	reflect "reflect"
 
-	gin "github.com/gin-gonic/gin"
+	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	base "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -50,21 +49,6 @@ func (m *MockQueryService) ExecQuery(ctx context.Context, query *model.QueryRequ
 func (mr *MockQueryServiceMockRecorder) ExecQuery(ctx, query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecQuery", reflect.TypeOf((*MockQueryService)(nil).ExecQuery), ctx, query)
-}
-
-// ExecQueryWithTimeout mocks base method.
-func (m *MockQueryService) ExecQueryWithTimeout(ctx *gin.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecQueryWithTimeout", ctx, query)
-	ret0, _ := ret[0].(*model.QueryResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ExecQueryWithTimeout indicates an expected call of ExecQueryWithTimeout.
-func (mr *MockQueryServiceMockRecorder) ExecQueryWithTimeout(ctx, query interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecQueryWithTimeout", reflect.TypeOf((*MockQueryService)(nil).ExecQueryWithTimeout), ctx, query)
 }
 
 // ExecStoredQuery mocks base method.
