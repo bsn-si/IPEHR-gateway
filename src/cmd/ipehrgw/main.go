@@ -27,8 +27,6 @@ func main() {
 
 	infra := infrastructure.New(cfg)
 
-	defer infra.Close()
-
 	a := api.New(cfg, infra).Build()
 	if err = a.Run(cfg.Host); err != nil {
 		panic(err)

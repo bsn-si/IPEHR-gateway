@@ -61,7 +61,7 @@ func TestAQLQueryServiceClient_ExecuteQuery(t *testing.T) {
 			defer srv.Close()
 
 			cli := NewAQLQueryServiceClient(srv.URL)
-			got, err := cli.ExecuteQuery(context.Background(), query)
+			got, err := cli.ExecQuery(context.Background(), query)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("AQLQueryServiceClient.ExecuteQuery() error = %v, wantErr %v", err, tt.wantErr)
 				return

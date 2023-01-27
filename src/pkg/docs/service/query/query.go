@@ -27,7 +27,7 @@ import (
 const defaultVersion = "1.0.1"
 
 type QueryExecuter interface { //nolint
-	ExecQueryContext(ctx context.Context, query string, offset, limit int, params map[string]any) ([]string, []any, error)
+	ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
 type Service struct {
@@ -242,38 +242,47 @@ func (s *Service) ExecStoredQuery(ctx context.Context, userID, systemID, qualifi
 
 	query.Query = storedQuery.Query
 
-	columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
+	resp, err := s.qExec.ExecQuery(ctx, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot exec query")
 	}
 
-	resp := &model.QueryResponse{
-		Name:  qualifiedQueryName,
-		Query: query.Query,
-		Rows:  result,
-	}
+	// columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "cannot exec query")
+	// }
 
-	for _, c := range columns {
-		resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
-	}
+	// resp := &model.QueryResponse{
+	// 	Name:  qualifiedQueryName,
+	// 	Query: query.Query,
+	// 	Rows:  result,
+	// }
+
+	// for _, c := range columns {
+	// 	resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
+	// }
 
 	return resp, nil
 }
 
 func (s *Service) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
+	// columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
+	// if err != nil {
+	// 	return nil, errors.Wrap(err, "cannot exec query")
+	// }
+
+	resp, err := s.qExec.ExecQuery(ctx, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot exec query")
 	}
+	// resp := &model.QueryResponse{
+	// 	Query: query.Query,
+	// 	Rows:  result,
+	// }
 
-	resp := &model.QueryResponse{
-		Query: query.Query,
-		Rows:  result,
-	}
-
-	for _, c := range columns {
-		resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
-	}
+	// for _, c := range columns {
+	// 	resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
+	// }
 
 	return resp, nil
 }

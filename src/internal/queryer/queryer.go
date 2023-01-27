@@ -31,7 +31,7 @@ func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
 	}
 }
 
-func (cli *AQLQueryServiceClient) ExecuteQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
+func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
 	reqData, err := json.Marshal(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal request body")

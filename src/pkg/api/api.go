@@ -10,6 +10,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/queryer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/composition"
@@ -57,7 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docGroupSvc := docGroupService.NewService(docService)
 	gaSvc := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	templateService := template.NewService(docService)
-	queryService := query.NewService(docService, query.NewQueryExecuterService(infra.AqlDB))
+	queryService := query.NewService(docService, queryer.NewAQLQueryServiceClient(cfg.StatsServiceAddress))
 	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 	directory := directoryService.NewService(docService, docGroupSvc)
