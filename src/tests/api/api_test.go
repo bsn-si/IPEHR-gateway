@@ -26,7 +26,7 @@ type TestData struct {
 	requests      []*Request
 	groupsAccess  []*model.GroupAccess
 	storedQueries []*model.StoredQuery
-	directories   []*model.Directory
+	directory     *model.Directory
 	userGroups    []*userModel.UserGroup
 	doctors       []*Doctor
 }

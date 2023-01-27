@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"golang.org/x/crypto/sha3"
@@ -100,9 +99,7 @@ func (s *Service) Create(ctx context.Context, req processing.RequestInterface, e
 	}
 
 	// Document encryption
-	log.Info("enc with: " + objectVersionID.String())
 	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(objectVersionID.String()))
-	//docEncrypted, err := key.EncryptWithAuthData(docBytes, baseDocumentUID)
 	if err != nil {
 		return fmt.Errorf("DIRECTORY encryption error: %w", err)
 	}
@@ -178,33 +175,32 @@ func (s *Service) Create(ctx context.Context, req processing.RequestInterface, e
 		req.AddEthereumTx(processing.TxAddEhrDoc, txHash)
 	}
 
-	//{
-	//	docCIDHash := indexer.Keccak256(CID.Bytes())
-	//
-	//	docCIDEncr, err := allDocGroup.GroupKey.Encrypt(CID.Bytes())
-	//	if err != nil {
-	//		return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
-	//	}
-	//
-	//	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, nil)
-	//	if err != nil {
-	//		return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
-	//	}
-	//
-	//	//multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
-	//	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
-	//	if err != nil {
-	//		if strings.Contains(err.Error(), "NFD") {
-	//			return errors.ErrNotFound
-	//		} else if strings.Contains(err.Error(), "AEX") {
-	//			return errors.ErrAlreadyExist
-	//		}
-	//
-	//		return fmt.Errorf("Index.SendSingle error: %w", err)
-	//	}
-	//
-	//	req.AddEthereumTx(processing.TxDocGroupAddDoc, txHash)
-	//}
+	{
+		docCIDHash := indexer.Keccak256(CID.Bytes())
+
+		docCIDEncr, err := allDocGroup.GroupKey.Encrypt(CID.Bytes())
+		if err != nil {
+			return fmt.Errorf("CID encryption error: %w", err)
+		}
+
+		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, nil)
+		if err != nil {
+			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
+		}
+
+		txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
+		if err != nil {
+			if strings.Contains(err.Error(), "NFD") {
+				return errors.ErrNotFound
+			} else if strings.Contains(err.Error(), "AEX") {
+				return errors.ErrAlreadyExist
+			}
+
+			return fmt.Errorf("Index.SendSingle error: %w", err)
+		}
+
+		req.AddEthereumTx(processing.TxDocGroupAddDoc, txHash)
+	}
 
 	return nil
 }
@@ -252,9 +248,40 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 	return objectVersionID.String(), nil
 }
 
-// TODO
 func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error) {
-	return nil, errors.ErrNotImplemented
+	docMeta, err := s.Infra.Index.GetDocByTime(ctx, ehrUUID, types.Directory, uint32(versionTime.Unix()))
+	if err != nil && errors.Is(err, errors.ErrNotFound) {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("Index.GetDocByTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), versionTime.String(), types.EhrStatus)
+	}
+
+	CID, err := cid.Parse(docMeta.Id)
+	if err != nil {
+		return nil, fmt.Errorf("cid.Parse error: %w", err)
+	}
+
+	docUIDEncrypted := docMeta.GetAttr(model.AttributeDocUIDEncr)
+	if docUIDEncrypted == nil {
+		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
+	}
+
+	docDecrypted, err := s.DocGroup.GetDocFromStorageByID(ctx, userID, systemID, &CID, docMeta.Version, docUIDEncrypted)
+	//docDecrypted, err := s.DocGroup.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("GetDocFromStorageByID error: %w", err)
+	}
+
+	var d model.Directory
+
+	err = json.Unmarshal(docDecrypted, &d)
+	if err != nil {
+		return nil, fmt.Errorf("DIRECTORY content unmarshal error: %w", err)
+	}
+
+	return &d, nil
 }
 
 func (s *Service) GetByID(ctx context.Context, patientID string, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error) {

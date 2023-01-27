@@ -60,7 +60,19 @@ func (testWrap *testWrap) directoryCreate(testData *TestData) func(t *testing.T)
 
 		assert.Equal(t, d, dCreated)
 
-		testData.directories = append(testData.directories, d)
+		testData.directory = d // TODO do i need it?
+
+		// TODO add UPDATE directory
+		err = deleteDirectory(t, doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, d.UID.Value, testWrap.httpClient)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		dCreated, err = getDirectory(doctor, user, testData.ehrSystemID, doctor.accessToken, d.UID.Value, d.Name.Value, testWrap.server.URL, testWrap.httpClient)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 	}
 }
 
@@ -70,9 +82,9 @@ func createDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, baseU
 		return nil, "", errors.Wrap(err, "cannot create composition body request")
 	}
 
-	url := baseURL + "/v1/ehr/" + user.ehrID + "/directory/?patient_id=" + user.id
+	link := baseURL + "/v1/ehr/" + user.ehrID + "/directory/?patient_id=" + user.id
 
-	request, err := http.NewRequest(http.MethodPost, url, body)
+	request, err := http.NewRequest(http.MethodPost, link, body)
 	if err != nil {
 		return nil, "", err
 	}
@@ -174,4 +186,35 @@ func directoryCreateBodyRequest(ehrSystemID, mockDirectoryFileName string) (*byt
 	//data = []byte(strings.Replace(string(data), "__COMPOSITION_ID__", objectVersionID.String(), 1))
 
 	return bytes.NewReader(data), nil
+}
+
+func deleteDirectory(t *testing.T, doctor *Doctor, user *User, ehrSystemID, accessToken, baseURL, directoryUUID string, client *http.Client) error {
+	link := fmt.Sprintf("%s/v1/ehr/%s/directory/?patient_id=%s", baseURL, user.ehrID, user.id)
+
+	request, err := http.NewRequest(http.MethodDelete, link, nil)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", doctor.id)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	//request.Header.Set("GroupAccessId", groupAccessID)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", ehrSystemID)
+	request.Header.Set("If-Match", directoryUUID)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return errors.Wrap(err, "cannot do create request")
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusNoContent {
+		return errors.New(response.Status)
+	}
+
+	t.Logf("Deleted, got new location: %s", response.Header.Get("Location"))
+
+	return nil
 }

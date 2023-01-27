@@ -210,7 +210,6 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 
@@ -223,6 +222,18 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		return
 	}
 
+	patientID := ctx.Query("patient_id")
+	if patientID == "" {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("patient_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	systemID := ctx.GetString("ehrSystemID")
+	searcher := helper.NewSearcher(ctx, patientID, systemID, ehrUUID.String()).UseService(h.indexer)
+
+	if !searcher.IsEhrBelongsToUser() {
 	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
@@ -333,7 +344,6 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
-	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 
@@ -346,6 +356,18 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
+	patientID := ctx.Query("patient_id")
+	if patientID == "" {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("patient_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	systemID := ctx.GetString("ehrSystemID")
+	searcher := helper.NewSearcher(ctx, patientID, systemID, ehrUUID.String()).UseService(h.indexer)
+
+	if !searcher.IsEhrBelongsToUser() {
 	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
@@ -362,7 +384,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	lastDirectoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, userID, time.Now())
+	lastDirectoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, patientID, time.Now())
 	if err != nil {
 		if !errors.Is(err, errors.ErrNotFound) {
 			log.Println("directoryService.GetByTime error: ", err)
@@ -374,8 +396,8 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	if lastDirectoryVersion.String() != precedingVersionUID {
-		ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s", h.baseURL, ehrUUID.String(), lastDirectoryVersion.UID.Value))
+	if lastDirectoryVersion.UID.Value != precedingVersionUID {
+		ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?&patient_id=%s", h.baseURL, ehrUUID.String(), lastDirectoryVersion.UID.Value, patientID))
 		ctx.Header("ETag", fmt.Sprintf("\"%s\"", lastDirectoryVersion.UID.Value))
 		ctx.AbortWithStatus(http.StatusPreconditionFailed)
 		return
@@ -389,7 +411,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	newUUID, err := h.service.Delete(ctx, procRequest, systemID, &ehrUUID, precedingVersionUID, userID)
+	newUUID, err := h.service.Delete(ctx, procRequest, systemID, &ehrUUID, precedingVersionUID, patientID)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyDeleted) {
 			errResponse.SetMessage("Execute failed").AddError(err)
@@ -408,7 +430,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s", h.baseURL, ehrUUID.String(), newUUID))
+	ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?patient_id=%s", h.baseURL, ehrUUID.String(), newUUID, patientID))
 	ctx.Header("ETag", fmt.Sprintf("\"%s\"", newUUID))
 	ctx.Status(http.StatusNoContent)
 }
@@ -570,7 +592,7 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 			return
 		}
 
-		log.Println("directoryService.GetByTime error: ", err)
+		log.Println("directoryService.GetByID error: ", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
