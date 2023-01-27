@@ -20,7 +20,7 @@ type Config struct {
 	CompressionLevel     int    `json:"compressionLevel"` // 1-9 Fast-Best compression or 0 - No compression
 	DefaultUserID        string `json:"defaultUserId"`
 	DefaultGroupAccessID string `json:"defaultGroupAccessId"`
-	StatsServiceAddress  string `json:"statsServiceAddress`
+	StatsServiceURL      string `json:"statsServiceURL"`
 	Storage              struct {
 		Localfile struct {
 			Path string
