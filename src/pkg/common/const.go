@@ -16,6 +16,7 @@ const (
 	DefaultGroupAllDocuments         = "all documents"
 	DefaultGroupDoctors              = "doctors"
 	QueryExecutionTimeout            = time.Second * 60
+	WebRequestTimeout                = time.Second * 60
 
 	ScryptKeyLen  = 32
 	ScryptSaltLen = 16
