@@ -247,42 +247,16 @@ func (s *Service) ExecStoredQuery(ctx context.Context, userID, systemID, qualifi
 		return nil, errors.Wrap(err, "cannot exec query")
 	}
 
-	// columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "cannot exec query")
-	// }
-
-	// resp := &model.QueryResponse{
-	// 	Name:  qualifiedQueryName,
-	// 	Query: query.Query,
-	// 	Rows:  result,
-	// }
-
-	// for _, c := range columns {
-	// 	resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
-	// }
+	resp.Name = qualifiedQueryName
 
 	return resp, nil
 }
 
 func (s *Service) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	// columns, result, err := s.qExec.ExecQueryContext(ctx, query.Query, query.Offset, query.Fetch, query.QueryParameters)
-	// if err != nil {
-	// 	return nil, errors.Wrap(err, "cannot exec query")
-	// }
-
 	resp, err := s.qExec.ExecQuery(ctx, query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot exec query")
 	}
-	// resp := &model.QueryResponse{
-	// 	Query: query.Query,
-	// 	Rows:  result,
-	// }
-
-	// for _, c := range columns {
-	// 	resp.Columns = append(resp.Columns, model.QueryColumn{Name: c})
-	// }
 
 	return resp, nil
 }
