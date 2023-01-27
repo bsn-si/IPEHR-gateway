@@ -58,7 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docGroupSvc := docGroupService.NewService(docService)
 	gaSvc := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	templateService := template.NewService(docService)
-	queryService := query.NewService(docService, queryer.NewAQLQueryServiceClient(cfg.StatsServiceAddres))
+	queryService := query.NewService(docService, queryer.NewAQLQueryServiceClient(cfg.StatsServiceURL))
 	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 	directory := directoryService.NewService(docService, docGroupSvc)
