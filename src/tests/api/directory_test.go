@@ -4,17 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"hms/gateway/pkg/common/utils"
-	"hms/gateway/pkg/docs/model/base"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	"hms/gateway/pkg/common"
+	"hms/gateway/pkg/common/utils"
 	"hms/gateway/pkg/docs/model"
+	"hms/gateway/pkg/docs/model/base"
 	"hms/gateway/pkg/errors"
 )
 
@@ -79,12 +82,18 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 
 		testData.directory = d
 
-		dCreated, err := getDirectory(wrap, d.UID.Value, d.Name.Value)
+		dCreated, err := getDirectoryByVersion(wrap, d.UID.Value, d.Name.Value)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		assert.Equal(t, d, dCreated)
+
+		dByTime, err := getDirectoryByTime(wrap, d.Name.Value, time.Now().Format(common.OpenEhrTimeFormat))
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, dCreated, dByTime)
 
 		// TODO finish with update
 		//err = updateDirectory(t, doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, d.UID.Value, testWrap.httpClient)
@@ -97,7 +106,7 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		_, err = getDirectory(wrap, d.UID.Value, d.Name.Value)
+		_, err = getDirectoryByVersion(wrap, d.UID.Value, d.Name.Value)
 		if err == nil {
 			t.Fatal(errors.New("Status mismatch"))
 		}
@@ -149,8 +158,46 @@ func createDirectory(t *testing.T, wrap *testWrapDirectory, body *bytes.Reader) 
 	return &d, nil
 }
 
-func getDirectory(wrap *testWrapDirectory, versionID, path string) (*model.Directory, error) {
+func getDirectoryByVersion(wrap *testWrapDirectory, versionID, path string) (*model.Directory, error) {
 	link := fmt.Sprintf("%s/%s/?&patient_id=%s&path=%s", wrap.getURL(), versionID, wrap.user.id, path)
+
+	request, err := http.NewRequest(http.MethodGet, link, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", wrap.doctor.id)
+	request.Header.Set("Authorization", "Bearer "+wrap.doctor.accessToken)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", wrap.ehrSystemID)
+
+	response, err := wrap.httpClient.Do(request)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot do create request")
+	}
+	defer response.Body.Close()
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot read response body")
+	}
+
+	if response.StatusCode != http.StatusOK {
+		err := fmt.Sprintf("response with status - %s, body contain %s", response.Status, data)
+		return nil, errors.New(err)
+	}
+
+	var d model.Directory
+	if err = json.Unmarshal(data, &d); err != nil {
+		return nil, errors.Wrap(err, "cannot unmarshal DIRECTORY model")
+	}
+
+	return &d, nil
+}
+
+func getDirectoryByTime(wrap *testWrapDirectory, path, versionAtTime string) (*model.Directory, error) {
+	link := fmt.Sprintf("%s/?&patient_id=%s&path=%s&version_at_time=%s", wrap.getURL(), wrap.user.id, path, url.QueryEscape(versionAtTime))
 
 	request, err := http.NewRequest(http.MethodGet, link, nil)
 	if err != nil {

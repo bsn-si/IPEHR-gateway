@@ -266,7 +266,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	lastDirectoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, userID, time.Now())
+	lastDirectoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, patientID, time.Now())
 	if err != nil {
 		if !errors.Is(err, errors.ErrNotFound) {
 			log.Println("directoryService.GetByTime error: ", err)
@@ -458,12 +458,17 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 // @Router       /ehr/{ehr_id}/directory [get]
 func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
-
-	userID := ctx.GetString("userID")
-	//patientID := ctx.Param("patient_id") TODO
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
 	versionAtTime := ctx.Query("version_at_time")
+
+	patientID := ctx.Query("patient_id")
+	if patientID == "" {
+		errResponse.AddError(errors.ErrFieldIsIncorrect("patient_id"))
+
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -474,9 +479,11 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 		return
 	}
 
-	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, patientID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
-		ctx.AbortWithStatus(http.StatusNotFound)
+		errResponse.SetMessage("Incorrect patient ID")
+
+		ctx.JSON(http.StatusNotFound, errResponse)
 		return
 	} else if err != nil {
 		log.Println("GetEhrUUIDByUserID error: ", err)
@@ -493,7 +500,7 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 		return
 	}
 
-	directoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, userID, statusTime)
+	directoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, patientID, statusTime)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			ctx.AbortWithStatus(http.StatusNotFound)

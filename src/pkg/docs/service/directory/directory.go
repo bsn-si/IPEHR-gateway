@@ -248,7 +248,7 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 	return objectVersionID.String(), nil
 }
 
-func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error) {
+func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, patientID string, versionTime time.Time) (*model.Directory, error) {
 	docMeta, err := s.Infra.Index.GetDocByTime(ctx, ehrUUID, types.Directory, uint32(versionTime.Unix()))
 	if err != nil && errors.Is(err, errors.ErrNotFound) {
 		return nil, err
@@ -266,8 +266,7 @@ func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.
 		return nil, errors.ErrFieldIsEmpty("DocUIDEncrypted")
 	}
 
-	docDecrypted, err := s.DocGroup.GetDocFromStorageByID(ctx, userID, systemID, &CID, docMeta.Version, docUIDEncrypted)
-	//docDecrypted, err := s.DocGroup.GetDocFromStorageByID(ctx, userID, systemID, &CID, ehrUUID[:], docUIDEncrypted)
+	docDecrypted, err := s.DocGroup.GetDocFromStorageByID(ctx, patientID, systemID, &CID, docMeta.Version, docUIDEncrypted)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		return nil, err
 	} else if err != nil {
