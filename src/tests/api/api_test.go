@@ -165,7 +165,7 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
-	if !t.Run("DIRECTORY create", testWrap.directoryCreate(testData)) {
+	if !t.Run("DIRECTORY create", testWrap.directoryCRUD(testData)) {
 		t.Fatal()
 	}
 

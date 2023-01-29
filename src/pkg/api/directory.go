@@ -194,6 +194,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        patient_id     query     string  true  "patient id UUID"
 // @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -331,6 +332,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 // @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        patient_id     query     string  true  "patient id UUID"
 // @Header       204            {string}  RequestID  "Request identifier"
 // @Header       412            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       412            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
@@ -446,6 +448,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 // @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_at_time  query     string  true  "Example: version_at_time=2015-01-20T19:30:22.765+01:00 A given time in the extended ISO 8601 format"
 // @Param        path  query     string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
+// @Param        patient_id     query     string  true  "patient id UUID"
 // @Produce      json
 // @Success      200  {object}  model.Directory "Is returned when the FOLDER is successfully retrieved"
 // @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"

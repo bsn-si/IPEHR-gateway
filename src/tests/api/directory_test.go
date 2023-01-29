@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"hms/gateway/pkg/common/utils"
+	"hms/gateway/pkg/docs/model/base"
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,126 +18,152 @@ import (
 	"hms/gateway/pkg/errors"
 )
 
-//const version123 = "1.2.3"
+type bodyFillers map[base.ItemType]string
 
-func (testWrap *testWrap) directoryCreate(testData *TestData) func(t *testing.T) {
-	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+type testWrapDirectory struct {
+	user        *User
+	doctor      *Doctor
+	ehrID       string
+	ehrSystemID string
+	*testWrap
+}
+
+func (w *testWrapDirectory) getURL() string {
+	return w.server.URL + "/v1/ehr/" + w.ehrID + "/directory"
+}
+
+func (w *testWrapDirectory) prepare(testData *TestData, t *testing.T) {
+
+	err := w.checkUser(testData)
+	if err != nil {
+		t.Fatal("Check user error:", err)
+	}
+
+	if testData.users[0].ehrID == "" {
+		w.ehrCreate(testData)(t)
+	}
+
+	w.user = testData.users[0]
+	w.ehrID = w.user.ehrID
+
+	if len(testData.doctors) == 0 {
+		w.doctorRegister(testData)(t)
+	}
+
+	if testData.doctors[0].accessToken == "" {
+		err := testData.doctors[0].login(testData.ehrSystemID, w.server.URL, w.httpClient)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("User login error:", err)
 		}
+	}
 
-		user := testData.users[0]
-		if user.ehrID == "" {
-			testWrap.ehrCreate(testData)(t)
-		}
+	w.doctor = testData.doctors[0]
+}
 
-		if len(testData.doctors) == 0 {
-			testWrap.doctorRegister(testData)(t)
-		}
+func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
 
-		doctor := testData.doctors[0]
-		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal("User login error:", err)
-			}
-		}
+		wrap := &testWrapDirectory{testWrap: testWrap}
+		wrap.prepare(testData, t)
 
 		// TODO who will pay for it patient or doctor?
-		d, reqID, err := createDirectory(doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, testWrap.httpClient)
+		body, err := directoryWithEmptyBody()
+		if err != nil {
+			t.Fatal(errors.Wrap(err, "cannot create composition body request"))
+		}
+
+		d, err := createDirectory(t, wrap, body)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = requestWait(doctor.id, doctor.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
-		if err != nil {
-			t.Fatal(err)
-		}
+		testData.directory = d
 
-		dCreated, err := getDirectory(doctor, user, testData.ehrSystemID, doctor.accessToken, d.UID.Value, d.Name.Value, testWrap.server.URL, testWrap.httpClient)
+		dCreated, err := getDirectory(wrap, d.UID.Value, d.Name.Value)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		assert.Equal(t, d, dCreated)
 
-		testData.directory = d // TODO do i need it?
+		// TODO finish with update
+		//err = updateDirectory(t, doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, d.UID.Value, testWrap.httpClient)
+		//if err != nil {
+		//	t.Fatal(err)
+		//}
 
-		// TODO add UPDATE directory
-		err = deleteDirectory(t, doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, d.UID.Value, testWrap.httpClient)
+		err = deleteDirectory(t, wrap, d.UID.Value)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		dCreated, err = getDirectory(doctor, user, testData.ehrSystemID, doctor.accessToken, d.UID.Value, d.Name.Value, testWrap.server.URL, testWrap.httpClient)
-		if err != nil {
-			t.Fatal(err)
+		_, err = getDirectory(wrap, d.UID.Value, d.Name.Value)
+		if err == nil {
+			t.Fatal(errors.New("Status mismatch"))
 		}
-
 	}
 }
 
-func createDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, baseURL string, client *http.Client) (*model.Directory, string, error) {
-	body, err := directoryWithEmptyBody(ehrSystemID)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "cannot create composition body request")
-	}
-
-	link := baseURL + "/v1/ehr/" + user.ehrID + "/directory/?patient_id=" + user.id
+func createDirectory(t *testing.T, wrap *testWrapDirectory, body *bytes.Reader) (*model.Directory, error) {
+	link := wrap.getURL() + "/?patient_id=" + wrap.user.id
 
 	request, err := http.NewRequest(http.MethodPost, link, body)
-	if err != nil {
-		return nil, "", err
-	}
-
-	request.Header.Set("Content-type", "application/json")
-	request.Header.Set("AuthUserId", doctor.id)
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-	//request.Header.Set("GroupAccessId", groupAccessID)
-	request.Header.Set("Prefer", "return=representation")
-	request.Header.Set("EhrSystemId", ehrSystemID)
-
-	response, err := client.Do(request)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "cannot do create request")
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusCreated {
-		return nil, "", errors.New(response.Status)
-	}
-
-	data, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, "", errors.Wrap(err, "connot read response body")
-	}
-
-	var d model.Directory
-	if err = json.Unmarshal(data, &d); err != nil {
-		return nil, "", errors.Wrap(err, "cannot unmarshal DIRECTORY model")
-	}
-
-	requestID := response.Header.Get("RequestId")
-
-	return &d, requestID, nil
-}
-
-func getDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, versionID, path, baseURL string, client *http.Client) (*model.Directory, error) {
-	url := baseURL + "/v1/ehr/" + user.ehrID + "/directory/" + versionID + "/?&patient_id=" + user.id + "&path=" + path
-
-	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	request.Header.Set("Content-type", "application/json")
-	request.Header.Set("AuthUserId", doctor.id)
-	request.Header.Set("Authorization", "Bearer "+accessToken)
+	request.Header.Set("AuthUserId", wrap.doctor.id)
+	request.Header.Set("Authorization", "Bearer "+wrap.doctor.accessToken)
+	//request.Header.Set("GroupAccessId", groupAccessID)
 	request.Header.Set("Prefer", "return=representation")
-	request.Header.Set("EhrSystemId", ehrSystemID)
+	request.Header.Set("EhrSystemId", wrap.ehrSystemID)
 
-	response, err := client.Do(request)
+	response, err := wrap.httpClient.Do(request)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot do create request")
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(response.Status)
+	}
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot read response body")
+	}
+
+	var d model.Directory
+	if err = json.Unmarshal(data, &d); err != nil {
+		return nil, errors.Wrap(err, "cannot unmarshal DIRECTORY model")
+	}
+
+	requestID := response.Header.Get("RequestId")
+
+	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return &d, nil
+}
+
+func getDirectory(wrap *testWrapDirectory, versionID, path string) (*model.Directory, error) {
+	link := fmt.Sprintf("%s/%s/?&patient_id=%s&path=%s", wrap.getURL(), versionID, wrap.user.id, path)
+
+	request, err := http.NewRequest(http.MethodGet, link, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", wrap.doctor.id)
+	request.Header.Set("Authorization", "Bearer "+wrap.doctor.accessToken)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", wrap.ehrSystemID)
+
+	response, err := wrap.httpClient.Do(request)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot do create request")
 	}
@@ -159,11 +187,54 @@ func getDirectory(doctor *Doctor, user *User, ehrSystemID, accessToken, versionI
 	return &d, nil
 }
 
-func directoryWithEmptyBody(ehrSystemID string) (*bytes.Reader, error) {
-	return directoryCreateBodyRequest(ehrSystemID, "directory_empty")
+func deleteDirectory(t *testing.T, wrap *testWrapDirectory, versionID string) error {
+	link := fmt.Sprintf("%s/?&patient_id=%s", wrap.getURL(), wrap.user.id)
+
+	request, err := http.NewRequest(http.MethodDelete, link, nil)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", wrap.doctor.id)
+	request.Header.Set("Authorization", "Bearer "+wrap.doctor.accessToken)
+	//request.Header.Set("GroupAccessId", groupAccessID)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", wrap.ehrSystemID)
+	request.Header.Set("If-Match", versionID)
+
+	response, err := wrap.httpClient.Do(request)
+	if err != nil {
+		return errors.Wrap(err, "cannot do create request")
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusNoContent {
+		return errors.New(response.Status)
+	}
+
+	requestID := response.Header.Get("RequestId")
+
+	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
+	if err != nil {
+		return err
+	}
+
+	t.Logf("Directory deleted, got new location: %s", response.Header.Get("Location"))
+
+	return nil
 }
 
-func directoryCreateBodyRequest(ehrSystemID, mockDirectoryFileName string) (*bytes.Reader, error) {
+func directoryWithEmptyBody() (*bytes.Reader, error) {
+	return directoryCreateBodyRequest(bodyFillers{}, "directory_empty")
+}
+
+func directoryWithItemComposition(ehrSystemID string) (*bytes.Reader, error) {
+	f := bodyFillers{base.CompositionItemType: ehrSystemID}
+	return directoryCreateBodyRequest(f, "directory_empty")
+}
+
+func directoryCreateBodyRequest(filler bodyFillers, mockDirectoryFileName string) (*bytes.Reader, error) {
 	rootDir, err := utils.ProjectRootDir()
 	if err != nil {
 		return nil, err
@@ -176,45 +247,11 @@ func directoryCreateBodyRequest(ehrSystemID, mockDirectoryFileName string) (*byt
 		return nil, err
 	}
 
-	//compositionID := uuid.New().String()
-
-	//objectVersionID, err := base.NewObjectVersionID(compositionID, ehrSystemID)
-	//if err != nil {
-	//	log.Fatalf("Expected model.EHR, received %s", err.Error())
-	//}
-	//
-	//data = []byte(strings.Replace(string(data), "__COMPOSITION_ID__", objectVersionID.String(), 1))
+	if len(filler) != 0 {
+		for k, v := range filler {
+			data = []byte(strings.Replace(string(data), "__"+k.ToString()+"__", v, -1))
+		}
+	}
 
 	return bytes.NewReader(data), nil
-}
-
-func deleteDirectory(t *testing.T, doctor *Doctor, user *User, ehrSystemID, accessToken, baseURL, directoryUUID string, client *http.Client) error {
-	link := fmt.Sprintf("%s/v1/ehr/%s/directory/?patient_id=%s", baseURL, user.ehrID, user.id)
-
-	request, err := http.NewRequest(http.MethodDelete, link, nil)
-	if err != nil {
-		return err
-	}
-
-	request.Header.Set("Content-type", "application/json")
-	request.Header.Set("AuthUserId", doctor.id)
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-	//request.Header.Set("GroupAccessId", groupAccessID)
-	request.Header.Set("Prefer", "return=representation")
-	request.Header.Set("EhrSystemId", ehrSystemID)
-	request.Header.Set("If-Match", directoryUUID)
-
-	response, err := client.Do(request)
-	if err != nil {
-		return errors.Wrap(err, "cannot do create request")
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusNoContent {
-		return errors.New(response.Status)
-	}
-
-	t.Logf("Deleted, got new location: %s", response.Header.Get("Location"))
-
-	return nil
 }

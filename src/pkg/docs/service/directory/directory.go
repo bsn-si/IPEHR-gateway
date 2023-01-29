@@ -297,6 +297,10 @@ func (s *Service) GetByID(ctx context.Context, patientID string, systemID string
 		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
 	}
 
+	if docMeta.Status == uint8(status.DELETED) {
+		return nil, errors.ErrAlreadyDeleted
+	}
+
 	CID, err := cid.Parse(docMeta.Id)
 	if err != nil {
 		return nil, fmt.Errorf("cid.Parse error: %w", err)
