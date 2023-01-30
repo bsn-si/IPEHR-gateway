@@ -21,13 +21,6 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
-	"hms/gateway/pkg/api/mocks"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
 )
 
 //
