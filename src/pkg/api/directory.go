@@ -116,6 +116,8 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	dUID := ""
 	if d.UID == nil || d.UID.Value == "" {
 		dUID = uuid.New().String()
+	} else {
+		dUID = d.UID.Value
 	}
 
 	directoryVersionUID, err := base.NewObjectVersionID(dUID, systemID)
@@ -173,7 +175,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?&patient_id=", h.baseURL, ehrUUID.String(), d.UID.Value, patientID))
+	ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?&patient_id=%s", h.baseURL, ehrUUID.String(), d.UID.Value, patientID))
 	ctx.Header("ETag", fmt.Sprintf("\"%s\"", d.UID.Value))
 
 	prefer := ctx.Request.Header.Get("Prefer")
