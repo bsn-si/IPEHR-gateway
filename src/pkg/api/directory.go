@@ -22,13 +22,12 @@ import (
 	"hms/gateway/pkg/docs/service/processing"
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/helper"
-	userModel "hms/gateway/pkg/user/model"
 )
 
 type DirectoryService interface {
 	NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error)
-	Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, systemID, dirUID string, d *model.Directory) error
-	Update(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, user *userModel.UserInfo, d *model.Directory) error
+	Create(ctx context.Context, req processing.RequestInterface, patientID, systemID, dirUID string, d *model.Directory) error
+	Update(ctx context.Context, req processing.RequestInterface, systemID string, userID string, d *model.Directory) error
 	Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error)
 	GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error)
 	GetByID(ctx context.Context, patientID string, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error)
@@ -160,7 +159,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	if err := h.service.Create(ctx, procRequest, ehrID, patientID, systemID, d.UID.Value, d); err != nil {
+	if err := h.service.Create(ctx, procRequest, patientID, systemID, d.UID.Value, d); err != nil {
 		log.Println("directoryService.Create error: ", err)
 		errResponse.SetMessage("Execute failed")
 
@@ -291,14 +290,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	userInfo, err := h.userService.Info(ctx, userID, systemID)
-	if err != nil {
-		log.Println("userService.Info error: ", err)
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	if err := h.service.Update(ctx, procRequest, systemID, &ehrUUID, userInfo, d); err != nil {
+	if err := h.service.Update(ctx, procRequest, systemID, patientID, d); err != nil {
 		errResponse.SetMessage("Execute failed").AddError(err)
 
 		ctx.JSON(http.StatusBadRequest, errResponse)

@@ -83,3 +83,25 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 
 	return docGroupList, nil
 }
+
+func (s *Service) GroupGetByName(ctx context.Context, groupName, userID, systemID string) (*model.DocumentGroup, error) {
+	var allDocGroup *model.DocumentGroup
+
+	docGroups, err := s.GroupGetList(ctx, userID, systemID)
+	if err != nil {
+		return nil, fmt.Errorf("DocGroup.GroupGetList error: %w", err)
+	}
+
+	for _, dg := range docGroups {
+		if dg.Name == groupName {
+			allDocGroup = dg
+			break
+		}
+	}
+
+	if allDocGroup == nil {
+		return nil, fmt.Errorf("user '%s' group not found: %w", groupName, errors.ErrNotFound)
+	}
+
+	return allDocGroup, nil
+}

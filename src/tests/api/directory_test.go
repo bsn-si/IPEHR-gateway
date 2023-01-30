@@ -48,6 +48,7 @@ func (w *testWrapDirectory) prepare(testData *TestData, t *testing.T) {
 
 	w.user = testData.users[0]
 	w.ehrID = w.user.ehrID
+	w.ehrSystemID = testData.ehrSystemID
 
 	if len(testData.doctors) == 0 {
 		w.doctorRegister(testData)(t)
@@ -75,9 +76,9 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 			t.Fatal(errors.Wrap(err, "cannot create composition body request"))
 		}
 
-		d, err := createDirectory(t, wrap, body)
+		d, err := createDirectory(wrap, body)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal(errors.Wrap(err, "Cant create DIRECTORY"))
 		}
 
 		testData.directory = d
@@ -95,25 +96,58 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 		}
 		assert.Equal(t, dCreated, dByTime)
 
-		// TODO finish with update
-		//err = updateDirectory(t, doctor, user, testData.ehrSystemID, doctor.accessToken, testWrap.server.URL, d.UID.Value, testWrap.httpClient)
-		//if err != nil {
-		//	t.Fatal(err)
-		//}
+		body, err = directoryWithItemComposition(wrap.ehrID, d.UID.Value)
+		if err != nil {
+			t.Fatal(errors.Wrap(err, "cannot create composition body request with data"))
+		}
 
-		err = deleteDirectory(t, wrap, d.UID.Value)
+		dVersionUID, err := base.NewObjectVersionID(d.UID.Value, wrap.ehrSystemID)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		_, err = getDirectoryByVersion(wrap, d.UID.Value, d.Name.Value)
+		_, err = dVersionUID.IncreaseUIDVersion()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = getDirectoryByVersion(wrap, dVersionUID.String(), d.Name.Value)
 		if err == nil {
-			t.Fatal(errors.New("Status mismatch"))
+			t.Fatal(errors.New(fmt.Sprintf("Directory with version %s not created yet", dVersionUID.String())))
+		}
+
+		dUpdated, err := updateDirectory(wrap, body, d.UID.Value)
+		if err != nil {
+			t.Fatal(errors.Wrap(err, "Cant update DIRECTORY"))
+		}
+
+		if !assert.Equal(t, dVersionUID.String(), dUpdated.UID.Value) {
+			t.Fatal(errors.New("Version os DIRECTORYes not equal"))
+		}
+
+		err = deleteDirectory(t, wrap, d.UID.Value)
+		if err == nil {
+			t.Fatal(errors.New("Should be invoked error because DIRECTORY version mismatched"))
+		}
+
+		err = deleteDirectory(t, wrap, dUpdated.UID.Value)
+		if err != nil {
+			t.Fatal(errors.New("Cant delete DIRECTORY by last version"))
+		}
+
+		_, err = getDirectoryByVersion(wrap, d.UID.Value, d.Name.Value)
+		if err != nil {
+			t.Fatal(errors.New(fmt.Sprintf("Directory with version %s should be exist", d.UID.Value)))
+		}
+
+		_, err = getDirectoryByVersion(wrap, dUpdated.UID.Value, d.Name.Value)
+		if err == nil {
+			t.Fatal(errors.New(fmt.Sprintf("Directory with version %s should be already deleted", dUpdated.UID.Value)))
 		}
 	}
 }
 
-func createDirectory(t *testing.T, wrap *testWrapDirectory, body *bytes.Reader) (*model.Directory, error) {
+func createDirectory(wrap *testWrapDirectory, body *bytes.Reader) (*model.Directory, error) {
 	link := wrap.getURL() + "/?patient_id=" + wrap.user.id
 
 	request, err := http.NewRequest(http.MethodPost, link, body)
@@ -152,7 +186,53 @@ func createDirectory(t *testing.T, wrap *testWrapDirectory, body *bytes.Reader) 
 
 	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
+	}
+
+	return &d, nil
+}
+
+func updateDirectory(wrap *testWrapDirectory, body *bytes.Reader, versionID string) (*model.Directory, error) {
+	link := wrap.getURL() + "/?patient_id=" + wrap.user.id
+
+	request, err := http.NewRequest(http.MethodPut, link, body)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header.Set("Content-type", "application/json")
+	request.Header.Set("AuthUserId", wrap.doctor.id)
+	request.Header.Set("Authorization", "Bearer "+wrap.doctor.accessToken)
+	//request.Header.Set("GroupAccessId", groupAccessID)
+	request.Header.Set("Prefer", "return=representation")
+	request.Header.Set("EhrSystemId", wrap.ehrSystemID)
+	request.Header.Set("If-Match", versionID)
+
+	response, err := wrap.httpClient.Do(request)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot do create request")
+	}
+	defer response.Body.Close()
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot read response body")
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return nil, errors.New(response.Status + ", body contain: " + string(data))
+	}
+
+	var d model.Directory
+	if err = json.Unmarshal(data, &d); err != nil {
+		return nil, errors.Wrap(err, "cannot unmarshal DIRECTORY model")
+	}
+
+	requestID := response.Header.Get("RequestId")
+
+	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
+	if err != nil {
+		return nil, err
 	}
 
 	return &d, nil
@@ -276,9 +356,13 @@ func directoryWithEmptyBody() (*bytes.Reader, error) {
 	return directoryCreateBodyRequest(bodyFillers{}, "directory_empty")
 }
 
-func directoryWithItemComposition(ehrSystemID string) (*bytes.Reader, error) {
-	f := bodyFillers{base.CompositionItemType: ehrSystemID}
-	return directoryCreateBodyRequest(f, "directory_empty")
+func directoryWithItemComposition(ehrSystemID, dUUID string) (*bytes.Reader, error) {
+	f := bodyFillers{
+		base.CompositionItemType:     ehrSystemID,
+		base.ObjectVersionIDItemType: dUUID,
+	}
+
+	return directoryCreateBodyRequest(f, "directory_with_items")
 }
 
 func directoryCreateBodyRequest(filler bodyFillers, mockDirectoryFileName string) (*bytes.Reader, error) {

@@ -5,6 +5,10 @@
     "value": "root"
   },
   "archetype_node_id": "openEHR-EHR-FOLDER.generic.v1",
+  "uid": {
+    "_type": "OBJECT_VERSION_ID",
+    "value": "__OBJECT_VERSION_ID__"
+  },
   "items": [
     {
       "id": {

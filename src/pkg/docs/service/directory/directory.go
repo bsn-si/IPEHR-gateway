@@ -32,7 +32,6 @@ import (
 	"hms/gateway/pkg/errors"
 	"hms/gateway/pkg/indexer"
 	"hms/gateway/pkg/indexer/ehrIndexer"
-	userModel "hms/gateway/pkg/user/model"
 )
 
 type Service struct {
@@ -50,7 +49,32 @@ func (s *Service) NewProcRequest(reqID, userID, ehrUUID string, kind processing.
 	return s.Proc.NewRequest(reqID, userID, ehrUUID, kind)
 }
 
-func (s *Service) Create(ctx context.Context, req processing.RequestInterface, ehrUUID, patientID, systemID, dirUID string, d *model.Directory) error {
+func (s *Service) Create(ctx context.Context, req processing.RequestInterface, patientID, systemID, dirUID string, d *model.Directory) error {
+	docBytes, err := json.Marshal(d)
+	if err != nil {
+		return fmt.Errorf("DIRECTORY marshal error: %w", err)
+	}
+
+	allDocGroup, err := s.getGroupAllDocs(ctx, patientID, systemID)
+	if err != nil {
+		return err
+	}
+
+	err = s.save(ctx, req, docBytes, patientID, systemID, dirUID, d.Name.Value, allDocGroup)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) getGroupAllDocs(ctx context.Context, patientID string, systemID string) (*model.DocumentGroup, error) {
+	return s.DocGroup.GroupGetByName(ctx, common.DefaultGroupAllDocuments, patientID, systemID)
+}
+
+func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes []byte, patientID, systemID, dirUID, encName string, allDocGroup *model.DocumentGroup) error {
+	var err error
+
 	key := chachaPoly.GenerateKey()
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(patientID)
@@ -65,31 +89,6 @@ func (s *Service) Create(ctx context.Context, req processing.RequestInterface, e
 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
-
-	// Searching 'all documents' group
-	var allDocGroup *model.DocumentGroup
-	{
-		docGroups, err := s.DocGroup.GroupGetList(ctx, patientID, systemID)
-		if err != nil {
-			return fmt.Errorf("DocGroup.GroupGetList error: %w", err)
-		}
-
-		for _, dg := range docGroups {
-			if dg.Name == common.DefaultGroupAllDocuments {
-				allDocGroup = dg
-				break
-			}
-		}
-
-		if allDocGroup == nil {
-			return fmt.Errorf("user 'all documents' group not found: %w", errors.ErrNotFound)
-		}
-	}
-
-	docBytes, err := json.Marshal(d)
-	if err != nil {
-		return fmt.Errorf("DIRECTORY marshal error: %w", err)
-	}
 
 	if s.Infra.CompressionEnabled {
 		docBytes, err = s.Infra.Compressor.Compress(docBytes)
@@ -134,7 +133,7 @@ func (s *Service) Create(ctx context.Context, req processing.RequestInterface, e
 			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		nameEncr, err := key.Encrypt([]byte(d.Name.Value))
+		nameEncr, err := key.Encrypt([]byte(encName))
 		if err != nil {
 			return fmt.Errorf("Encrypt name error: %w", err)
 		}
@@ -201,20 +200,30 @@ func (s *Service) Create(ctx context.Context, req processing.RequestInterface, e
 
 		req.AddEthereumTx(processing.TxDocGroupAddDoc, txHash)
 	}
-
 	return nil
 }
 
-// TODO
-func (s *Service) Update(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, user *userModel.UserInfo, d *model.Directory) error {
-	if err := s.increaseVersion(d); err != nil {
+func (s *Service) Update(ctx context.Context, req processing.RequestInterface, systemID string, userID string, d *model.Directory) error {
+	if err := s.increaseVersion(d, systemID); err != nil {
 		return fmt.Errorf("Directory increaseVersion error: %w directory.UID %s", err, d.UID.Value)
 	}
 
-	// TODO need realization
-	//err = s.save(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, groupAccess, d)
+	docBytes, err := json.Marshal(d)
+	if err != nil {
+		return fmt.Errorf("DIRECTORY marshal error: %w", err)
+	}
 
-	return errors.ErrNotImplemented
+	allDocGroup, err := s.getGroupAllDocs(ctx, userID, systemID)
+	if err != nil {
+		return err
+	}
+
+	err = s.save(ctx, req, docBytes, userID, systemID, d.UID.Value, d.Name.Value, allDocGroup)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error) {
@@ -250,10 +259,16 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 
 func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, patientID string, versionTime time.Time) (*model.Directory, error) {
 	docMeta, err := s.Infra.Index.GetDocByTime(ctx, ehrUUID, types.Directory, uint32(versionTime.Unix()))
-	if err != nil && errors.Is(err, errors.ErrNotFound) {
-		return nil, err
-	} else if err != nil {
-		return nil, fmt.Errorf("Index.GetDocByTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), versionTime.String(), types.EhrStatus)
+
+	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			docMeta, err = s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Directory)
+			if err != nil {
+				return nil, fmt.Errorf("Index.GetDocLastByType error: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("Index.GetDocByTime error: %w ehrID %s nearestTime %s docType %s", err, ehrUUID.String(), versionTime.String(), types.Directory)
+		}
 	}
 
 	CID, err := cid.Parse(docMeta.Id)
@@ -327,10 +342,17 @@ func (s *Service) GetByID(ctx context.Context, patientID string, systemID string
 	return &d, nil
 }
 
-func (s *Service) increaseVersion(d *model.Directory) error {
-	if _, err := d.IncreaseUIDVersion(); err != nil {
+func (s *Service) increaseVersion(d *model.Directory, systemID string) error {
+	dVersionUID, err := base.NewObjectVersionID(d.UID.Value, systemID)
+	if err != nil {
+		return fmt.Errorf("Directory %s NewObjectVersionID error: %w", d.UID.Value, err)
+	}
+
+	if _, err := dVersionUID.IncreaseUIDVersion(); err != nil {
 		return fmt.Errorf("Directory %s IncreaseUIDVersion error: %w", d.UID.Value, err)
 	}
+
+	d.UID.Value = dVersionUID.String()
 
 	return nil
 }

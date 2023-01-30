@@ -39,6 +39,8 @@ func (d *Directory) Validate() error {
 		errs = append(errs, errors.ErrFieldIsEmpty("uid"))
 	}
 
+	// TODO add ITEMS validation
+
 	for i, e := range errs {
 		if i == 0 {
 			err = e
