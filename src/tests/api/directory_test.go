@@ -36,7 +36,6 @@ func (w *testWrapDirectory) getURL() string {
 }
 
 func (w *testWrapDirectory) prepare(testData *TestData, t *testing.T) {
-
 	err := w.checkUser(testData)
 	if err != nil {
 		t.Fatal("Check user error:", err)
@@ -66,7 +65,6 @@ func (w *testWrapDirectory) prepare(testData *TestData, t *testing.T) {
 
 func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-
 		wrap := &testWrapDirectory{testWrap: testWrap}
 		wrap.prepare(testData, t)
 
@@ -81,8 +79,6 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 			t.Fatal(errors.Wrap(err, "Cant create DIRECTORY"))
 		}
 
-		testData.directory = d
-
 		dCreated, err := getDirectoryByVersion(wrap, d.UID.Value, d.Name.Value)
 		if err != nil {
 			t.Fatal(err)
@@ -94,6 +90,7 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		assert.Equal(t, dCreated, dByTime)
 
 		body, err = directoryWithItemComposition(wrap.ehrID, d.UID.Value)
@@ -113,7 +110,7 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 
 		_, err = getDirectoryByVersion(wrap, dVersionUID.String(), d.Name.Value)
 		if err == nil {
-			t.Fatal(errors.New(fmt.Sprintf("Directory with version %s not created yet", dVersionUID.String())))
+			t.Fatal("Directory with version not created yet", dVersionUID.String())
 		}
 
 		dUpdated, err := updateDirectory(wrap, body, d.UID.Value)
@@ -137,12 +134,12 @@ func (testWrap *testWrap) directoryCRUD(testData *TestData) func(t *testing.T) {
 
 		_, err = getDirectoryByVersion(wrap, d.UID.Value, d.Name.Value)
 		if err != nil {
-			t.Fatal(errors.New(fmt.Sprintf("Directory with version %s should be exist", d.UID.Value)))
+			t.Fatal("Directory with version should be exist", d.UID.Value)
 		}
 
 		_, err = getDirectoryByVersion(wrap, dUpdated.UID.Value, d.Name.Value)
 		if err == nil {
-			t.Fatal(errors.New(fmt.Sprintf("Directory with version %s should be already deleted", dUpdated.UID.Value)))
+			t.Fatal("Directory with version should be already deleted", dUpdated.UID.Value)
 		}
 	}
 }
