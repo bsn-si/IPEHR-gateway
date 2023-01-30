@@ -54,21 +54,21 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Summary      Create DIRECTORY
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_create
 // @Tags         DIRECTORY
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "Doctor UserId UUID"
-// @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        patient_id     query     string  true  "patient id UUID"
-// @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
+// @Param        Authorization  header    string     true  "Bearer AccessToken"
+// @Param        AuthUserId     header    string     true  "Doctor UserId UUID"
+// @Param        Prefer           header  string  true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string     true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        patient_id     query     string     true  "patient id UUID"
+// @Header       201            {string}  Etag       "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
 // @Accept       json
 // @Produce      json
 // @Success      201  {object}  model.Directory  "Is returned when the DIRECTORY was successfully created."
-// @Failure      400  "Is returned when the request has invalid content"
+// @Failure      400            "Is returned when the request has invalid content"
 // @Failure      404  "Is returned when an EHR with {ehr_id}  does not exist"
 // @Failure      409  "Is returned when a resource with same identifier(s) already exists"
-// @Failure      500  "Is returned when an unexpected error occurs while processing a request"
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/directory/ [post]
 func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
@@ -192,12 +192,12 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 // @Summary      Update DIRECTORY
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_update
 // @Tags         DIRECTORY
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
-// @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        patient_id     query     string  true  "patient id UUID"
-// @Header       201            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
+// @Param        Authorization  header    string     true  "Bearer AccessToken"
+// @Param        AuthUserId     header    string     true  "UserId UUID"
+// @Param        Prefer         header  string  true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
+// @Param        ehr_id         path      string     true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        patient_id     query     string     true  "patient id UUID"
+// @Header       201            {string}  Etag       "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
 // @Accept       json
@@ -205,8 +205,8 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 // @Success      200  {object}  model.Directory  "Is returned when the DIRECTORY was successfully updated"
 // @Success      204  "Is returned when directory was updated and 'Prefer' header is missing or is set to 'return=minimal'"
 // @Failure      400  "Is returned when the request has invalid content"
-// @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or DIRECTORY with that version is not exist"
-// @Failure      412  "Is returned when 'If-Match' request header doesn't match the latest version on the service side. Returns also latest 'version_uid' in the 'Location' and 'ETag' headers"
+// @Failure      404            "Is returned when an EHR with {ehr_id} does not exist, or DIRECTORY with that version is not exist"
+// @Failure      412            "Is returned when 'If-Match' request header doesn't match the latest version on the service side. Returns also latest 'version_uid' in the 'Location' and 'ETag' headers"
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/directory [put]
 func (h *DirectoryHandler) Update(ctx *gin.Context) {
@@ -323,15 +323,15 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_delete
 // @Description  The existing latest {version_uid} of directory FOLDER resource (i.e. the {preceding_version_uid}) must be specified in the {If-Match} header.
 // @Tags         DIRECTORY
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Authorization  header    string     true  "Bearer AccessToken"
+// @Param        AuthUserId     header    string     true  "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        patient_id     query     string  true  "patient id UUID"
+// @Param        ehr_id         path      string     true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        patient_id     query     string     true  "patient id UUID"
 // @Header       204            {string}  RequestID  "Request identifier"
-// @Header       412            {string}  Etag   "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
+// @Header       412            {string}  Etag       "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       412            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
-// @Success      204  "Is returned when the resource identified by the request parameters has been (logically) deleted"
+// @Success      204            "Is returned when the resource identified by the request parameters has been (logically) deleted"
 // @Failure      400  "Is returned when the request has invalid content"
 // @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or DIRECTORY with that version is not exist"
 // @Failure      412  "Is returned when 'If-Match' request header doesn't match the latest version on the service side. Returns also latest 'version_uid' in the 'Location' and 'ETag' headers"
@@ -437,15 +437,15 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_get_at_time
 // @Description  Retrieves the version of the directory FOLDER associated with the EHR identified by {ehr_id}. If {version_at_time} is supplied, retrieves the version extant at specified time, otherwise retrieves the latest directory FOLDER version. If path is supplied, retrieves from the directory only the sub-FOLDER that is associated with that path.
 // @Tags         DIRECTORY
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Authorization    header  string  true  "Bearer AccessToken"
+// @Param        AuthUserId       header  string  true  "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        version_at_time  query     string  true  "Example: version_at_time=2015-01-20T19:30:22.765+01:00 A given time in the extended ISO 8601 format"
-// @Param        path  query     string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
-// @Param        patient_id     query     string  true  "patient id UUID"
+// @Param        ehr_id           path    string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        version_at_time  query   string  true  "Example: version_at_time=2015-01-20T19:30:22.765+01:00 A given time in the extended ISO 8601 format"
+// @Param        path             query   string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
+// @Param        patient_id       query   string  true  "patient id UUID"
 // @Produce      json
-// @Success      200  {object}  model.Directory "Is returned when the FOLDER is successfully retrieved"
+// @Success      200  {object}  model.Directory  "Is returned when the FOLDER is successfully retrieved"
 // @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
 // @Failure      400  "Is returned when the request has invalid content"
 // @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or when a directory does not exist at the specified {version_at_time}, or when {path} does not exists within the directory"
@@ -526,15 +526,15 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_get_at_time
 // @Description  Retrieves a particular version of the directory FOLDER identified by {version_uid} and associated with the EHR identified by {ehr_id}. If {path} is supplied, retrieves from the directory only the sub-FOLDER that is associated with that path.
 // @Tags         DIRECTORY
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true   "UserId UUID"
+// @Param        Authorization  header  string  true  "Bearer AccessToken"
+// @Param        AuthUserId     header  string  true  "UserId UUID"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        ehr_id         path    string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid    query   string  true  "Example: 6cb19121-4307-4648-9da0-d62e4d51f19b::openEHRSys.example.com::2 VERSION identifier taken from VERSION.uid.value"
-// @Param        path  query     string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
-// @Param        patient_id     query     string  true  "patient id UUID"
+// @Param        path           query   string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
+// @Param        patient_id     query   string  true  "patient id UUID"
 // @Produce      json
-// @Success      200  {object}  model.Directory "Is returned when the FOLDER is successfully retrieved"
+// @Success      200  {object}  model.Directory  "Is returned when the FOLDER is successfully retrieved"
 // @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
 // @Failure      400  "Is returned when the request has invalid content"
 // @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or when a directory does not exist at the specified {version_at_time}, or when {path} does not exists within the directory"

@@ -32,10 +32,10 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 // @Tags         ACCESS
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header  string  true  "Bearer AccessToken"
-// @Param        AuthUserId     header  string  true  "UserId UUID"
-// @Param        EhrSystemId    header    string                 false   "The identifier of the system, typically a reverse domain identifier"
-// @Success      200            {object} model.DocAccessListResponse ""
+// @Param        Authorization  header    string                       true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string                       true   "UserId UUID"
+// @Param        EhrSystemId    header    string                       false  "The identifier of the system, typically a reverse domain identifier"
+// @Success      200            {object}  model.DocAccessListResponse  ""
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /access/document/ [get]
@@ -65,10 +65,10 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 // @Tags         ACCESS
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header  string                     true  "Bearer AccessToken"
-// @Param        AuthUserId     header  string                     true  "UserId UUID"
-// @Param    EhrSystemId    header    string                 false   "The identifier of the system, typically a reverse domain identifier"
-// @Param        Request        body    model.DocAccessSetRequest  true  "DTO with data to create group access"
+// @Param        Authorization  header  string                     true   "Bearer AccessToken"
+// @Param        AuthUserId     header  string                     true   "UserId UUID"
+// @Param        EhrSystemId    header  string                     false  "The identifier of the system, typically a reverse domain identifier"
+// @Param        Request        body    model.DocAccessSetRequest  true   "DTO with data to create group access"
 // @Success      200            "Indicates that the request to change the level of access to the document was successfully created"
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      404            "Is returned when the userID for which access is set is not found "

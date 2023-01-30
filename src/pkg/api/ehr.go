@@ -44,12 +44,12 @@ func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header    string                  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string                  true  "UserId"
-// @Param        EhrSystemId    header    string                  false "The identifier of the system, typically a reverse domain identifier"
+// @Param        Authorization  header    string                  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string                  true   "UserId"
+// @Param        EhrSystemId    header    string                  false  "The identifier of the system, typically a reverse domain identifier"
 // @Param    	 GroupAccessId  header    string                  false  "GroupAccessId - UUID. If not specified, the default access group will be used."
-// @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
+// @Param        Prefer         header    string                  true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        Request        body      model.EhrCreateRequest  true   "Query Request"
 // @Success      201            {object}  model.EhrSummary
 // @Header       201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Header       201            {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
@@ -158,12 +158,12 @@ func (h *EhrHandler) Create(c *gin.Context) {
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        Authorization  header    string                  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string                  true  "UserId"
-// @Param        EhrSystemId    header    string                  false "The identifier of the system, typically a reverse domain identifier"
-// @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        ehr_id         path      string                  true  "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
+// @Param        Authorization  header    string                  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string                  true   "UserId"
+// @Param        EhrSystemId    header    string                  false  "The identifier of the system, typically a reverse domain identifier"
+// @Param        Prefer         header    string                  true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        ehr_id         path      string                  true   "An UUID as a user specified EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        Request        body      model.EhrCreateRequest  true   "Query Request"
 // @Success      201            {object}  model.EhrSummary
 // @Header       201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Header       201            {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
@@ -263,9 +263,9 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        Authorization  header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true "UserId"
+// @Param        ehr_id         path      string  true   "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        Authorization  header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true   "UserId"
 // @Param        EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrSummary
 // @Success      202            "Is returned when the request is still being processed"
@@ -311,11 +311,11 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 // @Tags         EHR
 // @Accept       json
 // @Produce      json
-// @Param        subject_id         query     string  true  "subject id. Example: ins01"
-// @Param        subject_namespace  query     string  true  "id namespace. Example: examples"
-// @Param        Authorization      header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId         header    string  true  "UserId"
-// @Param        EhrSystemId        header    string  false "The identifier of the system, typically a reverse domain identifier"
+// @Param        subject_id         query     string  true   "subject id. Example: ins01"
+// @Param        subject_namespace  query     string  true   "id namespace. Example: examples"
+// @Param        Authorization      header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId         header    string  true   "UserId"
+// @Param        EhrSystemId        header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200                {object}  model.EhrSummary
 // @Success      202                "Is returned when the request is still being processed"
 // @Failure      400                "Is returned when userID is empty"

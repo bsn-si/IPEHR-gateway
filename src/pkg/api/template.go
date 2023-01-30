@@ -45,7 +45,7 @@ func NewTemplateHandler(templateService TemplateService, baseURL string) *Templa
 // @Param        template_id    path      string  false  "Template identifier. Example: Vital Signs"
 // @Param        Authorization  header    string     true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string     true  "UserId"
-// @Param        EhrSystemId    header    string     false "The identifier of the system, typically a reverse domain identifier"
+// @Param        EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {string}  []byte
 // @Failure      400            "Is returned when the request has invalid content."
 // @Failure      404            "Is returned when a stored query with {qualified_query_name} and {version} does not exist."
