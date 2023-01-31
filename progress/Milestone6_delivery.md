@@ -77,4 +77,7 @@ We have developed an application compatible with web and mobile platforms design
 -   We use Swagger to check if the Doctor is stripped of access to the Patient’s Documents
     
   
-Here is a demonstration [video](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4) of the test process.
+Here is a demonstration video:
+
+[![mobile app](https://user-images.githubusercontent.com/98888366/215516946-c8f37970-0c1b-47ca-b356-797ea8149da2.png)
+](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4)
