@@ -94,6 +94,7 @@ func New(cfg *config.Config) *Infra {
 			cfg.Contract.AddressEhrIndex,
 			cfg.Contract.AddressAccessStore,
 			cfg.Contract.AddressUsers,
+			cfg.Contract.AddressDataStore,
 			cfg.Contract.PrivKeyPath,
 			ehtClient,
 			cfg.Contract.GasTipCap,

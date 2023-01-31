@@ -235,12 +235,11 @@ func (s *Service) InfoByCode(ctx context.Context, code int) (*model.UserInfo, er
 func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 	var (
 		userInfo model.UserInfo
-		attrs    = docModel.AttributesUsers(user.Attrs)
 		err      error
 	)
 
 	if user.Role == uint8(roles.Doctor) {
-		content := attrs.GetByCode(docModel.AttributeContent)
+		content := docModel.AttributeGetByCode(user.Attrs, docModel.AttributeContent)
 		if content == nil {
 			return nil, errors.ErrFieldIsEmpty("AttributeContent")
 		}
@@ -259,7 +258,7 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 		userInfo.Code = fmt.Sprintf("%08d", codeInt)
 	}
 
-	timestamp := attrs.GetByCode(docModel.AttributeTimestamp)
+	timestamp := docModel.AttributeGetByCode(user.Attrs, docModel.AttributeTimestamp)
 	if timestamp == nil {
 		return nil, errors.ErrFieldIsEmpty("AttributeTimestamp")
 	}

@@ -27,7 +27,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -71,12 +71,12 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 		return nil, errors.ErrNotFound
 	}
 
-	contentEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeContentEncr)
+	contentEncr := model.AttributeGetByCode(ug.Attrs, model.AttributeContentEncr)
 	if contentEncr == nil {
 		return nil, errors.ErrFieldIsEmpty("ContentEncr")
 	}
 
-	groupKeyEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeKeyEncr)
+	groupKeyEncr := model.AttributeGetByCode(ug.Attrs, model.AttributeKeyEncr)
 	if groupKeyEncr == nil {
 		return nil, errors.ErrFieldIsEmpty("KeyEncr")
 	}
@@ -104,7 +104,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -155,7 +155,7 @@ func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSys
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}

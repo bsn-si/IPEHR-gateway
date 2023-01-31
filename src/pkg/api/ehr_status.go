@@ -16,6 +16,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 	docGroupService "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/docGroup"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/ehr"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/groupAccess"
 	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	userService "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
@@ -26,9 +27,9 @@ type EhrStatusHandler struct {
 	baseURL string
 }
 
-func NewEhrStatusHandler(docSvc *service.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, baseURL string) *EhrStatusHandler {
+func NewEhrStatusHandler(docSvc *service.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, gaSvc *groupAccess.Service, baseURL string) *EhrStatusHandler {
 	return &EhrStatusHandler{
-		service: ehr.NewService(docSvc, userSvc, docGroupSvc, docSvc.Infra),
+		service: ehr.NewService(docSvc, userSvc, docGroupSvc, gaSvc),
 		baseURL: baseURL,
 	}
 }

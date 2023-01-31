@@ -9,25 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (i *Index) usersNonce(ctx context.Context, address *common.Address) (*big.Int, error) {
-	nonce, err := i.users.Nonces(&bind.CallOpts{Context: ctx}, *address)
-	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.Nonces error: %w address: %s", err, address.String())
-	}
-
-	if nonce == nil {
-		return big.NewInt(1), nil
-	}
-
-	nonce.Add(nonce, big.NewInt(1))
-
-	return nonce, nil
+type Noncer interface {
+	Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error)
 }
 
-func (i *Index) ehrNonce(ctx context.Context, address *common.Address) (*big.Int, error) {
-	nonce, err := i.ehrIndex.Nonces(&bind.CallOpts{Context: ctx}, *address)
+func (i *Index) Nonce(ctx context.Context, noncer Noncer, address *common.Address) (*big.Int, error) {
+	nonce, err := noncer.Nonces(&bind.CallOpts{Context: ctx}, *address)
 	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.Nonces error: %w address: %s", err, address.String())
+		return nil, fmt.Errorf("Index.Nonces error: %w address: %s", err, address.String())
 	}
 
 	if nonce == nil {

@@ -5,7 +5,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func processComposition(cmp model.Composition) (Noder, error) {
+func processComposition(cmp *model.Composition) (Noder, error) {
 	node := newCompositionNode(cmp)
 
 	node.addAttribute("language", newNode(cmp.Language))
@@ -35,7 +35,7 @@ type CompositionNode struct {
 	Attributes Attributes
 }
 
-func newCompositionNode(cmp model.Composition) *CompositionNode {
+func newCompositionNode(cmp *model.Composition) *CompositionNode {
 	l := cmp.Locatable
 	node := &CompositionNode{
 		BaseNode: BaseNode{

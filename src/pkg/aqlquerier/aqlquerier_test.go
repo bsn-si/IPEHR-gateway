@@ -515,7 +515,7 @@ func getPreparedTreeIndex(filenames ...string) error {
 			return err
 		}
 
-		if err := treeindex.AddEHR(ehr); err != nil {
+		if err := treeindex.AddEHR(&ehr); err != nil {
 			return errors.Wrap(err, "cannot add ehr into index")
 		}
 	}
@@ -531,7 +531,7 @@ func getPreparedTreeIndex(filenames ...string) error {
 			return errors.Wrap(err, "cannot unmarshal composition")
 		}
 
-		if err := treeindex.AddComposition(ehr.EhrID.Value, comp); err != nil {
+		if err := treeindex.AddComposition(ehr.EhrID.Value, &comp); err != nil {
 			return errors.Wrap(err, "cannot add Composition into EHRIndex")
 		}
 	}

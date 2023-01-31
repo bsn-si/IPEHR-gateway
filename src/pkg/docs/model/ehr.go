@@ -13,7 +13,7 @@ type EHR struct {
 	Contributions []base.ObjectRef  `json:"contributions,omitempty"`
 	EhrStatus     base.ObjectRef    `json:"ehr_status"`
 	EhrAccess     base.ObjectRef    `json:"ehr_access"`
-	Compositions  []Composition     `json:"compositions,omitempty"`
+	Compositions  []*Composition    `json:"compositions,omitempty"`
 	Directory     *base.ObjectRef   `json:"directory,omitempty"`
 	TimeCreated   base.DvDateTime   `json:"time_created"`
 	Folders       []base.ObjectRef  `json:"folders,omitempty"`

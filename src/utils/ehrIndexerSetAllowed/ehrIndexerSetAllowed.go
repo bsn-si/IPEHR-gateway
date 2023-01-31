@@ -35,6 +35,7 @@ func main() {
 		cfg.Contract.AddressEhrIndex,
 		cfg.Contract.AddressAccessStore,
 		cfg.Contract.AddressUsers,
+		cfg.Contract.AddressDataStore,
 		cfg.Contract.PrivKeyPath,
 		ehtClient,
 		cfg.Contract.GasTipCap,

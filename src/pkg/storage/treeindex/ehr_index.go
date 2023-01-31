@@ -21,15 +21,15 @@ func NewEHRIndex() *EHRIndex {
 	return &idx
 }
 
-func AddEHR(ehr model.EHR) error {
+func AddEHR(ehr *model.EHR) error {
 	return DefaultEHRIndex.AddEHR(ehr)
 }
 
-func AddComposition(ehrID string, cmp model.Composition) error {
+func AddComposition(ehrID string, cmp *model.Composition) error {
 	return DefaultEHRIndex.AddComposition(ehrID, cmp)
 }
 
-func (idx *EHRIndex) AddEHR(ehr model.EHR) error {
+func (idx *EHRIndex) AddEHR(ehr *model.EHR) error {
 	node, err := processEHR(ehr)
 	if err != nil {
 		return errors.Wrap(err, "cannot add EHR object")
@@ -58,7 +58,7 @@ func (idx EHRIndex) GetEHRs(id string) ([]*EHRNode, error) {
 	return []*EHRNode{ehrNode}, nil
 }
 
-func (idx *EHRIndex) AddComposition(ehrID string, cmp model.Composition) error {
+func (idx *EHRIndex) AddComposition(ehrID string, cmp *model.Composition) error {
 	ehrNode, ok := idx.Ehrs[ehrID]
 	if !ok {
 		return errors.New("EHR not found")

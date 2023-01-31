@@ -43,7 +43,7 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 	}
 
 	if nonce == nil {
-		nonce, err = i.ehrNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -90,7 +90,7 @@ func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *
 	}
 
 	if nonce == nil {
-		nonce, err = i.ehrNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -121,7 +121,7 @@ func (i *Index) DocGroupGetByID(ctx context.Context, gID *uuid.UUID, userPubKey,
 		return nil, errors.ErrNotFound
 	}
 
-	keyEncr := model.AttributesEhr(attrs).GetByCode(model.AttributeKeyEncr)
+	keyEncr := model.AttributeGetByCode(attrs, model.AttributeKeyEncr)
 	if len(keyEncr) == 0 {
 		return nil, errors.ErrFieldIsEmpty("KeyEncr")
 	}
@@ -136,7 +136,7 @@ func (i *Index) DocGroupGetByID(ctx context.Context, gID *uuid.UUID, userPubKey,
 		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
 	}
 
-	nameEncr := model.AttributesEhr(attrs).GetByCode(model.AttributeNameEncr)
+	nameEncr := model.AttributeGetByCode(attrs, model.AttributeNameEncr)
 	if len(nameEncr) == 0 {
 		return nil, errors.ErrFieldIsEmpty("NameEncr")
 	}

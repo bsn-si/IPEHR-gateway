@@ -31,7 +31,7 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &i.signerAddress)
+		nonce, err = i.Nonce(ctx, i.users, &i.signerAddress)
 		if err != nil {
 			return nil, fmt.Errorf("signerNonce error: %w address: %s", err, i.signerAddress.String())
 		}
@@ -81,7 +81,7 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 		return nil, errors.ErrNotFound
 	}
 
-	pwdHash := model.AttributesUsers(user.Attrs).GetByCode(model.AttributePasswordHash)
+	pwdHash := model.AttributeGetByCode(user.Attrs, model.AttributePasswordHash)
 	if pwdHash == nil {
 		return nil, errors.ErrFieldIsEmpty("PasswordHash")
 	}

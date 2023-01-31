@@ -13,6 +13,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 	docGroupService "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/docGroup"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/ehr"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/groupAccess"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -24,9 +25,9 @@ type EhrHandler struct {
 	baseURL string
 }
 
-func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, baseURL string) *EhrHandler {
+func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.Service, docGroupSvc *docGroupService.Service, gaSvc *groupAccess.Service, baseURL string) *EhrHandler {
 	return &EhrHandler{
-		service: ehr.NewService(docSvc, userSvc, docGroupSvc, docSvc.Infra),
+		service: ehr.NewService(docSvc, userSvc, docGroupSvc, gaSvc),
 		baseURL: baseURL,
 	}
 }
@@ -46,6 +47,7 @@ func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.
 // @Param        Authorization  header    string                  true  "Bearer AccessToken"
 // @Param        AuthUserId     header    string                  true  "UserId"
 // @Param        EhrSystemId    header    string                  false "The identifier of the system, typically a reverse domain identifier"
+// @Param    	 GroupAccessId  header    string                  false  "GroupAccessId - UUID. If not specified, the default access group will be used."
 // @Param        Prefer         header    string                  true  "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request        body      model.EhrCreateRequest  true  "Query Request"
 // @Success      201            {object}  model.EhrSummary
@@ -101,6 +103,19 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	ehrUUIDnew := uuid.New()
 	reqID := c.GetString("reqID")
 
+	groupAccessUUID := h.service.GroupAccess.Default().GroupUUID
+
+	if c.GetHeader("GroupAccessId") != "" {
+		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
+			return
+		}
+
+		groupAccessUUID = &UUID
+	}
+
 	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
 		log.Println("EHR create NewRequest error:", err)
@@ -109,7 +124,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, &request, procRequest)
+	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, groupAccessUUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -183,6 +198,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
+	reqID := c.GetString("reqID")
 	systemID := c.GetString("ehrSystemID")
 
 	// Checking EHR does not exist
@@ -198,7 +214,18 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	reqID := c.GetString("reqID")
+	groupAccessUUID := h.service.GroupAccess.Default().GroupUUID
+
+	if c.GetHeader("GroupAccessId") != "" {
+		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
+		if err != nil {
+			log.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
+			return
+		}
+
+		groupAccessUUID = &UUID
+	}
 
 	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
@@ -209,7 +236,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, &request, procRequest)
+	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, groupAccessUUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})

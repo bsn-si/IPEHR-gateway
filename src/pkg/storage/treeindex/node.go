@@ -211,9 +211,9 @@ func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
 
 func newNode(obj any) Noder {
 	switch obj := obj.(type) {
-	case model.EHR:
+	case *model.EHR:
 		return newEHRNode(obj)
-	case model.Composition:
+	case *model.Composition:
 		return newCompositionNode(obj)
 	case base.Root:
 		return newObjectNode(obj)
