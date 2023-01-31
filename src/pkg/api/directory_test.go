@@ -99,7 +99,6 @@ func TestDirectoryHandler_Create(t *testing.T) {
 			nil,
 		},
 		{
-			// TODO
 			"4. Success DIRECTORY create",
 			directoryID.String(),
 			[]byte(`{
