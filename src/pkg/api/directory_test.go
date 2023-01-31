@@ -125,10 +125,6 @@ func TestDirectoryHandler_Create(t *testing.T) {
 			http.StatusCreated,
 			nil,
 		},
-		// TODO directory update
-		// TODO directory delete
-		// TODO directory GetByTime
-		// TODO directory GetByID
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -693,7 +689,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() status code mismatch {-want;+got}\n\t%s", diff)
 				return
 			}
 
@@ -715,7 +711,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			)
 
 			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() body response {-want;+got}\n%s", diff)
 			}
 		})
 	}
@@ -872,7 +868,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() status code mismatch {-want;+got}\n\t%s", diff)
 				return
 			}
 
@@ -894,7 +890,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			)
 
 			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() body response {-want;+got}\n%s", diff)
 			}
 		})
 	}

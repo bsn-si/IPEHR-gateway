@@ -276,7 +276,7 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 	return objectVersionID.String(), nil
 }
 
-func (s *Service) GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, patientID string, versionTime time.Time) (*model.Directory, error) {
+func (s *Service) GetByTimeOrLast(ctx context.Context, systemID string, ehrUUID *uuid.UUID, patientID string, versionTime time.Time) (*model.Directory, error) {
 	docMeta, err := s.Infra.Index.GetDocByTime(ctx, ehrUUID, types.Directory, uint32(versionTime.Unix()))
 
 	if err != nil {

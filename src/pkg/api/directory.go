@@ -30,7 +30,7 @@ type DirectoryService interface {
 	Create(ctx context.Context, req processing.RequestInterface, patientID, systemID, dirUID string, d *model.Directory) error
 	Update(ctx context.Context, req processing.RequestInterface, systemID string, userID string, d *model.Directory) error
 	Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error)
-	GetByTime(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error)
+	GetByTimeOrLast(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error)
 	GetByID(ctx context.Context, patientID string, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error)
 }
 
@@ -268,10 +268,10 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	lastDirectoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, patientID, time.Now())
+	lastDirectoryVersion, err := h.service.GetByTimeOrLast(ctx, systemID, &ehrUUID, patientID, time.Now())
 	if err != nil {
 		if !errors.Is(err, errors.ErrNotFound) {
-			log.Println("directoryService.GetByTime error: ", err)
+			log.Println("directoryService.GetByTimeOrLast error: ", err)
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
@@ -381,10 +381,10 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	lastDirectoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, patientID, time.Now())
+	lastDirectoryVersion, err := h.service.GetByTimeOrLast(ctx, systemID, &ehrUUID, patientID, time.Now())
 	if err != nil {
 		if !errors.Is(err, errors.ErrNotFound) {
-			log.Println("directoryService.GetByTime error: ", err)
+			log.Println("directoryService.GetByTimeOrLast error: ", err)
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
@@ -495,7 +495,7 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 		return
 	}
 
-	directoryVersion, err := h.service.GetByTime(ctx, systemID, &ehrUUID, patientID, statusTime)
+	directoryVersion, err := h.service.GetByTimeOrLast(ctx, systemID, &ehrUUID, patientID, statusTime)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			ctx.AbortWithStatus(http.StatusNotFound)
@@ -505,7 +505,7 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 			return
 		}
 
-		log.Println("directoryService.GetByTime error: ", err)
+		log.Println("directoryService.GetByTimeOrLast error: ", err)
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
