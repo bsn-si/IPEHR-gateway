@@ -8,9 +8,9 @@ The project is under active development and will gradually be supplemented.
 
 ## Description
 
-Today common HMS applications store patients’ data in a local or a cloud DB which creates significant security, reliability and operational risks. Centralized storage and access rights administration of sensitive medical data creates additional challenges:
+Today common HMS applications store patients’ data in a local or a cloud DB which creates significant security, reliability and operational risks. Centralized storage and access rights administration of sensitive medical data create additional challenges:
 
--	Administrative overheard due to the rights provisioning on per patients/per record level.
+-	Administrative overhead due to the rights provisioning on per patients/per record level.
 -	Patients lack control and visibility over who has access to their data which goes against natural data subject rights announced in GDPR (General Data Protection Regulation, chapter 3).
 -	Superuser access for DB and LDAP (access rights catalogue) create additional security risks.
 -	In case of a data breach full registry will be compromised.
@@ -21,7 +21,7 @@ The IPEHR (InterPlanetary EHR) project is held to propose an alternative way of 
   <img width="75%" src="https://user-images.githubusercontent.com/8058268/174096015-89aad056-d507-4ea5-8d00-bfef29c4a548.svg">
 </p>
 
-### Whatch video introduction:
+### Watch video introduction:
 
 [![Watch the video](https://media.bsn.si/ipehr/logo_intro.jpg)](https://media.bsn.si/ipehr/introduction.mp4)
 
@@ -66,7 +66,7 @@ On Milestone 1 we've developed the IPEHR-gateway to provide benefits of decentra
 
 ### Milestone 2
 
-On Milestone 2 we have developed indexes storage, access revocation algorythm and integrated the IPEHR-gateway with the Filecoin network.
+On Milestone 2 we have developed indexes storage, access revocation algorithm and integrated the IPEHR-gateway with the Filecoin network.
 
 ![smart-contract](https://user-images.githubusercontent.com/8058268/190085702-6edf9437-1273-4db3-a7c9-414f66afe823.svg)
 
