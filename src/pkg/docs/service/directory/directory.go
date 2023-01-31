@@ -83,33 +83,56 @@ func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes 
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
+	CID, dealCID, minerAddr, err := s.fileCoinSaving(ctx, req, docBytes, key, objectVersionID)
+	if err != nil {
+		return err
+	}
+
+	if err := s.addMetaData(ctx, req, key, objectVersionID, CID, userPubKey, encName, baseDocumentUIDHash, dealCID, minerAddr, userPrivKey); err != nil {
+		return err
+	}
+
+	if err := s.addDocGroupData(ctx, req, CID, allDocGroup, userPrivKey); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) fileCoinSaving(ctx context.Context, req proc.RequestInterface, docBytes []byte, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID) (*cid.Cid, *cid.Cid, string, error) {
+	var err error
+
 	if s.Infra.CompressionEnabled {
 		docBytes, err = s.Infra.Compressor.Compress(docBytes)
 		if err != nil {
-			return fmt.Errorf("DIRECTORY compress error: %w", err)
+			return nil, nil, "", fmt.Errorf("DIRECTORY compress error: %w", err)
 		}
 	}
 
 	// Document encryption
 	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(objectVersionID.String()))
 	if err != nil {
-		return fmt.Errorf("DIRECTORY encryption error: %w", err)
+		return nil, nil, "", fmt.Errorf("DIRECTORY encryption error: %w", err)
 	}
 
 	// IPFS saving
 	CID, err := s.Infra.IpfsClient.Add(ctx, docEncrypted)
 	if err != nil {
-		return fmt.Errorf("IpfsClient.Add error: %w", err)
+		return nil, nil, "", fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
 	// Filecoin saving
 	dealCID, minerAddr, err := s.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
 	if err != nil {
-		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+		return nil, nil, "", fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
 
 	req.AddFilecoinTx(proc.TxCreateDirectory, CID.String(), dealCID.String(), minerAddr)
 
+	return CID, dealCID, minerAddr, nil
+}
+
+func (s *Service) addMetaData(ctx context.Context, req proc.RequestInterface, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID *cid.Cid, userPubKey *[32]byte, encName string, baseDocumentUIDHash [32]byte, dealCID *cid.Cid, minerAddr string, userPrivKey *[32]byte) error {
 	{
 		docIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
 		if err != nil {
@@ -166,7 +189,10 @@ func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes 
 
 		req.AddEthereumTx(processing.TxAddEhrDoc, txHash)
 	}
+	return nil
+}
 
+func (s *Service) addDocGroupData(ctx context.Context, req proc.RequestInterface, CID *cid.Cid, allDocGroup *model.DocumentGroup, userPrivKey *[32]byte) error {
 	{
 		docCIDHash := indexer.Keccak256(CID.Bytes())
 
