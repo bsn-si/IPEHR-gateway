@@ -151,6 +151,28 @@ We have implemented two types of statistical data delivery:
 
 For more information see [Milestone 5 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_5)
 
+### Milestone 6
+
+We've developed an application (mobile/web) helping users to manage their personal data and its’ access rights. To control access to EHR Documents the following smart contracts are used: [EhrIndexer](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/EhrIndexer.sol), [Users](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/Users.sol), [AccessStore](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/AccessStore.sol)
+
+For each Patient during registration, a group of documents `All documents` and a group of users `Doctors` are created.
+
+
+-   All new documents of the Patient are assigned to the group `All documents`.
+    
+-   All members of the `Doctors` group have access to the documents assigned to the `All documents' group.
+    
+-   The Patient can add Doctors to the `Doctors` group and they automatically get access to all Patient's Documents.
+    
+-   When a Doctor is removed from the 'Doctors' group, their access to document keys is terminated.
+    
+
+To read more info about access rights management, please visit the ["docs access management"](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_3/3_Docs_access_mgmt.md) section.
+
+
+To ensure the quality of the application we developed and showed a test case:
+[![Дизайн без названия (1)](https://user-images.githubusercontent.com/98888366/214616759-e0c84f22-b524-4879-acdd-68b81e775676.png)](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4)
+
 ## How to
 
 ### Install Prerequisites
