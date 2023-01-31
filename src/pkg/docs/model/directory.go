@@ -22,8 +22,8 @@ type DirectoryItem struct {
 }
 
 const (
-	_directorySeparator      = "/"
-	_directoryRootFolderName = "root"
+	directorySeparator      = "/"
+	directoryRootFolderName = "root"
 )
 
 func (d *Directory) Validate() error {
@@ -52,10 +52,10 @@ func (d *Directory) Validate() error {
 func (d *Directory) GetByPath(p string) (*Directory, error) {
 	p = d.sanitize(p)
 	if p == "" {
-		p = _directoryRootFolderName
+		p = directoryRootFolderName
 	}
 
-	paths := strings.SplitN(p, _directorySeparator, 2)
+	paths := strings.SplitN(p, directorySeparator, 2)
 
 	if d.Name.Value != paths[0] {
 		return nil, errors.ErrNotFound
@@ -75,5 +75,5 @@ func (d *Directory) GetByPath(p string) (*Directory, error) {
 }
 
 func (d *Directory) sanitize(p string) string {
-	return strings.Trim(p, _directorySeparator)
+	return strings.Trim(p, directorySeparator)
 }
