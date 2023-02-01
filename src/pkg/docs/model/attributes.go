@@ -1,12 +1,15 @@
 package model
 
+import (
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
+)
+
 type (
 	Attribute = uint8
 
-	Attributes []struct {
-		Code  uint8
-		Value []byte
-	}
+	AttributesEhr   []ehrIndexer.AttributesAttribute
+	AttributesUsers []users.AttributesAttribute
 )
 
 const (
@@ -28,8 +31,17 @@ const (
 	AttributeDataIndexID        Attribute = 16
 )
 
-func AttributeGetByCode(attrs any, code uint8) []byte {
-	for _, attr := range attrs.(Attributes) {
+func (a AttributesEhr) GetByCode(code Attribute) []byte {
+	for _, attr := range a {
+		if attr.Code == code {
+			return attr.Value
+		}
+	}
+	return nil
+}
+
+func (a AttributesUsers) GetByCode(code Attribute) []byte {
+	for _, attr := range a {
 		if attr.Code == code {
 			return attr.Value
 		}

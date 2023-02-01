@@ -201,25 +201,9 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 	}
 
 	// Adding dataStore index
-	{
-		idx := treeindex.NewEHRIndex()
-
-		err := idx.AddEHR(&ehr)
-		if err != nil {
-			return nil, fmt.Errorf("EHRIndex.AddEHR error: %w", err)
-		}
-
-		data, err := msgpack.Marshal(idx)
-		if err != nil {
-			return nil, fmt.Errorf("msgpack.Marshal(EHRIndex) error: %w", err)
-		}
-
-		txHash, err = s.Infra.Index.DataUpdate(ctx, groupAccessUUID, &uuid.UUID{}, ehrUUID, data)
-		if err != nil {
-			return nil, fmt.Errorf("Index.DataUpdate error: %w", err)
-		}
-
-		procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash)
+	err = s.addDataIndex(ctx, ehrUUID, groupAccessUUID, &uuid.UUID{}, &ehr, procRequest)
+	if err != nil {
+		return nil, fmt.Errorf("addDataIndex error: %w", err)
 	}
 
 	return &ehr, nil
@@ -448,4 +432,25 @@ func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallT
 func (s *Service) ValidateEhr(ehr *model.EHR) bool {
 	// TODO
 	return true
+}
+
+func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, dataIndexUUID *uuid.UUID, ehr *model.EHR, procRequest *proc.Request) error {
+	ehrNode, err := treeindex.ProcessEHR(ehr)
+	if err != nil {
+		return fmt.Errorf("treeindex.ProcessEHR error: %w", err)
+	}
+
+	data, err := msgpack.Marshal(ehrNode)
+	if err != nil {
+		return fmt.Errorf("msgpack.Marshal(ehrNode) error: %w", err)
+	}
+
+	txHash, err := s.Infra.Index.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, data)
+	if err != nil {
+		return fmt.Errorf("Index.DataUpdate error: %w", err)
+	}
+
+	procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash)
+
+	return nil
 }

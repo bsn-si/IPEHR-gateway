@@ -71,12 +71,12 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 		return nil, errors.ErrNotFound
 	}
 
-	contentEncr := model.AttributeGetByCode(ug.Attrs, model.AttributeContentEncr)
+	contentEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeContentEncr)
 	if contentEncr == nil {
 		return nil, errors.ErrFieldIsEmpty("ContentEncr")
 	}
 
-	groupKeyEncr := model.AttributeGetByCode(ug.Attrs, model.AttributeKeyEncr)
+	groupKeyEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeKeyEncr)
 	if groupKeyEncr == nil {
 		return nil, errors.ErrFieldIsEmpty("KeyEncr")
 	}

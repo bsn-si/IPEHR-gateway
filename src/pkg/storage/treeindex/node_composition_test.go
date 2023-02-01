@@ -95,7 +95,7 @@ func Test_processComposition(t *testing.T) {
 				return
 			}
 
-			got, err := processComposition(&cmp)
+			got, err := ProcessComposition(&cmp)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processComposition() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -128,7 +128,7 @@ func Test_EncodeDecodeComposition(t *testing.T) {
 			composition, err := loadComposition(tt.filepath)
 			assert.Nil(t, err)
 
-			node, err := processComposition(&composition)
+			node, err := ProcessComposition(&composition)
 			assert.Nil(t, err)
 
 			origin := node.(*CompositionNode)

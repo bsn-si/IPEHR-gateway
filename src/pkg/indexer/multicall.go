@@ -42,7 +42,11 @@ func (i *Index) MultiCallEhrNew(ctx context.Context, pk *[32]byte) (*MultiCallTx
 
 	nonce.Add(nonce, big.NewInt(1))
 
-	return &MultiCallTx{index: i, nonce: nonce, kind: MulticallEhr}, nil
+	return &MultiCallTx{
+		index: i,
+		nonce: nonce,
+		kind:  MulticallEhr,
+	}, nil
 }
 
 func (i *Index) MultiCallUsersNew(ctx context.Context, pk *[32]byte) (*MultiCallTx, error) {

@@ -239,7 +239,7 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 	)
 
 	if user.Role == uint8(roles.Doctor) {
-		content := docModel.AttributeGetByCode(user.Attrs, docModel.AttributeContent)
+		content := docModel.AttributesUsers(user.Attrs).GetByCode(docModel.AttributeContent)
 		if content == nil {
 			return nil, errors.ErrFieldIsEmpty("AttributeContent")
 		}
@@ -258,7 +258,7 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 		userInfo.Code = fmt.Sprintf("%08d", codeInt)
 	}
 
-	timestamp := docModel.AttributeGetByCode(user.Attrs, docModel.AttributeTimestamp)
+	timestamp := docModel.AttributesUsers(user.Attrs).GetByCode(docModel.AttributeTimestamp)
 	if timestamp == nil {
 		return nil, errors.ErrFieldIsEmpty("AttributeTimestamp")
 	}

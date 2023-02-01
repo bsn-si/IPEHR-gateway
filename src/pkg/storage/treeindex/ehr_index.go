@@ -2,6 +2,7 @@ package treeindex
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -30,7 +31,7 @@ func AddComposition(ehrID string, cmp *model.Composition) error {
 }
 
 func (idx *EHRIndex) AddEHR(ehr *model.EHR) error {
-	node, err := processEHR(ehr)
+	node, err := ProcessEHR(ehr)
 	if err != nil {
 		return errors.Wrap(err, "cannot add EHR object")
 	}
@@ -64,7 +65,11 @@ func (idx *EHRIndex) AddComposition(ehrID string, cmp *model.Composition) error 
 		return errors.New("EHR not found")
 	}
 
-	return ehrNode.addComposition(cmp)
+	if err := ehrNode.addComposition(cmp); err != nil {
+		return fmt.Errorf("ehrNode.addComposition error: %w", err)
+	}
+
+	return nil
 }
 
 func (idx EHRIndex) MarshalJSON() ([]byte, error) {

@@ -5,14 +5,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 )
 
 type Service struct {
 	*service.DefaultDocumentService
 	defaultGroupAccessUUID *uuid.UUID
-	defaultGroupAccess     *model.GroupAccess
 }
 
 func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID, defaultUserID string) *Service {
@@ -49,8 +47,8 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 	return service
 }
 
-func (s *Service) Default() *model.GroupAccess {
-	return s.defaultGroupAccess
+func (s *Service) Default() *uuid.UUID {
+	return s.defaultGroupAccessUUID
 }
 
 /*

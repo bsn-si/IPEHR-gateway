@@ -10,7 +10,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func processEHR(ehr *model.EHR) (*EHRNode, error) {
+func ProcessEHR(ehr *model.EHR) (*EHRNode, error) {
 	node := newEHRNode(ehr)
 
 	for _, cmp := range ehr.Compositions {
@@ -48,7 +48,7 @@ func newEHRNode(ehr *model.EHR) *EHRNode {
 }
 
 func (ehr *EHRNode) addComposition(cmp *model.Composition) error {
-	cmpNode, err := processComposition(cmp)
+	cmpNode, err := ProcessComposition(cmp)
 	if err != nil {
 		return errors.Wrap(err, "cannot add Composition node into EHRNode")
 	}

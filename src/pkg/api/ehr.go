@@ -103,7 +103,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	ehrUUIDnew := uuid.New()
 	reqID := c.GetString("reqID")
 
-	groupAccessUUID := h.service.GroupAccess.Default().GroupUUID
+	groupAccessUUID := h.service.GroupAccess.Default()
 
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
@@ -214,7 +214,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	groupAccessUUID := h.service.GroupAccess.Default().GroupUUID
+	groupAccessUUID := h.service.GroupAccess.Default()
 
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))

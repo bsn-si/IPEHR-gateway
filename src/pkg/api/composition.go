@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 
@@ -22,7 +21,7 @@ import (
 type (
 	CompositionService interface {
 		helper.Finder
-		DefaultGroupAccess() *model.GroupAccess
+		DefaultGroupAccess() *uuid.UUID
 		Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
 		Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
 		GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
@@ -114,7 +113,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	groupAccessUUID := h.service.DefaultGroupAccess().GroupUUID
+	groupAccessUUID := h.service.DefaultGroupAccess()
 
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
@@ -128,6 +127,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	composition := &model.Composition{}
+
 	if err := json.NewDecoder(c.Request.Body).Decode(composition); err != nil {
 		log.Println("Composition Create request unmarshal error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body parsing error"})
@@ -359,10 +359,9 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 // @Failure  500                   "Is returned when an unexpected error occurs while processing a request"
 // @Router   /ehr/{ehr_id}/composition/{versioned_object_uid} [put]
 func (h CompositionHandler) Update(c *gin.Context) {
-	ehrID := c.Param("ehrid")
-	//TODO validate ehrID
-
 	systemID := c.GetString("ehrSystemID")
+	reqID := c.GetString("reqID")
+	ehrID := c.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -402,36 +401,27 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	var (
-		groupAccessUUID *uuid.UUID
-		groupIDStr      = c.GetHeader("GroupAccessId")
-		reqID           = c.GetString("reqID")
-	)
+	groupAccessUUID := h.service.DefaultGroupAccess()
 
-	if groupIDStr != "" {
-		UUID, err := uuid.Parse(groupIDStr)
+	if c.GetHeader("GroupAccessId") != "" {
+		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
 		if err != nil {
 			log.Println(err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
 			return
 		}
 
 		groupAccessUUID = &UUID
 	}
 
-	data, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body error"})
+	compositionUpdate := model.Composition{}
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&compositionUpdate); err != nil {
+		log.Println("Composition Update request unmarshal error", err)
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Request body parsing error"})
 		return
 	}
 	defer c.Request.Body.Close()
-
-	var compositionUpdate model.Composition
-
-	if err = json.Unmarshal(data, &compositionUpdate); err != nil {
-		c.AbortWithStatus(http.StatusUnprocessableEntity)
-		return
-	}
 
 	if ok, _ := compositionUpdate.Validate(); !ok {
 		c.AbortWithStatus(http.StatusUnprocessableEntity)

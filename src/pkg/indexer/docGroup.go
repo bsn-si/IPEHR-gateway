@@ -121,7 +121,7 @@ func (i *Index) DocGroupGetByID(ctx context.Context, gID *uuid.UUID, userPubKey,
 		return nil, errors.ErrNotFound
 	}
 
-	keyEncr := model.AttributeGetByCode(attrs, model.AttributeKeyEncr)
+	keyEncr := model.AttributesEhr(attrs).GetByCode(model.AttributeKeyEncr)
 	if len(keyEncr) == 0 {
 		return nil, errors.ErrFieldIsEmpty("KeyEncr")
 	}
@@ -136,7 +136,7 @@ func (i *Index) DocGroupGetByID(ctx context.Context, gID *uuid.UUID, userPubKey,
 		return nil, fmt.Errorf("chachaPoly.NewKeyFromBytes error: %w", err)
 	}
 
-	nameEncr := model.AttributeGetByCode(attrs, model.AttributeNameEncr)
+	nameEncr := model.AttributesEhr(attrs).GetByCode(model.AttributeNameEncr)
 	if len(nameEncr) == 0 {
 		return nil, errors.ErrFieldIsEmpty("NameEncr")
 	}

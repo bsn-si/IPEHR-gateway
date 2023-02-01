@@ -81,7 +81,7 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 		return nil, errors.ErrNotFound
 	}
 
-	pwdHash := model.AttributeGetByCode(user.Attrs, model.AttributePasswordHash)
+	pwdHash := model.AttributesUsers(user.Attrs).GetByCode(model.AttributePasswordHash)
 	if pwdHash == nil {
 		return nil, errors.ErrFieldIsEmpty("PasswordHash")
 	}
