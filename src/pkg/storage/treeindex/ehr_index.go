@@ -33,10 +33,36 @@ func AddComposition(ehrID string, cmp *model.Composition) error {
 func (idx *EHRIndex) AddEHR(ehr *model.EHR) error {
 	node, err := ProcessEHR(ehr)
 	if err != nil {
-		return errors.Wrap(err, "cannot add EHR object")
+		return errors.Wrap(err, "cannot process EHR")
 	}
 
-	idx.Ehrs[node.GetID()] = node
+	err = idx.AddEHRNode(node)
+	if err != nil {
+		return errors.Wrap(err, "cannot add EHR node")
+	}
+
+	return nil
+}
+
+func (idx *EHRIndex) AddEHRNode(node *EHRNode) error {
+	if node == nil {
+		return errors.New("node is empty")
+	}
+
+	nodeID := node.GetID()
+	if nodeID == "" {
+		return errors.New("nodeID is empty")
+	}
+
+	if idx.Ehrs == nil {
+		idx.Ehrs = map[string]*EHRNode{}
+	}
+
+	if _, ok := idx.Ehrs[nodeID]; ok {
+		return errors.New("EHR nodeID already exists")
+	}
+
+	idx.Ehrs[nodeID] = node
 
 	return nil
 }
