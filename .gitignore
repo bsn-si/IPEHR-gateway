@@ -5,3 +5,5 @@ config.json
 *.antlr
 *.DS_Store
 ./data/storage*
+data/local.db
+.blockchain.key

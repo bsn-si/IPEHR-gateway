@@ -1,17 +1,33 @@
 FROM golang:1.19.0-alpine3.16 AS build
-WORKDIR /srv
-COPY src/ .
-COPY config.json config.json
+
 RUN apk update && \
     apk add --no-cache gcc musl-dev && \
     rm -rf /var/lib/apt/lists/*
-RUN go run ./utils/defaultUserRegister/.
-RUN go run ./utils/defaultGroupAccessRegister/.
+
+WORKDIR /srv
+
+COPY data/ ./data
+COPY config.json.example ./config.json
+COPY src/ .
+
+RUN go mod download
+
+RUN go build -o ./bin/defaultUserRegister ./utils/defaultUserRegister/.
 RUN go build -o ./bin/ipehr-gateway cmd/ipehrgw/main.go
 
 FROM alpine:3.16
+
+
+RUN apk update && \
+    apk add --no-cache gcc musl-dev curl && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /srv
-COPY data/ /data
+
+RUN echo "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" > .blockchain.key
 COPY --from=build /srv/bin/ /srv
-COPY --from=build /srv/config.json /srv
-CMD ["./ipehr-gateway", "-config=./config.json"]
+COPY --from=build /srv/config.json /srv/config.json
+COPY --from=build /srv/data /srv/data
+COPY --from=build /srv/pkg/indexer /srv/inbexer
+
+ENTRYPOINT [ "/srv/ipehr-gateway", "-config=./config.json"]
