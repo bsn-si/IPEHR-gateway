@@ -16,13 +16,6 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
-	"hms/gateway/pkg/common"
-	"hms/gateway/pkg/docs/model"
-	"hms/gateway/pkg/docs/model/base"
-	"hms/gateway/pkg/docs/service/processing"
-	"hms/gateway/pkg/errors"
-	"hms/gateway/pkg/helper"
 )
 
 type DirectoryService interface {
@@ -57,10 +50,10 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_create
 // @Tags         DIRECTORY
 // @Param        Authorization  header    string     true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string     true  "Doctor UserId UUID"
+// @Param        AuthUserId     header    string     true  "Doctor UserId"
 // @Param        Prefer           header  string  true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path      string     true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        patient_id     query     string     true  "patient id UUID"
+// @Param        patient_id     query     string     true  "Patient UserId"
 // @Header       201            {string}  Etag       "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -117,6 +110,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	}
 
 	dUID := ""
+
 	lastDirectoryVersion, err := h.service.GetByTimeOrLast(ctx, systemID, &ehrUUID, patientID, time.Now())
 	if err != nil {
 		if !errors.Is(err, errors.ErrNotFound) && !errors.Is(err, errors.ErrAlreadyDeleted) {
@@ -240,10 +234,10 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 // @Description  https://specifications.openehr.org/releases/ITS-REST/latest/ehr.html#tag/DIRECTORY/operation/directory_update
 // @Tags         DIRECTORY
 // @Param        Authorization  header    string     true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string     true  "UserId UUID"
+// @Param        AuthUserId     header    string     true  "UserId"
 // @Param        Prefer         header  string  true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path      string     true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        patient_id     query     string     true  "patient id UUID"
+// @Param        patient_id     query     string     true  "Patient UserId"
 // @Header       201            {string}  Etag       "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       201            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
 // @Header       201            {string}  RequestID  "Request identifier"
@@ -281,11 +275,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, patientID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
-	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, patientID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
@@ -385,10 +375,10 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 // @Description  The existing latest {version_uid} of directory FOLDER resource (i.e. the {preceding_version_uid}) must be specified in the {If-Match} header.
 // @Tags         DIRECTORY
 // @Param        Authorization  header    string     true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string     true  "UserId UUID"
+// @Param        AuthUserId     header    string     true  "UserId"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path      string     true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        patient_id     query     string     true  "patient id UUID"
+// @Param        patient_id     query     string     true  "Patient UserId"
 // @Header       204            {string}  RequestID  "Request identifier"
 // @Header       412            {string}  Etag       "The ETag (i.e. entity tag) response header is the version_uid identifier, enclosed by double quotes. Example: \"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1\""
 // @Header       412            {string}  Location   "{baseUrl}/ehr/{ehr_id}/directory/{version_uid}"
@@ -423,11 +413,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, patientID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
-	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, patientID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
@@ -513,12 +499,12 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 // @Description  Retrieves the version of the directory FOLDER associated with the EHR identified by {ehr_id}. If {version_at_time} is supplied, retrieves the version extant at specified time, otherwise retrieves the latest directory FOLDER version. If path is supplied, retrieves from the directory only the sub-FOLDER that is associated with that path.
 // @Tags         DIRECTORY
 // @Param        Authorization    header  string  true  "Bearer AccessToken"
-// @Param        AuthUserId       header  string  true  "UserId UUID"
+// @Param        AuthUserId       header  string  true  "UserId"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id           path    string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_at_time  query   string  true  "Example: version_at_time=2015-01-20T19:30:22.765+01:00 A given time in the extended ISO 8601 format"
 // @Param        path             query   string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
-// @Param        patient_id       query   string  true  "patient id UUID"
+// @Param        patient_id     query     string     true  "Patient UserId"
 // @Produce      json
 // @Success      200  {object}  model.Directory  "Is returned when the FOLDER is successfully retrieved"
 // @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
@@ -602,12 +588,12 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 // @Description  Retrieves a particular version of the directory FOLDER identified by {version_uid} and associated with the EHR identified by {ehr_id}. If {path} is supplied, retrieves from the directory only the sub-FOLDER that is associated with that path.
 // @Tags         DIRECTORY
 // @Param        Authorization  header  string  true  "Bearer AccessToken"
-// @Param        AuthUserId     header  string  true  "UserId UUID"
+// @Param        AuthUserId     header  string  true  "UserId"
 // @Param        Prefer         header    string     true  "Request header to indicate the preference over response details. The response will contain the entire resource when the Prefer header has a value of return=representation."  Enums: ("return=representation", "return=minimal") default("return=minimal")
 // @Param        ehr_id         path    string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
 // @Param        version_uid    query   string  true  "Example: 6cb19121-4307-4648-9da0-d62e4d51f19b::openEHRSys.example.com::2 VERSION identifier taken from VERSION.uid.value"
 // @Param        path           query   string  true  "Example: path=episodes/a/b/c A path to a sub-folder; consists of slash-separated values of the name attribute of FOLDERs in the directory"
-// @Param        patient_id     query   string  true  "patient id UUID"
+// @Param        patient_id     query     string     true  "Patient UserId"
 // @Produce      json
 // @Success      200  {object}  model.Directory  "Is returned when the FOLDER is successfully retrieved"
 // @Success      204  "Is returned when the resource identified by the request parameters (at specified {version_at_time}) time has been deleted"
@@ -619,7 +605,6 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	// TODO check permission what its doctor
-	//userID := ctx.GetString("userID")
 	patientID := ctx.Query("patient_id")
 	ehrID := ctx.Param("ehrid")
 	systemID := ctx.GetString("ehrSystemID")
@@ -641,7 +626,7 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 		return
 	}
 
-	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, patientID, systemID)
 	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
@@ -651,8 +636,6 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 		return
 	}
 
-	versionUID := ctx.Param("version_uid")
-
 	objectVersionID, err := base.NewObjectVersionID(versionUID, systemID)
 	if err != nil || objectVersionID.String() != versionUID {
 		errResponse.AddError(errors.ErrFieldIsIncorrect("version_uid"))
@@ -661,8 +644,7 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 		return
 	}
 
-	directoryVersion, err := h.service.GetByID(ctx, userID, ehrID, objectVersionID.String())
-	directoryVersion, err := h.service.GetByID(ctx, userID, versionUID)
+	directoryVersion, err := h.service.GetByID(ctx, patientID, systemID, &ehrUUID, objectVersionID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			ctx.AbortWithStatus(http.StatusNotFound)

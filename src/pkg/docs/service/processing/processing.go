@@ -107,7 +107,7 @@ var (
 		TxSaveEhrStatus:       "SaveEhrStatus",
 		TxSaveComposition:     "SaveComposition",
 		TxSaveTemplate:        "SaveTemplate",
-		TxCreateDirectory:     "SaveDirectory",
+		TxCreateDirectory:     "CreateDirectory",
 		TxUserRegister:        "UserRegister",
 		TxUserNew:             "UserNew",
 		TxUserGroupCreate:     "UserGroupCreate",

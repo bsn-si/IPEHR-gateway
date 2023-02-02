@@ -171,7 +171,7 @@ func createDirectory(wrap *testWrapDirectory, body *bytes.Reader) (*model.Direct
 	}
 
 	if response.StatusCode != http.StatusCreated {
-		return nil, errors.New(fmt.Sprintf("status %s, body: %s", response.Status, data))
+		return nil, errors.New(response.Status)
 	}
 
 	var d model.Directory

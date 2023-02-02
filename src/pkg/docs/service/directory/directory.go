@@ -77,8 +77,6 @@ func (s *Service) getGroupAllDocs(ctx context.Context, patientID string, systemI
 }
 
 func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes []byte, patientID, systemID, dirUID, encName string, allDocGroup *model.DocumentGroup) error {
-	var err error
-
 	key := chachaPoly.GenerateKey()
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(patientID)
