@@ -445,7 +445,12 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		return fmt.Errorf("msgpack.Marshal(ehrNode) error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, data)
+	compressed, err := s.Infra.Compressor.Compress(data)
+	if err != nil {
+		return fmt.Errorf("data compressinon error: %w", err)
+	}
+
+	txHash, err := s.Infra.Index.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
 	if err != nil {
 		return fmt.Errorf("Index.DataUpdate error: %w", err)
 	}
