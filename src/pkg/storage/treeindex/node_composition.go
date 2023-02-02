@@ -5,7 +5,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func ProcessComposition(cmp *model.Composition) (Noder, error) {
+func ProcessComposition(cmp *model.Composition) (*CompositionNode, error) {
 	node := newCompositionNode(cmp)
 
 	node.addAttribute("language", newNode(cmp.Language))

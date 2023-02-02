@@ -50,10 +50,33 @@ func newEHRNode(ehr *model.EHR) *EHRNode {
 func (ehr *EHRNode) addComposition(cmp *model.Composition) error {
 	cmpNode, err := ProcessComposition(cmp)
 	if err != nil {
+		return errors.Wrap(err, "cannot process Composition")
+	}
+
+	err = ehr.AddCompositionNode(cmpNode)
+	if err != nil {
 		return errors.Wrap(err, "cannot add Composition node into EHRNode")
 	}
 
-	ehr.Compositions[cmpNode.GetID()] = append(ehr.Compositions[cmpNode.GetID()], cmpNode)
+	return nil
+}
+
+func (ehr *EHRNode) AddCompositionNode(cmpNode *CompositionNode) error {
+	if cmpNode == nil {
+		return errors.New("cmpNode is empty")
+	}
+
+	cmpNodeID := cmpNode.GetID()
+	if cmpNodeID == "" {
+		return errors.New("cmpNodeID is empty")
+	}
+
+	if ehr.Compositions == nil {
+		ehr.Compositions = make(Container)
+	}
+
+	ehr.Compositions[cmpNodeID] = append(ehr.Compositions[cmpNodeID], cmpNode)
+
 	return nil
 }
 

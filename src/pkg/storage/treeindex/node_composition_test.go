@@ -131,7 +131,7 @@ func Test_EncodeDecodeComposition(t *testing.T) {
 			node, err := ProcessComposition(&composition)
 			assert.Nil(t, err)
 
-			origin := node.(*CompositionNode)
+			origin := node
 
 			data, err := msgpack.Marshal(node)
 			assert.Nil(t, err)
