@@ -68,6 +68,21 @@ func (mr *MockDirectoryServiceMockRecorder) Delete(ctx, req, systemID, ehrUUID, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDirectoryService)(nil).Delete), ctx, req, systemID, ehrUUID, versionUID, userID)
 }
 
+// GetActiveProcRequest mocks base method.
+func (m *MockDirectoryService) GetActiveProcRequest(userID string, kind processing.RequestKind) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveProcRequest", userID, kind)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveProcRequest indicates an expected call of GetActiveProcRequest.
+func (mr *MockDirectoryServiceMockRecorder) GetActiveProcRequest(userID, kind interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveProcRequest", reflect.TypeOf((*MockDirectoryService)(nil).GetActiveProcRequest), userID, kind)
+}
+
 // GetByID mocks base method.
 func (m *MockDirectoryService) GetByID(ctx context.Context, patientID, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error) {
 	m.ctrl.T.Helper()
@@ -83,7 +98,7 @@ func (mr *MockDirectoryServiceMockRecorder) GetByID(ctx, patientID, systemID, eh
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockDirectoryService)(nil).GetByID), ctx, patientID, systemID, ehrUUID, versionID)
 }
 
-// GetByTime mocks base method.
+// GetByTimeOrLast mocks base method.
 func (m *MockDirectoryService) GetByTimeOrLast(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByTimeOrLast", ctx, systemID, ehrUUID, userID, versionTime)
@@ -92,10 +107,25 @@ func (m *MockDirectoryService) GetByTimeOrLast(ctx context.Context, systemID str
 	return ret0, ret1
 }
 
-// GetByTime indicates an expected call of GetByTime.
-func (mr *MockDirectoryServiceMockRecorder) GetByTime(ctx, systemID, ehrUUID, userID, versionTime interface{}) *gomock.Call {
+// GetByTimeOrLast indicates an expected call of GetByTimeOrLast.
+func (mr *MockDirectoryServiceMockRecorder) GetByTimeOrLast(ctx, systemID, ehrUUID, userID, versionTime interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTimeOrLast", reflect.TypeOf((*MockDirectoryService)(nil).GetByTimeOrLast), ctx, systemID, ehrUUID, userID, versionTime)
+}
+
+// IncreaseVersion mocks base method.
+func (m *MockDirectoryService) IncreaseVersion(d *model.Directory, systemID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncreaseVersion", d, systemID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IncreaseVersion indicates an expected call of IncreaseVersion.
+func (mr *MockDirectoryServiceMockRecorder) IncreaseVersion(d, systemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncreaseVersion", reflect.TypeOf((*MockDirectoryService)(nil).IncreaseVersion), d, systemID)
 }
 
 // NewProcRequest mocks base method.

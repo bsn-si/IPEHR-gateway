@@ -165,13 +165,13 @@ func createDirectory(wrap *testWrapDirectory, body *bytes.Reader) (*model.Direct
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusCreated {
-		return nil, errors.New(response.Status)
-	}
-
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot read response body")
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, errors.New(fmt.Sprintf("status %s, body: %s", response.Status, data))
 	}
 
 	var d model.Directory

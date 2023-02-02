@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -40,6 +41,16 @@ func NewService(docService *service.DefaultDocumentService, docGroupSvc *docGrou
 }
 func (s *Service) NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error) {
 	return s.Proc.NewRequest(reqID, userID, ehrUUID, kind)
+}
+
+func (s *Service) GetActiveProcRequest(userID string, kind processing.RequestKind) (string, error) {
+	r, err := s.Proc.GetRequestsByKindInProgress(userID, kind)
+	if err != nil {
+		return "", err
+	}
+
+	keys := reflect.ValueOf(r).MapKeys()
+	return keys[0].String(), nil
 }
 
 func (s *Service) Create(ctx context.Context, req processing.RequestInterface, patientID, systemID, dirUID string, d *model.Directory) error {
@@ -223,8 +234,8 @@ func (s *Service) addDocGroupData(ctx context.Context, req proc.RequestInterface
 }
 
 func (s *Service) Update(ctx context.Context, req processing.RequestInterface, systemID string, userID string, d *model.Directory) error {
-	if err := s.increaseVersion(d, systemID); err != nil {
-		return fmt.Errorf("Directory increaseVersion error: %w directory.UID %s", err, d.UID.Value)
+	if _, err := s.IncreaseVersion(d, systemID); err != nil {
+		return fmt.Errorf("Directory IncreaseVersion error: %w directory.UID %s", err, d.UID.Value)
 	}
 
 	docBytes, err := json.Marshal(d)
@@ -314,6 +325,10 @@ func (s *Service) GetByTimeOrLast(ctx context.Context, systemID string, ehrUUID 
 		return nil, fmt.Errorf("DIRECTORY content unmarshal error: %w", err)
 	}
 
+	if docMeta.Status == uint8(status.DELETED) {
+		return &d, errors.ErrAlreadyDeleted
+	}
+
 	return &d, nil
 }
 
@@ -361,17 +376,17 @@ func (s *Service) GetByID(ctx context.Context, patientID string, systemID string
 	return &d, nil
 }
 
-func (s *Service) increaseVersion(d *model.Directory, systemID string) error {
+func (s *Service) IncreaseVersion(d *model.Directory, systemID string) (string, error) {
 	dVersionUID, err := base.NewObjectVersionID(d.UID.Value, systemID)
 	if err != nil {
-		return fmt.Errorf("Directory %s NewObjectVersionID error: %w", d.UID.Value, err)
+		return "", fmt.Errorf("Directory %s NewObjectVersionID error: %w", d.UID.Value, err)
 	}
 
 	if _, err := dVersionUID.IncreaseUIDVersion(); err != nil {
-		return fmt.Errorf("Directory %s IncreaseUIDVersion error: %w", d.UID.Value, err)
+		return "", fmt.Errorf("Directory %s IncreaseUIDVersion error: %w", d.UID.Value, err)
 	}
 
 	d.UID.Value = dVersionUID.String()
 
-	return nil
+	return d.UID.Value, nil
 }

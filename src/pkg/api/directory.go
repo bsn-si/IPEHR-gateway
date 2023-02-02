@@ -27,11 +27,13 @@ import (
 
 type DirectoryService interface {
 	NewProcRequest(reqID, userID, ehrUUID string, kind processing.RequestKind) (processing.RequestInterface, error)
+	GetActiveProcRequest(userID string, kind processing.RequestKind) (string, error)
 	Create(ctx context.Context, req processing.RequestInterface, patientID, systemID, dirUID string, d *model.Directory) error
 	Update(ctx context.Context, req processing.RequestInterface, systemID string, userID string, d *model.Directory) error
 	Delete(ctx context.Context, req processing.RequestInterface, systemID string, ehrUUID *uuid.UUID, versionUID, userID string) (string, error)
 	GetByTimeOrLast(ctx context.Context, systemID string, ehrUUID *uuid.UUID, userID string, versionTime time.Time) (*model.Directory, error)
 	GetByID(ctx context.Context, patientID string, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) (*model.Directory, error)
+	IncreaseVersion(d *model.Directory, systemID string) (string, error)
 }
 
 type DirectoryHandler struct {
@@ -67,7 +69,7 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 // @Success      201  {object}  model.Directory  "Is returned when the DIRECTORY was successfully created."
 // @Failure      400            "Is returned when the request has invalid content"
 // @Failure      404  "Is returned when an EHR with {ehr_id}  does not exist"
-// @Failure      409  "Is returned when a resource with same identifier(s) already exists"
+// @Failure      409  "Is returned when a resource with same identifier(s) already exists, or previous request still in progress"
 // @Failure      500            "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/directory/ [post]
 func (h *DirectoryHandler) Create(ctx *gin.Context) {
@@ -115,10 +117,42 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	}
 
 	dUID := ""
-	if d.UID == nil || d.UID.Value == "" {
+	lastDirectoryVersion, err := h.service.GetByTimeOrLast(ctx, systemID, &ehrUUID, patientID, time.Now())
+	if err != nil {
+		if !errors.Is(err, errors.ErrNotFound) && !errors.Is(err, errors.ErrAlreadyDeleted) {
+			log.Println("directoryService.GetByTimeOrLast error: ", err)
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if lastDirectoryVersion != nil {
+		if err == nil {
+			ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?&patient_id=%s", h.baseURL, ehrUUID.String(), lastDirectoryVersion.UID.Value, patientID))
+			ctx.Header("ETag", fmt.Sprintf("\"%s\"", lastDirectoryVersion.UID.Value))
+
+			errResponse.SetMessage("Directory already exist with UUID " + lastDirectoryVersion.UID.Value)
+
+			ctx.JSON(http.StatusConflict, errResponse)
+			return
+		}
+
+		if errors.Is(err, errors.ErrAlreadyDeleted) {
+			dUID, err = h.service.IncreaseVersion(lastDirectoryVersion, systemID)
+			if err != nil {
+				log.Println("directoryService.IncreaseVersion error: ", err)
+				ctx.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
+	if dUID == "" && (d.UID == nil || d.UID.Value == "") {
 		dUID = uuid.New().String()
 	} else {
-		dUID = d.UID.Value
+		if dUID == "" {
+			dUID = d.UID.Value
+		}
 	}
 
 	directoryVersionUID, err := base.NewObjectVersionID(dUID, systemID)
@@ -151,6 +185,19 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 
 	if exist != nil {
 		ctx.AbortWithStatus(http.StatusConflict)
+		return
+	}
+
+	oldReqID, err := h.service.GetActiveProcRequest(userID, processing.RequestDirectoryCreate)
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
+		log.Println("directoryService.GetActiveProcRequest error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+
+	if oldReqID != "" {
+		ctx.Header("RequestID", oldReqID)
+		errResponse.SetMessage("Previous creating request is still in progress, for more information use RequestID " + oldReqID)
+		ctx.JSON(http.StatusConflict, errResponse)
 		return
 	}
 
@@ -206,6 +253,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 // @Success      204  "Is returned when directory was updated and 'Prefer' header is missing or is set to 'return=minimal'"
 // @Failure      400  "Is returned when the request has invalid content"
 // @Failure      404            "Is returned when an EHR with {ehr_id} does not exist, or DIRECTORY with that version is not exist"
+// @Failure      409  "Is returned when a resource with same identifier(s) already exists, or previous request still in progress"
 // @Failure      412            "Is returned when 'If-Match' request header doesn't match the latest version on the service side. Returns also latest 'version_uid' in the 'Location' and 'ETag' headers"
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/directory [put]
@@ -285,6 +333,19 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		return
 	}
 
+	oldReqID, err := h.service.GetActiveProcRequest(userID, processing.RequestDirectoryUpdate)
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
+		log.Println("directoryService.GetActiveProcRequest error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+
+	if oldReqID != "" {
+		ctx.Header("RequestID", oldReqID)
+		errResponse.SetMessage("Previous creating request is still in progress, for more information use RequestID " + oldReqID)
+		ctx.JSON(http.StatusConflict, errResponse)
+		return
+	}
+
 	reqID := ctx.GetString("reqID")
 
 	procRequest, err := h.service.NewProcRequest(reqID, userID, ehrID, processing.RequestDirectoryUpdate)
@@ -334,6 +395,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 // @Success      204            "Is returned when the resource identified by the request parameters has been (logically) deleted"
 // @Failure      400  "Is returned when the request has invalid content"
 // @Failure      404  "Is returned when an EHR with {ehr_id} does not exist, or DIRECTORY with that version is not exist"
+// @Failure      409  "Is returned when a resource with same identifier(s) already exists, or previous request still in progress"
 // @Failure      412  "Is returned when 'If-Match' request header doesn't match the latest version on the service side. Returns also latest 'version_uid' in the 'Location' and 'ETag' headers"
 // @Failure      500  "Is returned when an unexpected error occurs while processing a request"
 // @Router       /ehr/{ehr_id}/directory [delete]
@@ -397,6 +459,19 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		ctx.Header("Location", fmt.Sprintf("%s/%s/directory/%s?&patient_id=%s", h.baseURL, ehrUUID.String(), lastDirectoryVersion.UID.Value, patientID))
 		ctx.Header("ETag", fmt.Sprintf("\"%s\"", lastDirectoryVersion.UID.Value))
 		ctx.AbortWithStatus(http.StatusPreconditionFailed)
+		return
+	}
+
+	oldReqID, err := h.service.GetActiveProcRequest(userID, processing.RequestDirectoryDelete)
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
+		log.Println("directoryService.GetActiveProcRequest error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+
+	if oldReqID != "" {
+		ctx.Header("RequestID", oldReqID)
+		errResponse.SetMessage("Previous creating request is still in progress, for more information use RequestID " + oldReqID)
+		ctx.JSON(http.StatusConflict, errResponse)
 		return
 	}
 

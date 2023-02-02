@@ -186,7 +186,36 @@ type RequestResult struct {
 
 type RequestsResult map[string]*RequestResult
 
+type RequestsCriteria struct {
+	kind   []RequestKind
+	status []Status
+}
+
+func (rc *RequestsCriteria) ByStatus(status []Status) {
+	rc.status = status
+}
+
+func (rc *RequestsCriteria) ByKind(kind []RequestKind) {
+	rc.kind = kind
+}
+
+func (rc *RequestsCriteria) addInQuery(tx *gorm.DB) *gorm.DB {
+	if len(rc.status) != 0 {
+		tx.Where("status IN ?", rc.status)
+	}
+
+	if len(rc.kind) != 0 {
+		tx.Where("kind IN ?", rc.kind)
+	}
+
+	return tx
+}
+
 func (p *Proc) requests(userID, reqID string, limit, offset int) (RequestsResult, error) {
+	return p.requestsWithCriteria(userID, reqID, limit, offset, RequestsCriteria{})
+}
+
+func (p *Proc) requestsWithCriteria(userID, reqID string, limit, offset int, criteria RequestsCriteria) (RequestsResult, error) {
 	var (
 		requests    []*Request
 		reqIDs      []string
@@ -201,6 +230,8 @@ func (p *Proc) requests(userID, reqID string, limit, offset int) (RequestsResult
 	if reqID != "" {
 		queryReq = queryReq.Where("req_id = ?", reqID)
 	}
+
+	queryReq = criteria.addInQuery(queryReq)
 
 	err := queryReq.Limit(limit).Offset(offset).Find(&requests).Error
 	if err != nil {
@@ -281,4 +312,12 @@ func (p *Proc) GetRequest(userID, reqID string) ([]byte, error) {
 	}
 
 	return resultBytes, nil
+}
+
+func (p *Proc) GetRequestsByKindInProgress(userID string, kind RequestKind) (RequestsResult, error) {
+	c := RequestsCriteria{}
+	c.ByStatus([]Status{StatusPending, StatusProcessing})
+	c.ByKind([]RequestKind{kind})
+
+	return p.requestsWithCriteria(userID, "", 0, 0, c)
 }
