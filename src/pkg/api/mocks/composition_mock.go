@@ -6,10 +6,10 @@ package mocks
 
 import (
 	context "context"
-	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
-	processing "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	reflect "reflect"
 
+	model "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	processing "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )
@@ -53,10 +53,10 @@ func (mr *MockCompositionServiceMockRecorder) Create(ctx, userID, systemID, ehrU
 }
 
 // DefaultGroupAccess mocks base method.
-func (m *MockCompositionService) DefaultGroupAccess() *model.GroupAccess {
+func (m *MockCompositionService) DefaultGroupAccess() *uuid.UUID {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DefaultGroupAccess")
-	ret0, _ := ret[0].(*model.GroupAccess)
+	ret0, _ := ret[0].(*uuid.UUID)
 	return ret0
 }
 
@@ -212,26 +212,6 @@ func (m *MockIndexer) GetEhrUUIDByUserID(ctx context.Context, userID, systemID s
 func (mr *MockIndexerMockRecorder) GetEhrUUIDByUserID(ctx, userID, systemID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEhrUUIDByUserID", reflect.TypeOf((*MockIndexer)(nil).GetEhrUUIDByUserID), ctx, userID, systemID)
-}
-
-// IsExist mocks base method.
-func (m *MockIndexer) IsExist(ctx context.Context, args ...string) (bool, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx}
-	for _, a := range args {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "IsExist", varargs...)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IsExist indicates an expected call of IsExist.
-func (mr *MockIndexerMockRecorder) IsExist(ctx interface{}, args ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx}, args...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsExist", reflect.TypeOf((*MockIndexer)(nil).IsExist), varargs...)
 }
 
 // MockProcessingService is a mock of ProcessingService interface.

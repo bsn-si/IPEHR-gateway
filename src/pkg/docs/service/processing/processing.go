@@ -77,6 +77,7 @@ const (
 	TxUserGroupRemoveUser
 	TxDocGroupCreate
 	TxDocGroupAddDoc
+	TxIndexDataUpdate
 )
 
 var (
@@ -112,6 +113,7 @@ var (
 		TxUserGroupRemoveUser: "UserGroupRemoveUser",
 		TxDocGroupCreate:      "DocGroupCreate",
 		TxDocGroupAddDoc:      "DocGroupAddDoc",
+		TxIndexDataUpdate:     "IndexDataUpdate",
 		TxUnknown:             "Unknown",
 	}
 

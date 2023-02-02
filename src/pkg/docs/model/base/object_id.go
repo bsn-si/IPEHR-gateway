@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/sha3"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -81,17 +82,16 @@ func NewObjectVersionID(UID string, creatingSystemID string) (*ObjectVersionID, 
 }
 
 func (o *ObjectVersionID) String() string {
-	uid := []string{
-		o.ObjectID().String(),
-		o.CreatingSystemID(),
-		o.VersionString(),
-	}
-	return strings.Join(uid, uidDelimiter)
+	return o.ObjectID().String() + uidDelimiter + o.CreatingSystemID() + uidDelimiter + o.VersionString()
 }
 
 func (o *ObjectVersionID) BasedID() string {
-	UID := []string{o.ObjectID().String(), o.CreatingSystemID()}
-	return strings.Join(UID, uidDelimiter)
+	return o.ObjectID().String() + uidDelimiter + o.CreatingSystemID()
+}
+
+func (o *ObjectVersionID) BaseIDHash() *[32]byte {
+	h := sha3.Sum256([]byte(o.BasedID()))
+	return &h
 }
 
 func (o *ObjectVersionID) ObjectID() uuid.UUID {
@@ -199,4 +199,9 @@ func (o *ObjectVersionID) IncreaseUIDVersion() (string, error) {
 	o.setVersionTreeID(strings.Join(parts, "."))
 
 	return o.VersionString(), nil
+}
+
+func (o *ObjectVersionID) BaseUIDHash() *[32]byte {
+	UIDHash := sha3.Sum256([]byte(o.BasedID()))
+	return &UIDHash
 }

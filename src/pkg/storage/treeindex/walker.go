@@ -10,10 +10,10 @@ import (
 
 func walk(obj any) (Noder, error) {
 	switch obj := obj.(type) {
-	case model.EHR:
-		return processEHR(obj)
-	case model.Composition:
-		return processComposition(obj)
+	case *model.EHR:
+		return ProcessEHR(obj)
+	case *model.Composition:
+		return ProcessComposition(obj)
 	case model.EventContext:
 		return processEventContext(obj)
 	case base.Root:

@@ -27,7 +27,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -104,7 +104,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -155,7 +155,7 @@ func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSys
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}

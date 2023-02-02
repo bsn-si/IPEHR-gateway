@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
+	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -29,7 +30,7 @@ import (
 
 type (
 	GroupAccessService interface {
-		Default() *model.GroupAccess
+		Default() *uuid.UUID
 	}
 
 	Indexer interface {
@@ -39,6 +40,7 @@ type (
 		GetDocLastByBaseID(ctx context.Context, userID, systemID string, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
 		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
 		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
+		DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, error)
 	}
 
 	IpfsService interface {
@@ -51,6 +53,7 @@ type (
 
 	DocumentsSvc interface {
 		GetDocFromStorageByID(ctx context.Context, userID, systemID string, CID *cid.Cid, authData, docIDEncrypted []byte) ([]byte, error)
+		GetDocAccessKey(ctx context.Context, userID, systemID string, CID *cid.Cid) (*chachaPoly.Key, error)
 		DecryptKey(userID string, encryptedKey []byte) (*chachaPoly.Key, error)
 	}
 
@@ -95,10 +98,18 @@ func NewCompositionService(
 }
 
 func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
-	var (
-		groupAccess = s.groupAccessService.Default()
-		err         error
-	)
+	objectVersionID, err := base.NewObjectVersionID(composition.UID.Value, systemID)
+	if err != nil {
+		return nil, fmt.Errorf("NewObjectVersionID error: %w UID.Value: %s ehrSystemID %s", err, composition.UID.Value, systemID)
+	}
+
+	// Checking the existence of the Composition
+	docMeta, err := s.indexer.GetDocByVersion(ctx, ehrUUID, types.Composition, objectVersionID.BaseIDHash(), objectVersionID.VersionBytes())
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
+		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
+	} else if docMeta != nil {
+		return nil, fmt.Errorf("%w objectVersionID %s", errors.ErrAlreadyExist, objectVersionID.String())
+	}
 
 	_, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
@@ -110,22 +121,11 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 		return nil, fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
 	}
 
-	/*
-		if groupAccessUUID != nil {
-			groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
-			if err != nil {
-				return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
-			}
-		}
-	*/
+	dataIndexUUID := uuid.New()
 
-	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, groupAccess, composition)
+	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, &dataIndexUUID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
-	}
-
-	if err := treeindex.AddComposition(ehrUUID.String(), *composition); err != nil {
-		return nil, fmt.Errorf("Composition %s save into tree index error: %w", composition.UID.Value, err)
 	}
 
 	txHash, err := multiCallTx.Commit()
@@ -137,14 +137,49 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
+	err = s.addDataIndex(ctx, ehrUUID, groupAccessUUID, &dataIndexUUID, composition, procRequest)
+	if err != nil {
+		return nil, fmt.Errorf("addDataIndex error: %w", err)
+	}
+
 	return composition, nil
 }
 
 func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
-	var (
-		groupAccess = s.groupAccessService.Default()
-		err         error
-	)
+	err := s.increaseVersion(composition, systemID)
+	if err != nil {
+		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
+	}
+
+	objectVersionID, err := base.NewObjectVersionID(composition.UID.Value, systemID)
+	if err != nil {
+		return nil, fmt.Errorf("NewObjectVersionID error: %w UID.Value: %s ehrSystemID %s", err, composition.UID.Value, systemID)
+	}
+
+	// Checking the existence of the Composition same version
+	docMeta, err := s.indexer.GetDocByVersion(ctx, ehrUUID, types.Composition, objectVersionID.BaseIDHash(), objectVersionID.VersionBytes())
+	if err != nil && !errors.Is(err, errors.ErrNotFound) {
+		return nil, fmt.Errorf("Index.GetDocByVersion error: %w", err)
+	} else if docMeta != nil {
+		return nil, fmt.Errorf("%w objectVersionID %s", errors.ErrAlreadyExist, objectVersionID.String())
+	}
+
+	// Getting last Composition version
+	docMeta, err = s.indexer.GetDocLastByBaseID(ctx, userID, systemID, types.Composition, objectVersionID.BaseIDHash())
+	if err != nil {
+		return nil, fmt.Errorf("indexer.GetDocLastByBaseID error: %w", err)
+	}
+
+	// Getting dataIndexID
+	dataIndexIDBytes, err := s.extractDataIndexID(ctx, docMeta, userID, systemID)
+	if err != nil {
+		return nil, fmt.Errorf("extractDataIndexID error: %w", err)
+	}
+
+	dataIndexUUID, err := uuid.FromBytes(dataIndexIDBytes)
+	if err != nil {
+		return nil, fmt.Errorf("dataIndexID UUID parse error: %w", err)
+	}
 
 	_, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
@@ -156,20 +191,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID,
 		return nil, fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
 	}
 
-	/*
-		if groupAccessUUID != nil {
-			groupAccess, err = s.groupAccessService.Get(ctx, userID, groupAccessUUID)
-			if err != nil {
-				return nil, fmt.Errorf("groupAccessService.Get error: %w userID %s groupAccessUUID %s", err, userID, groupAccessUUID.String())
-			}
-		}
-	*/
-
-	if err = s.increaseVersion(composition, systemID); err != nil {
-		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
-	}
-
-	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, groupAccess, composition)
+	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, &dataIndexUUID, composition)
 	if err != nil {
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
@@ -184,6 +206,13 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID,
 	}
 
 	// TODO what we should do with prev composition?
+
+	// Adding dataStore index
+	err = s.addDataIndex(ctx, ehrUUID, groupAccessUUID, &dataIndexUUID, composition, procRequest)
+	if err != nil {
+		return nil, fmt.Errorf("addDataIndex error: %w", err)
+	}
+
 	return composition, nil
 }
 
@@ -206,7 +235,7 @@ func (s *Service) increaseVersion(c *model.Composition, ehrSystemID string) erro
 	return nil
 }
 
-func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, groupAccess *model.GroupAccess, doc *model.Composition) error {
+func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, dataIndexUUID *uuid.UUID, doc *model.Composition) error {
 	userPubKey, userPrivKey, err := s.keyStore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -215,17 +244,6 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 	objectVersionID, err := base.NewObjectVersionID(doc.UID.Value, systemID)
 	if err != nil {
 		return fmt.Errorf("saving error: %w versionUID %s ehrSystemID %s", err, objectVersionID, systemID)
-	}
-
-	baseDocumentUID := []byte(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
-
-	// Checking the existence of the Composition
-	docMeta, err := s.indexer.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
-	if err != nil && !errors.Is(err, errors.ErrNotFound) {
-		return fmt.Errorf("Index.GetDocByVersion error: %w", err)
-	} else if docMeta != nil {
-		return fmt.Errorf("%w objectVersionID %s", errors.ErrAlreadyExist, objectVersionID.String())
 	}
 
 	docBytes, err := json.Marshal(doc)
@@ -271,6 +289,11 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		return fmt.Errorf("Encrypt name error: %w", err)
 	}
 
+	dataIndexIDEncr, err := key.Encrypt(dataIndexUUID[:])
+	if err != nil {
+		return fmt.Errorf("Encrypt dataIndexID error: %w", err)
+	}
+
 	// Add filecoin tx
 	procRequest.AddFilecoinTx(proc.TxSaveComposition, CID.String(), dealCID.String(), minerAddr)
 
@@ -295,11 +318,12 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 			Attrs: []ehrIndexer.AttributesAttribute{
 				{Code: model.AttributeIDEncr, Value: CIDEncr},
 				{Code: model.AttributeKeyEncr, Value: keyEncr},
-				{Code: model.AttributeDocUIDHash, Value: baseDocumentUIDHash[:]},
+				{Code: model.AttributeDocUIDHash, Value: objectVersionID.BaseIDHash()[:]},
 				{Code: model.AttributeDocUIDEncr, Value: docIDEncrypted},
 				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
 				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
 				{Code: model.AttributeNameEncr, Value: nameEncr},
+				{Code: model.AttributeDataIndexID, Value: dataIndexIDEncr},
 			},
 		}
 
@@ -311,33 +335,6 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 	}
 
-	// Index DataSearch
-	_ = groupAccess
-	/* TODO
-	docStorageIDEncrypted, err := groupAccess.Key.EncryptWithAuthData(cidBytes[:], groupAccess.GroupUUID[:])
-	if err != nil {
-		return fmt.Errorf("EncryptWithAuthData error: %w", err)
-	}
-
-	if err = s.DataSearchIndex.UpdateIndexWithNewContent(doc.Content, groupAccess, docStorageIDEncrypted); err != nil {
-		return fmt.Errorf("UpdateIndexWithNewContent error: %w", err)
-	}
-	*/
-
-	// Index Access
-	/*
-		{
-			accessID := sha3.Sum256(append(CID.Bytes()[:], []byte(userID)...))
-
-			packed, err := s.Infra.Index.SetDocAccess(ctx, &accessID, CID.Bytes(), keyEncrypted, uint8(access.Owner), userPrivKey, multiCallTx.Nonce())
-			if err != nil {
-				return fmt.Errorf("Index.SetDocAccess error: %w", err)
-			}
-
-			multiCallTx.Add(uint8(proc.TxSetDocKeyEncrypted), packed)
-		}
-	*/
-
 	return nil
 }
 
@@ -347,8 +344,7 @@ func (s *Service) GetLastByBaseID(ctx context.Context, userID, systemID string, 
 		return nil, fmt.Errorf("GetLastByBaseID error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), systemID)
 	}
 
-	baseDocumentUID := []byte(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
+	baseDocumentUIDHash := sha3.Sum256([]byte(objectVersionID.BasedID()))
 
 	docMeta, err := s.indexer.GetDocLastByBaseID(ctx, userID, systemID, types.Composition, &baseDocumentUIDHash)
 	if err != nil {
@@ -390,8 +386,7 @@ func (s *Service) GetByID(ctx context.Context, userID, systemID string, ehrUUID 
 		return nil, fmt.Errorf("NewObjectVersionID error: %w versionUID %s ehrSystemID %s", err, versionUID, systemID)
 	}
 
-	baseDocumentUID := []byte(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
+	baseDocumentUIDHash := sha3.Sum256([]byte(objectVersionID.BasedID()))
 
 	docMeta, err := s.indexer.GetDocByVersion(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes())
 	if err != nil && errors.Is(err, errors.ErrNotFound) {
@@ -463,7 +458,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 	return objectVersionID.String(), nil
 }
 
-func (s *Service) DefaultGroupAccess() *model.GroupAccess {
+func (s *Service) DefaultGroupAccess() *uuid.UUID {
 	return s.groupAccessService.Default()
 }
 
@@ -540,4 +535,49 @@ func (s *Service) IsExist(ctx context.Context, args ...string) (bool, error) {
 	}
 
 	return (ok != nil), nil
+}
+
+func (s *Service) extractDataIndexID(ctx context.Context, docMeta *model.DocumentMeta, userID, systemID string) ([]byte, error) {
+	CID, err := cid.Parse(docMeta.Id)
+	if err != nil {
+		return nil, fmt.Errorf("cid.Parse error: %w", err)
+	}
+
+	docKey, err := s.docSvc.GetDocAccessKey(ctx, userID, systemID, &CID)
+	if err != nil {
+		return nil, fmt.Errorf("GetDocAccessKey error: %w", err)
+	}
+
+	dataIndexIDEncr := docMeta.GetAttr(model.AttributeDataIndexID)
+	if dataIndexIDEncr == nil {
+		return nil, errors.ErrFieldIsEmpty("dataIndexID")
+	}
+
+	dataIndexID, err := docKey.Decrypt(dataIndexIDEncr)
+	if err != nil {
+		return nil, fmt.Errorf("dataIndexID decryption error: %w", err)
+	}
+
+	return dataIndexID, nil
+}
+
+func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, dataIndexUUID *uuid.UUID, cmp *model.Composition, procRequest *proc.Request) error {
+	node, err := treeindex.ProcessComposition(cmp)
+	if err != nil {
+		return fmt.Errorf(" treeindex.ProcessComposition error: %w", err)
+	}
+
+	data, err := msgpack.Marshal(node)
+	if err != nil {
+		return fmt.Errorf("msgpack.Marshal(ehrNode) error: %w", err)
+	}
+
+	txHash, err := s.indexer.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, data)
+	if err != nil {
+		return fmt.Errorf("Index.DataUpdate error: %w", err)
+	}
+
+	procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash)
+
+	return nil
 }

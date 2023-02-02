@@ -120,7 +120,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 				return
 			}
 
-			if err := idx.AddEHR(ehr); (err != nil) != tt.wantErr {
+			if err := idx.AddEHR(&ehr); (err != nil) != tt.wantErr {
 				t.Errorf("EHRIndex.AddEHR() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
@@ -158,7 +158,7 @@ func TestEHRIndex_MessagePack(t *testing.T) {
 				return
 			}
 
-			if err := idx.AddEHR(ehr); (err != nil) != tt.wantErr {
+			if err := idx.AddEHR(&ehr); (err != nil) != tt.wantErr {
 				t.Errorf("EHRIndex.AddEHR() error = %v, wantErr %v", err, tt.wantErr)
 			}
 

@@ -55,8 +55,7 @@ type API struct {
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docService := service.NewDefaultDocumentService(cfg, infra)
 	docGroupSvc := docGroupService.NewService(docService)
-	groupAccessService := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
-
+	gaSvc := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	templateService := template.NewService(docService)
 	queryService := query.NewService(docService, query.NewQueryExecuterService(infra.AqlDB))
 	userSvc := userService.NewService(infra, docService.Proc)
@@ -70,11 +69,12 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		docService.Infra.Keystore,
 		docService.Infra.Compressor,
 		docService,
-		groupAccessService)
+		gaSvc,
+	)
 
 	return &API{
-		Ehr:         NewEhrHandler(docService, userSvc, docGroupSvc, cfg.BaseURL),
-		EhrStatus:   NewEhrStatusHandler(docService, userSvc, docGroupSvc, cfg.BaseURL),
+		Ehr:         NewEhrHandler(docService, userSvc, docGroupSvc, gaSvc, cfg.BaseURL),
+		EhrStatus:   NewEhrStatusHandler(docService, userSvc, docGroupSvc, gaSvc, cfg.BaseURL),
 		Composition: NewCompositionHandler(docService, compositionService, cfg.BaseURL),
 		Query:       NewQueryHandler(queryService, cfg.BaseURL),
 		Template:    NewTemplateHandler(templateService, cfg.BaseURL),

@@ -15,7 +15,6 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
@@ -67,6 +66,7 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 
 	userID := ctx.GetString("userID")
+	systemID := ctx.GetString("ehrSystemID")
 	ehrID := ctx.Param("ehrid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
@@ -78,11 +78,13 @@ func (h *DirectoryHandler) Create(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println("GetEhrUUIDByUserID error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -171,6 +173,7 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 
 	userID := ctx.GetString("userID")
 	ehrID := ctx.Param("ehrid")
+	systemID := ctx.GetString("ehrSystemID")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -181,11 +184,13 @@ func (h *DirectoryHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println("GetEhrUUIDByUserID error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -283,6 +288,7 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 
 	userID := ctx.GetString("userID")
 	ehrID := ctx.Param("ehrid")
+	systemID := ctx.GetString("ehrSystemID")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -293,11 +299,13 @@ func (h *DirectoryHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	} else if err != nil {
+		log.Println("GetEhrUUIDByUserID error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -381,6 +389,8 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 
 	userID := ctx.GetString("userID")
 	ehrID := ctx.Param("ehrid")
+	systemID := ctx.GetString("ehrSystemID")
+	versionAtTime := ctx.Query("version_at_time")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -391,15 +401,15 @@ func (h *DirectoryHandler) GetByTime(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
+	} else if err != nil {
+		log.Println("GetEhrUUIDByUserID error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
-
-	versionAtTime := ctx.Query("version_at_time")
 
 	statusTime, err := time.Parse(common.OpenEhrTimeFormat, versionAtTime)
 	if err != nil {
@@ -459,6 +469,8 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 
 	userID := ctx.GetString("userID")
 	ehrID := ctx.Param("ehrid")
+	systemID := ctx.GetString("ehrSystemID")
+	versionUID := ctx.Param("version_uid")
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {
@@ -469,15 +481,15 @@ func (h *DirectoryHandler) GetByVersion(ctx *gin.Context) {
 		return
 	}
 
-	systemID := ctx.GetString("ehrSystemID")
-	searcher := helper.NewSearcher(ctx, userID, systemID, ehrUUID.String()).UseService(h.indexer)
-
-	if !searcher.IsEhrBelongsToUser() {
+	ehrUUIDRegistered, err := h.indexer.GetEhrUUIDByUserID(ctx, userID, systemID)
+	if (err != nil && errors.Is(err, errors.ErrNotFound)) || ehrUUID != *ehrUUIDRegistered {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
+	} else if err != nil {
+		log.Println("GetEhrUUIDByUserID error: ", err)
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
-
-	versionUID := ctx.Param("version_uid")
 
 	directoryVersion, err := h.service.GetByID(ctx, userID, versionUID)
 	if err != nil {

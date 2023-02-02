@@ -20,24 +20,27 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/dataStore"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
 )
 
 type Index struct {
-	helper.Finder
 	sync.RWMutex
 	client        *ethclient.Client
-	ehrIndex      *ehrIndexer.EhrIndexer
-	accessStore   *accessStore.AccessStore
-	users         *users.Users
 	transactOpts  *bind.TransactOpts
-	ehrIndexAbi   *abi.ABI
-	usersAbi      *abi.ABI
 	signerKey     *ecdsa.PrivateKey
 	signerAddress common.Address
+
+	ehrIndex    *ehrIndexer.EhrIndexer
+	accessStore *accessStore.AccessStore
+	users       *users.Users
+	dataStore   *dataStore.DataStore
+
+	ehrIndexAbi  *abi.ABI
+	usersAbi     *abi.ABI
+	dataStoreAbi *abi.ABI
 }
 
 const (
@@ -73,7 +76,7 @@ var (
 	})
 )
 
-func New(ehrIndexAddr, accessStoreAddr, usersAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
+func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
 	ctx := context.Background()
 
 	key, err := os.ReadFile(keyPath)
@@ -108,8 +111,14 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, keyPath string, client *ethcl
 		log.Fatal(err)
 	}
 
+	_dataStore, err := dataStore.NewDataStore(common.HexToAddress(dataStoreAddr), client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ehrIndexAbi, _ := ehrIndexer.EhrIndexerMetaData.GetAbi()
 	usersAbi, _ := users.UsersMetaData.GetAbi()
+	dataStoreAbi, _ := dataStore.DataStoreMetaData.GetAbi()
 
 	transactOpts, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
@@ -122,14 +131,18 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, keyPath string, client *ethcl
 
 	return &Index{
 		client:        client,
-		ehrIndex:      ehrIndex,
-		accessStore:   accessStore,
-		users:         _users,
 		transactOpts:  transactOpts,
-		ehrIndexAbi:   ehrIndexAbi,
-		usersAbi:      usersAbi,
 		signerKey:     privateKey,
 		signerAddress: signerAddress,
+
+		ehrIndex:    ehrIndex,
+		accessStore: accessStore,
+		users:       _users,
+		dataStore:   _dataStore,
+
+		ehrIndexAbi:  ehrIndexAbi,
+		usersAbi:     usersAbi,
+		dataStoreAbi: dataStoreAbi,
 	}
 }
 
@@ -148,7 +161,7 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.usersNonce(ctx, &userAddress)
+		nonce, err = i.Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}

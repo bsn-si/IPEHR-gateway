@@ -39,6 +39,7 @@ type Config struct {
 		AddressEhrIndex    string
 		AddressAccessStore string
 		AddressUsers       string
+		AddressDataStore   string
 		Endpoint           string
 		PrivKeyPath        string
 		GasTipCap          int64 // maxPriorityFeePerGas used for hardhat testing
