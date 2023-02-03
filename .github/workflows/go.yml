@@ -6,6 +6,11 @@ on:
 #  pull_request:
 #    branches: [ "develop" ]
 
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   unit_tests:
     name: Unit Tests
@@ -64,6 +69,8 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    # - name: Start containers
+    #   run: docker-compose -f "docker-compose.yml" up -d --build
     - uses: isbang/compose-action@v1.4.1
       with:
         compose-file: "./docker-compose.yml"
@@ -87,3 +94,7 @@ jobs:
       run: |
         cd ./src
         go test -v ./tests/... -ci_run=true
+
+    # - name: Stop containers
+    #   if: always()
+    #   run: docker-compose -f "docker-compose.yml" down
