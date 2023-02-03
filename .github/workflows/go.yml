@@ -24,48 +24,53 @@ jobs:
         cd ./src
         go test -v ./pkg/...
 
-  integraion_tests:
+  integration_tests:
     name: Integration Tests
     runs-on: ubuntu-latest
     # Service containers to run with `runner-job`
     
     steps:
-    - name: Install Node
-      uses: actions/setup-node@v3.5.1
-      with:
-        node-version: '16'
+    # - name: Install Node
+    #   uses: actions/setup-node@v3.5.1
+    #   with:
+    #     node-version: '16'
 
-    - name: Install external repo
-      uses: actions/checkout@v3
-      with:
-        repository: bsn-si/IPEHR-blockchain-indexes.git
-        path: './IPEHR-blockchain-indexes'
-        ref: 'develop'
+    # - name: Install external repo
+    #   uses: actions/checkout@v3
+    #   with:
+    #     repository: bsn-si/IPEHR-blockchain-indexes.git
+    #     path: './IPEHR-blockchain-indexes'
+    #     ref: 'develop'
 
-    - name: Install deps and run
-      run: |
-        cd ./IPEHR-blockchain-indexes
-        npm install
-        npx hardhat node &
-        npx hardhat run scripts/deploy.ts --network localhost
+    # - name: Install deps and run
+    #   run: |
+    #     cd ./IPEHR-blockchain-indexes
+    #     npm install
+    #     npx hardhat node &
+    #     npx hardhat run scripts/deploy.ts --network localhost
           
     - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v3
+    - uses: isbang/compose-action@v1.4.1
       with:
-        go-version: 1.18
+        compose-file: "./docker-compose.yml"
+        services: |
+          ipehr-index
+    # - name: Set up Go
+    #   uses: actions/setup-go@v3
+    #   with:
+    #     go-version: 1.18
 
-    - name: Set the config path
-      run: echo "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example" >> $GITHUB_ENV
+    # - name: Set the config path
+    #   run: echo "IPEHR_CONFIG_PATH=$GITHUB_WORKSPACE/config.json.example" >> $GITHUB_ENV
 
-    - name: Prepare
-      run: |
-        echo "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" > .blockchain.key
-        cd ./src
-        go run ./utils/defaultUserRegister/
+    # - name: Prepare
+    #   run: |
+    #     echo "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" > .blockchain.key
+    #     cd ./src
+    #     go run ./utils/defaultUserRegister/
 
     - name: Integration Tests
       run: |
         cd ./src
-        go test -v ./tests/...
+        go test -v ./tests/... -ci_run=true
