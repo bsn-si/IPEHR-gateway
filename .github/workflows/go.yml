@@ -32,6 +32,9 @@ jobs:
   integration_tests:
     name: Integration Tests
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
 
     steps:
     - uses: actions/checkout@v3
