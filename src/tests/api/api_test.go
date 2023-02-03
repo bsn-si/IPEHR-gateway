@@ -35,7 +35,7 @@ type TestData struct {
 
 var (
 	ciRun        = flag.Bool("ci_run", false, "set true to use external server address")
-	serverAddres = flag.String("server_addres", "http://localhost:8080", "exteranl test server address")
+	serverAddres = flag.String("server_address", "http://localhost:8080", "exteranl test server address")
 )
 
 type testWrap struct {
@@ -47,6 +47,7 @@ type testWrap struct {
 
 func TestMain(m *testing.M) {
 	close := func() {}
+
 	if *ciRun {
 		testServer, storager, err := prepareTest()
 		if err != nil {
