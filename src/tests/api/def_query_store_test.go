@@ -27,7 +27,7 @@ func (testWrap *testWrap) definitionStoreQuery(testData *TestData) func(t *testi
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -41,12 +41,12 @@ func (testWrap *testWrap) definitionStoreQuery(testData *TestData) func(t *testi
 		name := fakeData.GetRandomStringWithLength(10)
 		version := ""
 
-		storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient)
+		storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, name, version, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,7 +65,7 @@ func (testWrap *testWrap) definitionStoreQueryVersion(testData *TestData) func(t
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -79,12 +79,12 @@ func (testWrap *testWrap) definitionStoreQueryVersion(testData *TestData) func(t
 		name := fakeData.GetRandomStringWithLength(10)
 		version := version123
 
-		storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient)
+		storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, name, version, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -103,7 +103,7 @@ func (testWrap *testWrap) definitionStoredQueryGetByID(testData *TestData) func(
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -118,12 +118,12 @@ func (testWrap *testWrap) definitionStoredQueryGetByID(testData *TestData) func(
 		version := version123
 
 		if len(testData.storedQueries) == 0 {
-			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient)
+			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, name, version, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -144,7 +144,7 @@ func (testWrap *testWrap) definitionStoredQueryGetByID(testData *TestData) func(
 			t.Fatalf("Stored Query version '%s' not found in testData", version)
 		}
 
-		url := testWrap.server.URL + "/v1/definition/query/" + query1.Name + "/" + version
+		url := testWrap.serverURL + "/v1/definition/query/" + query1.Name + "/" + version
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -197,7 +197,7 @@ func (testWrap *testWrap) definitionListStoredQueries(testData *TestData) func(t
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -212,12 +212,12 @@ func (testWrap *testWrap) definitionListStoredQueries(testData *TestData) func(t
 			name := fakeData.GetRandomStringWithLength(10)
 			version := "1.0.1"
 
-			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient)
+			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, name, version, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -227,7 +227,7 @@ func (testWrap *testWrap) definitionListStoredQueries(testData *TestData) func(t
 
 		query1 := testData.storedQueries[0]
 
-		url := testWrap.server.URL + "/v1/definition/query/" + query1.Name
+		url := testWrap.serverURL + "/v1/definition/query/" + query1.Name
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -286,7 +286,7 @@ func (testWrap *testWrap) definitionStoreQueryVersionWithSameID(testData *TestDa
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -310,12 +310,12 @@ func (testWrap *testWrap) definitionStoreQueryVersionWithSameID(testData *TestDa
 			name := fakeData.GetRandomStringWithLength(10)
 			version := version123
 
-			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient)
+			storedQuery, reqID, err := storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, name, version, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -323,7 +323,7 @@ func (testWrap *testWrap) definitionStoreQueryVersionWithSameID(testData *TestDa
 			query = storedQuery
 		}
 
-		_, _, err = storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, query.Name, query.Version, testWrap.httpClient)
+		_, _, err = storeQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, query.Name, query.Version, testWrap.httpClient)
 		if err == nil || !errors.Is(err, errors.ErrAlreadyExist) {
 			t.Fatalf("Expected error '%v', received: %v", errors.ErrAlreadyExist, err)
 		}
@@ -337,12 +337,12 @@ func (testWrap *testWrap) checkUser(testData *TestData) error {
 			password: fakeData.GetRandomStringWithLength(10),
 		}
 
-		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			return fmt.Errorf("Can not register user, err: %w", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			return fmt.Errorf("requestWait error, err: %w", err)
 		}
@@ -355,12 +355,12 @@ func (testWrap *testWrap) checkUser(testData *TestData) error {
 
 func (testWrap *testWrap) checkEhr(testData *TestData, user *User) error {
 	if user.ehrID == "" {
-		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			return fmt.Errorf("createEhr error: %w", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			return fmt.Errorf("requestWait error: %w", err)
 		}

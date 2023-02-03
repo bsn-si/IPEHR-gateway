@@ -50,7 +50,7 @@ func (testWrap *testWrap) accessGroupCreate(testData *TestData) func(t *testing.
 
 		user := testData.users[0]
 
-		ga, err := createGroupAccess(user.id, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		ga, err := createGroupAccess(user.id, user.accessToken, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Expected group access, received error: %v", err)
 		}
@@ -72,7 +72,7 @@ func (testWrap *testWrap) wrongAccessGroupGetting(testData *TestData) func(t *te
 			t.Fatal(err)
 		}
 
-		url := testWrap.server.URL + "/v1/access/group/" + groupAccessIDWrong.String()
+		url := testWrap.serverURL + "/v1/access/group/" + groupAccessIDWrong.String()
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -113,7 +113,7 @@ func (testWrap *testWrap) accessGroupGetting(testData *TestData) func(t *testing
 
 		ga := testData.groupsAccess[0]
 
-		url := testWrap.server.URL + "/v1/access/group/" + ga.GroupUUID.String()
+		url := testWrap.serverURL + "/v1/access/group/" + ga.GroupUUID.String()
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {

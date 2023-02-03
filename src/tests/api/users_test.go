@@ -188,7 +188,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				docBytes, _ = json.Marshal(jwt)
 			}
 
-			request, err := http.NewRequest(httpMethod, testWrap.server.URL+"/v1/user/"+data.action, bytes.NewReader(docBytes))
+			request, err := http.NewRequest(httpMethod, testWrap.serverURL+"/v1/user/"+data.action, bytes.NewReader(docBytes))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -268,25 +268,25 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 			PictureURL: "https://media.filmz.ru/photos/full/filmz.ru_f_48951.jpg",
 		}
 
-		reqID, err := registerDoctor(doctor, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := registerDoctor(doctor, testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Can not register user, err: %v", err)
 		}
 
-		err = requestWait(doctor.id, "", reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(doctor.id, "", reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("registerPatient requestWait error: ", err)
 		}
 
 		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := doctor.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
 		// getting doctor code
-		url := testWrap.server.URL + "/v1/user/" + doctor.id
+		url := testWrap.serverURL + "/v1/user/" + doctor.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -334,13 +334,13 @@ func (testWrap *testWrap) userInfoDoctor(testData *TestData) func(t *testing.T) 
 		doctor := testData.doctors[0]
 
 		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := doctor.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		url := testWrap.server.URL + "/v1/user/" + doctor.id
+		url := testWrap.serverURL + "/v1/user/" + doctor.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -388,13 +388,13 @@ func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T)
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		url := testWrap.server.URL + "/v1/user/" + user.id
+		url := testWrap.serverURL + "/v1/user/" + user.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -441,13 +441,13 @@ func (testWrap *testWrap) userInfoByCode(testData *TestData) func(t *testing.T) 
 		doctor := testData.doctors[0]
 
 		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := doctor.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		url := testWrap.server.URL + "/v1/user/code/" + doctor.Code
+		url := testWrap.serverURL + "/v1/user/code/" + doctor.Code
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {

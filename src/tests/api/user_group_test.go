@@ -23,7 +23,7 @@ func (testWrap *testWrap) userGroupCreate(testData *TestData) func(t *testing.T)
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -32,7 +32,7 @@ func (testWrap *testWrap) userGroupCreate(testData *TestData) func(t *testing.T)
 		name := fakeData.GetRandomStringWithLength(10)
 		description := fakeData.GetRandomStringWithLength(10)
 
-		userGroup, _, err := userGroupCreate(user, testData.ehrSystemID, testWrap.server.URL, name, description, testWrap.httpClient)
+		userGroup, _, err := userGroupCreate(user, testData.ehrSystemID, testWrap.serverURL, name, description, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -51,7 +51,7 @@ func (testWrap *testWrap) userGroupAddUser(testData *TestData) func(t *testing.T
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,19 +59,19 @@ func (testWrap *testWrap) userGroupAddUser(testData *TestData) func(t *testing.T
 
 		addingUser := testData.users[1]
 
-		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
+		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
 
 		userGroup := testData.userGroups[0]
 
-		reqID, err := userGroupAddUser(user, addingUser, userGroup, testData, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := userGroupAddUser(user, addingUser, userGroup, testData, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("userGroupAddUser error: ", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("requestWait error: %w reqID: %w", err, reqID)
 		}
@@ -90,13 +90,13 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
+		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
@@ -106,12 +106,12 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		if len(userGroup.Members) == 0 {
 			addingUser := testData.users[1]
 
-			reqID, err := userGroupAddUser(user, addingUser, userGroup, testData, testWrap.server.URL, testWrap.httpClient)
+			reqID, err := userGroupAddUser(user, addingUser, userGroup, testData, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("userGroupAddUser error: ", err)
 			}
 
-			err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+			err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("requestWait error: %w reqID: %w", err, reqID)
 			}
@@ -119,7 +119,7 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 
 		removingUserID := userGroup.Members[0]
 
-		url := testWrap.server.URL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_remove/" + removingUserID
+		url := testWrap.serverURL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_remove/" + removingUserID
 
 		request, err := http.NewRequest(http.MethodPost, url, nil)
 		if err != nil {
@@ -146,7 +146,7 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		}
 
 		// Checking that the user has been deleted
-		url = testWrap.server.URL + "/v1/user/group/" + userGroup.GroupID.String()
+		url = testWrap.serverURL + "/v1/user/group/" + userGroup.GroupID.String()
 
 		request, err = http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -199,20 +199,20 @@ func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
+		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
 
 		userGroup1 := testData.userGroups[0]
 
-		url := testWrap.server.URL + "/v1/user/group/" + userGroup1.GroupID.String()
+		url := testWrap.serverURL + "/v1/user/group/" + userGroup1.GroupID.String()
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -261,18 +261,18 @@ func (testWrap *testWrap) userGroupGetList(testData *TestData) func(t *testing.T
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		err = checkUserGroup(user, testData, testWrap.server.URL, testWrap.httpClient)
+		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
 
-		url := testWrap.server.URL + "/v1/user/group"
+		url := testWrap.serverURL + "/v1/user/group"
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {

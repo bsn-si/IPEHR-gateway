@@ -41,13 +41,13 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 		}
 
 		if req.user.accessToken == "" {
-			err := req.user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := req.user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
 		}
 
-		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/"+req.id, nil)
+		request, err := http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/requests/"+req.id, nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -71,7 +71,7 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 
 		t.Log("Requests: GetAll")
 
-		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/requests/", nil)
+		request, err = http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/requests/", nil)
 		if err != nil {
 			t.Error(err)
 			return

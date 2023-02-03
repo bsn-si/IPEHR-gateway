@@ -17,7 +17,7 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 
 		user := testData.users[0]
 
-		url := testWrap.server.URL + "/v1/query/aql"
+		url := testWrap.serverURL + "/v1/query/aql"
 
 		request, err := http.NewRequest(http.MethodPost, url, queryExecPostCreateBodyRequest(user.ehrID))
 		if err != nil {
@@ -50,7 +50,7 @@ func (testWrap *testWrap) queryExecPostFail(testData *TestData) func(t *testing.
 
 		user := testData.users[0]
 
-		url := testWrap.server.URL + "/v1/query/aql"
+		url := testWrap.serverURL + "/v1/query/aql"
 
 		request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte("111qqqEEE")))
 		if err != nil {

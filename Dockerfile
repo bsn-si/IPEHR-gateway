@@ -12,15 +12,9 @@ COPY src/ .
 
 RUN go mod download
 
-RUN go build -o ./bin/defaultUserRegister ./utils/defaultUserRegister/.
 RUN go build -o ./bin/ipehr-gateway cmd/ipehrgw/main.go
 
 FROM alpine:3.16
-
-
-RUN apk update && \
-    apk add --no-cache gcc musl-dev curl && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv
 

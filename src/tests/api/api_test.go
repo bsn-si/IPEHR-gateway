@@ -1,7 +1,6 @@
 package api_test
 
 import (
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -31,20 +30,27 @@ type TestData struct {
 }
 
 type testWrap struct {
-	server     *httptest.Server
+	// server     *httptest.Server
+	serverURL  string
 	httpClient *http.Client
-	storage    *storage.Storager
+	// storage    *storage.Storager
+}
+
+func TestMain(m *testing.M) {
+	m.Run()
 }
 
 func Test_API(t *testing.T) {
-	testServer, storager := prepareTest(t)
+	// testServer, storager := prepareTest(t)
 
 	testWrap := &testWrap{
-		server:     testServer,
+		// server: testServer,
+		// serverURL:  testServer.URL,
+		serverURL:  "http://localhost:8080",
 		httpClient: &http.Client{},
-		storage:    &storager,
+		// storage:    &storager,
 	}
-	defer tearDown(*testWrap)
+	// defer tearDown(*testWrap)
 
 	testData := &TestData{
 		ehrSystemID: common.EhrSystemID,
@@ -57,12 +63,12 @@ func Test_API(t *testing.T) {
 	}
 
 	for _, user := range testData.users {
-		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Can not register user, err: %v", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("registerPatient requestWait error: ", err)
 		}
@@ -268,10 +274,10 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 }
 
 func tearDown(testWrap testWrap) {
-	testWrap.server.Close()
+	// testWrap.server.Close()
 
-	err := (*testWrap.storage).Clean()
-	if err != nil {
-		log.Panicln(err)
-	}
+	// err := (*testWrap.storage).Clean()
+	// if err != nil {
+	// 	log.Panicln(err)
+	// }
 }

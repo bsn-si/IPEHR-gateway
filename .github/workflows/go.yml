@@ -28,12 +28,7 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     # Service containers to run with `runner-job`
-    services:
-      stat:
-        image: ghrs.io/bsn-si/ipehr-stat:develop
-        ports: 
-          - 8081:8080
-
+    
     steps:
     - name: Install Node
       uses: actions/setup-node@v3.5.1

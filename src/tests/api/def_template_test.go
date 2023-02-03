@@ -24,7 +24,7 @@ func (testWrap *testWrap) definitionTemplate14Upload(testData *TestData) func(t 
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -37,14 +37,14 @@ func (testWrap *testWrap) definitionTemplate14Upload(testData *TestData) func(t 
 
 		templateID := fakeData.GetRandomStringWithLength(10)
 
-		tmpl, reqID, err := uploadTemplate14(user.id, testData.ehrSystemID, templateID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		tmpl, reqID, err := uploadTemplate14(user.id, testData.ehrSystemID, templateID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Unexpected template upload, received error: %v", err)
 		}
 
 		t.Logf("Waiting for request %s done", reqID)
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -68,7 +68,7 @@ func (testWrap *testWrap) definitionTemplate14GetByID(testData *TestData) func(t
 
 		tmpl1 := user.templates[0]
 
-		url := testWrap.server.URL + "/v1/definition/template/adl1.4/" + tmpl1.TemplateID
+		url := testWrap.serverURL + "/v1/definition/template/adl1.4/" + tmpl1.TemplateID
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -116,7 +116,7 @@ func (testWrap *testWrap) definitionTemplate14List(testData *TestData) func(t *t
 
 		tmpl1 := user.templates[0]
 
-		url := testWrap.server.URL + "/v1/definition/template/adl1.4"
+		url := testWrap.serverURL + "/v1/definition/template/adl1.4"
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
