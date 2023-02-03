@@ -21,15 +21,41 @@ type DirectoryItem struct {
 	Namespace string          `json:"namespace"`
 }
 
-const _directorySeparator = "/"
+const (
+	directorySeparator      = "/"
+	directoryRootFolderName = "root"
+)
+
+func (d *Directory) Validate() error {
+	var err error
+
+	var errs []error
+
+	if d.UID == nil || d.UID.Value == "" {
+		errs = append(errs, errors.ErrFieldIsEmpty("uid"))
+	}
+
+	// TODO add ITEMS validation
+
+	for i, e := range errs {
+		if i == 0 {
+			err = e
+			continue
+		}
+
+		err = errors.Wrap(err, e.Error())
+	}
+
+	return err
+}
 
 func (d *Directory) GetByPath(p string) (*Directory, error) {
 	p = d.sanitize(p)
 	if p == "" {
-		return nil, errors.ErrIsEmpty
+		p = directoryRootFolderName
 	}
 
-	paths := strings.SplitN(p, _directorySeparator, 2)
+	paths := strings.SplitN(p, directorySeparator, 2)
 
 	if d.Name.Value != paths[0] {
 		return nil, errors.ErrNotFound
@@ -49,5 +75,5 @@ func (d *Directory) GetByPath(p string) (*Directory, error) {
 }
 
 func (d *Directory) sanitize(p string) string {
-	return strings.Trim(p, _directorySeparator)
+	return strings.Trim(p, directorySeparator)
 }

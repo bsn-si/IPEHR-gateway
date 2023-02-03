@@ -6,9 +6,9 @@ package mocks
 
 import (
 	context "context"
-	helper "github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 	reflect "reflect"
 
+	helper "github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )

@@ -78,6 +78,7 @@ const (
 	TxDocGroupCreate
 	TxDocGroupAddDoc
 	TxIndexDataUpdate
+	TxCreateDirectory
 )
 
 var (
@@ -106,6 +107,7 @@ var (
 		TxSaveEhrStatus:       "SaveEhrStatus",
 		TxSaveComposition:     "SaveComposition",
 		TxSaveTemplate:        "SaveTemplate",
+		TxCreateDirectory:     "CreateDirectory",
 		TxUserRegister:        "UserRegister",
 		TxUserNew:             "UserNew",
 		TxUserGroupCreate:     "UserGroupCreate",
@@ -129,6 +131,10 @@ var (
 		RequestCompositionUpdate:  "CompositionUpdate",
 		RequestCompositionGetByID: "CompositionGetByID",
 		RequestCompositionDelete:  "CompositionDelete",
+		RequestTemplateCreate:     "TemplateStore",
+		RequestDirectoryCreate:    "DirectoryCreate",
+		RequestDirectoryUpdate:    "DirectoryUpdate",
+		RequestDirectoryDelete:    "DirectoryDelete",
 	}
 )
 

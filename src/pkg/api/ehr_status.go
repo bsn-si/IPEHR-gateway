@@ -40,13 +40,13 @@ func NewEhrStatusHandler(docSvc *service.DefaultDocumentService, userSvc *userSe
 // @Tags         EHR_STATUS
 // @Accept       json
 // @Produce      json
-// @Param        ehr_id         path      string                 true  "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        Authorization  header    string                 true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string                 true  "UserId UUID"
+// @Param        ehr_id         path      string                 true   "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        Authorization  header    string                 true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string                 true   "UserId UUID"
 // @Param        EhrSystemId    header    string                 false  "The identifier of the system, typically a reverse domain identifier"
-// @Param        If-Match       header    string                 true  "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`)  must  be  specified."
-// @Param        Prefer         header    string                 true  "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-// @Param        Request        body      model.EhrStatusUpdate  true  "EHR_STATUS"
+// @Param        If-Match       header    string                 true   "The existing latest `version_uid` of EHR_STATUS resource (i.e. the `preceding_version_uid`)  must  be  specified."
+// @Param        Prefer         header    string                 true   "Updated resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        Request        body      model.EhrStatusUpdate  true   "EHR_STATUS"
 // @Success      200            {object}  model.EhrStatusUpdate
 // @Header       200            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/ehr_status/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 // @Header       200            {string}  ETag       "uid of created document. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
@@ -159,10 +159,10 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 // @Tags         EHR_STATUS
 // @Accept       json
 // @Produce      json
-// @Param        ehr_id         path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        version_at_time  query     string  true  "A given time in the extended ISO 8601 format. Example: 2015-01-20T19:30:22.765+01:00"
-// @Param        Authorization    header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId     header    string  true  "UserId UUID"
+// @Param        ehr_id           path      string  true   "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        version_at_time  query     string  true   "A given time in the extended ISO 8601 format. Example: 2015-01-20T19:30:22.765+01:00"
+// @Param        Authorization    header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId       header    string  true   "UserId UUID"
 // @Param        EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200            {object}  model.EhrStatusUpdate
 // @Success      202              "Is returned when the request is still being processed"
@@ -222,10 +222,10 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 // @Tags         EHR_STATUS
 // @Accept       json
 // @Produce      json
-// @Param        ehr_id           path      string  true  "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param        version_uid    path      string  true  "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
-// @Param        Authorization  header    string  true  "Bearer AccessToken"
-// @Param        AuthUserId       header    string  true  "UserId UUID"
+// @Param        ehr_id         path      string  true   "EHR identifier taken from EHR.ehr_id.value. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param        version_uid    path      string  true   "VERSION identifier taken from VERSION.uid.value. Example: 8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
+// @Param        Authorization  header    string  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string  true   "UserId UUID"
 // @Param        EhrSystemId      header    string  false  "The identifier of the system, typically a reverse domain identifier"
 // @Success      200              {object}  model.EhrStatusUpdate
 // @Success      202            "Is returned when the request is still being processed"

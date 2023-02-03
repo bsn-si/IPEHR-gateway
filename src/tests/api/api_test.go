@@ -180,6 +180,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("DIRECTORY create", testWrap.directoryCRUD(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("DEFINITION Store a query", testWrap.definitionStoreQuery(testData)) {
 		t.Fatal()
 	}

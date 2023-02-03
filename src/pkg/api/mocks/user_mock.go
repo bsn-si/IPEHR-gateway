@@ -6,13 +6,13 @@ package mocks
 
 import (
 	context "context"
+	reflect "reflect"
+
 	access "github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	chachaPoly "github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	processing "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	model "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 	service "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
-	reflect "reflect"
-
 	jwt "github.com/golang-jwt/jwt"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"

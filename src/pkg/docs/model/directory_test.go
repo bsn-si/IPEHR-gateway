@@ -471,8 +471,8 @@ func TestDirectory_GetByPath(t *testing.T) {
 		{
 			name:     "1. Error because path is empty",
 			path:     "",
-			wantName: "",
-			wantErr:  true,
+			wantName: "root",
+			wantErr:  false,
 		}, {
 			name:     "2. Error because path not found",
 			path:     "unknown folder name",

@@ -11,17 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/uuid"
-
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
+	"github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 )
 
 //
@@ -40,18 +38,18 @@ func TestDirectoryHandler_Create(t *testing.T) {
 	)
 
 	directoryVersionUID, _ := base.NewObjectVersionID(directoryID.String(), systemID)
+	nextDirectoryVersionUID, _ := base.NewObjectVersionID(directoryVersionUID.String(), systemID)
+	_, _ = nextDirectoryVersionUID.IncreaseUIDVersion()
 
 	tests := []struct {
-		name        string
-		directoryID string
-		payload     []byte
-		prepare     func(dSvc *mocks.MockDirectoryService, iSvc *mocks.MockIndexer, uS *mocks.MockUserService)
-		wantStatus  int
-		wantResp    *model.Directory
+		name       string
+		payload    []byte
+		prepare    func(dSvc *mocks.MockDirectoryService, iSvc *mocks.MockIndexer, uS *mocks.MockUserService)
+		wantStatus int
+		wantResp   *model.Directory
 	}{
 		{
 			"1. failed because EhrID is not belong to current user",
-			directoryVersionUID.String(),
 			[]byte(``),
 			func(_ *mocks.MockDirectoryService, i *mocks.MockIndexer, _ *mocks.MockUserService) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(nil, errors.ErrNotFound)
@@ -61,7 +59,6 @@ func TestDirectoryHandler_Create(t *testing.T) {
 		},
 		{
 			"2. failed because body is empty",
-			directoryVersionUID.String(),
 			[]byte(``),
 			func(_ *mocks.MockDirectoryService, i *mocks.MockIndexer, _ *mocks.MockUserService) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, errors.ErrNotFound)
@@ -70,25 +67,19 @@ func TestDirectoryHandler_Create(t *testing.T) {
 			nil,
 		},
 		{
-			"3. failed because DIRECTORY with current ID already exist",
-			directoryVersionUID.String(),
+			"4. Failed creation of DIRECTORY because doc already exist",
 			[]byte(`{
 					"_type": "FOLDER",
 						"name": {
 							"_type": "DV_TEXT",
 							"value": "root"
 					},
-					"uid": {
-						"_type": "OBJECT_VERSION_ID",
-						"value": "` + directoryVersionUID.String() + `"
-					
-					},
 					"archetype_node_id": "openEHR-EHR-FOLDER.generic.v1"
 				}
 			`),
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer, _ *mocks.MockUserService) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), directoryVersionUID.String()).Return(&model.Directory{Locatable: base.Locatable{
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(&model.Directory{Locatable: base.Locatable{
 					ObjectVersionID: *directoryVersionUID,
 					Type:            base.FolderItemType,
 					Name:            base.NewDvText("root"),
@@ -100,8 +91,80 @@ func TestDirectoryHandler_Create(t *testing.T) {
 			nil,
 		},
 		{
-			"4. Success DIRECTORY create",
-			directoryID.String(),
+			"5. Success DIRECTORY create with increased version ID because last doc was deleted",
+			[]byte(`{
+					"_type": "FOLDER",
+						"name": {
+							"_type": "DV_TEXT",
+							"value": "root"
+					},
+					"archetype_node_id": "openEHR-EHR-FOLDER.generic.v1"
+				}
+			`),
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer, _ *mocks.MockUserService) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
+
+				d := &model.Directory{Locatable: base.Locatable{
+					ObjectVersionID: *directoryVersionUID,
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("root"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				}}
+
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, errors.ErrAlreadyDeleted)
+
+				dS.EXPECT().IncreaseVersion(d, systemID).DoAndReturn(func(_ *model.Directory, _ string) (string, error) {
+					nextDirectoryVersionUID.UID.Value = nextDirectoryVersionUID.String()
+					return nextDirectoryVersionUID.String(), nil
+				})
+
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, nextDirectoryVersionUID).Return(nil, errors.ErrNotFound)
+
+				dS.EXPECT().GetActiveProcRequest(userUUID.String(), processing.RequestDirectoryCreate).Return("", nil)
+
+				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryCreate).Return(&MockRequest{}, nil)
+				dS.EXPECT().Create(gomock.Any(), gomock.Any(), userUUID.String(), systemID, nextDirectoryVersionUID.String(), gomock.Any()).Return(nil)
+			},
+			http.StatusCreated,
+			nil,
+		},
+		{
+			"6. Filed creation DIRECTORY because DB contain prev unfinished request",
+			[]byte(`{
+					"_type": "FOLDER",
+						"name": {
+							"_type": "DV_TEXT",
+							"value": "root"
+					},
+					"archetype_node_id": "openEHR-EHR-FOLDER.generic.v1"
+				}
+			`),
+			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer, _ *mocks.MockUserService) {
+				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
+
+				d := &model.Directory{Locatable: base.Locatable{
+					ObjectVersionID: *directoryVersionUID,
+					Type:            base.FolderItemType,
+					Name:            base.NewDvText("root"),
+					ArchetypeNodeID: "openEHR-EHR-FOLDER.generic.v1",
+				}}
+
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, errors.ErrAlreadyDeleted)
+
+				dS.EXPECT().IncreaseVersion(d, systemID).DoAndReturn(func(_ *model.Directory, _ string) (string, error) {
+					nextDirectoryVersionUID.UID.Value = nextDirectoryVersionUID.String()
+					return nextDirectoryVersionUID.String(), nil
+				})
+
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, nextDirectoryVersionUID).Return(nil, errors.ErrNotFound)
+
+				dS.EXPECT().GetActiveProcRequest(userUUID.String(), processing.RequestDirectoryCreate).Return("not empty", nil)
+			},
+			http.StatusConflict,
+			nil,
+		},
+		{
+			"7. Success DIRECTORY create",
 			[]byte(`{
 					"_type": "FOLDER",
 						"name": {
@@ -118,12 +181,15 @@ func TestDirectoryHandler_Create(t *testing.T) {
 			`),
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer, uS *mocks.MockUserService) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), directoryVersionUID.String()).Return(nil, nil)
 
-				uS.EXPECT().Info(gomock.Any(), userUUID.String(), systemID).Return(&userModel.UserInfo{}, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, nil)
+
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, directoryVersionUID).Return(nil, errors.ErrNotFound)
+
+				dS.EXPECT().GetActiveProcRequest(userUUID.String(), processing.RequestDirectoryCreate).Return("", nil)
 
 				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryCreate).Return(&MockRequest{}, nil)
-				dS.EXPECT().Create(gomock.Any(), gomock.Any(), systemID, &ehrUUID, &userModel.UserInfo{}, gomock.Any()).Return(nil)
+				dS.EXPECT().Create(gomock.Any(), gomock.Any(), userUUID.String(), systemID, directoryVersionUID.String(), gomock.Any()).Return(nil)
 			},
 			http.StatusCreated,
 			nil,
@@ -149,7 +215,7 @@ func TestDirectoryHandler_Create(t *testing.T) {
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
 
-			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/v1/ehr/%s/directory/", ehrUUID.String()), bytes.NewReader(tt.payload))
+			req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/v1/ehr/%s/directory/?&patient_id=%s", ehrUUID.String(), userUUID.String()), bytes.NewReader(tt.payload))
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userUUID.String())
 			req.Header.Set("EhrSystemId", systemID)
@@ -251,7 +317,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 			`),
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer, _ *mocks.MockUserService) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			nil,
@@ -282,7 +348,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 						ObjectVersionID: *directoryVersionUID,
 					},
 				}
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 			},
 			http.StatusPreconditionFailed,
 			nil,
@@ -313,10 +379,10 @@ func TestDirectoryHandler_Update(t *testing.T) {
 					},
 				}
 
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
-				uS.EXPECT().Info(gomock.Any(), userUUID.String(), systemID).Return(&userModel.UserInfo{}, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetActiveProcRequest(userUUID.String(), processing.RequestDirectoryUpdate).Return("", nil)
 				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryUpdate).Return(&MockRequest{}, nil)
-				dS.EXPECT().Update(gomock.Any(), gomock.Any(), systemID, &ehrUUID, &userModel.UserInfo{}, gomock.Any()).Return(nil)
+				dS.EXPECT().Update(gomock.Any(), gomock.Any(), systemID, userUUID.String(), gomock.Any()).Return(nil)
 			},
 			http.StatusOK,
 			nil,
@@ -343,7 +409,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
 
-			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/ehr/%s/directory/", ehrUUID.String()), bytes.NewReader(tt.payload))
+			req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/v1/ehr/%s/directory/?&patient_id=%s", ehrUUID.String(), userUUID.String()), bytes.NewReader(tt.payload))
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userUUID.String())
 			req.Header.Set("EhrSystemId", systemID)
@@ -427,7 +493,7 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 			directoryVersionUID.String(),
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			nil,
@@ -441,10 +507,17 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 
 				d := &model.Directory{
 					Locatable: base.Locatable{
-						ObjectVersionID: *nextDirectoryVersionUID,
+						ObjectVersionID: base.ObjectVersionID{
+							UID: &base.UIDBasedID{
+								ObjectID: base.ObjectID{
+									Type:  "OBJECT_VERSION_ID",
+									Value: nextDirectoryVersionUID.String(),
+								},
+							},
+						},
 					},
 				}
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 			},
 			http.StatusPreconditionFailed,
 			nil,
@@ -461,7 +534,8 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 					},
 				}
 
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetActiveProcRequest(userUUID.String(), processing.RequestDirectoryDelete).Return("", nil)
 				dS.EXPECT().NewProcRequest(gomock.Any(), userUUID.String(), ehrUUID.String(), processing.RequestDirectoryDelete).Return(&MockRequest{}, nil)
 				dS.EXPECT().Delete(gomock.Any(), gomock.Any(), systemID, &ehrUUID, directoryVersionUID.String(), userUUID.String()).Return(d.String(), nil)
 			},
@@ -490,7 +564,7 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
 
-			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/v1/ehr/%s/directory/", ehrUUID.String()), nil)
+			req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/v1/ehr/%s/directory/?&patient_id=%s", ehrUUID.String(), userUUID.String()), nil)
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userUUID.String())
 			req.Header.Set("EhrSystemId", systemID)
@@ -539,7 +613,7 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 	}
 }
 
-func TestDirectoryHandler_GetByTime(t *testing.T) {
+func TestDirectoryHandler_GetByTimeOrLast(t *testing.T) {
 	var (
 		userUUID    = uuid.New()
 		ehrUUID     = uuid.New()
@@ -587,7 +661,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			"",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			false,
@@ -599,7 +673,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			"",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrAlreadyDeleted)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(nil, errors.ErrAlreadyDeleted)
 			},
 			http.StatusNoContent,
 			false,
@@ -611,7 +685,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			"not_exist_path",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 			},
 			http.StatusNotFound,
 			false,
@@ -623,7 +697,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			"root",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 			},
 			http.StatusOK,
 			true,
@@ -635,7 +709,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			"root/1",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 			},
 			http.StatusOK,
 			true,
@@ -647,7 +721,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			"root/1/1-1/1-1-2",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByTime(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
+				dS.EXPECT().GetByTimeOrLast(gomock.Any(), systemID, &ehrUUID, userUUID.String(), gomock.Any()).Return(d, nil)
 			},
 			http.StatusOK,
 			true,
@@ -674,7 +748,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
 
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/ehr/%s/directory/?version_at_time=%s&path=%s", ehrUUID.String(), url.QueryEscape(tt.timeVersion), url.QueryEscape(tt.path)), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/ehr/%s/directory/?version_at_time=%s&path=%s&patient_id=%s", ehrUUID.String(), url.QueryEscape(tt.timeVersion), url.QueryEscape(tt.path), userUUID.String()), nil)
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userUUID.String())
 			req.Header.Set("EhrSystemId", systemID)
@@ -686,7 +760,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() status code mismatch {-want;+got}\n\t%s", diff)
 				return
 			}
 
@@ -708,7 +782,7 @@ func TestDirectoryHandler_GetByTime(t *testing.T) {
 			)
 
 			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() body response {-want;+got}\n%s", diff)
 			}
 		})
 	}
@@ -754,9 +828,8 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), "incorrect_time_format").Return(nil, errors.ErrNotFound)
 			},
-			http.StatusNotFound,
+			http.StatusBadRequest,
 			false,
 			"",
 		},
@@ -766,7 +839,8 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), nextDirectoryVersionUID.String()).Return(nil, errors.ErrNotFound)
+				//dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, nextDirectoryVersionUID).Return(nil, errors.ErrNotFound)
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			false,
@@ -778,7 +852,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), nextDirectoryVersionUID.String()).Return(nil, errors.ErrAlreadyDeleted)
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, gomock.Any()).Return(nil, errors.ErrAlreadyDeleted)
 			},
 			http.StatusNoContent,
 			false,
@@ -790,7 +864,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"not_exist_path",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), d.String()).Return(d, nil)
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, gomock.Any()).Return(d, nil)
 			},
 			http.StatusNotFound,
 			false,
@@ -802,7 +876,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"root",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), d.String()).Return(d, nil)
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, gomock.Any()).Return(d, nil)
 			},
 			http.StatusOK,
 			true,
@@ -814,7 +888,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"root/1",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), d.String()).Return(d, nil)
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, gomock.Any()).Return(d, nil)
 			},
 			http.StatusOK,
 			true,
@@ -826,7 +900,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			"root/1/1-1/1-1-2",
 			func(dS *mocks.MockDirectoryService, i *mocks.MockIndexer) {
 				i.EXPECT().GetEhrUUIDByUserID(gomock.Any(), userUUID.String(), systemID).Return(&ehrUUID, nil)
-				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), d.String()).Return(d, nil)
+				dS.EXPECT().GetByID(gomock.Any(), userUUID.String(), systemID, &ehrUUID, gomock.Any()).Return(d, nil)
 			},
 			http.StatusOK,
 			true,
@@ -853,7 +927,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
 
-			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/ehr/%s/directory/%s?path=%s", ehrUUID.String(), url.QueryEscape(tt.version), url.QueryEscape(tt.path)), nil)
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/ehr/%s/directory/%s?path=%s&patient_id=%s", ehrUUID.String(), url.QueryEscape(tt.version), url.QueryEscape(tt.path), userUUID.String()), nil)
 			req.Header.Set("Authorization", "Bearer emptyJWTkey")
 			req.Header.Set("AuthUserId", userUUID.String())
 			req.Header.Set("EhrSystemId", systemID)
@@ -865,7 +939,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			defer resp.Body.Close()
 
 			if diff := cmp.Diff(tt.wantStatus, resp.StatusCode); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() status code mismatch {-want;+got}\n\t%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() status code mismatch {-want;+got}\n\t%s", diff)
 				return
 			}
 
@@ -887,7 +961,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			)
 
 			if diff := cmp.Diff(tt.wantPathName, got.Name.Value, opts); diff != "" {
-				t.Errorf("DirectoryHandler.GetByTime() body response {-want;+got}\n%s", diff)
+				t.Errorf("DirectoryHandler.GetByTimeOrLast() body response {-want;+got}\n%s", diff)
 			}
 		})
 	}

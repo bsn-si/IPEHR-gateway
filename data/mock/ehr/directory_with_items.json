@@ -1,0 +1,22 @@
+{
+  "_type": "FOLDER",
+  "name": {
+    "_type": "DV_TEXT",
+    "value": "root"
+  },
+  "archetype_node_id": "openEHR-EHR-FOLDER.generic.v1",
+  "uid": {
+    "_type": "OBJECT_VERSION_ID",
+    "value": "__OBJECT_VERSION_ID__"
+  },
+  "items": [
+    {
+      "id": {
+        "_type": "HIER_OBJECT_ID",
+        "value": "__COMPOSITION__"
+      },
+      "namespace": "openEHRSys.example.com",
+      "type": "VERSIONED_COMPOSITION"
+    }
+  ]
+}
