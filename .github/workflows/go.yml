@@ -51,11 +51,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Docker Pull
-      run: docker pull ghcr.io/bsn-si/ipehr-blockchain-indexes:develop && docker pull ghcr.io/bsn-si/ipehr-stat:develop
-
-    - name: Start containers
-      run: docker-compose up -d --build
+    # - name: Start containers
+      # run: docker-compose up -d --build
 
     - name: Integration Tests
       run: |
