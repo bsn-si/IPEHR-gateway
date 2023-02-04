@@ -1,5 +1,9 @@
 version: '3.9'
 
+networks:
+  ipehr-network:
+    driver: bridge
+
 services: 
   ipehr-index:
     image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
@@ -7,7 +11,7 @@ services:
       - 8545:8545
     networks:
       - ipehr-network
-    command: npx hardhat node & npx hardhat run scripts/deploy.ts --network localhost & sleep infinity & wait
+    # command: npx hardhat node & npx hardhat run scripts/deploy.ts --network localhost & sleep infinity & wait
     healthcheck:
       test: 'curl --fail -X POST http://localhost:8545 -H "Content-Type: application/json" --data "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_chainId\",\"params\":[]}" || exit 1'
       interval: 10s
@@ -47,12 +51,4 @@ services:
       - 8080:8080
     networks:
       - ipehr-network
-         
-# configs:
-#   stats-config:
-#     file: ./ci/stats-config.json
-#   gateway-config:
-#     file: ./ci/gateway-config.json
-
-networks:
-  ipehr-network:
+  

@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  tests:
+    image: golang:1.19.0-alpine3.16
+    volumes:
+      - ./src:/src:ro
+    working_dir: /src/tests
+    networks:
+      - ipehr-network
+    depends_on:
+      - ipehr-gateway
+    command: go mod download && go test ./... -ci_run
