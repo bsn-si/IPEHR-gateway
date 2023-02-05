@@ -43,6 +43,9 @@ jobs:
     - name: Login to GitHub Package Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
+    - name: Docker version
+      run: docker version && docker help
+
     # - name: Log in to the Container registry
     #   uses: docker/login-action@v2
     #   with:
