@@ -53,16 +53,16 @@ jobs:
     #     username: ${{ github.actor }}
     #     password: ${{ secrets.GITHUB_TOKEN }}
 
-    - uses: KengoTODA/actions-setup-docker-compose@v1
-      with:
-        version: '2.14.2' # the full version of `docker-compose` command
+    # - uses: KengoTODA/actions-setup-docker-compose@v1
+      # with:
+        # version: '2.14.2' # the full version of `docker-compose` command
       # env:
         # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
     - name: Run Docker Compose
-      run: docker-compose -f docker-compose.yml -f docker-compose.test.yml up
+      run: docker compose -f docker-compose.yml -f docker-compose.test.yml up
 
     - name: Stop containers
       if: always()
-      run: docker-compose -f "docker-compose.yml" down
+      run: docker compose -f "docker-compose.yml" down
