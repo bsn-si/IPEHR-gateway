@@ -94,6 +94,8 @@ func (m *MultiCallTx) Commit() (string, error) {
 
 	switch m.kind {
 	case MulticallEhr:
+		log.Println("Hello")
+
 		tx, err = m.index.ehrIndex.Multicall(m.index.transactOpts, m.data)
 	case MulticallUsers:
 		log.Printf("indexer2 address: %p", m.index)
