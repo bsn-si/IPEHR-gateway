@@ -49,6 +49,7 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 
 	log.Printf("CI_RUN = %v, SERVER_ADDRESS: %s", *ciRun, *serverAddres)
+
 	close := func() {}
 
 	if !*ciRun {
