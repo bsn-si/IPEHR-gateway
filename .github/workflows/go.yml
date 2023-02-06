@@ -26,8 +26,6 @@ jobs:
 
   integration_tests:
     name: Integration Tests
-    needs: ["docker"]
-
     runs-on: ubuntu-latest
     permissions:
       packages: read
