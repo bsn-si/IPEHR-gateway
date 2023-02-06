@@ -55,6 +55,40 @@ func (testWrap *testWrap) definitionStoreQuery(testData *TestData) func(t *testi
 	}
 }
 
+func (testWrap *testWrap) definitionStoreInvalidQuery(testData *TestData) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := testWrap.checkUser(testData)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		user := testData.users[0]
+
+		if user.accessToken == "" {
+			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			if err != nil {
+				t.Fatal("User login error:", err)
+			}
+		}
+
+		err = testWrap.checkEhr(testData, user)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		name := fakeData.GetRandomStringWithLength(10)
+		version := ""
+
+		if err = storeInvalidQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient); err != nil {
+			if errors.Is(err, errors.ErrIsNotValid) {
+				return
+			}
+		}
+
+		t.Fatal(err)
+	}
+}
+
 func (testWrap *testWrap) definitionStoreQueryVersion(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		err := testWrap.checkUser(testData)
@@ -429,4 +463,52 @@ func storeQuery(userID, ehrSystemID, accessToken, baseURL, name, version string,
 	requestID := response.Header.Get("RequestId")
 
 	return storedQuery, requestID, nil
+}
+
+func storeInvalidQuery(userID, ehrSystemID, accessToken, baseURL, name, version string, client *http.Client) error {
+	storedQuery := &model.StoredQuery{
+		Name:    name,
+		Type:    "AQL",
+		Version: version,
+	}
+
+	storedQuery.Query = "SELECT invalid FROM"
+
+	var url string
+
+	switch version {
+	case "":
+		url = baseURL + "/v1/definition/query/" + storedQuery.Name + "?query_type=" + storedQuery.Type
+	default:
+		url = baseURL + "/v1/definition/query/" + storedQuery.Name + "/" + version + "?query_type=" + storedQuery.Type
+	}
+
+	data := bytes.NewReader([]byte(storedQuery.Query))
+
+	request, err := http.NewRequest(http.MethodPut, url, data)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-type", "text/plain")
+	request.Header.Set("AuthUserId", userID)
+	request.Header.Set("Authorization", "Bearer "+accessToken)
+	request.Header.Set("EhrSystemId", ehrSystemID)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode == http.StatusBadRequest {
+		data, err := io.ReadAll(response.Body)
+		if err != nil {
+			return err
+		}
+
+		return errors.Wrap(errors.ErrIsNotValid, response.Status+" data: "+string(data))
+	}
+
+	return nil
 }

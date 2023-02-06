@@ -27,6 +27,7 @@ import (
 const defaultVersion = "1.0.1"
 
 type QueryExecuter interface { //nolint
+	Validate(q string) error
 	ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
@@ -139,8 +140,10 @@ func (s *Service) GetByVersion(ctx context.Context, userID, systemID, name strin
 	return &storedQuery, nil
 }
 
-func (*Service) Validate(data []byte) bool {
-	return true
+func (s *Service) Validate(data []byte) bool {
+	err := s.qExec.Validate(string(data))
+
+	return err == nil
 }
 
 func (s *Service) Store(ctx context.Context, userID, systemID, reqID, qType, name, q string) (*model.StoredQuery, error) {
