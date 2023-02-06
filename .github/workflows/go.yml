@@ -49,7 +49,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run Docker Compose
-      run: docker compose -f docker-compose.yml up
+      run: docker compose up -d
 
     - name: Set up Go
       uses: actions/setup-go@v3
