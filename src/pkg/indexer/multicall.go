@@ -58,6 +58,9 @@ func (i *Index) MultiCallUsersNew(ctx context.Context, pk *[32]byte) (*MultiCall
 
 	address := crypto.PubkeyToAddress(userKey.PublicKey)
 
+	log.Printf("indexer2 address: %p", i)
+	log.Printf("indexer2.Users address: %p", i.users)
+
 	nonce, err := i.users.Nonces(&bind.CallOpts{Context: ctx}, address)
 	if err != nil {
 		return nil, fmt.Errorf("users.Nonces error: %w address: %s", err, address.String())
@@ -94,13 +97,8 @@ func (m *MultiCallTx) Commit() (string, error) {
 
 	switch m.kind {
 	case MulticallEhr:
-		log.Println("Hello")
-
 		tx, err = m.index.ehrIndex.Multicall(m.index.transactOpts, m.data)
 	case MulticallUsers:
-		log.Printf("indexer2 address: %p", m.index)
-		log.Printf("indexer2.Users address: %p", m.index.users)
-
 		tx, err = m.index.users.Multicall(m.index.transactOpts, m.data)
 	default:
 		return "", fmt.Errorf("%w: unknown kind %d", err, m.kind)
