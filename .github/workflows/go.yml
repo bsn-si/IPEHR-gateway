@@ -48,15 +48,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Docker version
-      run: docker version && docker help
-
-    - name: Docker pull Go
-      run: docker pull golang:1.19.0-alpine
-
-    - name: Docker pull
-      run: docker pull ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
-
     - name: Run Docker Compose
       run: docker compose -f docker-compose.yml up
 
