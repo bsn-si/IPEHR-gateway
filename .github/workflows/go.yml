@@ -67,10 +67,10 @@ jobs:
       - name: Save Containers Logs
         if: failure()
         run: |
-          docker logs ipehr-gateway-ipehr-index-1 > ./index.logs
-          docker logs ipehr-gateway-ipehr-index-deploy-1 > ./deploy.logs
-          docker logs ipehr-gateway-ipehr-gateway-1 > ./gateway.logs
-          docker logs ipehr-gateway-ipehr-stat-1 > ./stat.log
+          docker logs ipehr-gateway-ipehr-index-1 > ./index.logs &&
+          docker logs ipehr-gateway-ipehr-index-deploy-1 > ./deploy.logs &&
+          docker logs ipehr-gateway-ipehr-gateway-1 > ./gateway.logs &&
+          docker logs ipehr-gateway-ipehr-stat-1 > ./stat.log &&
 
       - name: Archive Index Logs
         if: failure()
