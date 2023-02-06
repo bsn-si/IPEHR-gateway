@@ -48,9 +48,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    # - name: Login to GitHub Package Registry
-      # run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
     - name: Docker version
       run: docker version && docker help
 
@@ -59,15 +56,24 @@ jobs:
 
     - name: Docker pull
       run: docker pull ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
-    # - uses: KengoTODA/actions-setup-docker-compose@v1
-      # with:
-        # version: '2.14.2' # the full version of `docker-compose` command
-      # env:
-        # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 
     - name: Run Docker Compose
-      run: docker compose -f docker-compose.yml -f docker-compose.test.yml up
+      run: docker compose -f docker-compose.yml up
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+
+    - name: Go mod download
+      run: |
+        cd ./src
+        go test -v ./pkg/...
+
+    - name: Run Integration Tests
+      run: |
+        cd ./src/tests/api
+        go test ./... -ci_run
 
     - name: Stop containers
       if: always()

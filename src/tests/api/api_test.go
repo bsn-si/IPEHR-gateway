@@ -46,9 +46,12 @@ type testWrap struct {
 }
 
 func TestMain(m *testing.M) {
+	flag.Parse()
+
+	log.Printf("CI_RUN = %v, SERVER_ADDRESS: %s", *ciRun, *serverAddres)
 	close := func() {}
 
-	if *ciRun {
+	if !*ciRun {
 		testServer, storager, err := prepareTest()
 		if err != nil {
 			log.Fatal(err)
