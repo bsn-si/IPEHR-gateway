@@ -19,7 +19,7 @@ services:
       retries: 5
       start_period: 5s
 
-  ipehr-index-deply:
+  ipehr-index-deploy:
     image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
     depends_on:
       ipehr-index:
@@ -33,7 +33,7 @@ services:
     depends_on:
       ipehr-index:
         condition: service_healthy
-      ipehr-index-deply:
+      ipehr-index-deploy:
         condition: service_completed_successfully
     ports:
       - 8081:8080
@@ -56,7 +56,7 @@ services:
     depends_on:
       ipehr-index:
         condition: service_healthy
-      ipehr-index-deply:
+      ipehr-index-deploy:
         condition: service_completed_successfully
       ipehr-stat:
         condition: service_started

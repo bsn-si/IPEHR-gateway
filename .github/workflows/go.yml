@@ -64,27 +64,42 @@ jobs:
           cd ./src/tests/api
           go test ./... -ci_run
       
-      - name: Save Gateway Logs
+      - name: Save Containers Logs
         if: failure()
-        run: docker logs ipehr-gateway-ipehr-gateway-1 > ./gateway.logs
+        run: |
+          docker logs ipehr-gateway-ipehr-index-1 > ./index.logs
+          docker logs ipehr-gateway-ipehr-index-deploy-1 > ./deploy.logs
+          docker logs ipehr-gateway-ipehr-gateway-1 > ./gateway.logs
+          docker logs ipehr-gateway-ipehr-stat-1 > ./stat.log
+
+      - name: Archive Index Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: index_logs.log
+          path: ./index.log
 
       - name: Archive Gateway Logs
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: gateway-service-logs
-          path: ./gateway.logs
+          name: deploy_logs.log
+          path: ./deploy.log
 
-      - name: Save Stat Logs
+
+      - name: Archive Gateway Logs
         if: failure()
-        run: docker logs ipehr-gateway-ipehr-stat-1 > ./stat.logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: gateway_logs.log
+          path: ./gateway.log
 
       - name: Archive Stat Logs
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: gateway-stat-logs
-          path: ./stat.logs
+          name: stat_logs.log
+          path: ./stat.log
 
       - name: Stop containers
         if: always()
