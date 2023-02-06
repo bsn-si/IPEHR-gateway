@@ -117,6 +117,8 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		log.Fatal(err)
 	}
 
+	log.Printf("Create user indexed, contract addres: %v, %v", usersAddr, common.HexToAddress(usersAddr))
+
 	_users, err := users.NewUsers(common.HexToAddress(usersAddr), client)
 	if err != nil {
 		log.Fatal(err)

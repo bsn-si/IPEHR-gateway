@@ -6,11 +6,14 @@ RUN apk update && \
 
 WORKDIR /srv
 
+COPY ./src/go.mod go.mod
+COPY ./src/go.sum go.sum
+
+RUN go mod download
 COPY data/ ./data
 COPY config.json.example ./config.json
 COPY src/ .
 
-RUN go mod download
 
 RUN go build -o ./bin/ipehr-gateway cmd/ipehrgw/main.go
 
@@ -24,4 +27,4 @@ COPY --from=build /srv/config.json /srv/config.json
 COPY --from=build /srv/data /srv/data
 COPY --from=build /srv/pkg/indexer /srv/inbexer
 
-ENTRYPOINT [ "/srv/ipehr-gateway", "-config=./config.json"]
+ENTRYPOINT [ "/srv/ipehr-gateway", "-config=/srv/config.json"]

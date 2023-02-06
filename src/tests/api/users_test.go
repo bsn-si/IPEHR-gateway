@@ -3,6 +3,7 @@ package api_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -506,17 +507,14 @@ func registerPatient(user *User, systemID, baseURL string, client *http.Client) 
 		return "", err
 	}
 
-	err = response.Body.Close()
-	if err != nil {
-		return "", err
-	}
+	defer response.Body.Close()
 
+	data, _ := io.ReadAll(response.Body)
 	if response.StatusCode != http.StatusCreated {
-		return "", err
+		return "", fmt.Errorf("register user resp error: %s", string(data))
 	}
 
 	requestID := response.Header.Get("RequestId")
-
 	return requestID, nil
 }
 
