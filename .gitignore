@@ -4,6 +4,6 @@ config.json
 /bin
 *.antlr
 *.DS_Store
-./data/storage*
+data/storage*
 data/local.db
 .blockchain.key

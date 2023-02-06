@@ -60,46 +60,25 @@ jobs:
         run: docker compose up -d
 
       - name: Run Integration Tests
-        run: |
-          cd ./src/tests/api
-          go test ./... -ci_run
+        working-directory: ./src/tests/api
+        run: go test ./... -ci_run
       
       - name: Save Containers Logs
         if: failure()
         run: |
-          docker logs ipehr-gateway-ipehr-index-1 > ./index.logs &&
-          docker logs ipehr-gateway-ipehr-index-deploy-1 > ./deploy.logs &&
-          docker logs ipehr-gateway-ipehr-gateway-1 > ./gateway.logs &&
-          docker logs ipehr-gateway-ipehr-stat-1 > ./stat.log &&
+          mkdir logs 
+          cd logs
+          docker logs ipehr-gateway-ipehr-gateway-1 &> ./gateway.log
+          docker logs ipehr-gateway-ipehr-index-1 &> ./index.log
+          docker logs ipehr-gateway-ipehr-index-deploy-1 &> ./deploy.log
+          docker logs ipehr-gateway-ipehr-stat-1 &> ./stat.log
 
-      - name: Archive Index Logs
+      - name: Archive Logs
         if: failure()
         uses: actions/upload-artifact@v3
         with:
-          name: index_logs.log
-          path: ./index.log
-
-      - name: Archive Gateway Logs
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: deploy_logs.log
-          path: ./deploy.log
-
-
-      - name: Archive Gateway Logs
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: gateway_logs.log
-          path: ./gateway.log
-
-      - name: Archive Stat Logs
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: stat_logs.log
-          path: ./stat.log
+          name: logs
+          path: ./logs
 
       - name: Stop containers
         if: always()
