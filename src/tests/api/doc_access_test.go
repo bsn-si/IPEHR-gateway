@@ -10,7 +10,7 @@ func (testWrap *testWrap) docSetAccessSuccess(testData *TestData) func(t *testin
 		user1 := testData.users[0]
 		user2 := testData.users[1]
 
-		url := testWrap.server.URL + "/v1/access/document"
+		url := testWrap.serverURL + "/v1/access/document"
 
 		req := model.DocAccessSetRequest{
 			UserID:      user2.id,

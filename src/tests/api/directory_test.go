@@ -32,7 +32,7 @@ type testWrapDirectory struct {
 }
 
 func (w *testWrapDirectory) getURL() string {
-	return w.server.URL + "/v1/ehr/" + w.ehrID + "/directory"
+	return w.serverURL + "/v1/ehr/" + w.ehrID + "/directory"
 }
 
 func (w *testWrapDirectory) prepare(testData *TestData, t *testing.T) {
@@ -54,7 +54,7 @@ func (w *testWrapDirectory) prepare(testData *TestData, t *testing.T) {
 	}
 
 	if testData.doctors[0].accessToken == "" {
-		err := testData.doctors[0].login(testData.ehrSystemID, w.server.URL, w.httpClient)
+		err := testData.doctors[0].login(testData.ehrSystemID, w.serverURL, w.httpClient)
 		if err != nil {
 			t.Fatal("User login error:", err)
 		}
@@ -181,7 +181,7 @@ func createDirectory(wrap *testWrapDirectory, body *bytes.Reader) (*model.Direct
 
 	requestID := response.Header.Get("RequestId")
 
-	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
+	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.serverURL, wrap.httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func updateDirectory(wrap *testWrapDirectory, body *bytes.Reader, versionID stri
 
 	requestID := response.Header.Get("RequestId")
 
-	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
+	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.serverURL, wrap.httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +339,7 @@ func deleteDirectory(t *testing.T, wrap *testWrapDirectory, versionID string) er
 
 	requestID := response.Header.Get("RequestId")
 
-	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.server.URL, wrap.httpClient)
+	err = requestWait(wrap.doctor.id, wrap.doctor.accessToken, requestID, wrap.serverURL, wrap.httpClient)
 	if err != nil {
 		return err
 	}

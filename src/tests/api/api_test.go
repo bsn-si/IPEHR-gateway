@@ -1,9 +1,11 @@
 package api_test
 
 import (
+	"flag"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage"
 	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
@@ -30,21 +33,44 @@ type TestData struct {
 	doctors       []*Doctor
 }
 
+var (
+	ciRun        = flag.Bool("ci_run", false, "set true to use external server address")
+	serverAddres = flag.String("server_address", "http://localhost:8080", "exteranl test server address")
+)
+
 type testWrap struct {
-	server     *httptest.Server
+	// server     *httptest.Server
+	serverURL  string
 	httpClient *http.Client
-	storage    *storage.Storager
+	// storage    *storage.Storager
+}
+
+func TestMain(m *testing.M) {
+	close := func() {}
+
+	if *ciRun {
+		testServer, storager, err := prepareTest()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		*serverAddres = testServer.URL
+
+		close = func() {
+			tearDown(testServer, storager)
+		}
+	}
+
+	defer close()
+
+	os.Exit(m.Run())
 }
 
 func Test_API(t *testing.T) {
-	testServer, storager := prepareTest(t)
-
 	testWrap := &testWrap{
-		server:     testServer,
+		serverURL:  *serverAddres,
 		httpClient: &http.Client{},
-		storage:    &storager,
 	}
-	defer tearDown(*testWrap)
 
 	testData := &TestData{
 		ehrSystemID: common.EhrSystemID,
@@ -57,12 +83,12 @@ func Test_API(t *testing.T) {
 	}
 
 	for _, user := range testData.users {
-		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+		reqID, err := registerPatient(user, testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Can not register user, err: %v", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal("registerPatient requestWait error: ", err)
 		}
@@ -245,12 +271,10 @@ func Test_API(t *testing.T) {
 	}
 }
 
-func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) {
-	t.Helper()
-
+func prepareTest() (*httptest.Server, storage.Storager, error) {
 	cfg, err := config.New()
 	if err != nil {
-		t.Fatal("config.New error:", err)
+		return nil, nil, errors.Wrap(err, "config.New() error")
 	}
 
 	cfg.Storage.Localfile.Path += "/test_" + strconv.FormatInt(time.Now().UnixNano(), 10)
@@ -262,16 +286,15 @@ func prepareTest(t *testing.T) (ts *httptest.Server, storager storage.Storager) 
 	apiHandler := api.New(cfg, infra)
 
 	r := apiHandler.Build()
-	ts = httptest.NewServer(r)
+	srv := httptest.NewServer(r)
 
-	return ts, storage.Storage()
+	return srv, storage.Storage(), nil
 }
 
-func tearDown(testWrap testWrap) {
-	testWrap.server.Close()
+func tearDown(srv *httptest.Server, storager storage.Storager) {
+	srv.Close()
 
-	err := (*testWrap.storage).Clean()
-	if err != nil {
+	if err := (storager).Clean(); err != nil {
 		log.Panicln(err)
 	}
 }

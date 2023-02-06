@@ -28,18 +28,18 @@ func (testWrap *testWrap) ehrCreate(testData *TestData) func(t *testing.T) {
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
 		}
 
-		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -64,7 +64,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 		user := testData.users[1]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -72,7 +72,7 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 
 		ehrID2 := uuid.New().String()
 
-		ehr, _, err := createEhrWithID(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, ehrID2, testWrap.httpClient)
+		ehr, _, err := createEhrWithID(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, ehrID2, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -94,7 +94,7 @@ func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *TestData) func(t 
 
 		user := testData.users[0]
 
-		_, _, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, testWrap.httpClient)
+		_, _, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
 		if err == nil {
 			t.Fatal("Expected error, received EHR")
 		}
@@ -109,7 +109,7 @@ func (testWrap *testWrap) ehrGetByID(testData *TestData) func(t *testing.T) {
 
 		user := testData.users[0]
 
-		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/"+user.ehrID, nil)
+		request, err := http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/ehr/"+user.ehrID, nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -164,7 +164,7 @@ func (testWrap *testWrap) ehrGetBySubject(testData *TestData) func(t *testing.T)
 		}
 
 		// Check document by subject
-		url := testWrap.server.URL + "/v1/ehr?subject_id=" + testEhrStatus.Subject.ExternalRef.ID.Value + "&subject_namespace=" + testEhrStatus.Subject.ExternalRef.Namespace
+		url := testWrap.serverURL + "/v1/ehr?subject_id=" + testEhrStatus.Subject.ExternalRef.ID.Value + "&subject_namespace=" + testEhrStatus.Subject.ExternalRef.Namespace
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -213,7 +213,7 @@ func (testWrap *testWrap) ehrStatusGet(testData *TestData) func(t *testing.T) {
 
 		user := testData.users[0]
 
-		url := testWrap.server.URL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", user.ehrID, user.ehrStatusID)
+		url := testWrap.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", user.ehrID, user.ehrStatusID)
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -262,7 +262,7 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *TestData) func(t *
 		user := testData.users[0]
 		versionAtTime := time.Now()
 
-		request, err := http.NewRequest(http.MethodGet, testWrap.server.URL+fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID), nil)
+		request, err := http.NewRequest(http.MethodGet, testWrap.serverURL+fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -340,7 +340,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 		  "is_queryable": true
 		}`, newEhrStatusID))
 
-		url := testWrap.server.URL + fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID)
+		url := testWrap.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID)
 
 		request, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(req))
 		if err != nil {
@@ -386,13 +386,13 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 
 		t.Logf("Waiting for request %s done", requestID)
 
-		err = requestWait(user.id, user.accessToken, requestID, testWrap.server.URL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, requestID, testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Checking EHR_STATUS changes
-		request, err = http.NewRequest(http.MethodGet, testWrap.server.URL+"/v1/ehr/"+user.ehrID, nil)
+		request, err = http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/ehr/"+user.ehrID, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -431,7 +431,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 }
 
 func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID, accessToken string) (*model.EhrStatus, error) {
-	url := testWrap.server.URL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", ehrID, statusID)
+	url := testWrap.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", ehrID, statusID)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

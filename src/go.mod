@@ -3,7 +3,6 @@ module github.com/bsn-si/IPEHR-gateway/src
 go 1.19
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/akyoto/cache v1.0.6
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20221202181307-76fa05c21b12
 	github.com/ethereum/go-ethereum v1.10.24-0.20221116142212-add337e0f7ba
@@ -13,13 +12,13 @@ require (
 	github.com/filecoin-project/lotus v1.17.0
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/gzip v0.0.5
+	github.com/gin-contrib/timeout v0.0.3
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/ipfs/go-cid v0.2.0
-	github.com/jmoiron/sqlx v1.3.5
 	github.com/multiformats/go-multihash v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0

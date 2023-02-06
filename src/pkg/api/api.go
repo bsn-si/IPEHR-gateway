@@ -10,6 +10,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/queryer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/composition"
@@ -57,7 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docGroupSvc := docGroupService.NewService(docService)
 	gaSvc := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	templateService := template.NewService(docService)
-	queryService := query.NewService(docService, query.NewQueryExecuterService(infra.AqlDB))
+	queryService := query.NewService(docService, queryer.NewAQLQueryServiceClient(cfg.StatsServiceURL))
 	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 	directory := directoryService.NewService(docService, docGroupSvc)
@@ -217,7 +218,8 @@ func (a *API) buildQueryAPI() handlerBuilder {
 		r = r.Group("query")
 		r.Use(auth(a))
 
-		r.Use(ehrSystemID)
+		r.Use(ehrSystemID, timeoutMiddleware())
+
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
 		r.POST("/aql", a.Query.ExecPostQuery)
