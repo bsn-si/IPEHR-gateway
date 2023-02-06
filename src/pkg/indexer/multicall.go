@@ -102,6 +102,8 @@ func (m *MultiCallTx) Commit() (string, error) {
 		log.Printf("indexer2.Users address: %p", m.index.users)
 
 		tx, err = m.index.users.Multicall(m.index.transactOpts, m.data)
+	default:
+		return "", fmt.Errorf("%w: unknown kind %d", err, m.kind)
 	}
 
 	if err != nil {
