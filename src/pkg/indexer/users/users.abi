@@ -43,6 +43,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "ehrIndex",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",

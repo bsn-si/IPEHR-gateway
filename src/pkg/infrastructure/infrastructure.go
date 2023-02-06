@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"context"
 	"log"
 	"net/http"
 
@@ -63,13 +62,6 @@ func New(cfg *config.Config) *Infra {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	chainID, err := ethClient.ChainID(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("ChainID:", chainID)
 
 	ipfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURLs)
 	if err != nil {

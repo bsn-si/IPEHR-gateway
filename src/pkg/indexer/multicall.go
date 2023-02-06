@@ -3,7 +3,6 @@ package indexer
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -57,9 +56,6 @@ func (i *Index) MultiCallUsersNew(ctx context.Context, pk *[32]byte) (*MultiCall
 	}
 
 	address := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	log.Printf("indexer2 address: %p", i)
-	log.Printf("indexer2.Users address: %p", i.users)
 
 	nonce, err := i.users.Nonces(&bind.CallOpts{Context: ctx}, address)
 	if err != nil {
