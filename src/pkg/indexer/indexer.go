@@ -117,12 +117,12 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		log.Fatal(err)
 	}
 
-	log.Printf("Users address: %s", common.HexToAddress(usersAddr).String())
-
 	_users, err := users.NewUsers(common.HexToAddress(usersAddr), client)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Printf("indexer1.Users address: %p", _users)
 
 	_dataStore, err := dataStore.NewDataStore(common.HexToAddress(dataStoreAddr), client)
 	if err != nil {

@@ -3,6 +3,7 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -95,6 +96,9 @@ func (m *MultiCallTx) Commit() (string, error) {
 	case MulticallEhr:
 		tx, err = m.index.ehrIndex.Multicall(m.index.transactOpts, m.data)
 	case MulticallUsers:
+		log.Printf("indexer2 address: %p", m.index)
+		log.Printf("indexer2.Users address: %p", m.index.users)
+
 		tx, err = m.index.users.Multicall(m.index.transactOpts, m.data)
 	}
 

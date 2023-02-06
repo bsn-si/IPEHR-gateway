@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"log"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/api"
 	_ "github.com/bsn-si/IPEHR-gateway/src/pkg/api/docs"
@@ -26,6 +27,8 @@ func main() {
 	}
 
 	infra := infrastructure.New(cfg)
+
+	log.Printf("indexer1 address: %p", infra.Index)
 
 	a := api.New(cfg, infra).Build()
 	if err = a.Run(cfg.Host); err != nil {
