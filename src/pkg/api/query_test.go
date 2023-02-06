@@ -269,10 +269,10 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 		},
 		{
 			"4. error on get data",
-			[]byte(`{"q":"SELECT 1", "offset":1, "fetch":10, "query_parameters":{"key":1}}`),
+			[]byte(`{"q":"SELECT 1 FROM EHR", "offset":1, "fetch":10, "query_parameters":{"key":1}}`),
 			func(svc *mocks.MockQueryService) {
 				r := &model.QueryRequest{
-					Query:  "SELECT 1",
+					Query:  "SELECT 1 FROM EHR",
 					Offset: 1,
 					Fetch:  10,
 					QueryParameters: map[string]interface{}{
@@ -287,10 +287,10 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 		},
 		{
 			"5. error on get data because long request",
-			[]byte(`{"q":"SELECT 1", "offset":1, "fetch":10, "query_parameters":{"key":1}}`),
+			[]byte(`{"q":"SELECT 1 FROM EHR", "offset":1, "fetch":10, "query_parameters":{"key":1}}`),
 			func(svc *mocks.MockQueryService) {
 				r := &model.QueryRequest{
-					Query:  "SELECT 1",
+					Query:  "SELECT 1 FROM EHR",
 					Offset: 1,
 					Fetch:  10,
 					QueryParameters: map[string]interface{}{
@@ -304,11 +304,11 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 			`{"error":"timeout exceeded"}`,
 		},
 		{
-			"5. success",
-			[]byte(`{"q":"SELECT 1", "offset":1, "fetch":10, "query_parameters":{"key":1}}`),
+			"6. success",
+			[]byte(`{"q":"SELECT 1 FROM EHR", "offset":1, "fetch":10, "query_parameters":{"key":1}}`),
 			func(svc *mocks.MockQueryService) {
 				r := &model.QueryRequest{
-					Query:  "SELECT 1",
+					Query:  "SELECT 1 FROM EHR",
 					Offset: 1,
 					Fetch:  10,
 					QueryParameters: map[string]interface{}{

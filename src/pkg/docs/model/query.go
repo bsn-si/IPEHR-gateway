@@ -1,5 +1,7 @@
 package model
 
+import "github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
+
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
 type QueryRequest struct {
 	Query           string                 `json:"q"`
@@ -9,7 +11,13 @@ type QueryRequest struct {
 }
 
 func (q *QueryRequest) Validate() bool {
-	return len(q.Query) != 0
+	if len(q.Query) == 0 {
+		return false
+	}
+
+	_, err := aqlprocessor.NewAqlProcessor(q.Query).Process()
+
+	return err == nil
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure

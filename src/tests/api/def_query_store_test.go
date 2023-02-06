@@ -65,7 +65,7 @@ func (testWrap *testWrap) definitionStoreInvalidQuery(testData *TestData) func(t
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.server.URL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
@@ -79,7 +79,7 @@ func (testWrap *testWrap) definitionStoreInvalidQuery(testData *TestData) func(t
 		name := fakeData.GetRandomStringWithLength(10)
 		version := ""
 
-		if err = storeInvalidQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.server.URL, name, version, testWrap.httpClient); err != nil {
+		if err = storeInvalidQuery(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, name, version, testWrap.httpClient); err != nil {
 			if errors.Is(err, errors.ErrIsNotValid) {
 				return
 			}

@@ -9,6 +9,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -27,7 +28,7 @@ import (
 const defaultVersion = "1.0.1"
 
 type QueryExecuter interface { //nolint
-	Validate(q string) error
+	//Validate(q string) error
 	ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
@@ -141,7 +142,7 @@ func (s *Service) GetByVersion(ctx context.Context, userID, systemID, name strin
 }
 
 func (s *Service) Validate(data []byte) bool {
-	err := s.qExec.Validate(string(data))
+	_, err := aqlprocessor.NewAqlProcessor(string(data)).Process()
 
 	return err == nil
 }
