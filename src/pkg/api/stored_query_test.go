@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/api/mocks"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 //
@@ -51,7 +51,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			"1. empty result because qualified_query_name was not found",
 			"notexist",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+				gaSvc.EXPECT().List(gomock.Any(), userID, systemID, "notexist")
 			},
 			http.StatusOK,
 			`[]`,
@@ -60,7 +60,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			"2. success result",
 			"exist",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().List(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+				gaSvc.EXPECT().List(gomock.Any(), userID, systemID, "exist").Return(sqM, nil)
 			},
 			http.StatusOK,
 			string(sqJSON),
@@ -126,6 +126,11 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 		Query:       "SELECT 1",
 	}
 
+	qV, err := base.NewVersionTreeID(sqM.Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	sqJSON, _ := json.Marshal(sqM)
 
 	tests := []struct {
@@ -157,7 +162,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			"notexist",
 			sqM.Version,
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), userID, systemID, "notexist", qV).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			"",
@@ -167,7 +172,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			sqM.Name,
 			"999.999.999",
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.ErrNotFound)
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), userID, systemID, sqM.Name, gomock.Any()).Return(nil, errors.ErrNotFound)
 			},
 			http.StatusNotFound,
 			"",
@@ -177,7 +182,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			sqM.Name,
 			sqM.Version,
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().GetByVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(sqM, nil)
+				gaSvc.EXPECT().GetByVersion(gomock.Any(), userID, systemID, sqM.Name, qV).Return(sqM, nil)
 			},
 			http.StatusOK,
 			string(sqJSON),
@@ -261,19 +266,29 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 			"",
 		},
 		{
-			"2. success result",
+			"2. failed because query is incorrect",
 			sqM.Name,
 			sqM.Query,
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().Validate(gomock.Any()).Return(true)
+				gaSvc.EXPECT().Validate([]byte(sqM.Query)).Return(false)
+			},
+			http.StatusBadRequest,
+			urlPath + "/" + sqM.Name + "/" + sqM.Version,
+		},
+		{
+			"3. success result",
+			sqM.Name,
+			sqM.Query,
+			func(gaSvc *mocks.MockQueryService) {
+				gaSvc.EXPECT().Validate([]byte(sqM.Query)).Return(true)
 				gaSvc.EXPECT().Store(
 					gomock.Any(),
+					userID,
+					systemID,
 					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
+					model.QueryTypeAQL,
+					sqM.Name,
+					sqM.Query,
 				).Return(&sqM, nil)
 			},
 			http.StatusOK,
@@ -344,6 +359,11 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 		Query:       "SELECT 1",
 	}
 
+	qV, err := base.NewVersionTreeID(sqM.Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
 		name               string
 		qualifiedQueryName string
@@ -360,10 +380,10 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().GetByVersion(
 					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
+					userID,
+					systemID,
+					sqM.Name,
+					qV,
 				).Return(nil, nil)
 			},
 			sqM.Version,
@@ -386,10 +406,10 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 			func(gaSvc *mocks.MockQueryService) {
 				gaSvc.EXPECT().GetByVersion(
 					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
+					userID,
+					systemID,
+					sqM.Name,
+					qV,
 				).Return(&sqM, nil)
 			},
 			sqM.Version,
@@ -397,28 +417,48 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 			urlPath + "/" + sqM.Name + "/" + sqM.Version,
 		},
 		{
-			"4. success result",
+			"4. failed because query is incorrect",
 			sqM.Name,
 			sqM.Query,
 			func(gaSvc *mocks.MockQueryService) {
-				gaSvc.EXPECT().Validate(gomock.Any()).Return(true)
-				gaSvc.EXPECT().StoreVersion(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(&sqM, nil)
 				gaSvc.EXPECT().GetByVersion(
 					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
+					userID,
+					systemID,
+					sqM.Name,
+					qV,
 				).Return(nil, nil)
+				gaSvc.EXPECT().Validate([]byte(sqM.Query)).Return(false)
+			},
+			sqM.Version,
+			http.StatusBadRequest,
+			urlPath + "/" + sqM.Name + "/" + sqM.Version,
+		},
+		{
+			"5. success result",
+			sqM.Name,
+			sqM.Query,
+			func(gaSvc *mocks.MockQueryService) {
+				gaSvc.EXPECT().GetByVersion(
+					gomock.Any(),
+					userID,
+					systemID,
+					sqM.Name,
+					qV,
+				).Return(nil, nil)
+
+				gaSvc.EXPECT().Validate([]byte(sqM.Query)).Return(true)
+
+				gaSvc.EXPECT().StoreVersion(
+					gomock.Any(),
+					userID,
+					systemID,
+					gomock.Any(),
+					model.QueryTypeAQL,
+					sqM.Name,
+					qV,
+					sqM.Query,
+				).Return(&sqM, nil)
 			},
 			sqM.Version,
 			http.StatusOK,

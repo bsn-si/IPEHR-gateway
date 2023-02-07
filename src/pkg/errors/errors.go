@@ -39,7 +39,7 @@ var (
 )
 
 func ErrFieldIsEmpty(name string) error {
-	return fmt.Errorf("%w: %s", ErrIsEmpty, name)
+	return fmt.Errorf("%w '%s'", ErrIsEmpty, name)
 }
 
 func ErrFieldIsIncorrect(name string) error {

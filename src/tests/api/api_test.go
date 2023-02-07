@@ -210,6 +210,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("DEFINITION Store a invalid query", testWrap.definitionStoreInvalidQuery(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("DEFINITION Store a query", testWrap.definitionStoreQuery(testData)) {
 		t.Fatal()
 	}

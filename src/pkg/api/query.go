@@ -68,8 +68,8 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 	}
 	defer c.Request.Body.Close()
 
-	if !req.Validate() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
 		return
 	}
 
