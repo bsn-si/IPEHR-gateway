@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -97,16 +96,12 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	fmt.Println("USER CREATE REQUEST:", userCreateRequest, string(data))
-
 	if ok, err := userCreateRequest.Validate(); !ok {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err})
 		return
 	}
 
 	if err := h.service.Register(c, &userCreateRequest, systemID, reqID); err != nil {
-		fmt.Println("ERROR ON REGISTER USERE: ", err)
-
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		} else {

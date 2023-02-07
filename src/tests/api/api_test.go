@@ -34,8 +34,8 @@ type TestData struct {
 }
 
 var (
-	ciRun        = flag.Bool("ci_run", true, "set true to use external server address")
-	serverAddres = flag.String("server_address", "http://localhost:8080", "exteranl test server address")
+	ciRun        = flag.Bool("ci_run", false, "set true to use external server address")
+	serverAddres = flag.String("server_address", "http://localhost:8080", "external test server address")
 )
 
 type testWrap struct {

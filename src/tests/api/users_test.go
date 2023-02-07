@@ -511,7 +511,7 @@ func registerPatient(user *User, systemID, baseURL string, client *http.Client) 
 
 	data, _ := io.ReadAll(response.Body)
 	if response.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("register user resp error: %s", string(data))
+		return "", fmt.Errorf("register user resp error: %s", string(data)) // nolint
 	}
 
 	requestID := response.Header.Get("RequestId")
