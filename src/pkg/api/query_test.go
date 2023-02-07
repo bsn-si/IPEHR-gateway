@@ -265,7 +265,7 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 			[]byte(`{"offset":1,"fetch":10,"query_parameters":{"key":1}}`),
 			func(svc *mocks.MockQueryService) {},
 			http.StatusBadRequest,
-			`{"error":"Request validation error"}`,
+			`{"error":"Request validation error: Is empty 'query'"}`,
 		},
 		{
 			"4. error on get data",
