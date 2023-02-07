@@ -96,6 +96,17 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		log.Fatal(err)
 	}
 
+	switch {
+	case !common.IsHexAddress(accessStoreAddr):
+		log.Fatal("ehrIndex contract address is incorrect")
+	case !common.IsHexAddress(accessStoreAddr):
+		log.Fatal("accessStore contract address is incorrect")
+	case !common.IsHexAddress(usersAddr):
+		log.Fatal("users contract address is incorrect")
+	case !common.IsHexAddress(dataStoreAddr):
+		log.Fatal("dataStore contract address is incorrect")
+	}
+
 	ehrIndex, err := ehrIndexer.NewEhrIndexer(common.HexToAddress(ehrIndexAddr), client)
 	if err != nil {
 		log.Fatal(err)
