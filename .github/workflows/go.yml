@@ -27,10 +27,13 @@ jobs:
   integration_tests:
     name: Integration Tests
     runs-on: ubuntu-latest
+
     permissions:
       packages: read
       contents: read
       actions: read
+    
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v3
@@ -62,6 +65,18 @@ jobs:
       - name: Run Integration Tests
         working-directory: ./src/tests/api
         run: go test ./... -ci_run
+
+      - name: Print Containers Logs
+        run: |
+          echo "::group::Gateway service logs"
+          docker logs ipehr-gateway-ipehr-gateway-1
+          echo "::endgroup::"
+          echo "::group::Stat service logs"
+          docker logs ipehr-gateway-ipehr-stat-1
+          echo "::endgroup::"
+          echo "::group::Hardhat index logs"
+          docker logs ipehr-gateway-ipehr-index-1
+          echo "::endgroup::"
       
       - name: Save Containers Logs
         if: failure()
