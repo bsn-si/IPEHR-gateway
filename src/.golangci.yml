@@ -221,3 +221,5 @@ issues:
   exclude:
     - "return statements should not be cuddled if block has more than two lines"
     - "anonymous switch statements should never be cuddled"
+    - "File is not `gofmt`-ed with `-s`"
+    - "File is not `goimports`-ed"

@@ -54,20 +54,20 @@ func NewUserHandler(handlerService UserService) *UserHandler {
 }
 
 // Register
-// @Summary  Register user
-// @Description
-// @Tags         USER
-// @Accept       json
-// @Produce      json
-// @Param    EhrSystemId  header  string                   false  "The identifier of the system, typically a reverse domain identifier"
-// @Param    Request      body    model.UserCreateRequest  true   "User creation request. `role`: 0 - Patient, 1 - Doctor. Fields `Name`, `Address`, `Description`, `PictureURL` are required for Doctor role"
-// @Success  201          "Indicates that the request has succeeded and transaction about register new user has been created"
-// @Header   201          {string}  RequestID  "Request identifier"
-// @Failure  400          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  409          "User with that userID already exist"
-// @Failure  422          "Password, systemID or role incorrect"
-// @Failure  500          "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/register [post]
+//	@Summary	Register user
+//	@Description
+//	@Tags		USER
+//	@Accept		json
+//	@Produce	json
+//	@Param		EhrSystemId	header	string					false	"The identifier of the system, typically a reverse domain identifier"
+//	@Param		Request		body	model.UserCreateRequest	true	"User creation request. `role`: 0 - Patient, 1 - Doctor. Fields `Name`, `Address`, `Description`, `PictureURL` are required for Doctor role"
+//	@Success	201			"Indicates that the request has succeeded and transaction about register new user has been created"
+//	@Header		201			{string}	RequestID	"Request identifier"
+//	@Failure	400			"The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+//	@Failure	409			"User with that userID already exist"
+//	@Failure	422			"Password, systemID or role incorrect"
+//	@Failure	500			"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/register [post]
 func (h *UserHandler) Register(c *gin.Context) {
 	// TODO can users register by themselves, or does it have to be an already authorized user?
 	data, err := io.ReadAll(c.Request.Body)
@@ -116,21 +116,21 @@ func (h *UserHandler) Register(c *gin.Context) {
 }
 
 // Login
-// @Summary  Login user
-// @Description
-// @Tags         USER
-// @Accept       json
-// @Produce      json
-// @Param    AuthUserId   header    string                 true   "UserId"
-// @Param    EhrSystemId  header    string                 false  "The identifier of the system, typically a reverse domain identifier"
-// @Param    Request      body      model.UserAuthRequest  true   "User authentication request"
-// @Success  200          {object}  model.JWT
-// @Failure  404          "User with ID not exist"
-// @Failure  422          "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  400          "Password, EhrSystemId or userID incorrect"
-// @Failure  401          "Password or userID incorrect"
-// @Failure  500          "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/login [post]
+//	@Summary	Login user
+//	@Description
+//	@Tags		USER
+//	@Accept		json
+//	@Produce	json
+//	@Param		AuthUserId	header		string					true	"UserId"
+//	@Param		EhrSystemId	header		string					false	"The identifier of the system, typically a reverse domain identifier"
+//	@Param		Request		body		model.UserAuthRequest	true	"User authentication request"
+//	@Success	200			{object}	model.JWT
+//	@Failure	404			"User with ID not exist"
+//	@Failure	422			"The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+//	@Failure	400			"Password, EhrSystemId or userID incorrect"
+//	@Failure	401			"Password or userID incorrect"
+//	@Failure	500			"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/login [post]
 func (h *UserHandler) Login(c *gin.Context) {
 	// TODO add timeout between attempts, we dont need password brute force
 	var u model.UserAuthRequest
@@ -178,19 +178,19 @@ func (h *UserHandler) Login(c *gin.Context) {
 }
 
 // Logout
-// @Summary  Logout
-// @Description
-// @Tags     USER
-// @Accept   json
-// @Produce  json
-// @Param    Authorization  header  string     true  "Bearer AccessToken"
-// @Param    AuthUserId     header  string     true  "UserId"
-// @Param    Request        body    model.JWT  true  "JWT"
-// @Success  200            "Successfully logged out"
-// @Failure  401            "User unauthorized"
-// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/logout [post]
+//	@Summary	Logout
+//	@Description
+//	@Tags		USER
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header	string		true	"Bearer AccessToken"
+//	@Param		AuthUserId		header	string		true	"UserId"
+//	@Param		Request			body	model.JWT	true	"JWT"
+//	@Success	200				"Successfully logged out"
+//	@Failure	401				"User unauthorized"
+//	@Failure	422				"The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/logout [post]
 func (h *UserHandler) Logout(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userID := c.Request.Header.Get("AuthUserId")
@@ -221,19 +221,19 @@ func (h *UserHandler) Logout(c *gin.Context) {
 }
 
 // RefreshToken
-// @Summary  Refresh JWT
-// @Description
-// @Tags     USER
-// @Accept   json
-// @Produce  json
-// @Param    Authorization  header    string  true  "Bearer RefreshToken"
-// @Param        AuthUserId     header    string  true   "UserId"
-// @Success  200            {object}  model.JWT
-// @Failure  401            "User unauthorized"
-// @Failure      404            "User with ID not exist"
-// @Failure  422            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure      500   "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/refresh/ [get]
+//	@Summary	Refresh JWT
+//	@Description
+//	@Tags		USER
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header		string	true	"Bearer RefreshToken"
+//	@Param		AuthUserId		header		string	true	"UserId"
+//	@Success	200				{object}	model.JWT
+//	@Failure	401				"User unauthorized"
+//	@Failure	404				"User with ID not exist"
+//	@Failure	422				"The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/refresh/ [get]
 func (h *UserHandler) RefreshToken(c *gin.Context) {
 	userID := c.Request.Header.Get("AuthUserId")
 	tokenString := c.Request.Header.Get("Authorization")
@@ -266,20 +266,20 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 }
 
 // Info
-// @Summary      Get user info
-// @Description  Get information about the user by user_id
-// @Tags     USER
-// @Accept   json
-// @Produce  json
-// @Param        user_id        path      string  true   "The identifier of the requested user info"
-// @Param        Authorization  header    string  true   "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true  "UserId"
-// @Param        EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
-// @Success      200            {object}  model.UserInfo
-// @Failure      400            "`user_id` is incorrect or requested user is not a doctor"
-// @Failure  404            "User with ID not exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /user/{user_id} [get]
+//	@Summary		Get user info
+//	@Description	Get information about the user by user_id
+//	@Tags			USER
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id			path		string	true	"The identifier of the requested user info"
+//	@Param			Authorization	header		string	true	"Bearer AccessToken"
+//	@Param			AuthUserId		header		string	true	"UserId"
+//	@Param			EhrSystemId		header		string	false	"The identifier of the system, typically a reverse domain identifier"
+//	@Success		200				{object}	model.UserInfo
+//	@Failure		400				"`user_id` is incorrect or requested user is not a doctor"
+//	@Failure		404				"User with ID not exist"
+//	@Failure		500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router			/user/{user_id} [get]
 func (h *UserHandler) Info(c *gin.Context) {
 	userID := c.Param("user_id")
 	if userID == "" {
@@ -313,17 +313,17 @@ func (h *UserHandler) Info(c *gin.Context) {
 }
 
 // Info by code
-// @Summary      Get doctor info by code
-// @Description  Get information about the doctor by code
-// @Tags     USER
-// @Accept   json
-// @Produce  json
-// @Param        code  path      string  true  "The pin code of the requested doctor"
-// @Success      200   {object}  model.UserInfo
-// @Failure      400   "`code` is incorrect or requested user is not a doctor"
-// @Failure      404   "User code is not exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /user/code/{code} [get]
+//	@Summary		Get doctor info by code
+//	@Description	Get information about the doctor by code
+//	@Tags			USER
+//	@Accept			json
+//	@Produce		json
+//	@Param			code	path		string	true	"The pin code of the requested doctor"
+//	@Success		200		{object}	model.UserInfo
+//	@Failure		400		"`code` is incorrect or requested user is not a doctor"
+//	@Failure		404		"User code is not exist"
+//	@Failure		500		"Is returned when an unexpected error occurs while processing a request"
+//	@Router			/user/code/{code} [get]
 func (h *UserHandler) InfoByCode(c *gin.Context) {
 	codeString := c.Param("code")
 
