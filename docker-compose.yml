@@ -11,7 +11,6 @@ services:
       - 8545:8545
     networks:
       - ipehr-network
-    command: npx hardhat node
     healthcheck:
       test: 'curl --fail -X POST http://0.0.0.0:8545 -H "Content-Type: application/json" --data "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_chainId\",\"params\":[]}" || exit 1'
       interval: 10s
@@ -19,22 +18,11 @@ services:
       retries: 5
       start_period: 5s
 
-  ipehr-index-deploy:
-    image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
-    depends_on:
-      ipehr-index:
-        condition: service_healthy
-    networks:
-      - ipehr-network
-    command: npx hardhat run scripts/deploy.ts
-
   ipehr-stat:
     image: ghcr.io/bsn-si/ipehr-stat:develop
     depends_on:
       ipehr-index:
         condition: service_healthy
-      ipehr-index-deploy:
-        condition: service_completed_successfully
     ports:
       - 8081:8080
     configs:
@@ -56,8 +44,6 @@ services:
     depends_on:
       ipehr-index:
         condition: service_healthy
-      ipehr-index-deploy:
-        condition: service_completed_successfully
       ipehr-stat:
         condition: service_started
     ports:

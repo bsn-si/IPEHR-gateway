@@ -70,7 +70,6 @@ jobs:
           cd logs
           docker logs ipehr-gateway-ipehr-gateway-1 &> ./gateway.log
           docker logs ipehr-gateway-ipehr-index-1 &> ./index.log
-          docker logs ipehr-gateway-ipehr-index-deploy-1 &> ./deploy.log
           docker logs ipehr-gateway-ipehr-stat-1 &> ./stat.log
 
       - name: Archive Logs
