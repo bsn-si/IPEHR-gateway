@@ -39,7 +39,8 @@ func TestAction_UnmarshalJSON(t *testing.T) {
 							TerminologyID: base.ObjectID{Type: base.TerminologyIDItemType, Value: "openehr"},
 							CodeString:    "245",
 						},
-						DvText: base.DvText{DvValueBase: base.DvValueBase{Type: base.DvCodedTextItemType}, Value: "active"},
+						DvValueBase: base.DvValueBase{Type: base.DvCodedTextItemType}, 
+                        Value: "active",
 					},
 				},
 				Description: base.ItemTree{

@@ -973,7 +973,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         }
                     }
                 ],
@@ -981,7 +981,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         },
                         "headers": {
                             "ETag": {
@@ -1140,7 +1140,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         }
                     },
                     "202": {
@@ -1229,7 +1229,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         }
                     }
                 ],
@@ -1237,7 +1237,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is ` + "`" + `return=representation.` + "`" + `",
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         },
                         "headers": {
                             "ETag": {
@@ -2875,6 +2875,205 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "Composition": {
+            "type": "object",
+            "properties": {
+                "_type": {
+                    "type": "string"
+                },
+                "archetype_details": {
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "archetype_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "rm_version": {
+                            "type": "string"
+                        },
+                        "template_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "archetype_node_id": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "object",
+                    "properties": {
+                        "defining_code": {
+                            "type": "object",
+                            "properties": {
+                                "code_string": {
+                                    "type": "string"
+                                },
+                                "preferred_term": {
+                                    "type": "string"
+                                },
+                                "terminology_id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "composer": {
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "external_ref": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "_type": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "namespace": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "content": {
+                    "type": "array",
+                    "items": {}
+                },
+                "context": {
+                    "type": "object",
+                    "properties": {
+                        "setting": {
+                            "type": "object",
+                            "properties": {
+                                "defining_code": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code_string": {
+                                            "type": "string"
+                                        },
+                                        "preferred_term": {
+                                            "type": "string"
+                                        },
+                                        "terminology_id": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "start_time": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "language": {
+                    "type": "object",
+                    "properties": {
+                        "code_string": {
+                            "type": "string"
+                        },
+                        "preferred_term": {
+                            "type": "string"
+                        },
+                        "terminology_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "object",
+                    "properties": {
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "territory": {
+                    "type": "object",
+                    "properties": {
+                        "code_string": {
+                            "type": "string"
+                        },
+                        "preferred_term": {
+                            "type": "string"
+                        },
+                        "terminology_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "uid": {
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "base.Archetyped": {
             "type": "object",
             "properties": {
@@ -3138,29 +3337,6 @@ const docTemplate = `{
                 }
             }
         },
-        "base.Interval-base_DvDateTime": {
-            "type": "object",
-            "properties": {
-                "lower": {
-                    "$ref": "#/definitions/base.DvDateTime"
-                },
-                "lower_included": {
-                    "type": "boolean"
-                },
-                "lower_unbounded": {
-                    "type": "boolean"
-                },
-                "upper": {
-                    "$ref": "#/definitions/base.DvDateTime"
-                },
-                "upper_included": {
-                    "type": "boolean"
-                },
-                "upper_unbounded": {
-                    "type": "boolean"
-                }
-            }
-        },
         "base.Interval-int64": {
             "type": "object",
             "properties": {
@@ -3366,23 +3542,6 @@ const docTemplate = `{
                 }
             }
         },
-        "base.Participation": {
-            "type": "object",
-            "properties": {
-                "function": {
-                    "$ref": "#/definitions/base.DvText"
-                },
-                "mode": {
-                    "$ref": "#/definitions/base.DvCodedText"
-                },
-                "performer": {
-                    "$ref": "#/definitions/base.PartyProxy"
-                },
-                "time": {
-                    "$ref": "#/definitions/base.Interval-base_DvDateTime"
-                }
-            }
-        },
         "base.PartyIdentified": {
             "type": "object",
             "properties": {
@@ -3436,51 +3595,6 @@ const docTemplate = `{
             "properties": {
                 "ObjectID": {
                     "type": "string"
-                }
-            }
-        },
-        "model.Composition": {
-            "type": "object",
-            "properties": {
-                "_type": {
-                    "$ref": "#/definitions/base.ItemType"
-                },
-                "archetype_details": {
-                    "$ref": "#/definitions/base.Archetyped"
-                },
-                "archetype_node_id": {
-                    "type": "string"
-                },
-                "category": {
-                    "$ref": "#/definitions/base.DvCodedText"
-                },
-                "composer": {
-                    "$ref": "#/definitions/base.PartyProxy"
-                },
-                "content": {
-                    "type": "array",
-                    "items": {}
-                },
-                "context": {
-                    "$ref": "#/definitions/model.EventContext"
-                },
-                "language": {
-                    "$ref": "#/definitions/base.CodePhrase"
-                },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/base.Link"
-                    }
-                },
-                "name": {
-                    "$ref": "#/definitions/base.DvText"
-                },
-                "territory": {
-                    "$ref": "#/definitions/base.CodePhrase"
-                },
-                "uid": {
-                    "$ref": "#/definitions/base.UIDBasedID"
                 }
             }
         },
@@ -3768,35 +3882,6 @@ const docTemplate = `{
                             "type": "string"
                         }
                     }
-                }
-            }
-        },
-        "model.EventContext": {
-            "type": "object",
-            "properties": {
-                "end_time": {
-                    "$ref": "#/definitions/base.DvDateTime"
-                },
-                "health_care_facility": {
-                    "$ref": "#/definitions/base.PartyIdentified"
-                },
-                "location": {
-                    "type": "string"
-                },
-                "other_context": {
-                    "$ref": "#/definitions/base.ItemStructure"
-                },
-                "participations": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/base.Participation"
-                    }
-                },
-                "setting": {
-                    "$ref": "#/definitions/base.DvCodedText"
-                },
-                "start_time": {
-                    "$ref": "#/definitions/base.DvDateTime"
                 }
             }
         },

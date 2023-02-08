@@ -285,9 +285,31 @@ func processDvCount(node Noder, value *base.DvCount) (Noder, error) {
 }
 
 func processDvCodedText(node Noder, value *base.DvCodedText) (Noder, error) {
-	node, err := processDvText(node, &value.DvText)
+	node, err := processDvValueBase(node, &value.DvValueBase)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot process DV_CODED_TEXT.DV_TEXT")
+		return nil, errors.Wrap(err, "cannot process DV_TEXT.base")
+	}
+
+	node.addAttribute("value", newNode(value.Value))
+	node.addAttribute("formatting", newNode(value.Formatting))
+
+	if value.Hyperlink != nil {
+		hyperlinkNode, err := processDvURI(node, value.Hyperlink)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot process DV_TEXT.hyperlink")
+		}
+
+		node.addAttribute("hyperlink", hyperlinkNode)
+	}
+
+	//todo: add processing for mappings filed
+
+	if value.Language != nil {
+		node.addAttribute("language", newNode(*value.Language))
+	}
+
+	if value.Encoding != nil {
+		node.addAttribute("encoding", newNode(*value.Encoding))
 	}
 
 	node.addAttribute("defining_code", newNode(value.DefiningCode))

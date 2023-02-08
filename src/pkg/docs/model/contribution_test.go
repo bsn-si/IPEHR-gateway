@@ -136,7 +136,7 @@ func newContribution() contributionTestData {
 					TerminologyID: base.ObjectID{Value: "openehr"},
 					CodeString:    "249",
 				},
-				DvText: base.DvText{Value: "creation"},
+				Value: "creation",
 			},
 			Description: base.DvText{Value: "<optional audit description>"},
 		},
@@ -279,7 +279,7 @@ func newContributionWithVersions(data []contributionVersionTestData) contributio
 						TerminologyID: base.ObjectID{Value: "openehr"},
 						CodeString:    "249",
 					},
-					DvText: base.DvText{Value: "creation"},
+					Value: "creation",
 				},
 				Committer: base.NewPartyProxy(
 					&base.PartyIdentified{

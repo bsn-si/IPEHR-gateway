@@ -336,18 +336,22 @@ func NewDvText(value string) DvText {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_coded_text_class
 type DvCodedText struct {
 	DefiningCode CodePhrase `json:"defining_code"`
-	DvText
+	DvValueBase
+	Value      string        `json:"value"`
+	Hyperlink  *DvURI        `json:"hyperlink,omitempty"`
+	Formatting string        `json:"formatting,omitempty"`
+	Mappings   []TermMapping `json:"mappings,omitempty"`
+	Language   *CodePhrase   `json:"language,omitempty"`
+	Encoding   *CodePhrase   `json:"encoding,omitempty"`
 }
 
 func NewDvCodedText(value string, codePhrase CodePhrase) DvCodedText {
 	return DvCodedText{
 		DefiningCode: codePhrase,
-		DvText: DvText{
-			DvValueBase: DvValueBase{
-				Type: DvCodedTextItemType,
-			},
-			Value: value,
+		DvValueBase: DvValueBase{
+			Type: DvCodedTextItemType,
 		},
+		Value: value,
 	}
 }
 

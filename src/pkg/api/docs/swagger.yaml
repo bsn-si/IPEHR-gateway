@@ -1,5 +1,131 @@
 basePath: /v1
 definitions:
+  Composition:
+    properties:
+      _type:
+        type: string
+      archetype_details:
+        properties:
+          _type:
+            type: string
+          archetype_id:
+            properties:
+              value:
+                type: string
+            type: object
+          rm_version:
+            type: string
+          template_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      archetype_node_id:
+        type: string
+      category:
+        properties:
+          defining_code:
+            properties:
+              code_string:
+                type: string
+              preferred_term:
+                type: string
+              terminology_id:
+                properties:
+                  value:
+                    type: string
+                type: object
+            type: object
+          value:
+            type: string
+        type: object
+      composer:
+        properties:
+          _type:
+            type: string
+          external_ref:
+            properties:
+              id:
+                properties:
+                  _type:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              namespace:
+                type: string
+              type:
+                type: string
+            type: object
+          name:
+            type: string
+        type: object
+      content:
+        items: {}
+        type: array
+      context:
+        properties:
+          setting:
+            properties:
+              defining_code:
+                properties:
+                  code_string:
+                    type: string
+                  preferred_term:
+                    type: string
+                  terminology_id:
+                    properties:
+                      value:
+                        type: string
+                    type: object
+                type: object
+              value:
+                type: string
+            type: object
+          start_time:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      language:
+        properties:
+          code_string:
+            type: string
+          preferred_term:
+            type: string
+          terminology_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      name:
+        properties:
+          value:
+            type: string
+        type: object
+      territory:
+        properties:
+          code_string:
+            type: string
+          preferred_term:
+            type: string
+          terminology_id:
+            properties:
+              value:
+                type: string
+            type: object
+        type: object
+      uid:
+        properties:
+          _type:
+            type: string
+          value:
+            type: string
+        type: object
+    type: object
   base.Archetyped:
     properties:
       _type:
@@ -171,21 +297,6 @@ definitions:
         $ref: '#/definitions/base.DvDateTime'
       version_id:
         type: string
-    type: object
-  base.Interval-base_DvDateTime:
-    properties:
-      lower:
-        $ref: '#/definitions/base.DvDateTime'
-      lower_included:
-        type: boolean
-      lower_unbounded:
-        type: boolean
-      upper:
-        $ref: '#/definitions/base.DvDateTime'
-      upper_included:
-        type: boolean
-      upper_unbounded:
-        type: boolean
     type: object
   base.Interval-int64:
     properties:
@@ -361,17 +472,6 @@ definitions:
       type:
         type: string
     type: object
-  base.Participation:
-    properties:
-      function:
-        $ref: '#/definitions/base.DvText'
-      mode:
-        $ref: '#/definitions/base.DvCodedText'
-      performer:
-        $ref: '#/definitions/base.PartyProxy'
-      time:
-        $ref: '#/definitions/base.Interval-base_DvDateTime'
-    type: object
   base.PartyIdentified:
     properties:
       _type:
@@ -407,36 +507,6 @@ definitions:
     properties:
       ObjectID:
         type: string
-    type: object
-  model.Composition:
-    properties:
-      _type:
-        $ref: '#/definitions/base.ItemType'
-      archetype_details:
-        $ref: '#/definitions/base.Archetyped'
-      archetype_node_id:
-        type: string
-      category:
-        $ref: '#/definitions/base.DvCodedText'
-      composer:
-        $ref: '#/definitions/base.PartyProxy'
-      content:
-        items: {}
-        type: array
-      context:
-        $ref: '#/definitions/model.EventContext'
-      language:
-        $ref: '#/definitions/base.CodePhrase'
-      links:
-        items:
-          $ref: '#/definitions/base.Link'
-        type: array
-      name:
-        $ref: '#/definitions/base.DvText'
-      territory:
-        $ref: '#/definitions/base.CodePhrase'
-      uid:
-        $ref: '#/definitions/base.UIDBasedID'
     type: object
   model.Directory:
     properties:
@@ -622,25 +692,6 @@ definitions:
           value:
             type: string
         type: object
-    type: object
-  model.EventContext:
-    properties:
-      end_time:
-        $ref: '#/definitions/base.DvDateTime'
-      health_care_facility:
-        $ref: '#/definitions/base.PartyIdentified'
-      location:
-        type: string
-      other_context:
-        $ref: '#/definitions/base.ItemStructure'
-      participations:
-        items:
-          $ref: '#/definitions/base.Participation'
-        type: array
-      setting:
-        $ref: '#/definitions/base.DvCodedText'
-      start_time:
-        $ref: '#/definitions/base.DvDateTime'
     type: object
   model.ExternalRef:
     properties:
@@ -1580,7 +1631,7 @@ paths:
         name: Request
         required: true
         schema:
-          $ref: '#/definitions/model.Composition'
+          $ref: '#/definitions/Composition'
       produces:
       - application/json
       responses:
@@ -1597,7 +1648,7 @@ paths:
               description: Request identifier
               type: string
           schema:
-            $ref: '#/definitions/model.Composition'
+            $ref: '#/definitions/Composition'
         "400":
           description: Is returned when the request has invalid ehr_id or invalid
             content (e.g. content could not be converted to a valid COMPOSITION object)
@@ -1707,7 +1758,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Composition'
+            $ref: '#/definitions/Composition'
         "202":
           description: Is returned when the request is still being processed
         "204":
@@ -1775,7 +1826,7 @@ paths:
         name: Request
         required: true
         schema:
-          $ref: '#/definitions/model.Composition'
+          $ref: '#/definitions/Composition'
       produces:
       - application/json
       responses:
@@ -1794,7 +1845,7 @@ paths:
               description: Request identifier
               type: string
           schema:
-            $ref: '#/definitions/model.Composition'
+            $ref: '#/definitions/Composition'
         "400":
           description: '`Bad Request` is returned when the request has invalid `ehr_id`
             or invalid content (e.g. either the body of the request could not be read,

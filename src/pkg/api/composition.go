@@ -69,8 +69,8 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, compositi
 //	@Param		EhrSystemId		header		string				false	"The identifier of the system, typically a reverse domain identifier"
 //	@Param		GroupAccessId	header		string				false	"GroupAccessId - UUID. If not specified, the default access group will be used."
 //	@Param		Prefer			header		string				true	"The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-//	@Param		Request			body		model.Composition	true	"COMPOSITION"
-//	@Success	201				{object}	model.Composition
+//	@Param		Request			body		model.SwagComposition	true	"COMPOSITION"
+//	@Success	201				{object}	model.SwagComposition
 //	@Header		201				{string}	Location	"{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 //	@Header		201				{string}	ETag		"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
 //	@Header		201				{string}	RequestID	"Request identifier"
@@ -176,7 +176,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 //	@Param		Authorization	header		string	true	"Bearer AccessToken"
 //	@Param		AuthUserId		header		string	true	"UserId"
 //	@Param		EhrSystemId		header		string	false	"The identifier of the system, typically a reverse domain identifier"
-//	@Success	200				{object}	model.Composition
+//	@Success	200				{object}	model.SwagComposition
 //	@Success	202				"Is returned when the request is still being processed"
 //	@Failure	204				"Is returned when the COMPOSITION is deleted (logically)."
 //	@Failure	400				"Is returned when AuthUserId is not specified"
@@ -347,8 +347,8 @@ func (h *CompositionHandler) Delete(c *gin.Context) {
 //	@Param		EhrSystemId				header		string				false	"The identifier of the system, typically a reverse domain identifier"
 //	@Param		Prefer					header		string				true	"The updated COMPOSITION resource is returned to the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 //	@Param		If-Match				header		string				true	"The existing latest version_uid of COMPOSITION resource (i.e the preceding_version_uid).  Example:  `8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1`"
-//	@Param		Request					body		model.Composition	true	"List of changes in COMPOSITION"
-//	@Success	200						{object}	model.Composition	"Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is `return=representation.`"
+//	@Param		Request					body		model.SwagComposition	true	"List of changes in COMPOSITION"
+//	@Success	200						{object}	model.SwagComposition	"Is returned when the COMPOSITION is successfully updated and the updated resource is returned in the body when Prefer header value is `return=representation.`"
 //	@Header		200						{string}	Location			"{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 //	@Header		200						{string}	ETag				"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::2"
 //	@Header		200						{string}	RequestID			"Request identifier"
