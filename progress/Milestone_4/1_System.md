@@ -1,4 +1,6 @@
-## EHR System core
+## IPEHR System
+
+![IPEHR_scheme](https://user-images.githubusercontent.com/8058268/217545657-ef2371b3-fed6-401c-9e4c-eb32aac96bac.svg)
 
 The IPEHR system is a dApp consisting of the following elements:
 
