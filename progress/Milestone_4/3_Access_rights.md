@@ -1,4 +1,4 @@
-##Integration with access rights management system.
+## Integration with access rights management system.
 
 In stages [MS3.3](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_3/3_Docs_access_mgmt.md) and [MS3.4](https://github.com/bsn-si/IPEHR-gateway/blob/develop/progress/Milestone_3/4_Access_store.md) we developed a document access rights management system.  
 

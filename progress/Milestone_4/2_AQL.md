@@ -1,4 +1,4 @@
-### Implementation AQL according to the openEHR protocol.
+## Implementation AQL according to the openEHR protocol.
 
 Client applications use for data queries, this way platform can be used by the 3rd party applications supporting the standard.
 
