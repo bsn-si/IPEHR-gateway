@@ -36,7 +36,7 @@ On receipt of a request, the IPEHR gateway interprets the request into a set of 
 
 ## Implementation AQL according to the openEHR protocol.
 
-Client applications use for data queries, this way platform can be used by the 3rd party applications supporting the standard.
+Client applications use AQL data queries, this way platform can be used by the 3rd party applications supporting the standard.
 
 In the process of implementing the ability to execute AQL queries, the following tasks were performed:
 
