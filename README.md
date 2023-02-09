@@ -40,8 +40,8 @@ The solution is being developed with 7 milestones:
 * Development of MH-ORM and structure of storage of medical data - **completed**
 * The functionality of encryption and saving/reading personal data to/from Filecoin - **completed**
 * Access rights management on a blockchain - **completed**
-* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **work in progress**
-* Public data publishing features using the Chainlink network - **delivery**
+* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **delivery**
+* Public data publishing features using the Chainlink network - **completed**
 * Application to manage your own medical data and access - **delivery**
 * Testing, documentation and deployment
 
@@ -157,6 +157,8 @@ In the process of implementing the ability to execute AQL queries, the following
 4. AQL executor(*) - service that searches the index tree for data according to an AQL query: [https://github.com/bsn-si/IPEHR-stat/tree/main/internal/aqlquerier](https://github.com/bsn-si/IPEHR-stat/tree/main/internal/aqlquerier)
 
 On receipt of a request, the IPEHR gateway interprets the request into a set of conditions, which is used to search the DataSearch index structure and returns the result to the requestor as specific values or as links to documents containing the requested data. 
+
+For more information see [Milestone 4 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_4)
 
 ### Milestone 5
 
