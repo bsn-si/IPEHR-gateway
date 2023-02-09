@@ -9,7 +9,7 @@ In the process of implementing the ability to execute AQL queries, the following
 3. AQL querier(*) - library for parsing an AQL query: [https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/aqlprocessor](https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/aqlprocessor)
 4. AQL executor(*) - service that searches the index tree for data according to an AQL query: [https://github.com/bsn-si/IPEHR-stat/tree/main/internal/aqlquerier](https://github.com/bsn-si/IPEHR-stat/tree/main/internal/aqlquerier)
 
-\* - as the project has MVP status, only basic AQL functionality has been implemented:
+\* - in this stage of the project we have implemented basic AQL functionality as in the list below:
 |         Feature         | Implementation |
 | ----------------------- |      :---:     |
 | EHR documents data parsing           | + |
@@ -38,34 +38,6 @@ In the process of implementing the ability to execute AQL queries, the following
 | Select field[...]/value      | + |
 | Select o/field[...]/value1/value2 with alisas      | + |
 | Select primitive      | + |
-| Select field[...]/object      | - |
-| Select field[version]      | - |
-| Select DISCTINCT      | - |
-| ORDER BY		|
-| descending      | - |
-| ascending      | - |
 | LIMIT		
 | limit     | + |
 | offset     | + |
-| FUNCTIONCALL|
-| string_fun.Length      | - |
-| string_fun.Contains      | - |
-| string_fun.Position      | - |
-| string_fun.Subsctring      | - |
-| string_fun.Concat_ws      | - |
-| string_fun.Concat      | - |
-| number.Abs      | - |
-| number.Mod      | - |
-| number.Ceil      | - |
-| number.Floor      | - |
-| number.Round      | - |
-| dateTime.Now      | - |
-| dateTime.CurrentDateTime      | - |
-| dateTime.CurrentTimezone      | - |
-| dateTime.CurrentTime      | - |
-| AggregationFunctionCall      | - |
-| Count      | - |
-| Min      | - |
-| Max      | - |
-| Sum      | - |
-| Avg      | - |
