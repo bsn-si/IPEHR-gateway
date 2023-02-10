@@ -41,13 +41,6 @@ func TestDataEncryption_Int64(t *testing.T) {
 			4294967295,
 			false,
 		},
-		{
-			"4. overflow error",
-			"ffffffffffffffff6b72fd6ab0358aa9f52cee4a11c2764c4e745f47ddb1d5e1",
-			4079960759662762541,
-			0,
-			true,
-		},
 	}
 
 	for _, tt := range tests {
@@ -60,12 +53,12 @@ func TestDataEncryption_Int64(t *testing.T) {
 			key := Key{}
 			copy(key[:], keyBytes)
 
-			x, err := EncryptInt64(tt.num, &key)
+			x, err := EncryptInt(tt.num, &key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EncryptInt error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			assert.Equal(t, tt.want, x)
+			assert.Equal(t, tt.want, x.Int64())
 		})
 	}
 }

@@ -6,8 +6,36 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/hm"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
+
+func encryptDataValueNode(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
+	var err error
+
+	switch node.Type {
+	case base.DvURIItemType:
+		err = encryptDvURI(node, key, nonce)
+	case base.DvQuantityItemType:
+		err = encryptDvQuantity(node, key, nonce)
+	case base.DvTextItemType:
+		err = encryptDvText(node, key, nonce)
+	case base.DvCodedTextItemType:
+		err = encryptDvCodedText(node, key, nonce)
+	case base.DvDateTimeItemType:
+		err = encryptDvDateTime(node, key)
+	case base.DvIdentifierItemType:
+		err = encryptDvIdentifier(node, key, nonce)
+	case base.DvProportionItemType:
+		err = encryptDvProportion(node, key)
+	case base.DvMultimediaItemType:
+		err = encryptDvMultimedia(node, key, nonce)
+	default:
+		fmt.Printf("encryptDataValueNode: unsupported node type: %s\n", node.Type)
+	}
+
+	return err
+}
 
 func encryptDvText(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
 	valueAttr, ok := node.Values["value"]
@@ -63,7 +91,7 @@ func encryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 
 	precisionAttr, ok := node.Values["precision"]
 	if ok {
-		newValue, err := hm.EncryptInt64(precisionAttr.(*ValueNode).Data.(int64), key)
+		newValue, err := hm.EncryptInt(precisionAttr.(*ValueNode).Data.(int64), key)
 		if err != nil {
 			return fmt.Errorf("EncryptInt error: %w value: %d", err, precisionAttr.(*ValueNode).Data.(int))
 		}
@@ -100,12 +128,12 @@ func encryptDvDateTime(node *DataValueNode, key *hm.Key) error {
 		return errors.ErrFieldIsEmpty("DvDateTime.value")
 	}
 
-	value, err := time.Parse(common.OpenEhrTimeFormat, valueAttr.(*ValueNode).Data.(string))
+	value, err := time.Parse(common.OpenEhrTimeFormatMicro, valueAttr.(*ValueNode).Data.(string))
 	if err != nil {
 		return fmt.Errorf("time.Parse error: %w value: %s", err, valueAttr.(*ValueNode).Data.(string))
 	}
 
-	newValue, err := hm.EncryptInt64(value.Unix(), key)
+	newValue, err := hm.EncryptInt(value.UnixMicro(), key)
 	if err != nil {
 		return fmt.Errorf("EncryptInt64 error: %w value: %d", err, value.Unix())
 	}
