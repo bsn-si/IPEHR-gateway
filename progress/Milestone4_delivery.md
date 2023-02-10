@@ -55,7 +55,9 @@ ORDER BY
 LIMIT 5
 ```
 
-On receipt of a request, the IPEHR gateway interprets the request into a set of conditions, which is used to search the DataSearch index structure and returns the result to the requestor as specific values or as links to documents containing the requested data. 
+![AQL flow](https://user-images.githubusercontent.com/98888366/218052758-f98c5f20-5d1c-4bcc-8350-3c9796654da2.svg)
+
+On receipt of a request, the IPEHR gateway interprets the request into a set of conditions, which is used to search the DataSearch index structure and returns the result to the requestor as specific values or as links to documents containing the requested data.
 
 # Workflow example
 
