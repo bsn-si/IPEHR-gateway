@@ -57,10 +57,10 @@ func TestDataEncryption_Int64(t *testing.T) {
 				t.Errorf("Encryption key error: %v", err)
 			}
 
-			key := [32]byte{}
+			key := Key{}
 			copy(key[:], keyBytes)
 
-			x, err := EncryptInt(tt.num, &key)
+			x, err := EncryptInt64(tt.num, &key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EncryptInt error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -104,15 +104,15 @@ func TestDataEncryption_Float64(t *testing.T) {
 				t.Errorf("Encryption key error: %v", err)
 			}
 
-			key := [32]byte{}
+			key := Key{}
 			copy(key[:], keyBytes)
 
-			x, err := EncryptFloat(tt.num, &key)
+			x, err := EncryptFloat64(tt.num, &key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EncryptFloat error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			x, err = DecryptFloat(x, &key)
+			x, err = DecryptFloat64(x, &key)
 			if err != nil {
 				t.Error(err)
 			}

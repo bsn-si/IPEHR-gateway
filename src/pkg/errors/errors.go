@@ -7,10 +7,11 @@ import (
 )
 
 var (
-	New  = errors.New
-	Is   = errors.Is
-	As   = errors.As
-	Wrap = errors.Wrap
+	New    = errors.New
+	Errorf = errors.Errorf
+	Is     = errors.Is
+	As     = errors.As
+	Wrap   = errors.Wrap
 
 	ErrAuthorization       = errors.New("Authorization error")
 	ErrIsNotExist          = errors.New("Object is not exist")

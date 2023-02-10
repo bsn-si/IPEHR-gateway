@@ -6,7 +6,11 @@ import (
 	"math/big"
 
 	"golang.org/x/crypto/chacha20poly1305"
-	"golang.org/x/crypto/sha3"
+)
+
+type (
+	Key   [32]byte
+	Nonce [12]byte
 )
 
 var (
@@ -19,7 +23,7 @@ var (
 // key[0:4] != []byte{0,0,0,0}
 // Limitations: -2147483648 <= x <= 2147483647 with key 0xffffffffffffffff...
 // Returns x*a + b
-func EncryptInt(x int64, key *[32]byte) (int64, error) {
+func EncryptInt64(x int64, key *Key) (int64, error) {
 	if key == nil {
 		return 0, ErrIncorrectKey
 	}
@@ -44,7 +48,7 @@ func EncryptInt(x int64, key *[32]byte) (int64, error) {
 // Key must not be nil
 // Key[0:4] != []byte{0,0,0,0}
 // Returs (x - b)/a
-func DecryptInt(x int64, key *[32]byte) (int64, error) {
+func DecryptInt64(x int64, key *[32]byte) (int64, error) {
 	if key == nil {
 		return 0, ErrIncorrectKey
 	}
@@ -62,7 +66,7 @@ func DecryptInt(x int64, key *[32]byte) (int64, error) {
 // Key must not be nil
 // key[0:4] != []byte{0,0,0,0}
 // Returns x*a + b
-func EncryptFloat(x float64, key *[32]byte) (float64, error) {
+func EncryptFloat64(x float64, key *Key) (float64, error) {
 	if key == nil {
 		return 0, ErrIncorrectKey
 	}
@@ -88,7 +92,7 @@ func EncryptFloat(x float64, key *[32]byte) (float64, error) {
 // key must not be nil
 // key[0:4] != []byte{0,0,0,0}
 // returs (x - b)/a
-func DecryptFloat(x float64, key *[32]byte) (float64, error) {
+func DecryptFloat64(x float64, key *Key) (float64, error) {
 	if key == nil {
 		return 0, ErrIncorrectKey
 	}
@@ -105,7 +109,7 @@ func DecryptFloat(x float64, key *[32]byte) (float64, error) {
 
 // Key or nonce must not be nil
 // key[0:4] != []byte{0,0,0,0}
-func EncryptString(in string, key *[32]byte, nonce *[12]byte) (out []byte) {
+func EncryptString(in string, key *Key, nonce *Nonce) (out []byte) {
 	if key == nil {
 		panic(ErrIncorrectKey)
 	}
@@ -119,8 +123,7 @@ func EncryptString(in string, key *[32]byte, nonce *[12]byte) (out []byte) {
 		panic(ErrIncorrectKey)
 	}
 
-	msg := sha3.Sum256([]byte(in))
-	encrypted := aead.Seal(nonce[:], nonce[:], msg[:], nil)
+	encrypted := aead.Seal(nonce[:], nonce[:], []byte(in), nil)
 
 	return encrypted[12:]
 }

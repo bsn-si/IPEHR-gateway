@@ -214,7 +214,7 @@ type DvAmount[T any] struct {
 type DvQuantity struct {
 	DvAmount[int64]
 	Magnitude            float64                      `json:"magnitude"`
-	Precision            *int                         `json:"precision,omitempty"`
+	Precision            *int64                       `json:"precision,omitempty"`
 	Units                *string                      `json:"units,omitempty"`
 	UnitsSystem          *string                      `json:"units_system,omitempty"`
 	UnitsDisplayName     *string                      `json:"units_display_name,omitempty"`
@@ -251,8 +251,8 @@ type DvCount struct {
 // https://specifications.openehr.org/releases/RM/latest/data_types.html#_dv_proportion_class
 type DvProportion struct {
 	DvAmount[int64]
-	Numeration           float64                        `json:"numeration"`
-	Denomination         float64                        `json:"denomination"`
+	Numerator            float64                        `json:"numerator"`
+	Denominator          float64                        `json:"denominator"`
 	Type                 int                            `json:"type"`
 	Precision            *int                           `json:"precision,omitempty"`
 	NormalRange          *DvInterval[DvProportion]      `json:"normal_range,omitempty"`

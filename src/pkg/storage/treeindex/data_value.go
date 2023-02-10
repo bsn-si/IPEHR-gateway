@@ -158,8 +158,8 @@ func processDvProportion(node Noder, value *base.DvProportion) (Noder, error) {
 		return nil, errors.Wrap(err, "cannot process DV_PROPORTION.base")
 	}
 
-	node.addAttribute("numeration", newNode(value.Numeration))
-	node.addAttribute("denomination", newNode(value.Denomination))
+	node.addAttribute("numerator", newNode(value.Numerator))
+	node.addAttribute("denominator", newNode(value.Denominator))
 	node.addAttribute("type", newNode(value.Type))
 
 	if value.Precision != nil {
