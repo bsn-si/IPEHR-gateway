@@ -10,9 +10,7 @@ When new EHR documents are created, the homomorphically encrypted data they cont
   <img width="75%" src="https://user-images.githubusercontent.com/8058268/174270324-1218d6ba-4cf5-497d-b455-cb084b129141.svg">
 </p>
 
-The DataSearch index will be located in a blockchain. The index will be searched using a smart contract.
-
-The index is currently located locally on the IPEHR gateway.
+The DataSearch index is located in a blockchain (currently [Goerli Testnet](https://goerli.net/) is used, later will be deployed to FEVM). Indexes are searched using a [smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes).
 
 ## AQL
 
