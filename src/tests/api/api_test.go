@@ -248,6 +248,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("QUERY execute with GET Expected success with correct query", testWrap.queryExecSuccess(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("QUERY execute with POST Expected success with correct query", testWrap.queryExecPostSuccess(testData)) {
 		t.Fatal()
 	}
