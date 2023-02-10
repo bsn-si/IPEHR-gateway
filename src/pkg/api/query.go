@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -75,11 +74,6 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
 		return
 	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), common.QueryExecutionTimeout)
-	defer cancel()
-
-	c.Request = c.Request.WithContext(ctx)
 
 	resp, err := h.service.ExecQuery(c.Request.Context(), &req)
 	if err != nil {
@@ -215,11 +209,6 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
 		return
 	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), common.QueryExecutionTimeout)
-	defer cancel()
-
-	c.Request = c.Request.WithContext(ctx)
 
 	resp, err := h.service.ExecQuery(c.Request.Context(), &req)
 	if err != nil {
