@@ -173,9 +173,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			return nil, fmt.Errorf("user default group 'doctors' %w", errors.ErrNotFound)
 		}
 
-		IDHash := indexer.Keccak256(allDocsGroup.GroupID[:])
-
-		objectID := sha3.Sum256(doctorsGroup.GroupID[:])
+		subjectID := sha3.Sum256(doctorsGroup.GroupID[:])
 
 		doctorsGroupKey, err := chachaPoly.NewKeyFromBytes(doctorsGroup.GroupKey[:])
 		if err != nil {
@@ -192,7 +190,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			return nil, fmt.Errorf("allDocsGroupKey encryption error: %w", err)
 		}
 
-		txHash, err := s.Infra.Index.SetAccess(ctx, IDHash, &objectID, IDEncr, keyEncr, access.DocGroup, access.Read)
+		txHash, err := s.Infra.Index.SetAccess(ctx, allDocsGroup.GroupID[:], &subjectID, IDEncr, keyEncr, access.DocGroup, access.Read)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess doctorsGroup to allDocsGroup error: %w", err)
 		}
@@ -300,14 +298,12 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 
 	// Adding EHR_STATUS doc into 'all documents'
 	{
-		docCIDHash := indexer.Keccak256(CID.Bytes())
-
 		docCIDEncr, err := allDocsGroup.GroupKey.Encrypt(CID.Bytes())
 		if err != nil {
 			return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, multiCallTx.Nonce())
+		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, CID.Bytes(), docCIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 		}

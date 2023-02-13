@@ -26,7 +26,10 @@ const (
 	Overhead = 16
 )
 
-type Key [KeyLength]byte
+type (
+	Key   [KeyLength]byte
+	Nonce [NonceLength]byte
+)
 
 func GenerateKey() *Key {
 	key := new(Key)
@@ -37,16 +40,37 @@ func GenerateKey() *Key {
 	return key
 }
 
+func GenerateNonce() *Nonce {
+	nonce := new(Nonce)
+	if _, err := crypto_rand.Read(nonce[:]); err != nil {
+		panic(err)
+	}
+
+	return nonce
+}
+
 func NewKeyFromBytes(keyBytes []byte) (*Key, error) {
 	if len(keyBytes) != KeyLength {
 		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
 	}
 
-	key := new(Key)
+	var key Key
 
 	copy(key[:], keyBytes)
 
-	return key, nil
+	return &key, nil
+}
+
+func NewNonceFromBytes(nonceBytes []byte) (*Nonce, error) {
+	if len(nonceBytes) != NonceLength {
+		return nil, fmt.Errorf("%w: Key length is incorrect", errors.ErrEncryption)
+	}
+
+	var nonce Nonce
+
+	copy(nonce[:], nonceBytes)
+
+	return &nonce, nil
 }
 
 func (k Key) Encrypt(msg []byte) ([]byte, error) {

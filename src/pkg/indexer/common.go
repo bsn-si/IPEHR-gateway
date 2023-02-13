@@ -12,7 +12,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func Keccak256(data []byte) *[32]byte {
+func keccak256(data []byte) *[32]byte {
 	var b [32]byte
 
 	copy(b[:], crypto.Keccak256(data))

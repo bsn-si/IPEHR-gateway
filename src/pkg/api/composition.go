@@ -21,9 +21,9 @@ import (
 type (
 	CompositionService interface {
 		helper.Finder
-		DefaultGroupAccess() *uuid.UUID
-		Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
-		Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
+		DefaultGroupAccess() *model.GroupAccess
+		Create(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
+		Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
 		GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 		GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 		DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error)
@@ -67,7 +67,7 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, compositi
 // @Param    Authorization  header    string                 true   "Bearer AccessToken"
 // @Param    AuthUserId     header    string                 true   "UserId"
 // @Param    EhrSystemId    header    string                 false  "The identifier of the system, typically a reverse domain identifier"
-// @Param    GroupAccessId  header    string                 false  "GroupAccessId - UUID. If not specified, the default access group will be used."
+// Param     GroupAccessId  header    string                 false  "TODO At the moment DefaultGroupAccess is used by default for all"
 // @Param    Prefer         header    string                 true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param    Request        body      model.SwagComposition  true   "COMPOSITION"
 // @Success  201            {object}  model.SwagComposition
@@ -113,19 +113,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	groupAccessUUID := h.service.DefaultGroupAccess()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
-
 	composition := &model.Composition{}
 
 	if err := json.NewDecoder(c.Request.Body).Decode(composition); err != nil {
@@ -148,7 +135,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(c, userID, systemID, &ehrUUID, groupAccessUUID, composition, procRequest)
+	doc, err := h.service.Create(c, userID, systemID, &ehrUUID, composition, procRequest)
 	if err != nil {
 		log.Println("Composition creating error:", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
@@ -401,19 +388,6 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	groupAccessUUID := h.service.DefaultGroupAccess()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
-
 	compositionUpdate := model.Composition{}
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&compositionUpdate); err != nil {
@@ -463,7 +437,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(c, procRequest, userID, systemID, &ehrUUID, groupAccessUUID, &compositionUpdate)
+	compositionUpdated, err := h.service.Update(c, procRequest, userID, systemID, &ehrUUID, &compositionUpdate)
 	if err != nil {
 		log.Println("Composition Update error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

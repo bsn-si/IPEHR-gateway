@@ -10,7 +10,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func encryptDataValueNode(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
+func EncryptDataValueNode(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
 	var err error
 
 	switch node.Type {

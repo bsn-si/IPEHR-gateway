@@ -38,25 +38,25 @@ func (m *MockCompositionService) EXPECT() *MockCompositionServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockCompositionService) Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *processing.Request) (*model.Composition, error) {
+func (m *MockCompositionService) Create(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition, procRequest *processing.Request) (*model.Composition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, userID, systemID, ehrUUID, groupAccessUUID, composition, procRequest)
+	ret := m.ctrl.Call(m, "Create", ctx, userID, systemID, ehrUUID, composition, procRequest)
 	ret0, _ := ret[0].(*model.Composition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockCompositionServiceMockRecorder) Create(ctx, userID, systemID, ehrUUID, groupAccessUUID, composition, procRequest interface{}) *gomock.Call {
+func (mr *MockCompositionServiceMockRecorder) Create(ctx, userID, systemID, ehrUUID, composition, procRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockCompositionService)(nil).Create), ctx, userID, systemID, ehrUUID, groupAccessUUID, composition, procRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockCompositionService)(nil).Create), ctx, userID, systemID, ehrUUID, composition, procRequest)
 }
 
 // DefaultGroupAccess mocks base method.
-func (m *MockCompositionService) DefaultGroupAccess() *uuid.UUID {
+func (m *MockCompositionService) DefaultGroupAccess() *model.GroupAccess {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DefaultGroupAccess")
-	ret0, _ := ret[0].(*uuid.UUID)
+	ret0, _ := ret[0].(*model.GroupAccess)
 	return ret0
 }
 
@@ -162,18 +162,18 @@ func (mr *MockCompositionServiceMockRecorder) IsExist(ctx interface{}, args ...i
 }
 
 // Update mocks base method.
-func (m *MockCompositionService) Update(ctx context.Context, procRequest *processing.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
+func (m *MockCompositionService) Update(ctx context.Context, procRequest *processing.Request, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, procRequest, userID, systemID, ehrUUID, groupAccessUUID, composition)
+	ret := m.ctrl.Call(m, "Update", ctx, procRequest, userID, systemID, ehrUUID, composition)
 	ret0, _ := ret[0].(*model.Composition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockCompositionServiceMockRecorder) Update(ctx, procRequest, userID, systemID, ehrUUID, groupAccessUUID, composition interface{}) *gomock.Call {
+func (mr *MockCompositionServiceMockRecorder) Update(ctx, procRequest, userID, systemID, ehrUUID, composition interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockCompositionService)(nil).Update), ctx, procRequest, userID, systemID, ehrUUID, groupAccessUUID, composition)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockCompositionService)(nil).Update), ctx, procRequest, userID, systemID, ehrUUID, composition)
 }
 
 // MockIndexer is a mock of Indexer interface.

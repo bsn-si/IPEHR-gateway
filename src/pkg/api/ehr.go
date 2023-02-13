@@ -47,7 +47,7 @@ func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.
 // @Param        Authorization  header    string                  true   "Bearer AccessToken"
 // @Param        AuthUserId     header    string                  true   "UserId"
 // @Param        EhrSystemId    header    string                  false  "The identifier of the system, typically a reverse domain identifier"
-// @Param    	 GroupAccessId  header    string                  false  "GroupAccessId - UUID. If not specified, the default access group will be used."
+// Param         GroupAccessId  header    string                  false  "TODO At the moment DefaultGroupAccess is used by default for all"
 // @Param        Prefer         header    string                  true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
 // @Param        Request        body      model.EhrCreateRequest  true   "Query Request"
 // @Success      201            {object}  model.EhrSummary
@@ -103,18 +103,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	ehrUUIDnew := uuid.New()
 	reqID := c.GetString("reqID")
 
-	groupAccessUUID := h.service.GroupAccess.Default()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
+	groupAccess := h.service.GroupAccess.Default()
 
 	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
@@ -124,7 +113,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, groupAccessUUID, &request, procRequest)
+	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, groupAccess.UUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -214,18 +203,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	groupAccessUUID := h.service.GroupAccess.Default()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
+	groupAccess := h.service.GroupAccess.Default()
 
 	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
@@ -236,7 +214,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, groupAccessUUID, &request, procRequest)
+	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, groupAccess.UUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})

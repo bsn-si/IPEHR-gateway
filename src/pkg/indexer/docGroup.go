@@ -17,7 +17,7 @@ import (
 )
 
 func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKeyEncr, gNameEncr []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
-	gIDHash := Keccak256(gID[:])
+	gIDHash := keccak256(gID[:])
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
@@ -64,7 +64,7 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 
 // Returns: []CIDEncr
 func (i *Index) DocGroupGetDocs(ctx context.Context, gID *uuid.UUID) ([][]byte, error) {
-	groupIDHash := Keccak256(gID[:])
+	groupIDHash := keccak256(gID[:])
 
 	CIDs, err := i.ehrIndex.DocGroupGetDocs(&bind.CallOpts{Context: ctx}, *groupIDHash)
 	if err != nil {
@@ -74,8 +74,9 @@ func (i *Index) DocGroupGetDocs(ctx context.Context, gID *uuid.UUID) ([][]byte, 
 	return CIDs, nil
 }
 
-func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
-	groupIDHash := Keccak256(gID[:])
+func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCID []byte, docCIDEncr []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
+	groupIDHash := keccak256(gID[:])
+	docCIDHash := keccak256(docCID)
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
@@ -110,7 +111,7 @@ func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *
 }
 
 func (i *Index) DocGroupGetByID(ctx context.Context, gID *uuid.UUID, userPubKey, userPrivateKey *[32]byte) (*model.DocumentGroup, error) {
-	groupIDHash := Keccak256(gID[:])
+	groupIDHash := keccak256(gID[:])
 
 	attrs, err := i.ehrIndex.DocGroupGetAttrs(&bind.CallOpts{Context: ctx}, *groupIDHash)
 	if err != nil {

@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
 type (
-	Key   [32]byte
-	Nonce [12]byte
+	Key   = chachaPoly.Key
+	Nonce = chachaPoly.Nonce
 )
 
 var (

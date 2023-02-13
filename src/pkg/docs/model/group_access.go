@@ -7,8 +7,8 @@ import (
 )
 
 type GroupAccess struct {
-	GroupUUID   *uuid.UUID      `json:"group_id"`
-	Description string          `json:"description"`
-	Key         *chachaPoly.Key `json:"-"`
-	Nonce       *[12]byte       `json:"-"`
+	UUID        *uuid.UUID        `json:"group_id"`
+	Description string            `json:"description"`
+	Key         *chachaPoly.Key   `json:"-"`
+	Nonce       *chachaPoly.Nonce `json:"-"`
 }

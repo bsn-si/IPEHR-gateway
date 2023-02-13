@@ -15,7 +15,7 @@ import (
 )
 
 func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind access.Kind, accessID []byte) ([]byte, access.Level, error) {
-	accessIDHash := Keccak256(accessID)
+	accessIDHash := keccak256(accessID)
 
 	acc, err := i.accessStore.UserAccess(&bind.CallOpts{Context: ctx}, *userIDHash, kind, *accessIDHash)
 	if err != nil {
@@ -29,13 +29,15 @@ func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind ac
 	return acc.KeyEncr, acc.Level, nil
 }
 
-func (i *Index) SetAccess(ctx context.Context, IDHash, objectID *[32]byte, IDEncr, keyEncr []byte, kind access.Kind, level access.Level) (string, error) {
-	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*objectID, kind)
+func (i *Index) SetAccess(ctx context.Context, objectID []byte, subjectID *[32]byte, IDEncr, keyEncr []byte, kind access.Kind, level access.Level) (string, error) {
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*subjectID, kind)
 	if err != nil {
 		return "", fmt.Errorf("args.Pack error: %w", err)
 	}
 
-	accessID := Keccak256(data)
+	accessID := keccak256(data)
+
+	IDHash := keccak256(objectID)
 
 	access := accessStore.IAccessStoreAccess{
 		IdHash:  *IDHash,

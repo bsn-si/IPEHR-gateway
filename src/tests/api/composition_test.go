@@ -59,12 +59,12 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 		if len(testData.groupsAccess) == 0 {
 			uuid := uuid.New()
 
-			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{GroupUUID: &uuid})
+			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{UUID: &uuid})
 		}
 
 		ga := testData.groupsAccess[0]
 
-		c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, ga.GroupUUID.String(), testWrap.serverURL, testWrap.httpClient)
+		c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, ga.UUID.String(), testWrap.serverURL, testWrap.httpClient)
 		if err != nil {
 			t.Fatalf("Unexpected composition, received error: %v", err)
 		}
@@ -91,10 +91,8 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 		if len(testData.groupsAccess) == 0 {
 			uuid := uuid.New()
 
-			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{GroupUUID: &uuid})
+			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{UUID: &uuid})
 		}
-
-		ga := testData.groupsAccess[0]
 
 		if len(user.compositions) == 0 {
 			t.Fatal("Composition required")
@@ -111,7 +109,6 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 
 		request.Header.Set("AuthUserId", user.id)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-		request.Header.Set("GroupAccessId", ga.GroupUUID.String())
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
 		response, err := testWrap.httpClient.Do(request)
@@ -262,10 +259,8 @@ func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.
 		if len(testData.groupsAccess) == 0 {
 			uuid := uuid.New()
 
-			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{GroupUUID: &uuid})
+			testData.groupsAccess = append(testData.groupsAccess, &model.GroupAccess{UUID: &uuid})
 		}
-
-		ga := testData.groupsAccess[0]
 
 		if len(user.compositions) == 0 {
 			t.Fatal("Composition required")
@@ -292,7 +287,6 @@ func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.
 
 		request.Header.Set("AuthUserId", user.id)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
-		request.Header.Set("GroupAccessId", ga.GroupUUID.String())
 		request.Header.Set("If-Match", comp.ObjectVersionID.String())
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("Prefer", "return=representation")

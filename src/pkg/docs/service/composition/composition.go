@@ -30,7 +30,7 @@ import (
 
 type (
 	GroupAccessService interface {
-		Default() *uuid.UUID
+		Default() *model.GroupAccess
 	}
 
 	Indexer interface {
@@ -67,13 +67,13 @@ type (
 
 	Service struct {
 		helper.Finder
-		indexer            Indexer
-		ipfs               IpfsService
-		fileCoin           FileCoinService
-		keyStore           KeyStore
-		compressor         Compressor
-		docSvc             DocumentsSvc
-		groupAccessService GroupAccessService
+		indexer        Indexer
+		ipfs           IpfsService
+		fileCoin       FileCoinService
+		keyStore       KeyStore
+		compressor     Compressor
+		docSvc         DocumentsSvc
+		groupAccessSvc GroupAccessService
 	}
 )
 
@@ -84,20 +84,20 @@ func NewCompositionService(
 	keyStore KeyStore,
 	compressor Compressor,
 	docSvc DocumentsSvc,
-	groupAccessService GroupAccessService,
+	groupAccessSvc GroupAccessService,
 ) *Service {
 	return &Service{
-		docSvc:             docSvc,
-		indexer:            indexer,
-		ipfs:               ipfs,
-		fileCoin:           fileCoin,
-		keyStore:           keyStore,
-		compressor:         compressor,
-		groupAccessService: groupAccessService,
+		docSvc:         docSvc,
+		indexer:        indexer,
+		ipfs:           ipfs,
+		fileCoin:       fileCoin,
+		keyStore:       keyStore,
+		compressor:     compressor,
+		groupAccessSvc: groupAccessSvc,
 	}
 }
 
-func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
+func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error) {
 	objectVersionID, err := base.NewObjectVersionID(composition.UID.Value, systemID)
 	if err != nil {
 		return nil, fmt.Errorf("NewObjectVersionID error: %w UID.Value: %s ehrSystemID %s", err, composition.UID.Value, systemID)
@@ -137,7 +137,7 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
-	err = s.addDataIndex(ctx, ehrUUID, groupAccessUUID, &dataIndexUUID, composition, procRequest)
+	err = s.addDataIndex(ctx, ehrUUID, &dataIndexUUID, composition, procRequest)
 	if err != nil {
 		return nil, fmt.Errorf("addDataIndex error: %w", err)
 	}
@@ -145,7 +145,7 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 	return composition, nil
 }
 
-func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
+func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error) {
 	err := s.increaseVersion(composition, systemID)
 	if err != nil {
 		return nil, fmt.Errorf("Composition increaseVersion error: %w composition.UID %s", err, composition.UID.Value)
@@ -208,7 +208,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID,
 	// TODO what we should do with prev composition?
 
 	// Adding dataStore index
-	err = s.addDataIndex(ctx, ehrUUID, groupAccessUUID, &dataIndexUUID, composition, procRequest)
+	err = s.addDataIndex(ctx, ehrUUID, &dataIndexUUID, composition, procRequest)
 	if err != nil {
 		return nil, fmt.Errorf("addDataIndex error: %w", err)
 	}
@@ -458,8 +458,8 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 	return objectVersionID.String(), nil
 }
 
-func (s *Service) DefaultGroupAccess() *uuid.UUID {
-	return s.groupAccessService.Default()
+func (s *Service) DefaultGroupAccess() *model.GroupAccess {
+	return s.groupAccessSvc.Default()
 }
 
 func (s *Service) GetList(ctx context.Context, userID, systemID string) ([]*model.EhrDocumentItem, error) {
@@ -561,13 +561,22 @@ func (s *Service) extractDataIndexID(ctx context.Context, docMeta *model.Documen
 	return dataIndexID, nil
 }
 
-func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, dataIndexUUID *uuid.UUID, cmp *model.Composition, procRequest *proc.Request) error {
+func (s *Service) addDataIndex(ctx context.Context, ehrUUID, dataIndexUUID *uuid.UUID, cmp *model.Composition, procRequest *proc.Request) error {
 	node, err := treeindex.ProcessComposition(cmp)
 	if err != nil {
 		return fmt.Errorf(" treeindex.ProcessComposition error: %w", err)
 	}
 
-	data, err := msgpack.Marshal(node)
+	groupAccess := s.groupAccessSvc.Default()
+
+	nodeEncrypted, err := treeindex.ExecNode(node, func(node *treeindex.DataValueNode) error {
+		return treeindex.EncryptDataValueNode(node, groupAccess.Key, groupAccess.Nonce)
+	})
+	if err != nil {
+		return fmt.Errorf("treeindex.encryptDataValueNode error: %w", err)
+	}
+
+	data, err := msgpack.Marshal(nodeEncrypted)
 	if err != nil {
 		return fmt.Errorf("msgpack.Marshal(ehrNode) error: %w", err)
 	}
@@ -577,7 +586,7 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		return fmt.Errorf("data compressinon error: %w", err)
 	}
 
-	txHash, err := s.indexer.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
+	txHash, err := s.indexer.DataUpdate(ctx, groupAccess.UUID, dataIndexUUID, ehrUUID, compressed)
 	if err != nil {
 		return fmt.Errorf("Index.DataUpdate error: %w", err)
 	}
