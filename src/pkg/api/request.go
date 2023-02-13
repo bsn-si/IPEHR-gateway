@@ -23,21 +23,21 @@ func NewRequestHandler(docService *service.DefaultDocumentService) *RequestHandl
 }
 
 // GetAll
-// @Summary      Get list of transactions requests by authorized user
-// @Description  It is returning only transactions which in progress
-// @Description
-// @Tags     REQUEST
-// @Accept   json
-// @Produce  json
-// @Param    Authorization  header    string  true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true  "UserId UUID"
-// @Param    limit          query     string  true  "default: 10"
-// @Param    offset         query     string  true  "id namespace. Example: examples"
-// @Success  200            {object}  processing.RequestsResult
-// @Failure  400            "Is returned when userID is empty"
-// @Failure  404            "Is returned when requests not exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /requests/ [get]
+//	@Summary		Get list of transactions requests by authorized user
+//	@Description	It is returning only transactions which in progress
+//	@Description
+//	@Tags		REQUEST
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header		string	true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string	true	"UserId"
+//	@Param		limit			query		string	true	"default: 10"
+//	@Param		offset			query		string	true	"id namespace. Example: examples"
+//	@Success	200				{object}	processing.RequestsResult
+//	@Failure	400				"Is returned when userID is empty"
+//	@Failure	404				"Is returned when requests not exist"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/requests/ [get]
 func (h RequestHandler) GetAll(c *gin.Context) {
 	reqLimit := c.Query("limit")
 	reqOffset := c.DefaultQuery("offset", "0")
@@ -73,20 +73,20 @@ func (h RequestHandler) GetAll(c *gin.Context) {
 }
 
 // GetByID
-// @Summary      Get list of transactions by certain request id for authorized user
-// @Description  It's returning only transactions which in progress
-// @Description
-// @Tags     REQUEST
-// @Accept   json
-// @Produce  json
-// @Param    Authorization  header    string  true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true  "UserId UUID"
-// @Param    request_id     path      string  true  "Unique id of request"
-// @Success  200            {object}  processing.RequestResult
-// @Failure  400            "Is returned when userID or request_id is empty"
-// @Failure  404            "Is returned when requests not exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /requests/{request_id} [get]
+//	@Summary		Get list of transactions by certain request id for authorized user
+//	@Description	It's returning only transactions which in progress
+//	@Description
+//	@Tags		REQUEST
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header		string	true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string	true	"UserId"
+//	@Param		request_id		path		string	true	"Unique id of request"
+//	@Success	200				{object}	processing.RequestResult
+//	@Failure	400				"Is returned when userID or request_id is empty"
+//	@Failure	404				"Is returned when requests not exist"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/requests/{request_id} [get]
 func (h RequestHandler) GetByID(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {

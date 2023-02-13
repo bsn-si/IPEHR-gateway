@@ -26,19 +26,19 @@ func NewDocAccessHandler(docService *service.DefaultDocumentService) *DocAccessH
 	}
 }
 
-// List
-// @Summary      Get a document access list
-// @Description  Returns the list of documents available to the user
-// @Tags         ACCESS
-// @Accept       json
-// @Produce      json
-// @Param        Authorization  header    string                       true   "Bearer AccessToken"
-// @Param        AuthUserId     header    string                       true   "UserId UUID"
-// @Param        EhrSystemId    header    string                       false  "The identifier of the system, typically a reverse domain identifier"
-// @Success      200            {object}  model.DocAccessListResponse  ""
-// @Failure      400            "Is returned when the request has invalid content."
-// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /access/document/ [get]
+//	List
+//	@Summary		Get a document access list
+//	@Description	Returns the list of documents available to the user
+//	@Tags			ACCESS
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization	header		string						true	"Bearer AccessToken"
+//	@Param			AuthUserId		header		string						true	"UserId"
+//	@Param			EhrSystemId		header		string						false	"The identifier of the system, typically a reverse domain identifier"
+//	@Success		200				{object}	model.DocAccessListResponse	""
+//	@Failure		400				"Is returned when the request has invalid content."
+//	@Failure		500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router			/access/document/ [get]
 func (h *DocAccessHandler) List(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -59,21 +59,21 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 }
 
 // Set
-// @Summary      Set user access to the document
-// @Description  Sets access to the document with the specified CID for the user with the userID.
-// @Description  Possible access levels: `owner`, `admin`, `read`, `noAccess`
-// @Tags         ACCESS
-// @Accept       json
-// @Produce      json
-// @Param        Authorization  header  string                     true   "Bearer AccessToken"
-// @Param        AuthUserId     header  string                     true   "UserId UUID"
-// @Param        EhrSystemId    header  string                     false  "The identifier of the system, typically a reverse domain identifier"
-// @Param        Request        body    model.DocAccessSetRequest  true   "DTO with data to create group access"
-// @Success      200            "Indicates that the request to change the level of access to the document was successfully created"
-// @Failure      400            "Is returned when the request has invalid content."
-// @Failure      404            "Is returned when the userID for which access is set is not found "
-// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
-// @Router       /access/document [post]
+//@Summary		Set user access to the document
+//@Description	Sets access to the document with the specified CID for the user with the userID.
+//@Description	Possible access levels: `owner`, `admin`, `read`, `noAccess`
+//@Tags			ACCESS
+//@Accept			json
+//@Produce		json
+//@Param			Authorization	header	string						true	"Bearer AccessToken"
+//@Param			AuthUserId		header	string						true	"UserId"
+//@Param			EhrSystemId		header	string						false	"The identifier of the system, typically a reverse domain identifier"
+//@Param			Request			body	model.DocAccessSetRequest	true	"DTO with data to create group access"
+//@Success		200				"Indicates that the request to change the level of access to the document was successfully created"
+//@Failure		400				"Is returned when the request has invalid content."
+//@Failure		404				"Is returned when the userID for which access is set is not found "
+//@Failure		500				"Is returned when an unexpected error occurs while processing a request"
+//@Router			/access/document [post]
 func (h *DocAccessHandler) Set(c *gin.Context) {
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {

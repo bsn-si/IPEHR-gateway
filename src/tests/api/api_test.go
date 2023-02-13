@@ -35,7 +35,7 @@ type TestData struct {
 
 var (
 	ciRun        = flag.Bool("ci_run", false, "set true to use external server address")
-	serverAddres = flag.String("server_address", "http://localhost:8080", "exteranl test server address")
+	serverAddres = flag.String("server_address", "http://localhost:8080", "external test server address")
 )
 
 type testWrap struct {
@@ -46,9 +46,11 @@ type testWrap struct {
 }
 
 func TestMain(m *testing.M) {
+	flag.Parse()
+
 	close := func() {}
 
-	if *ciRun {
+	if !*ciRun {
 		testServer, storager, err := prepareTest()
 		if err != nil {
 			log.Fatal(err)
@@ -210,6 +212,10 @@ func Test_API(t *testing.T) {
 		t.Fatal()
 	}
 
+	if !t.Run("DEFINITION Store a invalid query", testWrap.definitionStoreInvalidQuery(testData)) {
+		t.Fatal()
+	}
+
 	if !t.Run("DEFINITION Store a query", testWrap.definitionStoreQuery(testData)) {
 		t.Fatal()
 	}
@@ -239,6 +245,10 @@ func Test_API(t *testing.T) {
 	}
 
 	if !t.Run("DEFINITION Template14 list stored", testWrap.definitionTemplate14List(testData)) {
+		t.Fatal()
+	}
+
+	if !t.Run("QUERY execute with GET Expected success with correct query", testWrap.queryExecSuccess(testData)) {
 		t.Fatal()
 	}
 

@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -40,22 +41,23 @@ func NewQueryHandler(queryService QueryService, baseURL string) *QueryHandler {
 }
 
 // ExecPostQuery
-// @Summary      Execute ad-hoc (non-stored) AQL query
-// @Description  Execute ad-hoc query, supplied by q attribute, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.
-// @Description  See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
-// @Description
-// @Tags     QUERY
-// @Accept   json
-// @Produce  json
-// @Param    Authorization  header    string              true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string              true  "UserId UUID"
-// @Param    Request        body      model.QueryRequest  true  "Query Request"
-// @Success  200            {object}  model.QueryResponse
-// @Header   201            {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
-// @Failure  400            "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
-// @Failure  408            "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /query/aql [post]
+//
+//	@Summary		Execute ad-hoc (non-stored) AQL query
+//	@Description	Execute ad-hoc query, supplied by q attribute, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.
+//	@Description	See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
+//	@Description
+//	@Tags		QUERY
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header		string				true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string				true	"UserId"
+//	@Param		Request			body		model.QueryRequest	true	"Query Request"
+//	@Success	200				{object}	model.QueryResponse
+//	@Header		201				{string}	ETag	"A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+//	@Failure	400				"Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
+//	@Failure	408				"Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/query/aql [post]
 func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 	req := model.QueryRequest{
 		QueryParameters: map[string]interface{}{},
@@ -68,15 +70,145 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 	}
 	defer c.Request.Body.Close()
 
-	if !req.Validate() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(c.Request.Context(), common.QueryExecutionTimeout)
-	defer cancel()
+	resp, err := h.service.ExecQuery(c.Request.Context(), &req)
+	if err != nil {
+		log.Printf("cannot exec query: %v", err)
 
-	c.Request = c.Request.WithContext(ctx)
+		if errors.Is(err, errors.ErrTimeout) {
+			c.JSON(http.StatusRequestTimeout, gin.H{"error": "timeout exceeded"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// ExecGetQuery
+//
+//	@Summary		Execute ad-hoc AQL query
+//	@Description	Execute a given ad-hoc AQL query, supplied by {q} parameter, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.
+//	@Description	See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
+//	@Description
+//	@Tags		QUERY
+//	@Accept		json
+//	@Produce	json
+//	@Param		Authorization	header		string				true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string				true	"UserId"
+//	@Param		Request			body		model.QueryRequest	true	"Query Request"
+//	@Param			ehr_id					query		string	false	"An optional parameter to execute the query within an EHR context."
+//	@Param			q					query		string	false	"AQL. Example: {q=SELECT e/ehr_id/value, c/context/start_time/value as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp} The AQL query to be executed."
+//	@Param			offset					query		string	false	"The row number in result-set to start result-set from (0-based), default is 0."
+//	@Param			fetch					query		string	false	"Number of rows to fetch (the default depends on the implementation)."
+//	@Param			query_parameters		query		any		false	"Query parameters (can appear multiple times). Example: {ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&systolic_bp=140}"
+//	@Success	200				{object}	model.QueryResponse
+//	@Failure	400				"Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
+//	@Failure	408				"Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/query/aql [post]
+func (h QueryHandler) ExecGetQuery(c *gin.Context) {
+	req := model.QueryRequest{
+		QueryParameters: map[string]interface{}{},
+	}
+	m := map[string]string{}
+
+	if err := c.BindQuery(&m); err != nil {
+		log.Printf("cannot bind query params to map: %f", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		return
+	}
+
+	if _, ok := m["query_parameters"]; ok {
+		qP, err := url.ParseQuery(m["query_parameters"])
+		if err != nil {
+			log.Printf("cannot bind query params to map: %f", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+		}
+
+		for k, v := range qP {
+			m[k] = strings.Join(v, "")
+		}
+
+		delete(m, "query_parameters")
+	}
+
+	for key, val := range m {
+		if key == "q" {
+			req.Query = val
+			log.Printf("q: %s", val)
+
+			continue
+		}
+
+		if key == "ehr_id" {
+			ehrID, err := uuid.Parse(val)
+			if err != nil {
+				log.Printf("cannot parse ehr_id uuid: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
+				return
+			}
+
+			req.QueryParameters["ehr_id"] = ehrID
+
+			continue
+		}
+
+		if key == "offset" {
+			if len(val) == 0 {
+				req.Offset = 0
+
+				continue
+			}
+
+			offset, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'offset' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
+				return
+			}
+
+			if offset < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
+				return
+			}
+
+			req.Offset = offset
+
+			continue
+		}
+
+		if key == "fetch" {
+			fetch, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'fetch' from string: %f", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
+				return
+			}
+
+			if fetch < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
+				return
+			}
+
+			req.Fetch = fetch
+
+			continue
+		}
+
+		req.QueryParameters[key] = val
+	}
+
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
+		return
+	}
 
 	resp, err := h.service.ExecQuery(c.Request.Context(), &req)
 	if err != nil {
@@ -95,27 +227,28 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 }
 
 // Get
-// @Summary      Execute stored AQL
-// @Description  Execute a stored query, identified by the supplied qualified_query_name (at latest version), fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.
-// @Description  See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
-// @Description  Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
-// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
-// @Tags         QUERY
-// @Accept       json
-// @Produce      json
-// @Param        Authorization         header    string  true   "Bearer AccessToken"
-// @Param        AuthUserId            header    string  true   "UserId UUID"
-// @Param        qualified_query_name  path      string              true  "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
-// @Param        ehr_id                                  query  string  false  "An optional parameter to execute the query within an EHR context."
-// @Param        offset                                  query  string  false  "The row number in result-set to start result-set from (0-based), default is 0."
-// @Param        fetch                                   query  string  false  "Number of rows to fetch (the default depends on the implementation)."
-// @Param        query_parameters      query     any     false  "Query parameters (can appear multiple times)."
-// @Success      200                   {object}  model.QueryResponse
-// @Header       200                   {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
-// @Failure      400                   "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
-// @Failure      404                   "Is returned when a stored query with qualified_query_name does not exists."
-// @Failure      408                   "Is returned when there is a query execution timeout"
-// @Router       /query/{qualified_query_name} [get]
+//
+//	@Summary		Execute stored AQL
+//	@Description	Execute a stored query, identified by the supplied qualified_query_name (at latest version), fetching fetch numbers of rows from offset and passing query_parameters to the underlying query engine.
+//	@Description	See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
+//	@Description	Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
+//	@Description	https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
+//	@Tags			QUERY
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization			header		string	true	"Bearer AccessToken"
+//	@Param			AuthUserId				header		string	true	"UserId"
+//	@Param			qualified_query_name	path		string	true	"If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
+//	@Param			ehr_id					query		string	false	"An optional parameter to execute the query within an EHR context."
+//	@Param			offset					query		string	false	"The row number in result-set to start result-set from (0-based), default is 0."
+//	@Param			fetch					query		string	false	"Number of rows to fetch (the default depends on the implementation)."
+//	@Param			query_parameters		query		any		false	"Query parameters (can appear multiple times)."
+//	@Success		200						{object}	model.QueryResponse
+//	@Header			200						{string}	ETag	"A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+//	@Failure		400						"Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
+//	@Failure		404						"Is returned when a stored query with qualified_query_name does not exists."
+//	@Failure		408						"Is returned when there is a query execution timeout"
+//	@Router			/query/{qualified_query_name} [get]
 func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 	userID := c.GetString("userID")
 	systemID := c.GetString("ehrSystemID")
@@ -198,24 +331,25 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 }
 
 // Post
-// @Summary      Execute stored AQL (POST)
-// @Description  Execute a stored query, identified by the supplied {qualified_query_name} (at latest version).
-// @Description  See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
-// @Description  Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
-// @Description  https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
-// @Tags         QUERY
-// @Accept       json
-// @Produce      json
-// @Param        Authorization         header    string              true  "Bearer AccessToken"
-// @Param        AuthUserId            header    string              true  "UserId UUID"
-// @Param        qualified_query_name  path      string  true   "If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
-// @Param        Request               body      model.QueryRequest  true  "Query Request"
-// @Success      200                   {object}  model.QueryResponse
-// @Header       200                   {string}  ETag  "A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
-// @Failure      400                   "Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
-// @Failure      404                   "Is returned when a stored query with qualified_query_name does not exists."
-// @Failure      408                   "Is returned when there is a query execution timeout"
-// @Router       /query/{qualified_query_name} [post]
+//
+//	@Summary		Execute stored AQL (POST)
+//	@Description	Execute a stored query, identified by the supplied {qualified_query_name} (at latest version).
+//	@Description	See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Request/Common-Headers-and-Query-Parameters).
+//	@Description	Queries can be stored or, once stored, their definition can be retrieved using the [definition endpoint](https://specifications.openehr.org/releases/ITS-REST/latest/definition.html#tag/Query).
+//	@Description	https://specifications.openehr.org/releases/ITS-REST/latest/query.html#tag/Query/operation/query_execute_stored_query
+//	@Tags			QUERY
+//	@Accept			json
+//	@Produce		json
+//	@Param			Authorization			header		string				true	"Bearer AccessToken"
+//	@Param			AuthUserId				header		string				true	"UserId"
+//	@Param			qualified_query_name	path		string				true	"If pattern should given be in the format of [{namespace}::]{query-name},  and  when  is       empty,  it       will     be  treated  as    "wildcard"  in       the  search."
+//	@Param			Request					body		model.QueryRequest	true	"Query Request"
+//	@Success		200						{object}	model.QueryResponse
+//	@Header			200						{string}	ETag	"A unique identifier of the resultSet. Example: cdbb5db1-e466-4429-a9e5-bf80a54e120b"
+//	@Failure		400						"Is returned when the server was unable to execute the query due to invalid input, e.g. a required parameter is missing, or at least one of the parameters has invalid syntax"
+//	@Failure		404						"Is returned when a stored query with qualified_query_name does not exists."
+//	@Failure		408						"Is returned when there is a query execution timeout"
+//	@Router			/query/{qualified_query_name} [post]
 func (h QueryHandler) PostExecStoredQuery(c *gin.Context) {
 	userID := c.GetString("userID")
 	systemID := c.GetString("ehrSystemID")

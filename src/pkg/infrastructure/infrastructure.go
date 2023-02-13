@@ -58,7 +58,7 @@ func New(cfg *config.Config) *Infra {
 
 	ks := keystore.New(cfg.KeystoreKey)
 
-	ehtClient, err := ethclient.Dial(cfg.Contract.Endpoint)
+	ethClient, err := ethclient.Dial(cfg.Contract.Endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func New(cfg *config.Config) *Infra {
 		LocalDB:        db,
 		Keystore:       ks,
 		HTTPClient:     http.DefaultClient,
-		EthClient:      ehtClient,
+		EthClient:      ethClient,
 		IpfsClient:     ipfsClient,
 		FilecoinClient: filecoinClient,
 		Index: indexer.New(
@@ -88,7 +88,7 @@ func New(cfg *config.Config) *Infra {
 			cfg.Contract.AddressUsers,
 			cfg.Contract.AddressDataStore,
 			cfg.Contract.PrivKeyPath,
-			ehtClient,
+			ethClient,
 			cfg.Contract.GasTipCap,
 		),
 		LocalStorage:       storage.Storage(),

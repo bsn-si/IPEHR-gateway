@@ -96,6 +96,8 @@ func (m *MultiCallTx) Commit() (string, error) {
 		tx, err = m.index.ehrIndex.Multicall(m.index.transactOpts, m.data)
 	case MulticallUsers:
 		tx, err = m.index.users.Multicall(m.index.transactOpts, m.data)
+	default:
+		return "", fmt.Errorf("%w: unknown kind %d", err, m.kind)
 	}
 
 	if err != nil {

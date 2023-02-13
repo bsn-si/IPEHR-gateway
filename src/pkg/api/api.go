@@ -24,20 +24,20 @@ import (
 	userService "github.com/bsn-si/IPEHR-gateway/src/pkg/user/service"
 )
 
-// @title        IPEHR Gateway API
-// @version      0.2
-// @description  The IPEHR Gateway is an openEHR compliant EHR server implementation that stores encrypted medical data in a Filecoin distributed file storage.
+//	@title			IPEHR Gateway API
+//	@version		0.2
+//	@description	The IPEHR Gateway is an openEHR compliant EHR server implementation that stores encrypted medical data in a Filecoin distributed file storage.
 
-// @contact.name   API Support
-// @contact.url    https://bsn.si/blockchain
-// @contact.email  support@bsn.si
+//	@contact.name	API Support
+//	@contact.url	https://bsn.si/blockchain
+//	@contact.email	support@bsn.si
 
-// @license.name  Apache 2.0
-// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      gateway.ipehr.org
+//	@host		gateway.ipehr.org
 // host      localhost:8080
-// @BasePath  /v1
+//	@BasePath	/v1
 
 type API struct {
 	Ehr         *EhrHandler
@@ -222,6 +222,7 @@ func (a *API) buildQueryAPI() handlerBuilder {
 
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
+		r.GET("/aql", a.Query.ExecGetQuery)
 		r.POST("/aql", a.Query.ExecPostQuery)
 	}
 }

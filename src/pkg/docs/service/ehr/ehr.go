@@ -110,7 +110,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 	{
 		groupIDEncr, err := allDocsGroup.GroupKey.Encrypt(allDocsGroup.GroupID[:])
 		if err != nil {
-			return nil, fmt.Errorf("gallDocsGroupID encryption error: %w", err)
+			return nil, fmt.Errorf("allDocsGroupID encryption error: %w", err)
 		}
 
 		groupNameEncr, err := allDocsGroup.GroupKey.Encrypt([]byte(allDocsGroup.Name))

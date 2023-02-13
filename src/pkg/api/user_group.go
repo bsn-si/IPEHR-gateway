@@ -16,20 +16,20 @@ import (
 )
 
 // Group create
-// @Summary  User group create
-// @Description
-// @Tags     USER_GROUP
-// @Accept   json
-// @Param    Authorization  header    string           true  "Bearer AccessToken"
-// @Param    AuthUserId     header    string           true  "UserId"
-// @Param    Request        body      model.UserGroup  true  "User group"
-// @Success  201            {object}  model.UserGroup  "Indicates that the request has succeeded and transaction about create new user group has been created"
-// @Header   201            {string}  RequestID        "Request identifier"
-// @Failure  400            "The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
-// @Failure  404            "User with ID not exist"
-// @Failure  409            "Group with that Name already exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/group [post]
+//	@Summary	User group create
+//	@Description
+//	@Tags		USER_GROUP
+//	@Accept		json
+//	@Param		Authorization	header		string			true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string			true	"UserId"
+//	@Param		Request			body		model.UserGroup	true	"User group"
+//	@Success	201				{object}	model.UserGroup	"Indicates that the request has succeeded and transaction about create new user group has been created"
+//	@Header		201				{string}	RequestID		"Request identifier"
+//	@Failure	400				"The request could not be understood by the server due to incorrect syntax. The client SHOULD NOT repeat the request without modifications."
+//	@Failure	404				"User with ID not exist"
+//	@Failure	409				"Group with that Name already exist"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/group [post]
 func (h *UserHandler) GroupCreate(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -100,20 +100,20 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 }
 
 // Group get by ID
-// @Summary  Get user group by ID
-// @Description
-// @Tags     USER_GROUP
-// @Produce  json
-// @Param    group_id       path      string  true   "User group identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-// @Param    Authorization  header    string  true   "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true   "UserId"
-// @Param    EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
-// @Success  200            {object}  model.UserGroup
-// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
-// @Failure  403            "Is returned when userID does not have access to requested group"
-// @Failure  404            "Is returned when groupID does not exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/group/{group_id} [get]
+//	@Summary	Get user group by ID
+//	@Description
+//	@Tags		USER_GROUP
+//	@Produce	json
+//	@Param		group_id		path		string	true	"User group identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+//	@Param		Authorization	header		string	true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string	true	"UserId"
+//	@Param		EhrSystemId		header		string	false	"The identifier of the system, typically a reverse domain identifier"
+//	@Success	200				{object}	model.UserGroup
+//	@Failure	400				"The request could not be understood by the server due to incorrect syntax."
+//	@Failure	403				"Is returned when userID does not have access to requested group"
+//	@Failure	404				"Is returned when groupID does not exist"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/group/{group_id} [get]
 func (h *UserHandler) GroupGetByID(c *gin.Context) {
 	gID := c.Param("group_id")
 	if gID == "" {
@@ -154,24 +154,24 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 }
 
 // Group add user
-// @Summary  Adding a user to a group
-// @Description
-// @Tags     USER_GROUP
-// @Accept   json
-// @Param    Authorization  header  string  true   "Bearer AccessToken"
-// @Param    AuthUserId     header  string  true   "UserId"
-// @Param    EhrSystemId    header  string  false  "The identifier of the system, typically a reverse domain identifier"
-// @Param    group_id       path    string  true   "The identifier of the user group"
-// @Param    user_id        path    string  true   "The identifier of the user to be added"
-// @Param    access_level   path    string  true   "Access Level. One of `admin` or `read`"
-// @Success  200            ""
-// @Header   200            {string}  RequestID  "Request identifier"
-// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
-// @Failure  403            "Authentication required or user does not have access to change the group"
-// @Failure  404            "Group or adding user is not exist"
-// @Failure  409            "The user is already a member of a group"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/group/{group_id}/user_add/{user_id}/{access_level} [put]
+//	@Summary	Adding a user to a group
+//	@Description
+//	@Tags		USER_GROUP
+//	@Accept		json
+//	@Param		Authorization	header	string	true	"Bearer AccessToken"
+//	@Param		AuthUserId		header	string	true	"UserId"
+//	@Param		EhrSystemId		header	string	false	"The identifier of the system, typically a reverse domain identifier"
+//	@Param		group_id		path	string	true	"The identifier of the user group"
+//	@Param		user_id			path	string	true	"The identifier of the user to be added"
+//	@Param		access_level	path	string	true	"Access Level. One of `admin` or `read`"
+//	@Success	200				""
+//	@Header		200				{string}	RequestID	"Request identifier"
+//	@Failure	400				"The request could not be understood by the server due to incorrect syntax."
+//	@Failure	403				"Authentication required or user does not have access to change the group"
+//	@Failure	404				"Group or adding user is not exist"
+//	@Failure	409				"The user is already a member of a group"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/group/{group_id}/user_add/{user_id}/{access_level} [put]
 func (h *UserHandler) GroupAddUser(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -230,22 +230,22 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 }
 
 // Group remove user
-// @Summary  Removing a user from a group
-// @Description
-// @Tags     USER_GROUP
-// @Accept   json
-// @Param    Authorization  header  string  true   "Bearer AccessToken"
-// @Param    AuthUserId     header  string  true   "UserId"
-// @Param    EhrSystemId    header  string  false  "The identifier of the system, typically a reverse domain identifier"
-// @Param    group_id       path    string  true   "The identifier of the user group"
-// @Param    user_id        path    string  true   "The identifier of the user to be removed"
-// @Success  200            ""
-// @Header   200            {string}  RequestID  "Request identifier"
-// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
-// @Failure  403            "Authentication required or user does not have access to change the group"
-// @Failure  404            "Group or adding user is not exist or `user_id` is not the member of the group"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/group/{group_id}/user_remove/{user_id} [post]
+//	@Summary	Removing a user from a group
+//	@Description
+//	@Tags		USER_GROUP
+//	@Accept		json
+//	@Param		Authorization	header	string	true	"Bearer AccessToken"
+//	@Param		AuthUserId		header	string	true	"UserId"
+//	@Param		EhrSystemId		header	string	false	"The identifier of the system, typically a reverse domain identifier"
+//	@Param		group_id		path	string	true	"The identifier of the user group"
+//	@Param		user_id			path	string	true	"The identifier of the user to be removed"
+//	@Success	200				""
+//	@Header		200				{string}	RequestID	"Request identifier"
+//	@Failure	400				"The request could not be understood by the server due to incorrect syntax."
+//	@Failure	403				"Authentication required or user does not have access to change the group"
+//	@Failure	404				"Group or adding user is not exist or `user_id` is not the member of the group"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/group/{group_id}/user_remove/{user_id} [post]
 func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -294,18 +294,18 @@ func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
 }
 
 // Group get list
-// @Summary  Get a list of user groups
-// @Description
-// @Tags     USER_GROUP
-// @Produce  json
-// @Param    Authorization  header    string  true   "Bearer AccessToken"
-// @Param    AuthUserId     header    string  true   "UserId"
-// @Param    EhrSystemId    header    string  false  "The identifier of the system, typically a reverse domain identifier"
-// @Success  200            {object}  []model.UserGroup
-// @Failure  400            "The request could not be understood by the server due to incorrect syntax."
-// @Failure  404            "Is returned when groupID does not exist"
-// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
-// @Router   /user/group [get]
+//	@Summary	Get a list of user groups
+//	@Description
+//	@Tags		USER_GROUP
+//	@Produce	json
+//	@Param		Authorization	header		string	true	"Bearer AccessToken"
+//	@Param		AuthUserId		header		string	true	"UserId"
+//	@Param		EhrSystemId		header		string	false	"The identifier of the system, typically a reverse domain identifier"
+//	@Success	200				{object}	[]model.UserGroup
+//	@Failure	400				"The request could not be understood by the server due to incorrect syntax."
+//	@Failure	404				"Is returned when groupID does not exist"
+//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Router		/user/group [get]
 func (h *UserHandler) GroupGetList(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {

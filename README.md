@@ -40,8 +40,8 @@ The solution is being developed with 7 milestones:
 * Development of MH-ORM and structure of storage of medical data - **completed**
 * The functionality of encryption and saving/reading personal data to/from Filecoin - **completed**
 * Access rights management on a blockchain - **completed**
-* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **work in progress**
-* Public data publishing features using the Chainlink network - **delivery**
+* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **delivery**
+* Public data publishing features using the Chainlink network - **completed**
 * Application to manage your own medical data and access - **delivery**
 * Testing, documentation and deployment
 
@@ -132,6 +132,33 @@ List of methods:
 - getUserAccessList - Get a list of documents to which the user has access
 
 For more information see [Milestone 3 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_3)
+
+### Milestone 4
+
+AQL queries are used to search and filter data.
+
+Archetype Query Language (AQL) is a declarative query language developed specifically for expressing queries used for searching and retrieving the clinical data found in archetype-based EHRs.
+
+When new EHR documents are created, the homomorphically encrypted data they contain is placed in a special DataSearch index tree structure located in a blockchain. Indexes are searched using a smart contract. Later selections can be made from this data using AQL queries.
+
+<p align="center">
+  <img width="75%" src="https://user-images.githubusercontent.com/8058268/174270324-1218d6ba-4cf5-497d-b455-cb084b129141.svg">
+</p>
+
+You can find a detailed description of the AQL specification on the openEHR website: <https://specifications.openehr.org/releases/QUERY/latest/AQL.html>
+
+Client applications use AQL data queries, this way platform can be used by the 3rd party applications supporting the standard.
+
+In the process of implementing the ability to execute AQL queries, the following tasks were performed:
+
+1. Index data repository developed: [https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/storage/treeindex](https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/storage/treeindex)
+2. Smart contract for storing index data: [https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/DataStore.sol](https://github.com/bsn-si/IPEHR-blockchain-indexes/blob/develop/contracts/DataStore.sol)
+3. AQL querier(*) - library for parsing an AQL query: [https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/aqlprocessor](https://github.com/bsn-si/IPEHR-gateway/tree/develop/src/pkg/aqlprocessor)
+4. AQL executor(*) - service that searches the index tree for data according to an AQL query: [https://github.com/bsn-si/IPEHR-stat/tree/main/internal/aqlquerier](https://github.com/bsn-si/IPEHR-stat/tree/main/internal/aqlquerier)
+
+On receipt of a request, the IPEHR gateway interprets the request into a set of conditions, which is used to search the DataSearch index structure and returns the result to the requestor as specific values or as links to documents containing the requested data. 
+
+For more information see [Milestone 4 repository](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_4)
 
 ### Milestone 5
 
