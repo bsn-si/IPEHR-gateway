@@ -8,6 +8,7 @@ import (
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
 type QueryRequest struct {
 	Query           string                 `json:"q"`
+	EhrID           string                 `json:"ehr_id"`
 	Offset          int                    `json:"offset"`
 	Fetch           int                    `json:"fetch"`
 	QueryParameters map[string]interface{} `json:"query_parameters"`
