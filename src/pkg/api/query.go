@@ -100,23 +100,23 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 //	@Tags		QUERY
 //	@Accept		json
 //	@Produce	json
-//	@Param		Authorization	header		string				true	"Bearer AccessToken"
-//	@Param		AuthUserId		header		string				true	"UserId"
-//	@Param		Request			body		model.QueryRequest	true	"Query Request"
-//	@Param			ehr_id					query		string	false	"An optional parameter to execute the query within an EHR context."
-//	@Param			q					query		string	false	"AQL. Example: {q=SELECT e/ehr_id/value, c/context/start_time/value as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp} The AQL query to be executed."
-//	@Param			offset					query		string	false	"The row number in result-set to start result-set from (0-based), default is 0."
-//	@Param			fetch					query		string	false	"Number of rows to fetch (the default depends on the implementation)."
-//	@Param			query_parameters		query		any		false	"Query parameters (can appear multiple times). Example: {ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&systolic_bp=140}"
-//	@Success	200				{object}	model.QueryResponse
-//	@Failure	400				"Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
-//	@Failure	408				"Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
-//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
+//	@Param		Authorization	 header		string				true	"Bearer AccessToken"
+//	@Param		AuthUserId		 header		string				true	"UserId"
+//	@Param		Request			 body		model.QueryRequest	true	"Query Request"
+//	@Param		ehr_id			 query		string	false	"An optional parameter to execute the query within an EHR context."
+//	@Param		q				 query		string	false	"AQL. Example: {q=SELECT e/ehr_id/value, c/context/start_time/value as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp} The AQL query to be executed."
+//	@Param		offset			 query		string	false	"The row number in result-set to start result-set from (0-based), default is 0."
+//	@Param		fetch			 query		string	false	"Number of rows to fetch (the default depends on the implementation)."
+//	@Param		query_parameters query		any		false	"Query parameters (can appear multiple times). Example: {ehr_id=7d44b88c-4199-4bad-97dc-d78268e01398&systolic_bp=140}"
+//	@Success	200				 {object}	model.QueryResponse
+//	@Failure	400				 "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
+//	@Failure	408				 "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+//	@Failure	500				 "Is returned when an unexpected error occurs while processing a request"
 //	@Router		/query/aql [post]
 func (h QueryHandler) ExecGetQuery(c *gin.Context) {
-	req := model.QueryRequest{
-		QueryParameters: map[string]interface{}{},
-	}
+	// req := model.QueryRequest{
+	// 	QueryParameters: map[string]interface{}{},
+	// }
 	m := map[string]string{}
 
 	if err := c.BindQuery(&m); err != nil {
@@ -125,92 +125,97 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 		return
 	}
 
-	if _, ok := m["query_parameters"]; ok {
-		qP, err := url.ParseQuery(m["query_parameters"])
-		if err != nil {
-			log.Printf("cannot bind query params to map: %f", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-		}
-
-		for k, v := range qP {
-			m[k] = strings.Join(v, "")
-		}
-
-		delete(m, "query_parameters")
+	req, err := getQueryParamsFromMap(m)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
+	// if _, ok := m["query_parameters"]; ok {
+	// 	qP, err := url.ParseQuery(m["query_parameters"])
+	// 	if err != nil {
+	// 		log.Printf("cannot bind query params to map: %f", err)
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
+	// 	}
 
-	for key, val := range m {
-		if key == "q" {
-			req.Query = val
-			log.Printf("q: %s", val)
+	// 	for k, v := range qP {
+	// 		m[k] = strings.Join(v, "")
+	// 	}
 
-			continue
-		}
+	// 	delete(m, "query_parameters")
+	// }
 
-		if key == "ehr_id" {
-			ehrID, err := uuid.Parse(val)
-			if err != nil {
-				log.Printf("cannot parse ehr_id uuid: %f", err)
-				c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
-				return
-			}
+	// for key, val := range m {
+	// 	if key == "q" {
+	// 		req.Query = val
+	// 		log.Printf("q: %s", val)
 
-			req.QueryParameters["ehr_id"] = ehrID
+	// 		continue
+	// 	}
 
-			continue
-		}
+	// 	if key == "ehr_id" {
+	// 		ehrID, err := uuid.Parse(val)
+	// 		if err != nil {
+	// 			log.Printf("cannot parse ehr_id uuid: %f", err)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
+	// 			return
+	// 		}
 
-		if key == "offset" {
-			if len(val) == 0 {
-				req.Offset = 0
+	// 		req.EhrID = ehrID.String()
 
-				continue
-			}
+	// 		continue
+	// 	}
 
-			offset, err := strconv.Atoi(val)
-			if err != nil {
-				log.Printf("cannot parse 'offset' from string: %f", err)
-				c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
-				return
-			}
+	// 	if key == "offset" {
+	// 		if len(val) == 0 {
+	// 			req.Offset = 0
 
-			if offset < 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
-				return
-			}
+	// 			continue
+	// 		}
 
-			req.Offset = offset
+	// 		offset, err := strconv.Atoi(val)
+	// 		if err != nil {
+	// 			log.Printf("cannot parse 'offset' from string: %f", err)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
+	// 			return
+	// 		}
 
-			continue
-		}
+	// 		if offset < 0 {
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
+	// 			return
+	// 		}
 
-		if key == "fetch" {
-			fetch, err := strconv.Atoi(val)
-			if err != nil {
-				log.Printf("cannot parse 'fetch' from string: %f", err)
-				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
-				return
-			}
+	// 		req.Offset = offset
 
-			if fetch < 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
-				return
-			}
+	// 		continue
+	// 	}
 
-			req.Fetch = fetch
+	// 	if key == "fetch" {
+	// 		fetch, err := strconv.Atoi(val)
+	// 		if err != nil {
+	// 			log.Printf("cannot parse 'fetch' from string: %f", err)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
+	// 			return
+	// 		}
 
-			continue
-		}
+	// 		if fetch < 0 {
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
+	// 			return
+	// 		}
 
-		req.QueryParameters[key] = val
-	}
+	// 		req.Fetch = fetch
+
+	// 		continue
+	// 	}
+
+	// 	req.QueryParameters[key] = val
+	// }
 
 	if err := req.Validate(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
 		return
 	}
 
-	resp, err := h.service.ExecQuery(c.Request.Context(), &req)
+	resp, err := h.service.ExecQuery(c.Request.Context(), req)
 	if err != nil {
 		log.Printf("cannot exec query: %v", err)
 
@@ -263,62 +268,67 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 		return
 	}
 
-	req := &model.QueryRequest{
-		QueryParameters: map[string]interface{}{},
+	req, err := getQueryParamsFromMap(m)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
+	// req := &model.QueryRequest{
+	// 	QueryParameters: map[string]interface{}{},
+	// }
 
-	for key, val := range m {
-		if key == "ehr_id" {
-			ehrID, err := uuid.Parse(val)
-			if err != nil {
-				log.Printf("cannot parse ehr_id uuid: %f", err)
-				c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
-				return
-			}
+	// for key, val := range m {
+	// 	if key == "ehr_id" {
+	// 		ehrID, err := uuid.Parse(val)
+	// 		if err != nil {
+	// 			log.Printf("cannot parse ehr_id uuid: %f", err)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
+	// 			return
+	// 		}
 
-			req.QueryParameters["ehr_id"] = ehrID
+	// 		req.EhrID = ehrID.String()
 
-			continue
-		}
+	// 		continue
+	// 	}
 
-		if key == "offset" {
-			offset, err := strconv.Atoi(val)
-			if err != nil {
-				log.Printf("cannot parse 'offset' from string: %f", err)
-				c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
-				return
-			}
+	// 	if key == "offset" {
+	// 		offset, err := strconv.Atoi(val)
+	// 		if err != nil {
+	// 			log.Printf("cannot parse 'offset' from string: %f", err)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
+	// 			return
+	// 		}
 
-			if offset < 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
-				return
-			}
+	// 		if offset < 0 {
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
+	// 			return
+	// 		}
 
-			req.Offset = offset
+	// 		req.Offset = offset
 
-			continue
-		}
+	// 		continue
+	// 	}
 
-		if key == "fetch" {
-			fetch, err := strconv.Atoi(val)
-			if err != nil {
-				log.Printf("cannot parse 'fetch' from string: %f", err)
-				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
-				return
-			}
+	// 	if key == "fetch" {
+	// 		fetch, err := strconv.Atoi(val)
+	// 		if err != nil {
+	// 			log.Printf("cannot parse 'fetch' from string: %f", err)
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
+	// 			return
+	// 		}
 
-			if fetch < 0 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
-				return
-			}
+	// 		if fetch < 0 {
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
+	// 			return
+	// 		}
 
-			req.Fetch = fetch
+	// 		req.Fetch = fetch
 
-			continue
-		}
+	// 		continue
+	// 	}
 
-		req.QueryParameters[key] = val
-	}
+	// 	req.QueryParameters[key] = val
+	// }
 
 	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, req)
 	if err != nil {
@@ -376,4 +386,84 @@ func (h QueryHandler) PostExecStoredQuery(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
+	req := model.QueryRequest{
+		QueryParameters: map[string]interface{}{},
+	}
+
+	if _, ok := m["query_parameters"]; ok {
+		qP, err := url.ParseQuery(m["query_parameters"])
+		if err != nil {
+			log.Printf("cannot bind query params to map: %f", err)
+			return nil, errors.New("Request body error")
+		}
+
+		for k, v := range qP {
+			m[k] = strings.Join(v, "")
+		}
+
+		delete(m, "query_parameters")
+	}
+
+	for key, val := range m {
+		if key == "q" {
+			req.Query = val
+			continue
+		}
+
+		if key == "ehr_id" {
+			ehrID, err := uuid.Parse(val)
+			if err != nil {
+				log.Printf("cannot parse ehr_id uuid: %f", err)
+				return nil, errors.New("ehr_id bad format")
+			}
+
+			req.EhrID = ehrID.String()
+			continue
+		}
+
+		if key == "offset" {
+			if len(val) == 0 {
+				req.Offset = 0
+
+				continue
+			}
+
+			offset, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'offset' from string: %f", err)
+				return nil, errors.New("offset bad format")
+			}
+
+			if offset < 0 {
+				return nil, errors.New("offset cannot be less than 0")
+			}
+
+			req.Offset = offset
+
+			continue
+		}
+
+		if key == "fetch" {
+			fetch, err := strconv.Atoi(val)
+			if err != nil {
+				log.Printf("cannot parse 'fetch' from string: %f", err)
+				return nil, errors.New("fetch bad format")
+			}
+
+			if fetch < 0 {
+				return nil, errors.New("fetch cannot be less than 0")
+			}
+
+			req.Fetch = fetch
+
+			continue
+		}
+
+		req.QueryParameters[key] = val
+	}
+
+	return &req, nil
 }

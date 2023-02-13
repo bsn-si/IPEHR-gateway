@@ -61,8 +61,8 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 				r := &model.QueryRequest{
 					Offset: 1,
 					Fetch:  10,
+					EhrID:  ehrID.String(),
 					QueryParameters: map[string]interface{}{
-						"ehr_id":    ehrID,
 						"some_val1": "1",
 						"some_val2": "some_str",
 					},
@@ -80,8 +80,8 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 				r := &model.QueryRequest{
 					Offset: 1,
 					Fetch:  10,
+					EhrID:  ehrID.String(),
 					QueryParameters: map[string]interface{}{
-						"ehr_id":    ehrID,
 						"some_val1": "1",
 						"some_val2": "some_str",
 					},
@@ -469,8 +469,8 @@ func TestQueryHandler_ExecGetQuery(t *testing.T) {
 					Query:  "SELECT 1 FROM EHR",
 					Offset: 0,
 					Fetch:  10,
+					EhrID:  ehrID.String(),
 					QueryParameters: map[string]interface{}{
-						"ehr_id":    ehrID,
 						"some_val1": "1",
 						"some_val2": "some_str",
 					},
@@ -493,8 +493,8 @@ func TestQueryHandler_ExecGetQuery(t *testing.T) {
 					Query:  "SELECT 1 FROM EHR",
 					Offset: 0,
 					Fetch:  10,
+					EhrID:  ehrID.String(),
 					QueryParameters: map[string]interface{}{
-						"ehr_id":    ehrID,
 						"some_val1": "1",
 						"some_val2": "some_str",
 					},
@@ -517,8 +517,8 @@ func TestQueryHandler_ExecGetQuery(t *testing.T) {
 					Query:  "SELECT 1 FROM EHR",
 					Offset: 0,
 					Fetch:  10,
+					EhrID:  ehrID.String(),
 					QueryParameters: map[string]interface{}{
-						"ehr_id":    ehrID,
 						"some_val1": "1",
 						"some_val2": "some_str",
 					},
