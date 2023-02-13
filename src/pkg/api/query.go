@@ -272,6 +272,7 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 	for key, val := range m {
 		if key == "q" {
 			req.Query = val
+
 			continue
 		}
 
@@ -283,6 +284,7 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 			}
 
 			req.EhrID = ehrID.String()
+
 			continue
 		}
 
