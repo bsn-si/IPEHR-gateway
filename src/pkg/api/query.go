@@ -114,9 +114,6 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 //	@Failure	500				 "Is returned when an unexpected error occurs while processing a request"
 //	@Router		/query/aql [post]
 func (h QueryHandler) ExecGetQuery(c *gin.Context) {
-	// req := model.QueryRequest{
-	// 	QueryParameters: map[string]interface{}{},
-	// }
 	m := map[string]string{}
 
 	if err := c.BindQuery(&m); err != nil {
@@ -130,85 +127,6 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// if _, ok := m["query_parameters"]; ok {
-	// 	qP, err := url.ParseQuery(m["query_parameters"])
-	// 	if err != nil {
-	// 		log.Printf("cannot bind query params to map: %f", err)
-	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-	// 	}
-
-	// 	for k, v := range qP {
-	// 		m[k] = strings.Join(v, "")
-	// 	}
-
-	// 	delete(m, "query_parameters")
-	// }
-
-	// for key, val := range m {
-	// 	if key == "q" {
-	// 		req.Query = val
-	// 		log.Printf("q: %s", val)
-
-	// 		continue
-	// 	}
-
-	// 	if key == "ehr_id" {
-	// 		ehrID, err := uuid.Parse(val)
-	// 		if err != nil {
-	// 			log.Printf("cannot parse ehr_id uuid: %f", err)
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
-	// 			return
-	// 		}
-
-	// 		req.EhrID = ehrID.String()
-
-	// 		continue
-	// 	}
-
-	// 	if key == "offset" {
-	// 		if len(val) == 0 {
-	// 			req.Offset = 0
-
-	// 			continue
-	// 		}
-
-	// 		offset, err := strconv.Atoi(val)
-	// 		if err != nil {
-	// 			log.Printf("cannot parse 'offset' from string: %f", err)
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
-	// 			return
-	// 		}
-
-	// 		if offset < 0 {
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
-	// 			return
-	// 		}
-
-	// 		req.Offset = offset
-
-	// 		continue
-	// 	}
-
-	// 	if key == "fetch" {
-	// 		fetch, err := strconv.Atoi(val)
-	// 		if err != nil {
-	// 			log.Printf("cannot parse 'fetch' from string: %f", err)
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
-	// 			return
-	// 		}
-
-	// 		if fetch < 0 {
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
-	// 			return
-	// 		}
-
-	// 		req.Fetch = fetch
-
-	// 		continue
-	// 	}
-
-	// 	req.QueryParameters[key] = val
-	// }
 
 	if err := req.Validate(); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error: " + err.Error()})
@@ -273,62 +191,6 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// req := &model.QueryRequest{
-	// 	QueryParameters: map[string]interface{}{},
-	// }
-
-	// for key, val := range m {
-	// 	if key == "ehr_id" {
-	// 		ehrID, err := uuid.Parse(val)
-	// 		if err != nil {
-	// 			log.Printf("cannot parse ehr_id uuid: %f", err)
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "ehr_id bad format"})
-	// 			return
-	// 		}
-
-	// 		req.EhrID = ehrID.String()
-
-	// 		continue
-	// 	}
-
-	// 	if key == "offset" {
-	// 		offset, err := strconv.Atoi(val)
-	// 		if err != nil {
-	// 			log.Printf("cannot parse 'offset' from string: %f", err)
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset bad format"})
-	// 			return
-	// 		}
-
-	// 		if offset < 0 {
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "offset cannot be less than 0"})
-	// 			return
-	// 		}
-
-	// 		req.Offset = offset
-
-	// 		continue
-	// 	}
-
-	// 	if key == "fetch" {
-	// 		fetch, err := strconv.Atoi(val)
-	// 		if err != nil {
-	// 			log.Printf("cannot parse 'fetch' from string: %f", err)
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch bad format"})
-	// 			return
-	// 		}
-
-	// 		if fetch < 0 {
-	// 			c.JSON(http.StatusBadRequest, gin.H{"error": "fetch cannot be less than 0"})
-	// 			return
-	// 		}
-
-	// 		req.Fetch = fetch
-
-	// 		continue
-	// 	}
-
-	// 	req.QueryParameters[key] = val
-	// }
 
 	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, req)
 	if err != nil {
