@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -255,20 +253,6 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 		QueryParameters: map[string]interface{}{},
 	}
 
-	if _, ok := m["query_parameters"]; ok {
-		qP, err := url.ParseQuery(m["query_parameters"])
-		if err != nil {
-			log.Printf("cannot bind query params to map: %f", err)
-			return nil, errors.New("Request body error")
-		}
-
-		for k, v := range qP {
-			m[k] = strings.Join(v, "")
-		}
-
-		delete(m, "query_parameters")
-	}
-
 	for key, val := range m {
 		if key == "q" {
 			req.Query = val
@@ -284,8 +268,6 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 			}
 
 			req.EhrID = ehrID.String()
-
-			continue
 		}
 
 		if key == "offset" {
