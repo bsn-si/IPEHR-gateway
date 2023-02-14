@@ -2,7 +2,6 @@ package api_test
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,23 +16,22 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 			t.Fatal("Created EHR required")
 		}
 
-		user := testData.users[0]
-
-		opts := fmt.Sprintf("&ehr_id=%s&q=%s&fetch=%s&offset=%s&query_parameters=%s",
-			user.ehrID,
-			url.QueryEscape(`SELECT
-			   e/ehr_id/value AS ID
-			FROM EHR e [ehr_id/value=$ehr_id]`),
-			"10",
-			"0",
-			url.QueryEscape("ehr_id="+user.ehrID),
-		)
-
-		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(testWrap.serverURL+"/v1/query/aql?%s", opts), nil)
+		targetUrl := testWrap.serverURL + "/v1/query/aql"
+		request, err := http.NewRequest(http.MethodGet, targetUrl, nil)
 		if err != nil {
 			t.Error(err)
 			return
 		}
+
+		user := testData.users[0]
+		request.URL.Query().Add("ehr_id", user.ehrID)
+
+		query := url.QueryEscape(`SELECT e/ehr_id/value AS ID FROM EHR e [ehr_id/value=$ehr_id]`)
+		request.URL.Query().Add("q", query)
+
+		request.URL.Query().Add("fetch", "10")
+		request.URL.Query().Add("offset", "0")
+		request.URL.Query().Add("ehr_id", user.ehrID)
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", user.id)
