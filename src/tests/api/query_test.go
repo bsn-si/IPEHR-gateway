@@ -23,15 +23,18 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 			return
 		}
 
+		q := request.URL.Query()
+
 		user := testData.users[0]
-		request.URL.Query().Add("ehr_id", user.ehrID)
+		q.Add("ehr_id", user.ehrID)
 
 		query := url.QueryEscape(`SELECT e/ehr_id/value AS ID FROM EHR e [ehr_id/value=$ehr_id]`)
-		request.URL.Query().Add("q", query)
+		q.Add("q", query)
 
-		request.URL.Query().Add("fetch", "10")
-		request.URL.Query().Add("offset", "0")
-		request.URL.Query().Add("ehr_id", user.ehrID)
+		q.Add("fetch", "10")
+		q.Add("offset", "0")
+		q.Add("ehr_id", user.ehrID)
+		request.URL.RawQuery = q.Encode()
 
 		request.Header.Set("Content-type", "application/json")
 		request.Header.Set("AuthUserId", user.id)
