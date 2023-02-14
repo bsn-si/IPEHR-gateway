@@ -16,8 +16,8 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 			t.Fatal("Created EHR required")
 		}
 
-		targetUrl := testWrap.serverURL + "/v1/query/aql"
-		request, err := http.NewRequest(http.MethodGet, targetUrl, nil)
+		targetURL := testWrap.serverURL + "/v1/query/aql"
+		request, err := http.NewRequest(http.MethodGet, targetURL, nil)
 		if err != nil {
 			t.Error(err)
 			return
