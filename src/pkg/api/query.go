@@ -256,7 +256,6 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 	for key, val := range m {
 		if key == "q" {
 			req.Query = val
-
 			continue
 		}
 
@@ -273,7 +272,6 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 		if key == "offset" {
 			if len(val) == 0 {
 				req.Offset = 0
-
 				continue
 			}
 
@@ -288,7 +286,6 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 			}
 
 			req.Offset = offset
-
 			continue
 		}
 
