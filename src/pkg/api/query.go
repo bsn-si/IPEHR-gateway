@@ -286,6 +286,7 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 			}
 
 			req.Offset = offset
+
 			continue
 		}
 
