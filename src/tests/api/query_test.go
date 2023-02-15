@@ -17,6 +17,7 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 		}
 
 		targetURL := testWrap.serverURL + "/v1/query/aql"
+
 		request, err := http.NewRequest(http.MethodGet, targetURL, nil)
 		if err != nil {
 			t.Error(err)
