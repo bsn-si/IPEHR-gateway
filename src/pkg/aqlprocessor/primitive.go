@@ -96,6 +96,10 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				vBig := new(big.Float).SetFloat64(v)
 				pBigFloat := new(big.Float).SetInt(pBig)
 				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
+			case []uint8:
+				vBig := new(big.Int).SetBytes(v)
+				fmt.Printf("vBig: %v pBig: %v\n", vBig, pBig)
+				return compareBigInt(vBig, pBig, cmpSymbl), nil
 			default:
 				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p.Val,p.Type)
 			}
