@@ -12,7 +12,7 @@ type From struct {
 }
 
 type ContainsExpr struct {
-	Operand  any
+	Operand  *ClassExpression
 	Contains []*ContainsExpr
 	Operator *OperatorType
 }
@@ -75,24 +75,26 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 					ce.PathPredicate = &p
 				}
 
-				result.Operand = ce
+				result.Operand = &ce
 			}
-		case *aqlparser.VersionClassExprContext:
-			{
-				vce := VersionClassExpr{}
-				vce.Version = ctx.VERSION().GetText()
-				vce.Variable = toRef(ctx.IDENTIFIER().GetText())
-				if ctx.VersionPredicate() != nil {
-					pp, err := getVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
-					if err != nil {
-						return nil, err
+			/*
+				case *aqlparser.VersionClassExprContext:
+					{
+						vce := VersionClassExpr{}
+						vce.Version = ctx.VERSION().GetText()
+						vce.Variable = toRef(ctx.IDENTIFIER().GetText())
+						if ctx.VersionPredicate() != nil {
+							pp, err := getVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
+							if err != nil {
+								return nil, err
+							}
+
+							vce.VersionPredicate = &pp
+						}
+
+						result.Operand = vce
 					}
-
-					vce.VersionPredicate = &pp
-				}
-
-				result.Operand = vce
-			}
+			*/
 		default:
 			return nil, fmt.Errorf("unexpected ContainsExp operand class: %T", ctx) //nolint
 		}
@@ -124,6 +126,7 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 	return &result, nil
 }
 
+/*
 func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (PathPredicate, error) {
 	sp, err := getStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
 	if err != nil {
@@ -135,3 +138,4 @@ func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (PathPredicate,
 		StandartPredicate: sp,
 	}, nil
 }
+*/

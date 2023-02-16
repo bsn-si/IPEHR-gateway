@@ -33,8 +33,6 @@ func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
 }
 
 func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	log.Printf("%+v", query)
-
 	reqData, err := msgpack.Marshal(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal request body")

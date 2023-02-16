@@ -24,7 +24,7 @@ func TestProcessor_From(t *testing.T) {
 			"SELECT val FROM EHR",
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers: []string{"EHR"},
 					},
 				},
@@ -36,7 +36,7 @@ func TestProcessor_From(t *testing.T) {
 			"SELECT val FROM EHR e",
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers: []string{"EHR", "e"},
 					},
 				},
@@ -49,7 +49,7 @@ func TestProcessor_From(t *testing.T) {
 			"SELECT val FROM EHR e [ehr_id/value=$ehrUid]",
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers: []string{"EHR", "e"},
 						PathPredicate: &PathPredicate{
 							Type: StandartPathPredicate,
@@ -76,13 +76,13 @@ func TestProcessor_From(t *testing.T) {
 			`SELECT val FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.report.v1]`,
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers:   []string{"EHR", "e"},
 						PathPredicate: nil,
 					},
 					Contains: []*ContainsExpr{
 						{
-							Operand: ClassExpression{
+							Operand: &ClassExpression{
 								Identifiers: []string{"COMPOSITION", "c"},
 								PathPredicate: &PathPredicate{
 									Type: ArchetypedPathPredicate,
@@ -103,7 +103,7 @@ func TestProcessor_From(t *testing.T) {
 				CONTAINS COMPOSITION c [openEHR-EHR-COMPOSITION.referral.v1] AND COMPOSITION c1 [openEHR-EHR-COMPOSITION.report.v1]`,
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers: []string{"EHR", "e"},
 					},
 					Contains: []*ContainsExpr{
@@ -111,7 +111,7 @@ func TestProcessor_From(t *testing.T) {
 							Operator: toRef(ANDOperator),
 							Contains: []*ContainsExpr{
 								{
-									Operand: ClassExpression{
+									Operand: &ClassExpression{
 										Identifiers: []string{"COMPOSITION", "c"},
 										PathPredicate: &PathPredicate{
 											Type: ArchetypedPathPredicate,
@@ -122,7 +122,7 @@ func TestProcessor_From(t *testing.T) {
 									},
 								},
 								{
-									Operand: ClassExpression{
+									Operand: &ClassExpression{
 										Identifiers: []string{"COMPOSITION", "c1"},
 										PathPredicate: &PathPredicate{
 											Type: ArchetypedPathPredicate,
@@ -147,12 +147,12 @@ func TestProcessor_From(t *testing.T) {
 					CONTAINS (OBSERVATION o [openEHR-EHR-OBSERVATION.laboratory-hba1c.v1] OR OBSERVATION o1 [openEHR-EHR-OBSERVATION.laboratory-glucose.v1])`,
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers: []string{"EHR", "e"},
 					},
 					Contains: []*ContainsExpr{
 						{
-							Operand: ClassExpression{
+							Operand: &ClassExpression{
 								Identifiers: []string{"COMPOSITION", "c"},
 								PathPredicate: &PathPredicate{
 									Type: ArchetypedPathPredicate,
@@ -168,7 +168,7 @@ func TestProcessor_From(t *testing.T) {
 											Operator: toRef(OROperator),
 											Contains: []*ContainsExpr{
 												{
-													Operand: ClassExpression{
+													Operand: &ClassExpression{
 														Identifiers: []string{"OBSERVATION", "o"},
 														PathPredicate: &PathPredicate{
 															Type: ArchetypedPathPredicate,
@@ -179,7 +179,7 @@ func TestProcessor_From(t *testing.T) {
 													},
 												},
 												{
-													Operand: ClassExpression{
+													Operand: &ClassExpression{
 														Identifiers: []string{"OBSERVATION", "o1"},
 														PathPredicate: &PathPredicate{
 															Type: ArchetypedPathPredicate,
@@ -208,13 +208,13 @@ func TestProcessor_From(t *testing.T) {
 					NOT CONTAINS OBSERVATION o [openEHR-EHR-OBSERVATION.laboratory_test_result.v1]`,
 			From{
 				ContainsExpr: ContainsExpr{
-					Operand: ClassExpression{
+					Operand: &ClassExpression{
 						Identifiers: []string{"EHR", "e"},
 					},
 					Contains: []*ContainsExpr{
 						{
 							Operator: toRef(NOTOperator),
-							Operand: ClassExpression{
+							Operand: &ClassExpression{
 								Identifiers: []string{"COMPOSITION", "c"},
 								PathPredicate: &PathPredicate{
 									Type: ArchetypedPathPredicate,
@@ -225,7 +225,7 @@ func TestProcessor_From(t *testing.T) {
 							},
 							Contains: []*ContainsExpr{
 								{
-									Operand: ClassExpression{
+									Operand: &ClassExpression{
 										Identifiers: []string{"OBSERVATION", "o"},
 										PathPredicate: &PathPredicate{
 											Type: ArchetypedPathPredicate,

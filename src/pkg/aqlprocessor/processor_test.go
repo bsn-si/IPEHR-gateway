@@ -153,7 +153,7 @@ LIMIT 3`,
 				},
 				From: From{
 					ContainsExpr{
-						Operand: ClassExpression{
+						Operand: &ClassExpression{
 							Identifiers: []string{"EHR"},
 							PathPredicate: &PathPredicate{
 								Type: StandartPathPredicate,
@@ -173,7 +173,7 @@ LIMIT 3`,
 						},
 						Contains: []*ContainsExpr{
 							{
-								Operand: ClassExpression{
+								Operand: &ClassExpression{
 									Identifiers: []string{"Observation", "o"},
 									PathPredicate: &PathPredicate{
 										Type: ArchetypedPathPredicate,
