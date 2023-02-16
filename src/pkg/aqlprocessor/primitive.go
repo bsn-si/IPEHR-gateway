@@ -78,7 +78,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				vBig := new(big.Float).SetFloat64(v)
 				return compareBigFloat(vBig, &pBig, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p,p.Type)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p.Val,p.Type)
 			}
 		}
 	case PrimitiveTypeBigInt:
@@ -96,6 +96,8 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				vBig := new(big.Float).SetFloat64(v)
 				pBigFloat := new(big.Float).SetInt(pBig)
 				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
+			default:
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p.Val,p.Type)
 			}
 		}
 	 case PrimitiveTypeString:
