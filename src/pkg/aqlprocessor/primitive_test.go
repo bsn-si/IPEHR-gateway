@@ -21,7 +21,7 @@ func TestProcessor_SelectNull(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "NULL",
-						Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}},
+						Value: &PrimitiveSelectValue{Val: Primitive{Type: PrimitiveTypeNull, Val: nil}},
 					},
 				},
 			},
@@ -172,7 +172,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "0",
-						Value: &PrimitiveSelectValue{Val: Primitive{0}},
+						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeInt, 0}},
 					},
 				},
 			},
@@ -185,7 +185,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "-1",
-						Value: &PrimitiveSelectValue{Val: Primitive{-1}},
+						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeInt, -1}},
 					},
 				},
 			},
@@ -198,7 +198,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "123.5e+10",
-						Value: &PrimitiveSelectValue{Val: Primitive{123.5e+10}},
+						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeFloat64, 123.5e+10}},
 					},
 				},
 			},
@@ -241,7 +241,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'2020-10-11'",
-						Value: &PrimitiveSelectValue{Val: Primitive{date}},
+						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeString, date}},
 					},
 				},
 			},
@@ -254,7 +254,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'23:58:58.123'",
-						Value: &PrimitiveSelectValue{Val: Primitive{timeValue}},
+						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeString, timeValue}},
 					},
 				},
 			},
@@ -267,7 +267,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'2020-10-11T23:58:58.123'",
-						Value: &PrimitiveSelectValue{Val: Primitive{dateTimeValue}},
+						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeString, dateTimeValue}},
 					},
 				},
 			},

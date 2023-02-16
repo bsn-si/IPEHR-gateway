@@ -15,7 +15,18 @@ import (
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
 )
 
+type PrimitiveType byte
+
+const (
+	PrimitiveTypeFloat64 PrimitiveType = iota
+	PrimitiveTypeInt
+	PrimitiveTypeBigInt
+	PrimitiveTypeString
+	PrimitiveTypeNull
+)
+
 type Primitive struct {
+	Type PrimitiveType
 	Val any
 }
 
@@ -95,6 +106,7 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 				return err
 			}
 
+			p.Type = PrimitiveTypeString
 			p.Val = t
 		}
 	case aqlparser.AqlLexerTIME:
@@ -105,6 +117,7 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 				return err
 			}
 
+			p.Type = PrimitiveTypeString
 			p.Val = t
 		}
 	case aqlparser.AqlLexerDATETIME:
@@ -115,11 +128,14 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 				return err
 			}
 
+			p.Type = PrimitiveTypeString
 			p.Val = t
 		}
 	case aqlparser.AqlLexerBOOLEAN:
+		p.Type = PrimitiveTypeString
 		p.Val = strings.ToLower(terminal.String()) == "true"
 	case aqlparser.AqlLexerNULL:
+		p.Type = PrimitiveTypeNull
 		p.Val = nil
 	default:
 		return fmt.Errorf("unexpected PRIMITIVE SYMBOL type: %v", tokenType) //nolint
@@ -135,6 +151,7 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 			return errors.Wrap(err, "cannot unmarshal numeric value")
 		}
 
+		p.Type = PrimitiveTypeInt
 		p.Val = val
 	} else if numeric.SYM_MINUS() != nil {
 		err := p.processNumericPrimitive(numeric.NumericPrimitive().(*aqlparser.NumericPrimitiveContext))
@@ -144,8 +161,10 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 
 		switch val := p.Val.(type) {
 		case int:
+			p.Type = PrimitiveTypeInt
 			p.Val = -val
 		case float64:
+			p.Type = PrimitiveTypeFloat64
 			p.Val = -val
 		default:
 			return errors.New("unexpected primitive value type")
@@ -156,6 +175,7 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 			return errors.Wrap(err, "cannot unmarshal numeric value")
 		}
 
+		p.Type = PrimitiveTypeFloat64
 		p.Val = val
 	}
 
