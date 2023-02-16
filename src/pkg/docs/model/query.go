@@ -40,8 +40,12 @@ func (q *QueryRequest) AqlProcess() error {
 	return err
 }
 
-func (q *QueryRequest) MarshalBinary() ([]byte, error) {
+func (q QueryRequest) MarshalBinary() ([]byte, error) {
 	return msgpack.Marshal(q.QueryParsed)
+}
+
+func (q *QueryRequest) UnmarshalBinary(data []byte) error {
+	return msgpack.Unmarshal(data, q)
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
