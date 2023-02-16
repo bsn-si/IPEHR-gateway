@@ -65,21 +65,29 @@ func encryptTerminal(t *aqlprocessor.Terminal, key *chachaPoly.Key, nonce *chach
 
 	switch val := t.Primitive.Val.(type) {
 	case float64:
+		t.Primitive.Type = aqlprocessor.PrimitiveTypeFloat64
+
 		t.Primitive.Val, err = hm.EncryptFloat64(val, key)
 		if err != nil {
 			return fmt.Errorf("hm.EncryptFloat64 error: %w", err)
 		}
 	case int64:
+		t.Primitive.Type = aqlprocessor.PrimitiveTypeBigInt
+
 		t.Primitive.Val, err = hm.EncryptInt64(val, key)
 		if err != nil {
 			return fmt.Errorf("hm.EncryptInt64 error: %w", err)
 		}
 	case int:
+		t.Primitive.Type = aqlprocessor.PrimitiveTypeBigInt
+
 		t.Primitive.Val, err = hm.EncryptInt64(int64(val), key)
 		if err != nil {
 			return fmt.Errorf("hm.EncryptInt64 error: %w", err)
 		}
 	case string:
+		t.Primitive.Type = aqlprocessor.PrimitiveTypeString
+
 		t.Primitive.Val = hm.EncryptString(val, key, nonce)
 	default:
 		return errors.Errorf("Unsupported value %v type: %T", val, val)
