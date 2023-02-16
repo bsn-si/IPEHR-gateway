@@ -66,7 +66,28 @@ func DecryptInt(x *big.Int, key *Key) (int64, error) {
 // Key must not be nil
 // key[0:4] != []byte{0,0,0,0}
 // Returns x*a + b
-func EncryptFloat64(x float64, key *Key) (float64, error) {
+func EncryptFloat64(x float64, key *Key) (*big.Float, error) {
+	if key == nil {
+		return nil, ErrIncorrectKey
+	}
+
+	if binary.BigEndian.Uint32(key[0:4]) == 0 {
+		return nil, ErrIncorrectKey
+	}
+
+	a := big.NewFloat(float64(binary.BigEndian.Uint32(key[0:4])))
+	b := big.NewFloat(float64(binary.BigEndian.Uint32(key[4:8])))
+
+	xBig := a.Mul(a, big.NewFloat(x))
+	xBig.Add(xBig, b)
+
+	return xBig, nil
+}
+
+// key must not be nil
+// key[0:4] != []byte{0,0,0,0}
+// returs (x - b)/a
+func DecryptFloat(x *big.Float, key *Key) (float64, error) {
 	if key == nil {
 		return 0, ErrIncorrectKey
 	}
@@ -78,33 +99,12 @@ func EncryptFloat64(x float64, key *Key) (float64, error) {
 	a := big.NewFloat(float64(binary.BigEndian.Uint32(key[0:4])))
 	b := big.NewFloat(float64(binary.BigEndian.Uint32(key[4:8])))
 
-	xBig := a.Mul(a, big.NewFloat(x))
-	xBig.Add(xBig, b)
+	x.Sub(x, b)
+	x.Quo(x, a)
 
-	x, acc := xBig.Float64()
-	if acc != 0 {
-		return 0, ErrOverflow
-	}
+	result, _ := x.Float64()
 
-	return x, nil
-}
-
-// key must not be nil
-// key[0:4] != []byte{0,0,0,0}
-// returs (x - b)/a
-func DecryptFloat64(x float64, key *Key) (float64, error) {
-	if key == nil {
-		return 0, ErrIncorrectKey
-	}
-
-	a := float64(binary.BigEndian.Uint32(key[0:4]))
-	b := float64(binary.BigEndian.Uint32(key[4:8]))
-
-	if a == 0 {
-		return 0, ErrIncorrectKey
-	}
-
-	return (x - b) / a, nil
+	return result, nil
 }
 
 // Key or nonce must not be nil

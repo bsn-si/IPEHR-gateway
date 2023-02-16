@@ -65,7 +65,7 @@ func encryptTerminal(t *aqlprocessor.Terminal, key *chachaPoly.Key, nonce *chach
 
 	switch val := t.Primitive.Val.(type) {
 	case float64:
-		t.Primitive.Type = aqlprocessor.PrimitiveTypeFloat64
+		t.Primitive.Type = aqlprocessor.PrimitiveTypeBigFloat
 
 		t.Primitive.Val, err = hm.EncryptFloat64(val, key)
 		if err != nil {

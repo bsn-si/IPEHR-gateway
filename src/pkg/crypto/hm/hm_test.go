@@ -105,12 +105,12 @@ func TestDataEncryption_Float64(t *testing.T) {
 				t.Errorf("EncryptFloat error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			x, err = DecryptFloat64(x, &key)
+			x2, err := DecryptFloat(x, &key)
 			if err != nil {
 				t.Error(err)
 			}
 
-			assert.Equal(t, tt.num, x)
+			assert.Equal(t, tt.num, x2)
 		})
 	}
 }

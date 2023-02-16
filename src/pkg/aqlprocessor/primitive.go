@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"math/big"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -17,10 +18,11 @@ import (
 type PrimitiveType byte
 
 const (
-	PrimitiveTypeFloat64 PrimitiveType = iota
-	PrimitiveTypeInt
+	PrimitiveTypeBigFloat PrimitiveType = iota
 	PrimitiveTypeBigInt
 	PrimitiveTypeString
+	PrimitiveTypeInt 
+	PrimitiveTypeFloat64
 	PrimitiveTypeNull
 )
 
@@ -30,55 +32,83 @@ type Primitive struct {
 }
 
 func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
-	pType := p.Type
+	switch p.Type {
+	case PrimitiveTypeInt:
+		{
+			pVal := p.Val.(int)
 
-	switch p := p.Val.(type) {
-	case int:
-		{
 			switch v := v.(type) {
 			case int:
-				return compare(v, p, cmpSymbl), nil
+				return compare(v, pVal, cmpSymbl), nil
 			case int64:
-				return compare(v, int64(p), cmpSymbl), nil
+				return compare(v, int64(pVal), cmpSymbl), nil
 			case float64:
-				return compare(v, float64(p), cmpSymbl), nil
+				return compare(v, float64(pVal), cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p.Val,p.Type)
 			}
 		}
-	case int64:
+	case PrimitiveTypeFloat64:
 		{
+			pVal := p.Val.(float64)
+
 			switch v := v.(type) {
 			case int:
-				return compare(int64(v), p, cmpSymbl), nil
+				return compare(float64(v), pVal, cmpSymbl), nil
 			case int64:
-				return compare(v, p, cmpSymbl), nil
+				return compare(float64(v), pVal, cmpSymbl), nil
 			case float64:
-				return compare(v, float64(p), cmpSymbl), nil
+				return compare(v, pVal, cmpSymbl), nil
+			default:
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p.Val,p.Type)
 			}
 		}
-	 case float64:
-		 {
+	case PrimitiveTypeBigFloat:
+		{
+			pBig := p.Val.(big.Float)
+
 			switch v := v.(type) {
 			case int:
-				return compare(float64(v), p, cmpSymbl), nil
+				vBig := new(big.Float).SetInt64(int64(v))
+				return compareBigFloat(vBig, &pBig, cmpSymbl), nil
 			case int64:
-				return compare(float64(v), p, cmpSymbl), nil
+				vBig := new(big.Float).SetInt64(v)
+				return compareBigFloat(vBig, &pBig, cmpSymbl), nil
 			case float64:
-				return compare(v, p, cmpSymbl), nil
+				vBig := new(big.Float).SetFloat64(v)
+				return compareBigFloat(vBig, &pBig, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p,p.Type)
 			}
-		 }
-	 case string:
+		}
+	case PrimitiveTypeBigInt:
+		{
+			pBig := new(big.Int).SetBytes(p.Val.([]uint8))
+
+			switch v := v.(type) {
+			case int:
+				vBig := big.NewInt(int64(v))
+				return compareBigInt(vBig, pBig, cmpSymbl), nil
+			case int64:
+				vBig := big.NewInt(v)
+				return compareBigInt(vBig, pBig, cmpSymbl), nil
+			case float64:
+				vBig := new(big.Float).SetFloat64(v)
+				pBigFloat := new(big.Float).SetInt(pBig)
+				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
+			}
+		}
+	 case PrimitiveTypeString:
 		 {
+			pString := p.Val.(string)
+
 			switch v := v.(type) {
 			case string:
-				return compare(v, p, cmpSymbl), nil
+				return compare(v, pString, cmpSymbl), nil
 			}
 		}
 	default:
-		return false, errors.Errorf("Unsupported comparison p=%v(%T) %d", p,p, pType)
+		return false, errors.Errorf("Unsupported comparison p=%v(%T) %d", p,p, p.Type)
 	}
 
 	/*
@@ -104,6 +134,44 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 	}
 	*/
 	return false, errors.ErrIsUnsupported
+}
+
+func compareBigInt(x, y *big.Int, cmpSymbl ComparisionSymbol) bool {
+	switch cmpSymbl {
+	case SymLT:
+		return x.Cmp(y) == -1
+	case SymGT:
+		return x.Cmp(y) == 1
+	case SymLE:
+		return x.Cmp(y) <= 0
+	case SymGE:
+		return x.Cmp(y) >= 0
+	case SymNe:
+		return x.Cmp(y) != 0
+	case SymEQ:
+		return x.Cmp(y) == 0
+	default:
+		return false
+	}
+}
+
+func compareBigFloat(x, y *big.Float, cmpSymbl ComparisionSymbol) bool {
+	switch cmpSymbl {
+	case SymLT:
+		return x.Cmp(y) == -1
+	case SymGT:
+		return x.Cmp(y) == 1
+	case SymLE:
+		return x.Cmp(y) <= 0
+	case SymGE:
+		return x.Cmp(y) >= 0
+	case SymNe:
+		return x.Cmp(y) != 0
+	case SymEQ:
+		return x.Cmp(y) == 0
+	default:
+		return false
+	}
 }
 
 func compare[T constraints.Ordered](x, y T, cmpSymbl ComparisionSymbol) bool {

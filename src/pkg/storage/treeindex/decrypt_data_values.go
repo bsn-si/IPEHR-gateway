@@ -92,9 +92,9 @@ func decryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 		return errors.ErrFieldIsEmpty("DvQuantity.magnitude")
 	}
 
-	newValue, err := hm.DecryptFloat64(magnitudeAttr.(*ValueNode).Data.(float64), key)
+	newValue, err := hm.DecryptFloat(magnitudeAttr.(*ValueNode).Data.(*big.Float), key)
 	if err != nil {
-		return fmt.Errorf("EncryptFloat error: %w %f", err, magnitudeAttr.(*ValueNode).Data.(float64))
+		return fmt.Errorf("EncryptFloat error: %w %f", err, magnitudeAttr.(*ValueNode).Data.(*big.Float))
 	}
 
 	node.Values["magnitude"] = newValueNode(newValue)
@@ -191,8 +191,8 @@ func decryptDvProportion(node *DataValueNode, key *hm.Key) error {
 	switch value := valueAttr.(type) {
 	case *ValueNode:
 		switch f := value.Data.(type) {
-		case float64:
-			newValue, err := hm.DecryptFloat64(f, key)
+		case *big.Float:
+			newValue, err := hm.DecryptFloat(f, key)
 			if err != nil {
 				return fmt.Errorf("DecryptFloat64 error: %w value: %f", err, f)
 			}
