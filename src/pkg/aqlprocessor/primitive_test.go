@@ -324,7 +324,12 @@ func TestPrimitive_Compare(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.prim.Compare(tt.val, tt.cmpSymbl); got != tt.want {
+			got, err := tt.prim.Compare(tt.val, tt.cmpSymbl)
+			if err != nil {
+				t.Errorf("Primitive.Compare() error: %v", err)
+			}
+
+			if got != tt.want {
 				t.Errorf("Primitive.Compare() = %v, want %v", got, tt.want)
 			}
 		})

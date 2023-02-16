@@ -2,7 +2,6 @@ package aqlprocessor
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -30,9 +29,59 @@ type Primitive struct {
 	Val any
 }
 
-func (p Primitive) Compare(val any, cmpSymbl ComparisionSymbol) bool {
+func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
+	switch p:= p.Val.(type) {
+	case int:
+		{
+			switch v := v.(type) {
+			case int:
+				return compare(v, p, cmpSymbl), nil
+			case int64:
+				return compare(v, int64(p), cmpSymbl), nil
+			case float64:
+				return compare(v, float64(p), cmpSymbl), nil
+			default:
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v,v,cmpSymbl,p,p)
+			}
+		}
+	case int64:
+		{
+			switch v := v.(type) {
+			case int:
+				return compare(int64(v), p, cmpSymbl), nil
+			case int64:
+				return compare(v, p, cmpSymbl), nil
+			case float64:
+				return compare(v, float64(p), cmpSymbl), nil
+			}
+		}
+	 case float64:
+		 {
+			switch v := v.(type) {
+			case int:
+				return compare(float64(v), p, cmpSymbl), nil
+			case int64:
+				return compare(float64(v), p, cmpSymbl), nil
+			case float64:
+				return compare(v, p, cmpSymbl), nil
+			default:
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v,v,cmpSymbl,p,p)
+			}
+		 }
+	 case string:
+		 {
+			switch v := v.(type) {
+			case string:
+				return compare(v, p, cmpSymbl), nil
+			}
+		}
+	default:
+		return false, errors.Errorf("Unsupported comparison p=%v(%T)", p,p)
+	}
+
+	/*
 	x := reflect.ValueOf(p.Val)
-	y := reflect.ValueOf(val)
+	y := reflect.ValueOf(v)
 
 	switch {
 	case x.Type() == y.Type():
@@ -51,8 +100,8 @@ func (p Primitive) Compare(val any, cmpSymbl ComparisionSymbol) bool {
 	default:
 		fmt.Printf("x: %v y: %v\n", x.Kind(), y.Kind())
 	}
-
-	return false
+	*/
+	return false, errors.ErrIsUnsupported
 }
 
 func compare[T constraints.Ordered](x, y T, cmpSymbl ComparisionSymbol) bool {
