@@ -23,7 +23,8 @@ func (p Primitive) Compare(val any, cmpSymbl ComparisionSymbol) bool {
 	x := reflect.ValueOf(p.Val)
 	y := reflect.ValueOf(val)
 
-	if x.Type() == y.Type() {
+	switch {
+	case x.Type() == y.Type():
 		switch x.Kind() {
 		case reflect.Int:
 			return compare(val.(int), p.Val.(int), cmpSymbl)
@@ -32,10 +33,12 @@ func (p Primitive) Compare(val any, cmpSymbl ComparisionSymbol) bool {
 		case reflect.String:
 			return compare(val.(string), p.Val.(string), cmpSymbl)
 		}
-	} else if x.Kind() == reflect.Float64 && y.Kind() == reflect.Int {
+	case x.Kind() == reflect.Float64 && y.Kind() == reflect.Int:
 		return compare(float64(val.(int)), p.Val.(float64), cmpSymbl)
-	} else if x.Kind() == reflect.Int && y.Kind() == reflect.Float64 {
+	case x.Kind() == reflect.Int && y.Kind() == reflect.Float64:
 		return compare(val.(float64), float64(p.Val.(int)), cmpSymbl)
+	default:
+		fmt.Printf("x: %v y: %v\n", x.Kind(), y.Kind())
 	}
 
 	return false
