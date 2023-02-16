@@ -21,7 +21,7 @@ func TestProcessor_SelectNull(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "NULL",
-						Value: &PrimitiveSelectValue{Val: Primitive{Type: PrimitiveTypeNull, Val: nil}},
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}},
 					},
 				},
 			},
@@ -172,7 +172,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "0",
-						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeInt, 0}},
+						Value: &PrimitiveSelectValue{Val: Primitive{0}},
 					},
 				},
 			},
@@ -185,7 +185,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "-1",
-						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeInt, -1}},
+						Value: &PrimitiveSelectValue{Val: Primitive{-1}},
 					},
 				},
 			},
@@ -198,7 +198,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "123.5e+10",
-						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeFloat64, 123.5e+10}},
+						Value: &PrimitiveSelectValue{Val: Primitive{123.5e+10}},
 					},
 				},
 			},
@@ -241,7 +241,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'2020-10-11'",
-						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeString, date}},
+						Value: &PrimitiveSelectValue{Val: Primitive{date}},
 					},
 				},
 			},
@@ -254,7 +254,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'23:58:58.123'",
-						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeString, timeValue}},
+						Value: &PrimitiveSelectValue{Val: Primitive{timeValue}},
 					},
 				},
 			},
@@ -267,7 +267,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'2020-10-11T23:58:58.123'",
-						Value: &PrimitiveSelectValue{Val: Primitive{PrimitiveTypeString, dateTimeValue}},
+						Value: &PrimitiveSelectValue{Val: Primitive{dateTimeValue}},
 					},
 				},
 			},
@@ -301,26 +301,26 @@ func TestPrimitive_Compare(t *testing.T) {
 		cmpSymbl ComparisionSymbol
 		want     bool
 	}{
-		{"1. 123 == 123", Primitive{Type: PrimitiveTypeInt, Val: 123}, 123, SymEQ, true},
-		{"2. 123 == 321", Primitive{Type: PrimitiveTypeInt, Val: 123}, 321, SymEQ, false},
-		{"3. 123 != 321", Primitive{Type: PrimitiveTypeInt, Val: 123}, 331, SymNe, true},
-		{"4. 123 > 321", Primitive{Type: PrimitiveTypeInt, Val: 123}, 321, SymGT, true},
-		{"5. 123 >= 321", Primitive{Type: PrimitiveTypeInt, Val: 123}, 331, SymGE, true},
-		{"6. 123 < 100", Primitive{Type: PrimitiveTypeInt, Val: 123}, 100, SymLT, true},
-		{"7. 123 <= 100", Primitive{Type: PrimitiveTypeInt, Val: 123}, 100, SymLE, true},
+		{"1. 123 == 123", Primitive{Val: 123}, 123, SymEQ, true},
+		{"2. 123 == 321", Primitive{Val: 123}, 321, SymEQ, false},
+		{"3. 123 != 321", Primitive{Val: 123}, 331, SymNe, true},
+		{"4. 123 > 321", Primitive{Val: 123}, 321, SymGT, true},
+		{"5. 123 >= 321", Primitive{Val: 123}, 331, SymGE, true},
+		{"6. 123 < 100", Primitive{Val: 123}, 100, SymLT, true},
+		{"7. 123 <= 100", Primitive{Val: 123}, 100, SymLE, true},
 
-		{"8. 123.0 == 123", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 123, SymEQ, true},
-		{"9. 123.0 == 321", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 321, SymEQ, false},
-		{"10. 123.0 != 321", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 331, SymNe, true},
-		{"11. 123.0 > 321", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 321, SymGT, true},
-		{"12. 123.0 >= 321", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 331, SymGE, true},
-		{"13. 123.0 < 100", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 100, SymLT, true},
-		{"14. 123.0 <= 100", Primitive{Type: PrimitiveTypeFloat64, Val: 123.0}, 100, SymLE, true},
+		{"8. 123.0 == 123", Primitive{Val: 123.0}, 123, SymEQ, true},
+		{"9. 123.0 == 321", Primitive{Val: 123.0}, 321, SymEQ, false},
+		{"10. 123.0 != 321", Primitive{Val: 123.0}, 331, SymNe, true},
+		{"11. 123.0 > 321", Primitive{Val: 123.0}, 321, SymGT, true},
+		{"12. 123.0 >= 321", Primitive{Val: 123.0}, 331, SymGE, true},
+		{"13. 123.0 < 100", Primitive{Val: 123.0}, 100, SymLT, true},
+		{"14. 123.0 <= 100", Primitive{Val: 123.0}, 100, SymLE, true},
 
-		{"15. 123 <= 100.1", Primitive{Type: PrimitiveTypeInt, Val: 123}, 100.1, SymLE, true},
-		{"16. 123.1 <= 100.1", Primitive{Type: PrimitiveTypeFloat64, Val: 123.1}, 100.1, SymLE, true},
+		{"15. 123 <= 100.1", Primitive{Val: 123}, 100.1, SymLE, true},
+		{"16. 123.1 <= 100.1", Primitive{Val: 123.1}, 100.1, SymLE, true},
 
-		{`17. "aaa" != "bbb"`, Primitive{Type: PrimitiveTypeString, Val: "aaa"}, "bbb", SymNe, true},
+		{`17. "aaa" != "bbb"`, Primitive{Val: "aaa"}, "bbb", SymNe, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

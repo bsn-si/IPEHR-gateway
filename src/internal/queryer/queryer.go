@@ -3,15 +3,17 @@ package queryer
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/big"
 	"net/http"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 const executeQueryPath = `/query/`
@@ -19,6 +21,12 @@ const executeQueryPath = `/query/`
 type AQLQueryServiceClient struct {
 	statsServiceHost string
 	client           *http.Client
+}
+
+func init() {
+	gob.Register(aqlprocessor.IdentifiedPathSelectValue{})
+	gob.Register(big.Int{})
+	gob.Register(big.Float{})
 }
 
 func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
@@ -33,14 +41,18 @@ func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
 }
 
 func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	reqData, err := msgpack.Marshal(query)
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	//reqData, err := msgpack.Marshal(query)
+	err := enc.Encode(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal request body")
 	}
 
 	url := fmt.Sprintf("%s%s", cli.statsServiceHost, executeQueryPath)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqData))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create new request")
 	}
