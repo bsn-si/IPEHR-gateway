@@ -91,7 +91,7 @@ func encryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 
 	precisionAttr, ok := node.Values["precision"]
 	if ok {
-		newValue, err := hm.EncryptInt(precisionAttr.(*ValueNode).Data.(int64), key)
+		newValue, err := hm.EncryptInt64(precisionAttr.(*ValueNode).Data.(int64), key)
 		if err != nil {
 			return fmt.Errorf("EncryptInt error: %w value: %d", err, precisionAttr.(*ValueNode).Data.(int))
 		}
@@ -133,7 +133,7 @@ func encryptDvDateTime(node *DataValueNode, key *hm.Key) error {
 		return fmt.Errorf("time.Parse error: %w value: %s", err, valueAttr.(*ValueNode).Data.(string))
 	}
 
-	newValue, err := hm.EncryptInt(value.UnixMicro(), key)
+	newValue, err := hm.EncryptInt64(value.UnixMicro(), key)
 	if err != nil {
 		return fmt.Errorf("EncryptInt64 error: %w value: %d", err, value.Unix())
 	}

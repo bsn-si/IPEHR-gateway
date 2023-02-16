@@ -24,7 +24,7 @@ var (
 // Key must not be nil
 // key[0:4] != []byte{0,0,0,0}
 // Returns x*a + b
-func EncryptInt(x int64, key *Key) (*big.Int, error) {
+func EncryptInt64(x int64, key *Key) (*big.Int, error) {
 	if key == nil {
 		return nil, ErrIncorrectKey
 	}

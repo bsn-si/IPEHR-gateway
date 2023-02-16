@@ -33,30 +33,39 @@ func NewService(docService *service.DefaultDocumentService, defaultGroupAccessID
 		log.Fatal(err)
 	}
 
-	service := &Service{
+	svc := &Service{
 		DefaultDocumentService: docService,
 	}
 
-	service.defaultGroupAccess, err = service.Get(context.Background(), defaultUserID, common.EhrSystemID, &groupUUID)
+	svc.defaultGroupAccess, err = svc.Get(context.Background(), defaultUserID, common.EhrSystemID, &groupUUID)
 	if err != nil {
-		if errors.Is(err, errors.ErrIsNotExist) {
+		if errors.Is(err, errors.ErrNotFound) {
 			log.Println("Default access group is not registered.")
+
+			svc.defaultGroupAccess, err = svc.Create(context.Background(), defaultUserID, common.EhrSystemID, &groupUUID)
+			if err != nil {
+				log.Fatal("DefaultGroupAccess create error: ", err)
+			}
 		} else {
 			log.Fatal(err)
 		}
 	}
 
-	return service
+	return svc
 }
 
 func (s *Service) Default() *model.GroupAccess {
 	return s.defaultGroupAccess
 }
 
-func (s *Service) Create(ctx context.Context, userID, systemID string, c *model.GroupAccessCreateRequest) (*model.GroupAccess, error) {
-	groupAccessUUID := uuid.New()
+func (s *Service) Create(ctx context.Context, userID, systemID string, groupAccessUUID *uuid.UUID) (*model.GroupAccess, error) {
+	if groupAccessUUID == nil {
+		u := uuid.New()
+		groupAccessUUID = &u
+	}
+
 	groupAccess := &model.GroupAccess{
-		UUID:  &groupAccessUUID,
+		UUID:  groupAccessUUID,
 		Key:   chachaPoly.GenerateKey(),
 		Nonce: chachaPoly.GenerateNonce(),
 	}
@@ -105,6 +114,10 @@ func (s *Service) Get(ctx context.Context, userID, systemID string, groupAccessU
 
 	keyEncrypted, err := s.Infra.Index.GetKeyEncrypted(ctx, userID, systemID, groupAccessUUID[:], access.GroupAccess)
 	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf("Index.GetGroupAccess error: %w", err)
 	}
 

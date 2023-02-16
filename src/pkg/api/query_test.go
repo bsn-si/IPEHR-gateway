@@ -398,7 +398,18 @@ func TestQueryHandler_ExecGetQuery(t *testing.T) {
 			"0",
 			"10",
 			"",
-			func(svc *mocks.MockQueryService) {},
+			func(svc *mocks.MockQueryService) {
+				r := &model.QueryRequest{
+					Query:  "invalid_query",
+					Offset: 0,
+					Fetch:  10,
+					QueryParameters: map[string]interface{}{
+						"ehr_id": ehrID,
+					},
+				}
+
+				svc.EXPECT().ExecQuery(gomock.Any(), r).Return(nil, errors.Wrap(errors.ErrIncorrectRequest, "some error"))
+			},
 			http.StatusBadRequest,
 			``,
 		},
@@ -551,7 +562,10 @@ func TestQueryHandler_ExecGetQuery(t *testing.T) {
 
 			router := api.setupRouter(api.buildQueryAPI())
 
-			opts := fmt.Sprintf("&ehr_id=%s&q=%s&fetch=%s&offset=%s&query_parameters=%s", tt.ehrID, url.QueryEscape(tt.q), tt.fetch, tt.offset, url.QueryEscape(tt.queryParams))
+			opts := fmt.Sprintf("&ehr_id=%s&q=%s&fetch=%s&offset=%s", tt.ehrID, url.QueryEscape(tt.q), tt.fetch, tt.offset)
+			if tt.queryParams != "" {
+				opts += "&" + tt.queryParams
+			}
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/query/aql?%s", opts), nil)
 			req.Header.Set("Authorization", "Bearer AccessKey")
 			req.Header.Set("AuthUserId", userID)

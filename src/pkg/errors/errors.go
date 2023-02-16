@@ -12,6 +12,7 @@ var (
 	Is     = errors.Is
 	As     = errors.As
 	Wrap   = errors.Wrap
+	Unwrap = errors.Unwrap
 
 	ErrAuthorization       = errors.New("Authorization error")
 	ErrIsNotExist          = errors.New("Object is not exist")

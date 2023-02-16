@@ -53,7 +53,7 @@ func TestDataEncryption_Int64(t *testing.T) {
 			key := Key{}
 			copy(key[:], keyBytes)
 
-			x, err := EncryptInt(tt.num, &key)
+			x, err := EncryptInt64(tt.num, &key)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EncryptInt error = %v, wantErr %v", err, tt.wantErr)
 			}

@@ -1,8 +1,11 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
@@ -11,6 +14,7 @@ type QueryRequest struct {
 	Offset          int                    `json:"offset"`
 	Fetch           int                    `json:"fetch"`
 	QueryParameters map[string]interface{} `json:"query_parameters"`
+	QueryParsed     *aqlprocessor.Query    `json:"-"`
 }
 
 func (q *QueryRequest) Validate() error {
@@ -18,9 +22,26 @@ func (q *QueryRequest) Validate() error {
 		return errors.ErrFieldIsEmpty("query")
 	}
 
-	_, err := aqlprocessor.NewAqlProcessor(q.Query).Process()
+	return nil
+}
 
+func (q *QueryRequest) AqlProcess() error {
+	var err error
+
+	if q.Offset != 0 {
+		q.Query = fmt.Sprintf("%s OFFSET %d", q.Query, q.Offset)
+	}
+
+	if q.Fetch != 0 {
+		q.Query = fmt.Sprintf("%s LIMIT %d", q.Query, q.Fetch)
+	}
+
+	q.QueryParsed, err = aqlprocessor.NewAqlProcessor(q.Query).Process()
 	return err
+}
+
+func (q *QueryRequest) MarshalBinary() ([]byte, error) {
+	return msgpack.Marshal(q.QueryParsed)
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
