@@ -5,7 +5,6 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
@@ -38,14 +37,6 @@ func (q *QueryRequest) AqlProcess() error {
 
 	q.QueryParsed, err = aqlprocessor.NewAqlProcessor(q.Query).Process()
 	return err
-}
-
-func (q QueryRequest) MarshalBinary() ([]byte, error) {
-	return msgpack.Marshal(q.QueryParsed)
-}
-
-func (q *QueryRequest) UnmarshalBinary(data []byte) error {
-	return msgpack.Unmarshal(data, q)
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure

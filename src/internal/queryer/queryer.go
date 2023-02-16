@@ -11,6 +11,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 const executeQueryPath = `/query/`
@@ -32,7 +33,9 @@ func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
 }
 
 func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	reqData, err := query.MarshalBinary()
+	log.Printf("%+v", query)
+
+	reqData, err := msgpack.Marshal(query)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal request body")
 	}
