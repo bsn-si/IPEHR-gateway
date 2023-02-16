@@ -30,7 +30,9 @@ type Primitive struct {
 }
 
 func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
-	switch p:= p.Val.(type) {
+	pType := p.Type
+
+	switch p := p.Val.(type) {
 	case int:
 		{
 			switch v := v.(type) {
@@ -76,7 +78,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 			}
 		}
 	default:
-		return false, errors.Errorf("Unsupported comparison p=%v(%T)", p,p)
+		return false, errors.Errorf("Unsupported comparison p=%v(%T) %d", p,p, pType)
 	}
 
 	/*
