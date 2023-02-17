@@ -575,14 +575,9 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, dataIndexUUID *uuid
 		return fmt.Errorf("treeindex.encryptDataValueNode error: %w", err)
 	}
 
-	ne := treeindex.NodeEnvelope{
-		Type: treeindex.NodeTypeCompostion,
-		Node: nodeEncrypted,
-	}
-
-	data, err := ne.Bytes()
+	data, err := nodeEncrypted.Bytes()
 	if err != nil {
-		return fmt.Errorf("NodeEnvelope.MarshalBinary error: %w", err)
+		return fmt.Errorf("nodeEncrypted.Bytes error: %w", err)
 	}
 
 	compressed, err := s.compressor.Compress(data)

@@ -31,11 +31,8 @@ type Noder interface {
 
 	addAttribute(key string, val Noder)
 	TryGetChild(key string) Noder
-}
-
-type NodeEnvelope struct {
-	Type NodeType
-	Node Noder
+	Bytes() ([]byte, error)
+	FromBytes(data []byte) error
 }
 
 func init() {
@@ -45,30 +42,6 @@ func init() {
 	gob.Register(ValueNode{})
 	gob.Register(SliceNode{})
 	gob.Register(EventContextNode{})
-}
-
-func (ne NodeEnvelope) Bytes() ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-
-	err := enc.Encode(ne)
-	if err != nil {
-		return nil, fmt.Errorf("gob encode error: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func (ne *NodeEnvelope) FromBytes(data []byte) error {
-	var buf = bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
-
-	err := dec.Decode(ne)
-	if err != nil {
-		return fmt.Errorf("gob decode error: %w", err)
-	}
-
-	return nil
 }
 
 type BaseNode struct {
@@ -89,6 +62,30 @@ func (node BaseNode) TryGetChild(key string) Noder {
 	default:
 		return nil
 	}
+}
+
+func (node BaseNode) Bytes() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	err := enc.Encode(node)
+	if err != nil {
+		return nil, fmt.Errorf("gob encode error: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (node *BaseNode) FromBytes(data []byte) error {
+	var buf = bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+
+	err := dec.Decode(node)
+	if err != nil {
+		return fmt.Errorf("gob decode error: %w", err)
+	}
+
+	return nil
 }
 
 type ObjectNode struct {

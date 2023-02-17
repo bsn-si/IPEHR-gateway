@@ -435,14 +435,9 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		return fmt.Errorf("treeindex.ProcessEHR error: %w", err)
 	}
 
-	ne := treeindex.NodeEnvelope{
-		Type: treeindex.NodeTypeEHR,
-		Node: ehrNode,
-	}
-
-	data, err := ne.Bytes()
+	data, err := ehrNode.Bytes()
 	if err != nil {
-		return fmt.Errorf("NodeEnvelope.MarshalBinary error: %w", err)
+		return fmt.Errorf("ehrNode.Bytes error: %w", err)
 	}
 
 	compressed, err := s.Infra.Compressor.Compress(data)
