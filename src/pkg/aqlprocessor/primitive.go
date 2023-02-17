@@ -30,13 +30,7 @@ func (p *Primitive) MarshalMsgpack() ([]byte, error) {
 		return msgpack.Marshal(BigIntWrap{v})
 	}
 
-	str := struct {
-		Val any
-	}{
-		Val: p.Val,
-	}
-
-	return msgpack.Marshal(str)
+	return msgpack.Marshal(struct{Val any}{p.Val})
 }
 
 func (p *Primitive) UnmarshalMsgpack(data []byte) error {
