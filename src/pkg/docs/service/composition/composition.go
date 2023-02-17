@@ -580,7 +580,7 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, dataIndexUUID *uuid
 		Node: nodeEncrypted,
 	}
 
-	data, err := ne.MarshalBinary()
+	data, err := ne.Bytes()
 	if err != nil {
 		return fmt.Errorf("NodeEnvelope.MarshalBinary error: %w", err)
 	}

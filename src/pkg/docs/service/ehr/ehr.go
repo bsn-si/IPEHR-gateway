@@ -440,7 +440,7 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		Node: ehrNode,
 	}
 
-	data, err := ne.MarshalBinary()
+	data, err := ne.Bytes()
 	if err != nil {
 		return fmt.Errorf("NodeEnvelope.MarshalBinary error: %w", err)
 	}

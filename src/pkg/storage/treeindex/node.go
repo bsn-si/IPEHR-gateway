@@ -38,7 +38,16 @@ type NodeEnvelope struct {
 	Node Noder
 }
 
-func (ne NodeEnvelope) MarshalBinary() ([]byte, error) {
+func init() {
+	gob.Register(CompositionNode{})
+	gob.Register(ObjectNode{})
+	gob.Register(DataValueNode{})
+	gob.Register(ValueNode{})
+	gob.Register(SliceNode{})
+	gob.Register(EventContextNode{})
+}
+
+func (ne NodeEnvelope) Bytes() ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 
@@ -48,6 +57,18 @@ func (ne NodeEnvelope) MarshalBinary() ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+func (ne *NodeEnvelope) FromBytes(data []byte) error {
+	var buf = bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+
+	err := dec.Decode(ne)
+	if err != nil {
+		return fmt.Errorf("gob decode error: %w", err)
+	}
+
+	return nil
 }
 
 type BaseNode struct {
