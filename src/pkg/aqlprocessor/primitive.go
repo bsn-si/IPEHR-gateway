@@ -58,34 +58,34 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%d)", v,v,cmpSymbl,p,p)
 			}
 		}
-	case big.Float:
+	case *big.Float:
 		{
 			switch v := v.(type) {
 			case int:
 				vBig := new(big.Float).SetInt64(int64(v))
-				return compareBigFloat(vBig, &p, cmpSymbl), nil
+				return compareBigFloat(vBig, p, cmpSymbl), nil
 			case int64:
 				vBig := new(big.Float).SetInt64(v)
-				return compareBigFloat(vBig, &p, cmpSymbl), nil
+				return compareBigFloat(vBig, p, cmpSymbl), nil
 			case float64:
 				vBig := new(big.Float).SetFloat64(v)
-				return compareBigFloat(vBig, &p, cmpSymbl), nil
+				return compareBigFloat(vBig, p, cmpSymbl), nil
 			default:
 				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v,v,cmpSymbl,p,p)
 			}
 		}
-	case big.Int:
+	case *big.Int:
 		{
 			switch v := v.(type) {
 			case int:
 				vBig := big.NewInt(int64(v))
-				return compareBigInt(vBig, &p, cmpSymbl), nil
+				return compareBigInt(vBig, p, cmpSymbl), nil
 			case int64:
 				vBig := big.NewInt(v)
-				return compareBigInt(vBig, &p, cmpSymbl), nil
+				return compareBigInt(vBig, p, cmpSymbl), nil
 			case float64:
 				vBig := new(big.Float).SetFloat64(v)
-				pBigFloat := new(big.Float).SetInt(&p)
+				pBigFloat := new(big.Float).SetInt(p)
 				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
 			default:
 				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p,p)

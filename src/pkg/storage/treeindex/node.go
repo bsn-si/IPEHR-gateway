@@ -2,7 +2,6 @@ package treeindex
 
 import (
 	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 
@@ -31,17 +30,6 @@ type Noder interface {
 
 	addAttribute(key string, val Noder)
 	TryGetChild(key string) Noder
-	Bytes() ([]byte, error)
-	FromBytes(data []byte) error
-}
-
-func init() {
-	gob.Register(CompositionNode{})
-	gob.Register(ObjectNode{})
-	gob.Register(DataValueNode{})
-	gob.Register(ValueNode{})
-	gob.Register(SliceNode{})
-	gob.Register(EventContextNode{})
 }
 
 type BaseNode struct {
@@ -62,30 +50,6 @@ func (node BaseNode) TryGetChild(key string) Noder {
 	default:
 		return nil
 	}
-}
-
-func (node BaseNode) Bytes() ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-
-	err := enc.Encode(node)
-	if err != nil {
-		return nil, fmt.Errorf("Node gob encode error: %w", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-func (node *BaseNode) FromBytes(data []byte) error {
-	var buf = bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
-
-	err := dec.Decode(node)
-	if err != nil {
-		return fmt.Errorf("Node gob decode error: %w", err)
-	}
-
-	return nil
 }
 
 type ObjectNode struct {
