@@ -32,10 +32,6 @@ func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
 }
 
 func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	j2, _ := json.Marshal(query.QueryParsed)
-
-	fmt.Printf("queryParsed: %s\n", j2)
-
 	data, err := query.Bytes()
 	if err != nil {
 		return nil, fmt.Errorf("query.Bytes() error: %w", err)
