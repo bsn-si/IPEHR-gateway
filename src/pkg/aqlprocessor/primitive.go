@@ -20,44 +20,95 @@ type Primitive struct {
 	Val any
 }
 
-type BigIntWrap struct {
-	Val *big.Int
+type PrimitiveType = uint8
+
+const (
+	PrimitiveTypeInt PrimitiveType = iota
+	PrimitiveTypeFloat64
+	PrimitiveTypeString
+	PrimitiveTypeBigFloat
+	PrimitiveTypeBigInt
+)
+
+type PrimitiveWrap struct {
+	Type PrimitiveType
+	Val any
 }
 
-func (p *Primitive) MarshalMsgpack() ([]byte, error) {
+func (p Primitive) EncodeMsgpack(enc *msgpack.Encoder) error {
 	switch v := p.Val.(type) {
+	case int8:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeInt, int(v)})
+	case int16:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeInt, int(v)})
+	case uint16:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeInt, int(v)})
+	case int32:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeInt, int(v)})
+	case uint32:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeInt, int(v)})
+	case int:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeInt, v})
+	case float64:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeFloat64, v})
 	case *big.Int:
-		return msgpack.Marshal(BigIntWrap{v})
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeBigInt, v})
+	case *big.Float:
+		return enc.Encode(PrimitiveWrap{PrimitiveTypeBigFloat, v})
+	default:
+		return errors.Errorf("Unsupported Primitive.Val type: %T", v)
 	}
-
-	return msgpack.Marshal(struct{Val any}{p.Val})
 }
+
 
 func (p *Primitive) UnmarshalMsgpack(data []byte) error {
-	tmp := struct {
-		Val any
-	}{}
+	var tmp map[string]any
 
-	if err := msgpack.Unmarshal(data, &tmp); err != nil {
-		return err
+	err := msgpack.Unmarshal(data, &tmp)
+	if err != nil {
+		panic(err)
 	}
 
-	switch v := tmp.Val.(type) {
-	case int8:
-		p.Val = int(v)
-	case int16:
-		p.Val = int(v)
-	case uint16:
-		p.Val = int(v)
-	case int32:
-		p.Val = int(v)
-	case uint32:
-		p.Val = int(v)
-	case BigIntWrap:
-		p.Val = v.Val
+	_type, ok := tmp["Type"]
+	if !ok {
+		return errors.New("Unknown type of ContainsExpr")
+	}
+
+	wrap := PrimitiveWrap{}
+
+	switch _type {
+	case PrimitiveTypeInt, PrimitiveTypeFloat64:
+		switch v := tmp["Val"].(type) {
+		case int8:
+			p.Val = int(v)
+		case float64:
+			p.Val = v
+		}
+
+		return nil
+	case PrimitiveTypeString:
+		wrap.Val = ""
+	case PrimitiveTypeBigInt:
+		wrap.Val = []uint8{}
+
+		err = msgpack.Unmarshal(data, &wrap)
+		if err != nil {
+			return errors.New("Primitive unmarshaling error")
+		}
+
+		p.Val = new(big.Int).SetBytes(wrap.Val.([]uint8))
+
+		return nil
 	default:
-		p.Val = tmp.Val
+		return errors.Errorf("Unsupported Primitive type: %d", _type)
 	}
+
+	err = msgpack.Unmarshal(data, &wrap)
+	if err != nil {
+		return errors.New("Primitive unmarshaling error")
+	}
+
+	p.Val = wrap.Val
 
 	return nil
 }
