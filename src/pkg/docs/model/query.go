@@ -12,6 +12,7 @@ import (
 
 func init() {
 	gob.Register(aqlprocessor.IdentifiedPathSelectValue{})
+	gob.Register(aqlprocessor.ClassExpression{})
 	gob.Register(&big.Int{})
 	gob.Register(&big.Float{})
 }
