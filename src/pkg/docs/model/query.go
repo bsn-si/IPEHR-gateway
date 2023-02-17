@@ -12,8 +12,8 @@ import (
 
 func init() {
 	gob.Register(aqlprocessor.IdentifiedPathSelectValue{})
-	gob.Register(big.Int{})
-	gob.Register(big.Float{})
+	gob.Register(&big.Int{})
+	gob.Register(&big.Float{})
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
