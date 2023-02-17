@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
-	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
@@ -436,9 +435,14 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		return fmt.Errorf("treeindex.ProcessEHR error: %w", err)
 	}
 
-	data, err := msgpack.Marshal(ehrNode)
+	ne := treeindex.NodeEnvelope{
+		Type: treeindex.NodeTypeEHR,
+		Node: ehrNode,
+	}
+
+	data, err := ne.MarshalBinary()
 	if err != nil {
-		return fmt.Errorf("msgpack.Marshal(ehrNode) error: %w", err)
+		return fmt.Errorf("NodeEnvelope.MarshalBinary error: %w", err)
 	}
 
 	compressed, err := s.Infra.Compressor.Compress(data)

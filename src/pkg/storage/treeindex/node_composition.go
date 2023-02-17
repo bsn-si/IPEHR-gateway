@@ -42,7 +42,7 @@ func newCompositionNode(cmp *model.Composition) *CompositionNode {
 			ID:       l.ArchetypeNodeID,
 			Type:     l.Type,
 			Name:     l.Name.Value,
-			NodeType: CompostionNodeType,
+			NodeType: NodeTypeCompostion,
 		},
 		Tree:       *NewTree(),
 		Attributes: Attributes{},

@@ -38,19 +38,19 @@ func (nw *NodeWrapper) UnmarshalMsgpack(data []byte) error {
 	}
 
 	switch tmp.NodeType {
-	case ObjectNodeType:
+	case NodeTypeObject:
 		nw.data = &ObjectNode{}
-	case SliceNodeType:
+	case NodeTypeSlice:
 		nw.data = newSliceNode()
-	case DataValueNodeType:
+	case NodeTypeDataValue:
 		nw.data = &DataValueNode{}
-	case ValueNodeType:
+	case NodeTypeValue:
 		nw.data = &ValueNode{}
-	case EHRNodeType:
+	case NodeTypeEHR:
 		nw.data = &EHRNode{}
-	case CompostionNodeType:
+	case NodeTypeCompostion:
 		nw.data = &CompositionNode{}
-	case EventContextNodeType:
+	case NodeTypeEventContext:
 		nw.data = &EventContextNode{}
 	default:
 		return fmt.Errorf("unexpected node type: %v", tmp.NodeType) //nolint

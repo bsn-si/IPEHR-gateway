@@ -25,7 +25,7 @@ func execCompositionData(node *CompositionNode, dataValueExec func(node *DataVal
 		for _, collection := range container {
 			for _, node := range collection {
 				switch node.GetNodeType() {
-				case ObjectNodeType:
+				case NodeTypeObject:
 					err := execObjectNode(node.(*ObjectNode), dataValueExec)
 					if err != nil {
 						return fmt.Errorf("encryptObjectNode error: %w", err)

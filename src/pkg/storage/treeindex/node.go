@@ -2,6 +2,7 @@ package treeindex
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 
@@ -13,14 +14,14 @@ import (
 type NodeType byte
 
 const (
-	NoneNodeType NodeType = iota
-	ObjectNodeType
-	SliceNodeType
-	DataValueNodeType
-	ValueNodeType
-	EHRNodeType
-	CompostionNodeType
-	EventContextNodeType
+	NodeTypeNone NodeType = iota
+	NodeTypeObject
+	NodeTypeSlice
+	NodeTypeDataValue
+	NodeTypeValue
+	NodeTypeEHR
+	NodeTypeCompostion
+	NodeTypeEventContext
 )
 
 type Noder interface {
@@ -30,6 +31,23 @@ type Noder interface {
 
 	addAttribute(key string, val Noder)
 	TryGetChild(key string) Noder
+}
+
+type NodeEnvelope struct {
+	Type NodeType
+	Node Noder
+}
+
+func (ne NodeEnvelope) MarshalBinary() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+
+	err := enc.Encode(ne)
+	if err != nil {
+		return nil, fmt.Errorf("gob encode error: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }
 
 type BaseNode struct {
@@ -244,7 +262,7 @@ func newObjectNode(obj base.Root) Noder {
 			ID:       l.ArchetypeNodeID,
 			Type:     l.Type,
 			Name:     l.Name.Value,
-			NodeType: ObjectNodeType,
+			NodeType: NodeTypeObject,
 		},
 		Attributes: Attributes{
 			"name":              newNode(l.Name),
@@ -256,7 +274,7 @@ func newObjectNode(obj base.Root) Noder {
 func newSliceNode() Noder {
 	return &SliceNode{
 		BaseNode: BaseNode{
-			NodeType: SliceNodeType,
+			NodeType: NodeTypeSlice,
 		},
 		Data: make(Attributes),
 	}
@@ -266,7 +284,7 @@ func newDataValueNode(dv base.DataValue) Noder {
 	return &DataValueNode{
 		BaseNode: BaseNode{
 			Type:     dv.GetType(),
-			NodeType: DataValueNodeType,
+			NodeType: NodeTypeDataValue,
 		},
 		Values: make(Attributes),
 	}
@@ -276,7 +294,7 @@ func nodeForCodePhrase(cp base.CodePhrase) Noder {
 	return &ObjectNode{
 		BaseNode: BaseNode{
 			Type:     cp.Type,
-			NodeType: ObjectNodeType,
+			NodeType: NodeTypeObject,
 		},
 		Attributes: Attributes{
 			"terminology_id": nodeForObjectID(cp.TerminologyID),
@@ -290,7 +308,7 @@ func nodeForObjectID(objectID base.ObjectID) Noder {
 	return &ValueNode{
 		BaseNode: BaseNode{
 			Type:     objectID.Type,
-			NodeType: ValueNodeType,
+			NodeType: NodeTypeValue,
 		},
 		Data: objectID.Value,
 	}
@@ -299,7 +317,7 @@ func nodeForObjectID(objectID base.ObjectID) Noder {
 func newValueNode(val any) Noder {
 	return &ValueNode{
 		BaseNode: BaseNode{
-			NodeType: ValueNodeType,
+			NodeType: NodeTypeValue,
 		},
 		Data: val,
 	}

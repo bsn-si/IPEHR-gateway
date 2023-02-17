@@ -31,7 +31,7 @@ func Test_processComposition(t *testing.T) {
 					ID:       "openEHR-EHR-COMPOSITION.health_summary.v1",
 					Type:     base.CompositionItemType,
 					Name:     "International Patient Summary",
-					NodeType: CompostionNodeType,
+					NodeType: NodeTypeCompostion,
 				},
 				Tree: *NewTree(),
 				Attributes: Attributes{
@@ -61,7 +61,7 @@ func Test_processComposition(t *testing.T) {
 					})),
 					"context": &EventContextNode{
 						BaseNode: BaseNode{
-							NodeType: EventContextNodeType,
+							NodeType: NodeTypeEventContext,
 						},
 						Attributes: Attributes{
 							"start_time": newNode(&base.DvDateTime{
