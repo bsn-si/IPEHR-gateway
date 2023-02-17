@@ -99,6 +99,22 @@ func (p *Primitive) UnmarshalMsgpack(data []byte) error {
 		p.Val = new(big.Int).SetBytes(wrap.Val.([]uint8))
 
 		return nil
+	case PrimitiveTypeBigFloat:
+		switch v := tmp["Val"].(type) {
+		case []uint8:
+			fmt.Printf("!!! %v", v)
+
+			bigF := new(big.Float)
+
+			err = bigF.UnmarshalText(v)
+			if err != nil {
+				return fmt.Errorf("big.Float UnmarshalText error: %w", err)
+			}
+
+			p.Val = bigF
+		}
+
+		return nil
 	default:
 		return errors.Errorf("Unsupported Primitive type: %d", _type)
 	}
