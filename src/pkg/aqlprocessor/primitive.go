@@ -16,19 +16,27 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-type PrimitiveType byte
-
-const (
-	PrimitiveTypeBigFloat PrimitiveType = iota
-	PrimitiveTypeBigInt
-	PrimitiveTypeString
-	PrimitiveTypeInt 
-	PrimitiveTypeFloat64
-	PrimitiveTypeNull
-)
-
 type Primitive struct {
 	Val any
+}
+
+type BigIntWrap struct {
+	Val *big.Int
+}
+
+func (p *Primitive) MarshalMsgpack() ([]byte, error) {
+	switch v := p.Val.(type) {
+	case *big.Int:
+		return msgpack.Marshal(BigIntWrap{v})
+	}
+
+	str := struct {
+		Val any
+	}{
+		Val: p.Val,
+	}
+
+	return msgpack.Marshal(str)
 }
 
 func (p *Primitive) UnmarshalMsgpack(data []byte) error {
@@ -51,6 +59,8 @@ func (p *Primitive) UnmarshalMsgpack(data []byte) error {
 		p.Val = int(v)
 	case uint32:
 		p.Val = int(v)
+	case BigIntWrap:
+		p.Val = v.Val
 	default:
 		p.Val = tmp.Val
 	}
@@ -130,28 +140,6 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 		return false, errors.Errorf("Unsupported comparison p=%v (%T)", p,p)
 	}
 
-	/*
-	x := reflect.ValueOf(p.Val)
-	y := reflect.ValueOf(v)
-
-	switch {
-	case x.Type() == y.Type():
-		switch x.Kind() {
-		case reflect.Int:
-			return compare(val.(int), p.Val.(int), cmpSymbl)
-		case reflect.Float64:
-			return compare(val.(float64), p.Val.(float64), cmpSymbl)
-		case reflect.String:
-			return compare(val.(string), p.Val.(string), cmpSymbl)
-		}
-	case x.Kind() == reflect.Float64 && y.Kind() == reflect.Int:
-		return compare(float64(val.(int)), p.Val.(float64), cmpSymbl)
-	case x.Kind() == reflect.Int && y.Kind() == reflect.Float64:
-		return compare(val.(float64), float64(p.Val.(int)), cmpSymbl)
-	default:
-		fmt.Printf("x: %v y: %v\n", x.Kind(), y.Kind())
-	}
-	*/
 	return false, errors.ErrIsUnsupported
 }
 
