@@ -1,21 +1,12 @@
 package model
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
-	"math/big"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 )
-
-func init() {
-	gob.Register(aqlprocessor.IdentifiedPathSelectValue{})
-	gob.Register(aqlprocessor.ClassExpression{})
-	gob.Register(&big.Int{})
-	gob.Register(&big.Float{})
-}
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
 type QueryRequest struct {
@@ -50,24 +41,18 @@ func (q *QueryRequest) AqlProcess() error {
 }
 
 func (q QueryRequest) Bytes() ([]byte, error) {
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-
-	err := enc.Encode(q)
+	data, err := msgpack.Marshal(q)
 	if err != nil {
-		return nil, fmt.Errorf("QueryRequest gob encode error: %w", err)
+		return nil, fmt.Errorf("QueryRequest Marshal error: %w", err)
 	}
 
-	return buf.Bytes(), nil
+	return data, nil
 }
 
 func (q *QueryRequest) FromBytes(data []byte) error {
-	var buf = bytes.NewBuffer(data)
-	dec := gob.NewDecoder(buf)
-
-	err := dec.Decode(q)
+	err := msgpack.Unmarshal(data, q)
 	if err != nil {
-		return fmt.Errorf("QueryRequest gob decode error: %w", err)
+		return fmt.Errorf("QueryRequest Unmarshal error: %w", err)
 	}
 
 	return nil

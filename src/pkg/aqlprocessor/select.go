@@ -5,6 +5,7 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Select struct {
@@ -17,6 +18,22 @@ type SelectExpr struct {
 	Path      string
 	AliasName string
 }
+
+type SelectValueWrap struct {
+	Type      uint8
+	Value     any
+	Path      string
+	AliasName string
+}
+
+type SelectValueType = uint8
+
+const (
+	SelectValueTypeIdentifiedPath SelectValueType = iota
+	SelectValueTypePrimitive
+	SelectValueAggregateFunction
+	SelectValueFunctionCall
+)
 
 type SelectValuer interface{}
 
@@ -32,6 +49,70 @@ type AggregateFunctionCallSelectValue struct {
 }
 
 type FunctionCallSelectValue struct {
+}
+
+func (se SelectExpr) EncodeMsgpack(enc *msgpack.Encoder) error {
+	var _type SelectValueType
+
+	switch se.Value.(type) {
+	case *IdentifiedPathSelectValue:
+		_type = SelectValueTypeIdentifiedPath
+	case *PrimitiveSelectValue:
+		_type = SelectValueTypePrimitive
+	case *AggregateFunctionCallSelectValue:
+		//TODO
+	case *FunctionCallSelectValue:
+		//TODO
+	default:
+		return errors.Errorf("Unsupported SelectExpr.Value type: %T", se.Value)
+	}
+
+	return enc.Encode(SelectValueWrap{
+		Type:      _type,
+		Path:      se.Path,
+		AliasName: se.AliasName,
+		Value:     se.Value,
+	})
+}
+
+func (se *SelectExpr) UnmarshalMsgpack(data []byte) error {
+	var tmp map[string]any
+
+	err := msgpack.Unmarshal(data, &tmp)
+	if err != nil {
+		panic(err)
+	}
+
+	_type, ok := tmp["Type"]
+	if !ok {
+		return errors.New("Unknown type of SelectExpr")
+	}
+
+	wrap := SelectValueWrap{}
+
+	switch _type {
+	case SelectValueTypeIdentifiedPath:
+		wrap.Value = &IdentifiedPathSelectValue{}
+	case SelectValueTypePrimitive:
+		wrap.Value = &PrimitiveSelectValue{}
+	case SelectValueAggregateFunction:
+		wrap.Value = &AggregateFunctionCallSelectValue{}
+	case SelectValueFunctionCall:
+		wrap.Value = &FunctionCallSelectValue{}
+	default:
+		return errors.Errorf("Unsupported SelectValueType: %d", _type)
+	}
+
+	err = msgpack.Unmarshal(data, &wrap)
+	if err != nil {
+		return errors.New("SelectExpr unmarshaling error")
+	}
+
+	se.Path = wrap.Path
+	se.AliasName = wrap.AliasName
+	se.Value = wrap.Value
+
+	return nil
 }
 
 func getSelect(ctx *aqlparser.SelectClauseContext) (*Select, error) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type From struct {
@@ -16,6 +17,20 @@ type ContainsExpr struct {
 	Contains []*ContainsExpr
 	Operator *OperatorType
 }
+
+type ContainsExprWrap struct {
+	Type     OperandType
+	Operand  any
+	Contains []*ContainsExpr
+	Operator *OperatorType
+}
+
+type OperandType = uint8
+
+const (
+	OperandTypeClassExpression OperandType = iota
+	OperandTypeVersionClassExpr
+)
 
 type OperatorType string
 
@@ -35,6 +50,62 @@ type VersionClassExpr struct {
 	Version          string
 	Variable         *string
 	VersionPredicate *PathPredicate
+}
+
+func (ce ContainsExpr) EncodeMsgpack(enc *msgpack.Encoder) error {
+	var _type OperandType
+
+	switch ce.Operand.(type) {
+	case *ClassExpression:
+		_type = OperandTypeClassExpression
+	case *VersionClassExpr:
+		_type = OperandTypeVersionClassExpr
+	default:
+		return errors.Errorf("Unsupported ContainsExpr.Operand type: %T", ce.Operand)
+	}
+
+	return enc.Encode(ContainsExprWrap{
+		Type:     _type,
+		Operand:  ce.Operand,
+		Contains: ce.Contains,
+		Operator: ce.Operator,
+	})
+}
+
+func (ce *ContainsExpr) UnmarshalMsgpack(data []byte) error {
+	var tmp map[string]any
+
+	err := msgpack.Unmarshal(data, &tmp)
+	if err != nil {
+		panic(err)
+	}
+
+	_type, ok := tmp["Type"]
+	if !ok {
+		return errors.New("Unknown type of ContainsExpr")
+	}
+
+	wrap := ContainsExprWrap{}
+
+	switch _type {
+	case OperandTypeClassExpression:
+		wrap.Operand = &ClassExpression{}
+	case OperandTypeVersionClassExpr:
+		wrap.Operand = &VersionClassExpr{}
+	default:
+		return errors.Errorf("Unsupported ContainsExprType: %d", _type)
+	}
+
+	err = msgpack.Unmarshal(data, &wrap)
+	if err != nil {
+		return errors.New("ContainsExpr unmarshaling error")
+	}
+
+	ce.Operand = wrap.Operand
+	ce.Contains = wrap.Contains
+	ce.Operator = wrap.Operator
+
+	return nil
 }
 
 func getFrom(ctx *aqlparser.FromExprContext) (From, error) {

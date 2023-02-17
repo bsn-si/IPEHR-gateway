@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/constraints"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type PrimitiveType byte
@@ -28,6 +29,33 @@ const (
 
 type Primitive struct {
 	Val any
+}
+
+func (p *Primitive) UnmarshalMsgpack(data []byte) error {
+	tmp := struct {
+		Val any
+	}{}
+
+	if err := msgpack.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+
+	switch v := tmp.Val.(type) {
+	case int8:
+		p.Val = int(v)
+	case int16:
+		p.Val = int(v)
+	case uint16:
+		p.Val = int(v)
+	case int32:
+		p.Val = int(v)
+	case uint32:
+		p.Val = int(v)
+	default:
+		p.Val = tmp.Val
+	}
+
+	return nil
 }
 
 func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
@@ -88,7 +116,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				pBigFloat := new(big.Float).SetInt(p)
 				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%d)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v,v,cmpSymbl,p,p)
 			}
 		}
 	 case string:
