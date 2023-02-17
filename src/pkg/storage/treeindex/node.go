@@ -70,7 +70,7 @@ func (node BaseNode) Bytes() ([]byte, error) {
 
 	err := enc.Encode(node)
 	if err != nil {
-		return nil, fmt.Errorf("gob encode error: %w", err)
+		return nil, fmt.Errorf("Node gob encode error: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -82,7 +82,7 @@ func (node *BaseNode) FromBytes(data []byte) error {
 
 	err := dec.Decode(node)
 	if err != nil {
-		return fmt.Errorf("gob decode error: %w", err)
+		return fmt.Errorf("Node gob decode error: %w", err)
 	}
 
 	return nil
