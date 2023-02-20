@@ -7,7 +7,6 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 type NodeType byte
@@ -145,70 +144,6 @@ func (node *DataValueNode) addAttribute(key string, val Noder) {
 	node.Values[key] = val
 }
 
-type ValueNode struct {
-	BaseNode
-	Data any
-}
-
-func (node ValueNode) GetData() any {
-	return node.Data
-}
-
-func (node ValueNode) GetID() string {
-	return ""
-}
-
-func (node ValueNode) TryGetChild(key string) Noder {
-	n := node.BaseNode.TryGetChild(key)
-	if n != nil {
-		return n
-	}
-
-	return nil
-}
-
-func (node *ValueNode) addAttribute(key string, val Noder) {
-	noderInstance, ok := node.Data.(Noder)
-	if !ok {
-		return
-	}
-
-	noderInstance.addAttribute(key, val)
-}
-
-func (node ValueNode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(node.Data)
-}
-
-func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
-	tmp := struct {
-		BaseNode
-		Data any
-	}{}
-
-	if err := msgpack.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-
-	node.BaseNode = tmp.BaseNode
-	switch v := tmp.Data.(type) {
-	case int8:
-		node.Data = int(v)
-	case int16:
-		node.Data = int(v)
-	case uint16:
-		node.Data = int(v)
-	case int32:
-		node.Data = int(v)
-	case uint32:
-		node.Data = int(v)
-	default:
-		node.Data = tmp.Data
-	}
-
-	return nil
-}
-
 func newNode(obj any) Noder {
 	switch obj := obj.(type) {
 	case *model.EHR:
@@ -293,14 +228,5 @@ func nodeForObjectID(objectID base.ObjectID) Noder {
 			NodeType: NodeTypeValue,
 		},
 		Data: objectID.Value,
-	}
-}
-
-func newValueNode(val any) Noder {
-	return &ValueNode{
-		BaseNode: BaseNode{
-			NodeType: NodeTypeValue,
-		},
-		Data: val,
 	}
 }

@@ -2,10 +2,10 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
-	"math/big"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -23,7 +23,8 @@ type Primitive struct {
 type PrimitiveType = uint8
 
 const (
-	PrimitiveTypeInt PrimitiveType = iota
+	PrimitiveTypeNone PrimitiveType = iota
+	PrimitiveTypeInt
 	PrimitiveTypeFloat64
 	PrimitiveTypeString
 	PrimitiveTypeBigFloat
@@ -32,7 +33,7 @@ const (
 
 type PrimitiveWrap struct {
 	Type PrimitiveType
-	Val any
+	Val  any
 }
 
 func (p Primitive) EncodeMsgpack(enc *msgpack.Encoder) error {
@@ -60,7 +61,6 @@ func (p Primitive) EncodeMsgpack(enc *msgpack.Encoder) error {
 	}
 }
 
-
 func (p *Primitive) UnmarshalMsgpack(data []byte) error {
 	var tmp map[string]any
 
@@ -71,60 +71,42 @@ func (p *Primitive) UnmarshalMsgpack(data []byte) error {
 
 	_type, ok := tmp["Type"]
 	if !ok {
-		return errors.New("Unknown type of ContainsExpr")
+		return errors.ErrFieldIsEmpty("Type")
 	}
 
-	wrap := PrimitiveWrap{}
+	value, ok := tmp["Val"]
+	if !ok {
+		return errors.ErrFieldIsEmpty("Val")
+	}
 
 	switch _type {
-	case PrimitiveTypeInt, PrimitiveTypeFloat64:
-		switch v := tmp["Val"].(type) {
+	case PrimitiveTypeInt, PrimitiveTypeFloat64, PrimitiveTypeString:
+		switch v := value.(type) {
 		case int8:
 			p.Val = int(v)
 		case float64:
 			p.Val = v
+		case string:
+			p.Val = v
 		}
-
-		return nil
-	case PrimitiveTypeString:
-		wrap.Val = ""
 	case PrimitiveTypeBigInt:
-		wrap.Val = []uint8{}
-
-		err = msgpack.Unmarshal(data, &wrap)
-		if err != nil {
-			return errors.New("Primitive unmarshaling error")
-		}
-
-		p.Val = new(big.Int).SetBytes(wrap.Val.([]uint8))
-
-		return nil
-	case PrimitiveTypeBigFloat:
-		switch v := tmp["Val"].(type) {
+		switch v := value.(type) {
 		case []uint8:
-			fmt.Printf("!!! %v", v)
+			p.Val = new(big.Int).SetBytes(v)
+		}
+	case PrimitiveTypeBigFloat:
+		switch v := value.(type) {
+		case []uint8:
+			p.Val = big.NewFloat(0)
 
-			bigF := new(big.Float)
-
-			err = bigF.UnmarshalText(v)
+			err = p.Val.(*big.Float).UnmarshalText(v)
 			if err != nil {
 				return fmt.Errorf("big.Float UnmarshalText error: %w", err)
 			}
-
-			p.Val = bigF
 		}
-
-		return nil
 	default:
 		return errors.Errorf("Unsupported Primitive type: %d", _type)
 	}
-
-	err = msgpack.Unmarshal(data, &wrap)
-	if err != nil {
-		return errors.New("Primitive unmarshaling error")
-	}
-
-	p.Val = wrap.Val
 
 	return nil
 }
@@ -141,7 +123,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 			case float64:
 				return compare(v, float64(p), cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case float64:
@@ -154,7 +136,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 			case float64:
 				return compare(v, p, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%d)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%d)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case *big.Float:
@@ -170,7 +152,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				vBig := new(big.Float).SetFloat64(v)
 				return compareBigFloat(vBig, p, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case *big.Int:
@@ -187,18 +169,18 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				pBigFloat := new(big.Float).SetInt(p)
 				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v,v,cmpSymbl,p,p)
+				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v, v, cmpSymbl, p, p)
 			}
 		}
-	 case string:
-		 {
+	case string:
+		{
 			switch v := v.(type) {
 			case string:
 				return compare(v, p, cmpSymbl), nil
 			}
 		}
 	default:
-		return false, errors.Errorf("Unsupported comparison p=%v (%T)", p,p)
+		return false, errors.Errorf("Unsupported comparison p=%v (%T)", p, p)
 	}
 
 	return false, errors.ErrIsUnsupported
