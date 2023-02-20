@@ -32,7 +32,7 @@ func DecryptDataValueNode(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) err
 	case base.DvMultimediaItemType:
 		err = decryptDvMultimedia(node, key, nonce)
 	default:
-		fmt.Printf("decryptDataValueNode: unsupported node type: %s\n", node.Type)
+		err = errors.Errorf("decryptDataValueNode: unsupported node type: %s", node.Type)
 	}
 
 	return err

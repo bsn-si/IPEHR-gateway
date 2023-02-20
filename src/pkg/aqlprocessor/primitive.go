@@ -53,7 +53,6 @@ func (p Primitive) EncodeMsgpack(enc *msgpack.Encoder) error {
 	case float64:
 		return enc.Encode(PrimitiveWrap{PrimitiveTypeFloat64, v})
 	case *big.Int:
-		fmt.Printf("p=%x", v.Bytes())
 		return enc.Encode(PrimitiveWrap{PrimitiveTypeBigInt, v.Bytes()})
 	case *big.Float:
 		return enc.Encode(PrimitiveWrap{PrimitiveTypeBigFloat, v})
@@ -94,8 +93,6 @@ func (p *Primitive) UnmarshalMsgpack(data []byte) error {
 		switch v := value.(type) {
 		case []uint8:
 			p.Val = new(big.Int).SetBytes(v)
-			fmt.Printf("v=%x", v)
-			fmt.Println("p.Val=", p.Val)
 		}
 	case PrimitiveTypeBigFloat:
 		switch v := value.(type) {

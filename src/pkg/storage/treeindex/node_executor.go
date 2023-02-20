@@ -14,7 +14,7 @@ func ExecNode(node Noder, dataValueExec func(node *DataValueNode) error) (Noder,
 			return nil, fmt.Errorf("encryptCompositionData error: %w", err)
 		}
 	default:
-		fmt.Printf("EncryptNode: Unsupported type %T", node)
+		return nil, errors.Errorf("EncryptNode: Unsupported type %T", node)
 	}
 
 	return node, nil
@@ -83,7 +83,7 @@ func execObjectNode(nodeObj *ObjectNode, dataValueExec func(node *DataValueNode)
 			return fmt.Errorf("encrypt CLUSTER error: %w", err)
 		}
 	default:
-		fmt.Printf("execObjectNode: unsupported ObjectNode.Type: %s\n", nodeObj.Type)
+		return errors.Errorf("execObjectNode: unsupported ObjectNode.Type: %s", nodeObj.Type)
 	}
 
 	return nil
@@ -111,7 +111,7 @@ func execByAttribute(nodeObj *ObjectNode, attribute string, reqired bool, dataVa
 			return fmt.Errorf("dataValueExec error: %w", err)
 		}
 	default:
-		fmt.Printf("execByAttribute: unsupported attribute type: %T attr: %s\n", attr, attribute)
+		return errors.Errorf("execByAttribute: unsupported attribute type: %T attr: %s", attr, attribute)
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func encryptWalkBySlice(slice *SliceNode, dataValueExec func(node *DataValueNode
 				return fmt.Errorf("encryptObjectNode error: %w", err)
 			}
 		default:
-			fmt.Printf("encryptWalkBySlice: unsupported attribute type: %T\n", node)
+			return errors.Errorf("encryptWalkBySlice: unsupported attribute type: %T", node)
 		}
 	}
 

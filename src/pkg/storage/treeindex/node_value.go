@@ -19,11 +19,12 @@ const (
 
 type ValueNode struct {
 	BaseNode
-	DataType DataType `msgpack:"DataType,omitempty"`
-	Data     any
+	DataType    DataType `msgpack:"DataType,omitempty"`
+	Data        any
+	IsEncrypted bool
 }
 
-func newValueNode(val any) Noder {
+func newValueNode(val any) *ValueNode {
 	var dt DataType
 
 	switch val.(type) {
@@ -128,4 +129,9 @@ func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
 	}
 
 	return nil
+}
+
+func (node *ValueNode) SetEncrypted(val bool) *ValueNode {
+	node.IsEncrypted = val
+	return node
 }

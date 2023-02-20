@@ -31,7 +31,7 @@ func EncryptDataValueNode(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) err
 	case base.DvMultimediaItemType:
 		err = encryptDvMultimedia(node, key, nonce)
 	default:
-		fmt.Printf("encryptDataValueNode: unsupported node type: %s\n", node.Type)
+		return errors.Errorf("encryptDataValueNode: unsupported node type: %s", node.Type)
 	}
 
 	return err
@@ -45,7 +45,7 @@ func encryptDvText(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
 
 	newValue := hm.EncryptString(valueAttr.(*ValueNode).Data.(string), key, nonce)
 
-	node.Values["value"] = newValueNode(newValue)
+	node.Values["value"] = newValueNode(newValue).SetEncrypted(true)
 
 	return nil
 }
@@ -58,7 +58,7 @@ func encryptDvCodedText(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error
 
 	newValue := hm.EncryptString(valueAttr.(*ValueNode).Data.(string), key, nonce)
 
-	node.Values["value"] = newValueNode(newValue)
+	node.Values["value"] = newValueNode(newValue).SetEncrypted(true)
 
 	return nil
 }
@@ -71,7 +71,7 @@ func encryptDvURI(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
 
 	newValue := hm.EncryptString(valueAttr.(*ValueNode).Data.(string), key, nonce)
 
-	node.Values["value"] = newValueNode(newValue)
+	node.Values["value"] = newValueNode(newValue).SetEncrypted(true)
 
 	return nil
 }
@@ -87,7 +87,7 @@ func encryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 		return fmt.Errorf("EncryptFloat error: %w %f", err, magnitudeAttr.(*ValueNode).Data.(float64))
 	}
 
-	node.Values["magnitude"] = newValueNode(newValue)
+	node.Values["magnitude"] = newValueNode(newValue).SetEncrypted(true)
 
 	precisionAttr, ok := node.Values["precision"]
 	if ok {
@@ -96,25 +96,25 @@ func encryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 			return fmt.Errorf("EncryptInt error: %w value: %d", err, precisionAttr.(*ValueNode).Data.(int))
 		}
 
-		node.Values["precision"] = newValueNode(newValue)
+		node.Values["precision"] = newValueNode(newValue).SetEncrypted(true)
 	}
 
 	unitsAttr, ok := node.Values["units"]
 	if ok {
 		newValue := hm.EncryptString(unitsAttr.(*ValueNode).Data.(string), key, nonce)
-		node.Values["units"] = newValueNode(newValue)
+		node.Values["units"] = newValueNode(newValue).SetEncrypted(true)
 	}
 
 	unitsSystemAttr, ok := node.Values["units_system"]
 	if ok {
 		newValue := hm.EncryptString(unitsSystemAttr.(*ValueNode).Data.(string), key, nonce)
-		node.Values["units_system"] = newValueNode(newValue)
+		node.Values["units_system"] = newValueNode(newValue).SetEncrypted(true)
 	}
 
 	unitsDisplayNameAttr, ok := node.Values["units_display_name"]
 	if ok {
 		newValue := hm.EncryptString(unitsDisplayNameAttr.(*ValueNode).Data.(string), key, nonce)
-		node.Values["units_display_name"] = newValueNode(newValue)
+		node.Values["units_display_name"] = newValueNode(newValue).SetEncrypted(true)
 	}
 
 	// todo DvAmount, DvQuantity.NormalRange, DvQuantity.OtherReferenceRanges
@@ -138,7 +138,7 @@ func encryptDvDateTime(node *DataValueNode, key *hm.Key) error {
 		return fmt.Errorf("EncryptInt64 error: %w value: %d", err, value.Unix())
 	}
 
-	node.Values["value"] = newValueNode(newValue)
+	node.Values["value"] = newValueNode(newValue).SetEncrypted(true)
 
 	return nil
 }
@@ -153,7 +153,7 @@ func encryptDvIdentifier(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) erro
 		}
 
 		newValue := hm.EncryptString(valueAttr.(*ValueNode).Data.(string), key, nonce)
-		node.Values[attr] = newValueNode(newValue)
+		node.Values[attr] = newValueNode(newValue).SetEncrypted(true)
 	}
 
 	return nil
@@ -174,7 +174,7 @@ func encryptDvProportion(node *DataValueNode, key *hm.Key) error {
 				return fmt.Errorf("EncryptFloat64 error: %w value: %f", err, f)
 			}
 
-			node.Values["numerator"] = newValueNode(newValue)
+			node.Values["numerator"] = newValueNode(newValue).SetEncrypted(true)
 		default:
 			return errors.Errorf("encryptDvProportion: unsupported numerator.data type: %T", f)
 		}
@@ -197,7 +197,8 @@ func encryptDvMultimedia(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) erro
 
 			value := valueAttr.(*ValueNode).Data.(string)
 			newValue := hm.EncryptString(value, key, nonce)
-			uri.Values["value"] = newValueNode(newValue)
+
+			uri.Values["value"] = newValueNode(newValue).SetEncrypted(true)
 		default:
 			return errors.Errorf("encryptDvMultimedia: unsupported uri type: %T", uri)
 		}

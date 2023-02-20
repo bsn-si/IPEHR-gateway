@@ -270,8 +270,6 @@ func (s *Service) ExecQuery(ctx context.Context, query *model.QueryRequest) (*mo
 
 	groupAccess := s.groupAccessSvc.Default()
 
-	fmt.Printf("key: %x\n", groupAccess.Key.Bytes())
-
 	err = encryptQuery(query.QueryParsed, groupAccess.Key, groupAccess.Nonce)
 	if err != nil {
 		return nil, fmt.Errorf("encryptQuery error: %w", err)
