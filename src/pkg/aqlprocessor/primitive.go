@@ -53,6 +53,7 @@ func (p Primitive) EncodeMsgpack(enc *msgpack.Encoder) error {
 	case float64:
 		return enc.Encode(PrimitiveWrap{PrimitiveTypeFloat64, v})
 	case *big.Int:
+		fmt.Println("p=", v)
 		return enc.Encode(PrimitiveWrap{PrimitiveTypeBigInt, v})
 	case *big.Float:
 		return enc.Encode(PrimitiveWrap{PrimitiveTypeBigFloat, v})
@@ -93,6 +94,7 @@ func (p *Primitive) UnmarshalMsgpack(data []byte) error {
 		switch v := value.(type) {
 		case []uint8:
 			p.Val = new(big.Int).SetBytes(v)
+			fmt.Println("p.Val=", p.Val)
 		}
 	case PrimitiveTypeBigFloat:
 		switch v := value.(type) {
@@ -164,11 +166,9 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 		{
 			switch v := v.(type) {
 			case int:
-				vBig := big.NewInt(int64(v))
-				return compareBigInt(vBig, p, cmpSymbl), nil
+				return compareBigInt(big.NewInt(int64(v)), p, cmpSymbl), nil
 			case int64:
-				vBig := big.NewInt(v)
-				return compareBigInt(vBig, p, cmpSymbl), nil
+				return compareBigInt(big.NewInt(v), p, cmpSymbl), nil
 			case float64:
 				vBig := new(big.Float).SetFloat64(v)
 				pBigFloat := new(big.Float).SetInt(p)
@@ -179,7 +179,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				pBigFloat := new(big.Float).SetInt(p)
 				return compareBigFloat(v, pBigFloat, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%v (%T) %s p=%v(%T)", v, v, cmpSymbl, p, p)
+				return false, errors.Errorf("Unsupported comparison v=%v (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case string:
@@ -211,6 +211,7 @@ func compareBigInt(x, y *big.Int, cmpSymbl ComparisionSymbol) bool {
 	case SymEQ:
 		return x.Cmp(y) == 0
 	default:
+		fmt.Println("Unknown BigInt comparison symbol: ", cmpSymbl)
 		return false
 	}
 }
@@ -230,6 +231,7 @@ func compareBigFloat(x, y *big.Float, cmpSymbl ComparisionSymbol) bool {
 	case SymEQ:
 		return x.Cmp(y) == 0
 	default:
+		fmt.Println("Unknown BigFloat comparison symbol: ", cmpSymbl)
 		return false
 	}
 }
@@ -249,6 +251,7 @@ func compare[T constraints.Ordered](x, y T, cmpSymbl ComparisionSymbol) bool {
 	case SymEQ:
 		return x == y
 	default:
+		fmt.Println("Unknown comparison symbol: ", cmpSymbl)
 		return false
 	}
 }
