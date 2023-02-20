@@ -123,7 +123,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 			case float64:
 				return compare(v, float64(p), cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
+				return false, errors.Errorf("Unsupported comparison v=%v (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case float64:
@@ -136,7 +136,7 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 			case float64:
 				return compare(v, p, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%d)", v, v, cmpSymbl, p, p)
+				return false, errors.Errorf("Unsupported comparison v=%v (%T) %s p=%v (%d)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case *big.Float:
@@ -151,8 +151,13 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 			case float64:
 				vBig := new(big.Float).SetFloat64(v)
 				return compareBigFloat(vBig, p, cmpSymbl), nil
+			case *big.Int:
+				vBigFloat := new(big.Float).SetInt(v)
+				return compareBigFloat(vBigFloat, p, cmpSymbl), nil
+			case *big.Float:
+				return compareBigFloat(v, p, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
+				return false, errors.Errorf("Unsupported comparison v=%v (%T) %s p=%v (%T)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case *big.Int:
@@ -168,8 +173,13 @@ func (p Primitive) Compare(v any, cmpSymbl ComparisionSymbol) (bool, error) {
 				vBig := new(big.Float).SetFloat64(v)
 				pBigFloat := new(big.Float).SetInt(p)
 				return compareBigFloat(vBig, pBigFloat, cmpSymbl), nil
+			case *big.Int:
+				return compareBigInt(v, p, cmpSymbl), nil
+			case *big.Float:
+				pBigFloat := new(big.Float).SetInt(p)
+				return compareBigFloat(v, pBigFloat, cmpSymbl), nil
 			default:
-				return false, errors.Errorf("Unsupported comparison v=%d (%T) %s p=%v(%T)", v, v, cmpSymbl, p, p)
+				return false, errors.Errorf("Unsupported comparison v=%v (%T) %s p=%v(%T)", v, v, cmpSymbl, p, p)
 			}
 		}
 	case string:
