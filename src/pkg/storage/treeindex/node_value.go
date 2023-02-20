@@ -78,8 +78,9 @@ func (node ValueNode) MarshalJSON() ([]byte, error) {
 func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
 	tmp := struct {
 		BaseNode
-		DataType DataType
-		Data     any
+		DataType    DataType
+		Data        any
+		IsEncrypted bool
 	}{}
 
 	if err := msgpack.Unmarshal(data, &tmp); err != nil {
@@ -88,6 +89,7 @@ func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
 
 	node.BaseNode = tmp.BaseNode
 	node.DataType = tmp.DataType
+	node.IsEncrypted = tmp.IsEncrypted
 
 	switch tmp.DataType {
 	case DataTypeBasic:
