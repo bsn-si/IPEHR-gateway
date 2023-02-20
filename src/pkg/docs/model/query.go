@@ -83,3 +83,21 @@ type QueryColumn struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
 }
+
+func (q QueryResponse) Bytes() ([]byte, error) {
+	data, err := msgpack.Marshal(q)
+	if err != nil {
+		return nil, fmt.Errorf("QueryResponse Marshal error: %w", err)
+	}
+
+	return data, nil
+}
+
+func (q *QueryResponse) FromBytes(data []byte) error {
+	err := msgpack.Unmarshal(data, q)
+	if err != nil {
+		return fmt.Errorf("QueryResponse Unmarshal error: %w", err)
+	}
+
+	return nil
+}

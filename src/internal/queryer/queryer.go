@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -67,10 +68,21 @@ func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.Qu
 		}
 	}
 
-	result := &model.QueryResponse{}
-	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-		return nil, errors.Wrap(err, "cannot unmarshal respose body")
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read query response: %w", err)
 	}
+	defer resp.Body.Close()
+
+	result := &model.QueryResponse{}
+
+	err = result.FromBytes(respData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal respose body: %w", err)
+	}
+
+	j, _ := json.Marshal(result)
+	fmt.Println(string(j))
 
 	return result, nil
 }
