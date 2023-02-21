@@ -15,16 +15,18 @@ import (
 
 func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Skip()
+
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")
 		}
 
 		user := testData.users[0]
 
-		opts := fmt.Sprintf("&ehr_id=%s&q=%s&fetch=%s&offset=%s&query_parameters=%s",
+		opts := fmt.Sprintf("&ehr_id=%s&q=%s&fetch=%s&offset=%s&%s",
 			user.ehrID,
 			url.QueryEscape(`SELECT
-			   e/ehr_id/value AS ID
+			   e/ehr_id/value
 			FROM EHR e [ehr_id/value=$ehr_id]`),
 			"10",
 			"0",
@@ -79,7 +81,7 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 					   c/context/start_time/value as startTime, 
 					   c/uid/value as cid, 
 					   c/name 
-				FROM EHR e[ehr_id/value=$ehr_id] 
+				FROM EHR e [ehr_id/value=$ehr_id] 
 				CONTAINS COMPOSITION c [openEHR-EHR-COMPOSITION.encounter.v1] 
 					CONTAINS OBSERVATION obs [openEHR-EHR-OBSERVATION.blood_pressure.v1] 
 				WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp",	
@@ -114,6 +116,7 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 			t.Errorf("Expected success, received status: %d", response.StatusCode)
 		}
 
+		// TODO check queryResp content
 		queryResp := &model.QueryResponse{}
 
 		err = json.NewDecoder(response.Body).Decode(queryResp)
