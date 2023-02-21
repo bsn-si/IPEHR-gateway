@@ -49,7 +49,7 @@ func decryptDvText(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
 		return fmt.Errorf("DecryptString error: %w", err)
 	}
 
-	node.Values["value"] = newValueNode(string(newValue))
+	node.Values["value"] = newValueNode(newValue)
 
 	return nil
 }
@@ -65,7 +65,7 @@ func decryptDvCodedText(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error
 		return fmt.Errorf("DecryptString error: %w", err)
 	}
 
-	node.Values["value"] = newValueNode(string(newValue))
+	node.Values["value"] = newValueNode(newValue)
 
 	return nil
 }
@@ -81,7 +81,7 @@ func decryptDvURI(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error {
 		return fmt.Errorf("DecryptString error: %w", err)
 	}
 
-	node.Values["value"] = newValueNode(string(newValue))
+	node.Values["value"] = newValueNode(newValue)
 
 	return nil
 }
@@ -116,7 +116,7 @@ func decryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 			return fmt.Errorf("DecryptString error: %w", err)
 		}
 
-		node.Values["units"] = newValueNode(string(newValue))
+		node.Values["units"] = newValueNode(newValue)
 	}
 
 	unitsSystemAttr, ok := node.Values["units_system"]
@@ -126,7 +126,7 @@ func decryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 			return fmt.Errorf("DecryptString error: %w", err)
 		}
 
-		node.Values["units_system"] = newValueNode(string(newValue))
+		node.Values["units_system"] = newValueNode(newValue)
 	}
 
 	unitsDisplayNameAttr, ok := node.Values["units_display_name"]
@@ -136,7 +136,7 @@ func decryptDvQuantity(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) error 
 			return fmt.Errorf("DecryptString error: %w", err)
 		}
 
-		node.Values["units_display_name"] = newValueNode(string(newValue))
+		node.Values["units_display_name"] = newValueNode(newValue)
 	}
 
 	// todo DvAmount, DvQuantity.NormalRange, DvQuantity.OtherReferenceRanges
@@ -176,7 +176,7 @@ func decryptDvIdentifier(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) erro
 			return fmt.Errorf("DecryptString error: %w", err)
 		}
 
-		node.Values[attr] = newValueNode(string(newValue))
+		node.Values[attr] = newValueNode(newValue)
 	}
 
 	return nil
@@ -225,7 +225,7 @@ func decryptDvMultimedia(node *DataValueNode, key *hm.Key, nonce *hm.Nonce) erro
 				return fmt.Errorf("DecryptString error: %w", err)
 			}
 
-			uri.Values["value"] = newValueNode(string(newValue))
+			uri.Values["value"] = newValueNode(newValue)
 		default:
 			return errors.Errorf("decryptDvMultimedia: unsupported uri type: %T", uri)
 		}

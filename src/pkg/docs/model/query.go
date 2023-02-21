@@ -58,6 +58,11 @@ func (q *QueryRequest) FromBytes(data []byte) error {
 	return nil
 }
 
+type QueryColumn struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
 type QueryResponse struct {
 	Meta struct {
@@ -71,17 +76,12 @@ type QueryResponse struct {
 	Name    string        `json:"name"`
 	Query   string        `json:"q"`
 	Columns []QueryColumn `json:"columns"`
-	Rows    []interface{} `json:"rows"`
+	Rows    []any         `json:"rows"`
 }
 
 func (q *QueryResponse) Validate() bool {
 	//TODO
 	return true
-}
-
-type QueryColumn struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
 }
 
 func (q QueryResponse) Bytes() ([]byte, error) {

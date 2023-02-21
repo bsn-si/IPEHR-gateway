@@ -130,7 +130,7 @@ func EncryptString(in string, key *Key, nonce *Nonce) (out []byte) {
 
 // Key or nonce must not be nil
 // key[0:4] != []byte{0,0,0,0}
-func DecryptString(in []byte, key *Key, nonce *Nonce) ([]byte, error) {
+func DecryptString(in []byte, key *Key, nonce *Nonce) (string, error) {
 	if key == nil {
 		panic(ErrIncorrectKey)
 	}
@@ -146,8 +146,8 @@ func DecryptString(in []byte, key *Key, nonce *Nonce) ([]byte, error) {
 
 	decrypted, err := aead.Open(nil, nonce[:], in, nil)
 	if err != nil {
-		return nil, fmt.Errorf("aead.Open error: %w", err)
+		return "", fmt.Errorf("aead.Open error: %w", err)
 	}
 
-	return decrypted, nil
+	return string(decrypted), nil
 }

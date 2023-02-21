@@ -277,7 +277,12 @@ func (s *Service) ExecQuery(ctx context.Context, query *model.QueryRequest) (*mo
 
 	resp, err := s.qExec.ExecQuery(ctx, query)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot exec query")
+		return nil, fmt.Errorf("cannot exec query: %w", err)
+	}
+
+	err = decryptQueryResponse(resp, groupAccess.Key, groupAccess.Nonce)
+	if err != nil {
+		return nil, fmt.Errorf("decryptQueryResponse error: %w", err)
 	}
 
 	return resp, nil

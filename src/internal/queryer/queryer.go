@@ -81,8 +81,5 @@ func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.Qu
 		return nil, fmt.Errorf("cannot unmarshal respose body: %w", err)
 	}
 
-	j, _ := json.Marshal(result)
-	fmt.Println(string(j))
-
 	return result, nil
 }
