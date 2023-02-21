@@ -2,13 +2,15 @@ package api_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 )
 
 func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T) {
@@ -59,7 +61,6 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 }
 
 func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testing.T) {
-	// TODO should be realize after AQL inserts will done
 	return func(t *testing.T) {
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")
@@ -67,9 +68,32 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 
 		user := testData.users[0]
 
+		if len(user.compositions) == 0 {
+			t.Fatal("Composition required")
+		}
+
 		url := testWrap.serverURL + "/v1/query/aql"
 
-		request, err := http.NewRequest(http.MethodPost, url, queryExecPostCreateBodyRequest(user.ehrID))
+		req := `{
+		  "q": "SELECT e/ehr_id/value, 
+					   c/context/start_time/value as startTime, 
+					   c/uid/value as cid, 
+					   c/name 
+				FROM EHR e[ehr_id/value=$ehr_id] 
+				CONTAINS COMPOSITION c [openEHR-EHR-COMPOSITION.encounter.v1] 
+					CONTAINS OBSERVATION obs [openEHR-EHR-OBSERVATION.blood_pressure.v1] 
+				WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude >= $systolic_bp",	
+		  "offset": 0,
+		  "fetch": 10,
+		  "query_parameters": {
+			"ehr_id": "` + user.ehrID + `",
+			"systolic_bp": 140
+		  }
+		}`
+		req = strings.ReplaceAll(req, "\n", "")
+		req = strings.ReplaceAll(req, "\t", "")
+
+		request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte(req)))
 		if err != nil {
 			t.Error(err)
 			return
@@ -89,6 +113,14 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 		if response.StatusCode != http.StatusOK {
 			t.Errorf("Expected success, received status: %d", response.StatusCode)
 		}
+
+		queryResp := &model.QueryResponse{}
+
+		err = json.NewDecoder(response.Body).Decode(queryResp)
+		if err != nil {
+			t.Errorf("Query response unmarshaling error: %v", err)
+		}
+		defer response.Body.Close()
 	}
 }
 
@@ -123,9 +155,4 @@ func (testWrap *testWrap) queryExecPostFail(testData *TestData) func(t *testing.
 			t.Errorf("Expected fail, received status: %d", response.StatusCode)
 		}
 	}
-}
-
-func queryExecPostCreateBodyRequest(ehrID string) *bytes.Reader {
-	req := fakeData.QueryExecRequest(ehrID)
-	return bytes.NewReader(req)
 }
