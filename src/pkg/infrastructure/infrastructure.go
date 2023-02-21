@@ -65,8 +65,7 @@ func New(cfg *config.Config) *Infra {
 
 	ipfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURLs)
 	if err != nil {
-		//log.Fatal(err)
-		log.Println(err)
+		log.Fatal(err)
 	}
 
 	filecoinCfg := filecoin.Config(cfg.Storage.Filecoin)

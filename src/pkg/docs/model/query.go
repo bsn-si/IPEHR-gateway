@@ -28,16 +28,19 @@ func (q *QueryRequest) Validate() error {
 func (q *QueryRequest) AqlProcess() error {
 	var err error
 
-	if q.Offset != 0 {
-		q.Query = fmt.Sprintf("%s OFFSET %d", q.Query, q.Offset)
-	}
-
-	if q.Fetch != 0 {
-		q.Query = fmt.Sprintf("%s LIMIT %d", q.Query, q.Fetch)
-	}
-
 	q.QueryParsed, err = aqlprocessor.NewAqlProcessor(q.Query).Process()
-	return err
+	if err != nil {
+		return fmt.Errorf("AqlProcess() error: %w", err)
+	}
+
+	if q.Fetch != 0 || q.Offset != 0 {
+		q.QueryParsed.Limit = &aqlprocessor.Limit{
+			Limit:  q.Fetch,
+			Offset: q.Offset,
+		}
+	}
+
+	return nil
 }
 
 func (q QueryRequest) Bytes() ([]byte, error) {
