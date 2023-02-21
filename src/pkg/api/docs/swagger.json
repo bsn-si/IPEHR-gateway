@@ -14,7 +14,7 @@
         },
         "version": "0.2"
     },
-    "host": "localhost:8080",
+    "host": "gateway.ipehr.org",
     "basePath": "/v1",
     "paths": {
         "/access/document": {
