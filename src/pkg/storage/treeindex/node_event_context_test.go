@@ -22,7 +22,7 @@ func Test_processEventContext(t *testing.T) {
 			getEventContext,
 			&EventContextNode{
 				BaseNode: BaseNode{
-					NodeType: EventContextNodeType,
+					NodeType: NodeTypeEventContext,
 				},
 				Attributes: Attributes{
 					"start_time": newNode(&base.DvDateTime{

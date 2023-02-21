@@ -35,9 +35,9 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@host		gateway.ipehr.org
+// @host      gateway.ipehr.org
 // host      localhost:8080
-//	@BasePath	/v1
+// @BasePath  /v1
 
 type API struct {
 	Ehr         *EhrHandler
@@ -58,7 +58,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 	docGroupSvc := docGroupService.NewService(docService)
 	gaSvc := groupAccess.NewService(docService, cfg.DefaultGroupAccessID, cfg.DefaultUserID)
 	templateService := template.NewService(docService)
-	queryService := query.NewService(docService, queryer.NewAQLQueryServiceClient(cfg.StatsServiceURL))
+	queryService := query.NewService(docService, queryer.NewAQLQueryServiceClient(cfg.StatsServiceURL), gaSvc)
 	userSvc := userService.NewService(infra, docService.Proc)
 	contribution := contributionService.NewService(docService)
 	directory := directoryService.NewService(docService, docGroupSvc)

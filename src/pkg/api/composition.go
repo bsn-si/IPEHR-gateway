@@ -21,9 +21,9 @@ import (
 type (
 	CompositionService interface {
 		helper.Finder
-		DefaultGroupAccess() *uuid.UUID
-		Create(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
-		Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
+		DefaultGroupAccess() *model.GroupAccess
+		Create(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition, procRequest *proc.Request) (*model.Composition, error)
+		Update(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, composition *model.Composition) (*model.Composition, error)
 		GetLastByBaseID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 		GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionUID string) (*model.Composition, error)
 		DeleteByID(ctx context.Context, procRequest *proc.Request, ehrUUID *uuid.UUID, versionUID, userID, systemID string) (string, error)
@@ -56,29 +56,28 @@ func NewCompositionHandler(docService *service.DefaultDocumentService, compositi
 }
 
 // Create
-//	@Summary		Create COMPOSITION
-//	@Description	Work in progress...
-//	@Description	Creates the first version of a new COMPOSITION in the EHR identified by ehr_id.
-//	@Description
-//	@Tags		COMPOSITION
-//	@Accept		json
-//	@Produce	json
-//	@Param		ehr_id			path		string				true	"EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-//	@Param		Authorization	header		string				true	"Bearer AccessToken"
-//	@Param		AuthUserId		header		string				true	"UserId"
-//	@Param		EhrSystemId		header		string				false	"The identifier of the system, typically a reverse domain identifier"
-//	@Param		GroupAccessId	header		string				false	"GroupAccessId - UUID. If not specified, the default access group will be used."
-//	@Param		Prefer			header		string				true	"The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-//	@Param		Request			body		model.Composition	true	"COMPOSITION"
-//	@Success	201				{object}	model.Composition
-//	@Header		201				{string}	Location	"{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
-//	@Header		201				{string}	ETag		"8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
-//	@Header		201				{string}	RequestID	"Request identifier"
-//	@Failure	400				"Is returned when the request has invalid ehr_id or invalid content (e.g. content could not be converted to a valid COMPOSITION object)"
-//	@Failure	404				"Is returned when an EHR with ehr_id does not exist."
-//	@Failure	422				"Is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
-//	@Failure	500				"Is returned when an unexpected error occurs while processing a request"
-//	@Router		/ehr/{ehr_id}/composition [post]
+// @Summary      Create COMPOSITION
+// @Description  Creates the first version of a new COMPOSITION in the EHR identified by ehr_id.
+// @Description
+// @Tags     COMPOSITION
+// @Accept   json
+// @Produce  json
+// @Param    ehr_id         path      string                 true   "EHR identifier. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Param    Authorization  header    string                 true   "Bearer AccessToken"
+// @Param    AuthUserId     header    string                 true   "UserId"
+// @Param    EhrSystemId    header    string                 false  "The identifier of the system, typically a reverse domain identifier"
+// Param     GroupAccessId  header    string                 false  "TODO At the moment DefaultGroupAccess is used by default for all"
+// @Param    Prefer         header    string                 true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param    Request        body      model.SwagComposition  true   "COMPOSITION"
+// @Success  201            {object}  model.SwagComposition
+// @Header   201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398/composition/8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+// @Header   201            {string}  ETag       "8849182c-82ad-4088-a07f-48ead4180515::openEHRSys.example.com::1"
+// @Header   201            {string}  RequestID  "Request identifier"
+// @Failure  400            "Is returned when the request has invalid ehr_id or invalid content (e.g. content could not be converted to a valid COMPOSITION object)"
+// @Failure  404            "Is returned when an EHR with ehr_id does not exist."
+// @Failure  422            "Is returned when the content could be converted to a COMPOSITION, but there are semantic validation errors, such as the underlying template is not known or is not validating the supplied COMPOSITION)."
+// @Failure  500            "Is returned when an unexpected error occurs while processing a request"
+// @Router   /ehr/{ehr_id}/composition [post]
 func (h *CompositionHandler) Create(c *gin.Context) {
 	systemID := c.GetString("ehrSystemID")
 	reqID := c.GetString("reqID")
@@ -113,19 +112,6 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	groupAccessUUID := h.service.DefaultGroupAccess()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
-
 	composition := &model.Composition{}
 
 	if err := json.NewDecoder(c.Request.Body).Decode(composition); err != nil {
@@ -148,7 +134,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	}
 
 	// Composition document creating
-	doc, err := h.service.Create(c, userID, systemID, &ehrUUID, groupAccessUUID, composition, procRequest)
+	doc, err := h.service.Create(c, userID, systemID, &ehrUUID, composition, procRequest)
 	if err != nil {
 		log.Println("Composition creating error:", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "Composition creating error"})
@@ -401,19 +387,6 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
 
-	groupAccessUUID := h.service.DefaultGroupAccess()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
-
 	compositionUpdate := model.Composition{}
 
 	if err := json.NewDecoder(c.Request.Body).Decode(&compositionUpdate); err != nil {
@@ -463,7 +436,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	compositionUpdated, err := h.service.Update(c, procRequest, userID, systemID, &ehrUUID, groupAccessUUID, &compositionUpdate)
+	compositionUpdated, err := h.service.Update(c, procRequest, userID, systemID, &ehrUUID, &compositionUpdate)
 	if err != nil {
 		log.Println("Composition Update error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)

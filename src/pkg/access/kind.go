@@ -8,6 +8,7 @@ const (
 	Doc Kind = iota
 	DocGroup
 	UserGroup
+	GroupAccess
 	Unknown = 255
 )
 

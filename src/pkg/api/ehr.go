@@ -33,31 +33,31 @@ func NewEhrHandler(docSvc *service.DefaultDocumentService, userSvc *userService.
 }
 
 // Create
-//	@Summary		Create EHR
-//	@Description	Create a new EHR with an auto-generated identifier.
-//	@Description	An EHR_STATUS resource needs to be always created and committed in the new EHR. This resource MAY be also supplied by the client as the request body. If not supplied, a default EHR_STATUS will be used by the service with following attributes:
-//	@Description	- `is_queryable`: true
-//	@Description	- `is_modifiable`: true
-//	@Description	- `subject`: a PARTY_SELF object
-//	@Description
-//	@Description	All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
-//	@Tags			EHR
-//	@Accept			json
-//	@Produce		json
-//	@Param			Authorization	header		string					true	"Bearer AccessToken"
-//	@Param			AuthUserId		header		string					true	"UserId"
-//	@Param			EhrSystemId		header		string					false	"The identifier of the system, typically a reverse domain identifier"
-//	@Param			GroupAccessId	header		string					false	"GroupAccessId - UUID. If not specified, the default access group will be used."
-//	@Param			Prefer			header		string					true	"The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
-//	@Param			Request			body		model.EhrCreateRequest	true	"Query Request"
-//	@Success		201				{object}	model.EhrSummary
-//	@Header			201				{string}	Location	"{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
-//	@Header			201				{string}	ETag		"ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
-//	@Header			201				{string}	RequestID	"Request identifier"
-//	@Failure		400				"Is returned when the request body (if provided)  could      not  be  parsed."
-//	@Failure		409				"Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
-//	@Failure		500				"Is returned when an unexpected error occurs while processing a request"
-//	@Router			/ehr [post]
+// @Summary      Create EHR
+// @Description  Create a new EHR with an auto-generated identifier.
+// @Description  An EHR_STATUS resource needs to be always created and committed in the new EHR. This resource MAY be also supplied by the client as the request body. If not supplied, a default EHR_STATUS will be used by the service with following attributes:
+// @Description  - `is_queryable`: true
+// @Description  - `is_modifiable`: true
+// @Description  - `subject`: a PARTY_SELF object
+// @Description
+// @Description  All other required EHR attributes and resources will be automatically created as needed by the [EHR creation semantics](https://specifications.openehr.org/releases/RM/latest/ehr.html#_ehr_creation_semantics).
+// @Tags         EHR
+// @Accept       json
+// @Produce      json
+// @Param        Authorization  header    string                  true   "Bearer AccessToken"
+// @Param        AuthUserId     header    string                  true   "UserId"
+// @Param        EhrSystemId    header    string                  false  "The identifier of the system, typically a reverse domain identifier"
+// Param         GroupAccessId  header    string                  false  "TODO At the moment DefaultGroupAccess is used by default for all"
+// @Param        Prefer         header    string                  true   "The new EHR resource is returned in the body when the request’s `Prefer` header value is `return=representation`, otherwise only headers are returned."
+// @Param        Request        body      model.EhrCreateRequest  true   "Query Request"
+// @Success      201            {object}  model.EhrSummary
+// @Header       201            {string}  Location   "{baseUrl}/ehr/7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201            {string}  ETag       "ehr_id of created document. Example: 7d44b88c-4199-4bad-97dc-d78268e01398"
+// @Header       201            {string}  RequestID  "Request identifier"
+// @Failure      400            "Is returned when the request body (if provided)  could      not  be  parsed."
+// @Failure      409            "Unable to create a new EHR due to a conflict with an already existing EHR with the same subject id, namespace pair."
+// @Failure      500            "Is returned when an unexpected error occurs while processing a request"
+// @Router       /ehr [post]
 func (h *EhrHandler) Create(c *gin.Context) {
 	userID := c.GetString("userID")
 	if userID == "" {
@@ -103,18 +103,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	ehrUUIDnew := uuid.New()
 	reqID := c.GetString("reqID")
 
-	groupAccessUUID := h.service.GroupAccess.Default()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
+	groupAccess := h.service.GroupAccess.Default()
 
 	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUIDnew.String(), processing.RequestEhrCreate)
 	if err != nil {
@@ -124,7 +113,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, groupAccessUUID, &request, procRequest)
+	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, groupAccess.UUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -214,18 +203,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 		return
 	}
 
-	groupAccessUUID := h.service.GroupAccess.Default()
-
-	if c.GetHeader("GroupAccessId") != "" {
-		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
-			return
-		}
-
-		groupAccessUUID = &UUID
-	}
+	groupAccess := h.service.GroupAccess.Default()
 
 	procRequest, err := h.service.Doc.Proc.NewRequest(reqID, userID, ehrUUID.String(), proc.RequestEhrCreateWithID)
 	if err != nil {
@@ -236,7 +214,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, groupAccessUUID, &request, procRequest)
+	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, groupAccess.UUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})

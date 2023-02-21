@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -125,29 +123,11 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 		return
 	}
 
-	if _, ok := m["query_parameters"]; ok {
-		qP, err := url.ParseQuery(m["query_parameters"])
-		if err != nil {
-			log.Printf("cannot bind query params to map: %f", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-		}
-
-		for k, v := range qP {
-			m[k] = strings.Join(v, "")
-		}
-
-		delete(m, "query_parameters")
-	}
-
 	for key, val := range m {
-		if key == "q" {
+		switch key {
+		case "q":
 			req.Query = val
-			log.Printf("q: %s", val)
-
-			continue
-		}
-
-		if key == "ehr_id" {
+		case "ehr_id":
 			ehrID, err := uuid.Parse(val)
 			if err != nil {
 				log.Printf("cannot parse ehr_id uuid: %f", err)
@@ -156,17 +136,7 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 			}
 
 			req.QueryParameters["ehr_id"] = ehrID
-
-			continue
-		}
-
-		if key == "offset" {
-			if len(val) == 0 {
-				req.Offset = 0
-
-				continue
-			}
-
+		case "offset":
 			offset, err := strconv.Atoi(val)
 			if err != nil {
 				log.Printf("cannot parse 'offset' from string: %f", err)
@@ -180,11 +150,7 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 			}
 
 			req.Offset = offset
-
-			continue
-		}
-
-		if key == "fetch" {
+		case "fetch":
 			fetch, err := strconv.Atoi(val)
 			if err != nil {
 				log.Printf("cannot parse 'fetch' from string: %f", err)
@@ -198,11 +164,9 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 			}
 
 			req.Fetch = fetch
-
-			continue
+		default:
+			req.QueryParameters[key] = val
 		}
-
-		req.QueryParameters[key] = val
 	}
 
 	if err := req.Validate(); err != nil {
@@ -214,12 +178,14 @@ func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 	if err != nil {
 		log.Printf("cannot exec query: %v", err)
 
-		if errors.Is(err, errors.ErrTimeout) {
+		if errors.Is(errors.Unwrap(err), errors.ErrIncorrectRequest) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Request process error: " + err.Error()})
+		} else if errors.Is(err, errors.ErrTimeout) {
 			c.JSON(http.StatusRequestTimeout, gin.H{"error": "timeout exceeded"})
-			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 

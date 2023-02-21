@@ -38,7 +38,7 @@ func newEHRNode(ehr *model.EHR) *EHRNode {
 		BaseNode: BaseNode{
 			ID:       ehr.EhrID.Value,
 			Type:     base.EHRItemType,
-			NodeType: EHRNodeType,
+			NodeType: NodeTypeEHR,
 		},
 		Attributes:   Attributes{},
 		Compositions: Container{},

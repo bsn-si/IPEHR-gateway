@@ -39,7 +39,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 		{Code: model.AttributeContentEncr, Value: contentEncr}, // encrypted by group key
 	}
 
-	IDHash := Keccak256(groupID[:])
+	IDHash := keccak256(groupID[:])
 
 	data, err := i.usersAbi.Pack("userGroupCreate", IDHash, attrs, userAddress, make([]byte, signatureLength))
 	if err != nil {
@@ -60,7 +60,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 }
 
 func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*userModel.UserGroup, error) {
-	groupIDHash := Keccak256(groupID[:])
+	groupIDHash := keccak256(groupID[:])
 
 	ug, err := i.users.UserGroupGetByID(&bind.CallOpts{Context: ctx}, *groupIDHash)
 	if err != nil {
@@ -110,7 +110,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 		}
 	}
 
-	groupIDHash := Keccak256(groupID[:])
+	groupIDHash := keccak256(groupID[:])
 
 	params := users.IUsersGroupAddUserParams{
 		GroupIDHash: *groupIDHash,
@@ -161,7 +161,7 @@ func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSys
 		}
 	}
 
-	groupIDHash := Keccak256(groupID[:])
+	groupIDHash := keccak256(groupID[:])
 	removeUserIDHash := sha3.Sum256([]byte(removeUserID + removeSystemID))
 
 	data, err := i.usersAbi.Pack("groupRemoveUser", groupIDHash, removeUserIDHash, userAddress, make([]byte, signatureLength))

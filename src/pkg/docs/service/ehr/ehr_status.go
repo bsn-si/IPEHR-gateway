@@ -159,14 +159,12 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 
 	// Adding EHR_STATUS doc into 'all documents'
 	{
-		docCIDHash := indexer.Keccak256(CID.Bytes())
-
 		docCIDEncr, err := allDocsGroup.GroupKey.Encrypt(CID.Bytes())
 		if err != nil {
 			return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, multiCallTx.Nonce())
+		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, CID.Bytes(), docCIDEncr, userPrivKey, multiCallTx.Nonce())
 		if err != nil {
 			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 		}

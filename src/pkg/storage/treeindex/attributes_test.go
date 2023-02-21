@@ -34,7 +34,7 @@ func TestAttributes_EncodeDecodeMsgpack(t *testing.T) {
 			Attributes{
 				"slice": &SliceNode{
 					BaseNode: BaseNode{
-						NodeType: SliceNodeType,
+						NodeType: NodeTypeSlice,
 					},
 					Data: Attributes{
 						"key1": newValueNode("123"),

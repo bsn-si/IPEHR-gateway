@@ -55,7 +55,7 @@ type EventContextNode struct {
 func NewEventContextNode(ctx model.EventContext) *EventContextNode {
 	node := EventContextNode{
 		BaseNode: BaseNode{
-			NodeType: EventContextNodeType,
+			NodeType: NodeTypeEventContext,
 		},
 		Attributes: Attributes{},
 	}

@@ -1,8 +1,11 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements
@@ -11,6 +14,7 @@ type QueryRequest struct {
 	Offset          int                    `json:"offset"`
 	Fetch           int                    `json:"fetch"`
 	QueryParameters map[string]interface{} `json:"query_parameters"`
+	QueryParsed     *aqlprocessor.Query    `json:"-"`
 }
 
 func (q *QueryRequest) Validate() error {
@@ -18,9 +22,48 @@ func (q *QueryRequest) Validate() error {
 		return errors.ErrFieldIsEmpty("query")
 	}
 
-	_, err := aqlprocessor.NewAqlProcessor(q.Query).Process()
+	return nil
+}
 
-	return err
+func (q *QueryRequest) AqlProcess() error {
+	var err error
+
+	q.QueryParsed, err = aqlprocessor.NewAqlProcessor(q.Query).Process()
+	if err != nil {
+		return fmt.Errorf("AqlProcess() error: %w", err)
+	}
+
+	if q.Fetch != 0 || q.Offset != 0 {
+		q.QueryParsed.Limit = &aqlprocessor.Limit{
+			Limit:  q.Fetch,
+			Offset: q.Offset,
+		}
+	}
+
+	return nil
+}
+
+func (q QueryRequest) Bytes() ([]byte, error) {
+	data, err := msgpack.Marshal(q)
+	if err != nil {
+		return nil, fmt.Errorf("QueryRequest Marshal error: %w", err)
+	}
+
+	return data, nil
+}
+
+func (q *QueryRequest) FromBytes(data []byte) error {
+	err := msgpack.Unmarshal(data, q)
+	if err != nil {
+		return fmt.Errorf("QueryRequest Unmarshal error: %w", err)
+	}
+
+	return nil
+}
+
+type QueryColumn struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
@@ -36,7 +79,7 @@ type QueryResponse struct {
 	Name    string        `json:"name"`
 	Query   string        `json:"q"`
 	Columns []QueryColumn `json:"columns"`
-	Rows    []interface{} `json:"rows"`
+	Rows    []any         `json:"rows"`
 }
 
 func (q *QueryResponse) Validate() bool {
@@ -44,7 +87,20 @@ func (q *QueryResponse) Validate() bool {
 	return true
 }
 
-type QueryColumn struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+func (q QueryResponse) Bytes() ([]byte, error) {
+	data, err := msgpack.Marshal(q)
+	if err != nil {
+		return nil, fmt.Errorf("QueryResponse Marshal error: %w", err)
+	}
+
+	return data, nil
+}
+
+func (q *QueryResponse) FromBytes(data []byte) error {
+	err := msgpack.Unmarshal(data, q)
+	if err != nil {
+		return fmt.Errorf("QueryResponse Unmarshal error: %w", err)
+	}
+
+	return nil
 }

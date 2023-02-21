@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
@@ -119,7 +120,7 @@ func (d *DefaultDocumentService) GetDocFromStorageByID(ctx context.Context, user
 }
 
 func (d *DefaultDocumentService) GetDocAccessKey(ctx context.Context, userID, systemID string, CID *cid.Cid) (*chachaPoly.Key, error) {
-	docKeyEncr, err := d.Infra.Index.GetDocKeyEncrypted(ctx, userID, systemID, CID.Bytes())
+	docKeyEncr, err := d.Infra.Index.GetKeyEncrypted(ctx, userID, systemID, CID.Bytes(), access.Doc)
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetDocKeyEncrypted error: %w", err)
 	}

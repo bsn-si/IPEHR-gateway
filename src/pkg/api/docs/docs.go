@@ -644,12 +644,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "GroupAccessId - UUID. If not specified, the default access group will be used.",
-                        "name": "GroupAccessId",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
                         "description": "The new EHR resource is returned in the body when the request’s ` + "`" + `Prefer` + "`" + ` header value is ` + "`" + `return=representation` + "`" + `, otherwise only headers are returned.",
                         "name": "Prefer",
                         "in": "header",
@@ -915,7 +909,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Work in progress...\nCreates the first version of a new COMPOSITION in the EHR identified by ehr_id.\n",
+                "description": "Creates the first version of a new COMPOSITION in the EHR identified by ehr_id.\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -956,12 +950,6 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "GroupAccessId - UUID. If not specified, the default access group will be used.",
-                        "name": "GroupAccessId",
-                        "in": "header"
-                    },
-                    {
-                        "type": "string",
                         "description": "The new EHR resource is returned in the body when the request’s ` + "`" + `Prefer` + "`" + ` header value is ` + "`" + `return=representation` + "`" + `, otherwise only headers are returned.",
                         "name": "Prefer",
                         "in": "header",
@@ -973,7 +961,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         }
                     }
                 ],
@@ -981,7 +969,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/model.Composition"
+                            "$ref": "#/definitions/Composition"
                         },
                         "headers": {
                             "ETag": {
@@ -1911,7 +1899,7 @@ const docTemplate = `{
         },
         "/query/aql": {
             "post": {
-                "description": "Execute ad-hoc query, supplied by q attribute, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).\n",
+                "description": "Execute a given ad-hoc AQL query, supplied by {q} parameter, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).\n",
                 "consumes": [
                     "application/json"
                 ],
@@ -1921,7 +1909,7 @@ const docTemplate = `{
                 "tags": [
                     "QUERY"
                 ],
-                "summary": "Execute ad-hoc (non-stored) AQL query",
+                "summary": "Execute ad-hoc AQL query",
                 "parameters": [
                     {
                         "type": "string",
@@ -1945,6 +1933,30 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/model.QueryRequest"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "An optional parameter to execute the query within an EHR context.",
+                        "name": "ehr_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "AQL. Example: {q=SELECT e/ehr_id/value, c/context/start_time/value as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude \u003e= $systolic_bp} The AQL query to be executed.",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The row number in result-set to start result-set from (0-based), default is 0.",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Number of rows to fetch (the default depends on the implementation).",
+                        "name": "fetch",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2875,6 +2887,205 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "Composition": {
+            "type": "object",
+            "properties": {
+                "_type": {
+                    "type": "string"
+                },
+                "archetype_details": {
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "archetype_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "rm_version": {
+                            "type": "string"
+                        },
+                        "template_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "archetype_node_id": {
+                    "type": "string"
+                },
+                "category": {
+                    "type": "object",
+                    "properties": {
+                        "defining_code": {
+                            "type": "object",
+                            "properties": {
+                                "code_string": {
+                                    "type": "string"
+                                },
+                                "preferred_term": {
+                                    "type": "string"
+                                },
+                                "terminology_id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "composer": {
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "external_ref": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "object",
+                                    "properties": {
+                                        "_type": {
+                                            "type": "string"
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "namespace": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "content": {
+                    "type": "array",
+                    "items": {}
+                },
+                "context": {
+                    "type": "object",
+                    "properties": {
+                        "setting": {
+                            "type": "object",
+                            "properties": {
+                                "defining_code": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code_string": {
+                                            "type": "string"
+                                        },
+                                        "preferred_term": {
+                                            "type": "string"
+                                        },
+                                        "terminology_id": {
+                                            "type": "object",
+                                            "properties": {
+                                                "value": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "start_time": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "language": {
+                    "type": "object",
+                    "properties": {
+                        "code_string": {
+                            "type": "string"
+                        },
+                        "preferred_term": {
+                            "type": "string"
+                        },
+                        "terminology_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "object",
+                    "properties": {
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "territory": {
+                    "type": "object",
+                    "properties": {
+                        "code_string": {
+                            "type": "string"
+                        },
+                        "preferred_term": {
+                            "type": "string"
+                        },
+                        "terminology_id": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "uid": {
+                    "type": "object",
+                    "properties": {
+                        "_type": {
+                            "type": "string"
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "base.Archetyped": {
             "type": "object",
             "properties": {

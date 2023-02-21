@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 
@@ -32,14 +33,14 @@ func NewAQLQueryServiceClient(statsHost string) *AQLQueryServiceClient {
 }
 
 func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
-	reqData, err := json.Marshal(query)
+	data, err := query.Bytes()
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot marshal request body")
+		return nil, fmt.Errorf("query.Bytes() error: %w", err)
 	}
 
 	url := fmt.Sprintf("%s%s", cli.statsServiceHost, executeQueryPath)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqData))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create new request")
 	}
@@ -67,9 +68,17 @@ func (cli *AQLQueryServiceClient) ExecQuery(ctx context.Context, query *model.Qu
 		}
 	}
 
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read query response: %w", err)
+	}
+	defer resp.Body.Close()
+
 	result := &model.QueryResponse{}
-	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-		return nil, errors.Wrap(err, "cannot unmarshal respose body")
+
+	err = result.FromBytes(respData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot unmarshal respose body: %w", err)
 	}
 
 	return result, nil

@@ -7,20 +7,19 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 type NodeType byte
 
 const (
-	NoneNodeType NodeType = iota
-	ObjectNodeType
-	SliceNodeType
-	DataValueNodeType
-	ValueNodeType
-	EHRNodeType
-	CompostionNodeType
-	EventContextNodeType
+	NodeTypeNone NodeType = iota
+	NodeTypeObject
+	NodeTypeSlice
+	NodeTypeDataValue
+	NodeTypeValue
+	NodeTypeEHR
+	NodeTypeCompostion
+	NodeTypeEventContext
 )
 
 type Noder interface {
@@ -145,70 +144,6 @@ func (node *DataValueNode) addAttribute(key string, val Noder) {
 	node.Values[key] = val
 }
 
-type ValueNode struct {
-	BaseNode
-	Data any
-}
-
-func (node ValueNode) GetData() any {
-	return node.Data
-}
-
-func (node ValueNode) GetID() string {
-	return ""
-}
-
-func (node ValueNode) TryGetChild(key string) Noder {
-	n := node.BaseNode.TryGetChild(key)
-	if n != nil {
-		return n
-	}
-
-	return nil
-}
-
-func (node *ValueNode) addAttribute(key string, val Noder) {
-	noderInstance, ok := node.Data.(Noder)
-	if !ok {
-		return
-	}
-
-	noderInstance.addAttribute(key, val)
-}
-
-func (node ValueNode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(node.Data)
-}
-
-func (node *ValueNode) UnmarshalMsgpack(data []byte) error {
-	tmp := struct {
-		BaseNode
-		Data any
-	}{}
-
-	if err := msgpack.Unmarshal(data, &tmp); err != nil {
-		return err
-	}
-
-	node.BaseNode = tmp.BaseNode
-	switch v := tmp.Data.(type) {
-	case int8:
-		node.Data = int(v)
-	case int16:
-		node.Data = int(v)
-	case uint16:
-		node.Data = int(v)
-	case int32:
-		node.Data = int(v)
-	case uint32:
-		node.Data = int(v)
-	default:
-		node.Data = tmp.Data
-	}
-
-	return nil
-}
-
 func newNode(obj any) Noder {
 	switch obj := obj.(type) {
 	case *model.EHR:
@@ -244,7 +179,7 @@ func newObjectNode(obj base.Root) Noder {
 			ID:       l.ArchetypeNodeID,
 			Type:     l.Type,
 			Name:     l.Name.Value,
-			NodeType: ObjectNodeType,
+			NodeType: NodeTypeObject,
 		},
 		Attributes: Attributes{
 			"name":              newNode(l.Name),
@@ -256,7 +191,7 @@ func newObjectNode(obj base.Root) Noder {
 func newSliceNode() Noder {
 	return &SliceNode{
 		BaseNode: BaseNode{
-			NodeType: SliceNodeType,
+			NodeType: NodeTypeSlice,
 		},
 		Data: make(Attributes),
 	}
@@ -266,7 +201,7 @@ func newDataValueNode(dv base.DataValue) Noder {
 	return &DataValueNode{
 		BaseNode: BaseNode{
 			Type:     dv.GetType(),
-			NodeType: DataValueNodeType,
+			NodeType: NodeTypeDataValue,
 		},
 		Values: make(Attributes),
 	}
@@ -276,7 +211,7 @@ func nodeForCodePhrase(cp base.CodePhrase) Noder {
 	return &ObjectNode{
 		BaseNode: BaseNode{
 			Type:     cp.Type,
-			NodeType: ObjectNodeType,
+			NodeType: NodeTypeObject,
 		},
 		Attributes: Attributes{
 			"terminology_id": nodeForObjectID(cp.TerminologyID),
@@ -290,17 +225,8 @@ func nodeForObjectID(objectID base.ObjectID) Noder {
 	return &ValueNode{
 		BaseNode: BaseNode{
 			Type:     objectID.Type,
-			NodeType: ValueNodeType,
+			NodeType: NodeTypeValue,
 		},
 		Data: objectID.Value,
-	}
-}
-
-func newValueNode(val any) Noder {
-	return &ValueNode{
-		BaseNode: BaseNode{
-			NodeType: ValueNodeType,
-		},
-		Data: val,
 	}
 }

@@ -203,14 +203,12 @@ func (s *Service) addMetaData(ctx context.Context, req proc.RequestInterface, ke
 
 func (s *Service) addDocGroupData(ctx context.Context, req proc.RequestInterface, CID *cid.Cid, allDocGroup *model.DocumentGroup, userPrivKey *[32]byte) error {
 	{
-		docCIDHash := indexer.Keccak256(CID.Bytes())
-
 		docCIDEncr, err := allDocGroup.GroupKey.Encrypt(CID.Bytes())
 		if err != nil {
 			return fmt.Errorf("CID encryption error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, nil)
+		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, CID.Bytes(), docCIDEncr, userPrivKey, nil)
 		if err != nil {
 			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 		}

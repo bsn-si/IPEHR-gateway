@@ -32,16 +32,22 @@ type QueryExecuter interface { //nolint
 	ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error)
 }
 
+type GroupAccessService interface {
+	Default() *model.GroupAccess
+}
+
 type Service struct {
 	*service.DefaultDocumentService
 
-	qExec QueryExecuter
+	qExec          QueryExecuter
+	groupAccessSvc GroupAccessService
 }
 
-func NewService(docService *service.DefaultDocumentService, qExec QueryExecuter) *Service {
+func NewService(docService *service.DefaultDocumentService, qExec QueryExecuter, gaSvc GroupAccessService) *Service {
 	return &Service{
 		DefaultDocumentService: docService,
 		qExec:                  qExec,
+		groupAccessSvc:         gaSvc,
 	}
 }
 
@@ -257,9 +263,26 @@ func (s *Service) ExecStoredQuery(ctx context.Context, userID, systemID, qualifi
 }
 
 func (s *Service) ExecQuery(ctx context.Context, query *model.QueryRequest) (*model.QueryResponse, error) {
+	err := query.AqlProcess()
+	if err != nil {
+		return nil, errors.Wrap(errors.ErrIncorrectRequest, err.Error())
+	}
+
+	groupAccess := s.groupAccessSvc.Default()
+
+	err = encryptQuery(query.QueryParsed, groupAccess.Key, groupAccess.Nonce)
+	if err != nil {
+		return nil, fmt.Errorf("encryptQuery error: %w", err)
+	}
+
 	resp, err := s.qExec.ExecQuery(ctx, query)
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot exec query")
+		return nil, fmt.Errorf("cannot exec query: %w", err)
+	}
+
+	err = decryptQueryResponse(resp, groupAccess.Key, groupAccess.Nonce)
+	if err != nil {
+		return nil, fmt.Errorf("decryptQueryResponse error: %w", err)
 	}
 
 	return resp, nil
