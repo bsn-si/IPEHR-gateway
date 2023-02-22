@@ -11,6 +11,8 @@ import (
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
 	"github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway/docs"
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/metrics"
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	aqlclient "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/client"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
@@ -108,6 +110,11 @@ type handlerBuilder func(r *gin.RouterGroup)
 
 func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	r := gin.New()
+
+	r.Use(metrics.Middleware)
+	r.Use(tracer.Middleware)
+
+	r.Use(gin.Recovery())
 
 	//TODO complete CORS config
 	config := cors.DefaultConfig()
