@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
@@ -48,6 +49,8 @@ type Config struct {
 	DB struct {
 		FilePath string `json:"filePath"`
 	} `json:"db"`
+
+	Observability observability.Config `json:"observability"`
 
 	path string
 }
