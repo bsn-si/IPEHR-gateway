@@ -14,7 +14,6 @@ type Select struct {
 }
 
 func (s *Select) write(w io.Writer) {
-
 	if s.Distinct {
 		fmt.Fprintln(w, "SELECT DISTINCT")
 	} else {
@@ -31,6 +30,7 @@ func (s *Select) write(w io.Writer) {
 		if i < len(s.SelectExprs)-1 {
 			fmt.Fprint(w, ",")
 		}
+
 		fmt.Fprintln(w)
 	}
 }

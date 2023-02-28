@@ -16,9 +16,11 @@ type IdentifiedPath struct {
 
 func (ip *IdentifiedPath) write(w io.Writer) {
 	fmt.Fprintf(w, "%s ", ip.Identifier)
+
 	if ip.PathPredicate != nil {
 		ip.PathPredicate.write(w)
 	}
+
 	if ip.ObjectPath != nil {
 		fmt.Fprintln(w, "/")
 		ip.ObjectPath.write(w)
@@ -32,6 +34,7 @@ type ObjectPath struct {
 func (op *ObjectPath) write(w io.Writer) {
 	for i := range op.Paths {
 		op.Paths[i].write(w)
+
 		if i < len(op.Paths)-1 {
 			fmt.Fprint(w, "/")
 		}

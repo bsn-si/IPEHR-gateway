@@ -14,6 +14,7 @@ type Order struct {
 
 func (o *Order) write(w io.Writer) {
 	fmt.Fprint(w, "ORDER BY ")
+
 	for i := range o.Orders {
 		if i != 0 {
 			fmt.Fprint(w, ",")
@@ -21,6 +22,7 @@ func (o *Order) write(w io.Writer) {
 
 		fmt.Fprint(w, " ")
 		o.Orders[i].IdentifierPath.write(w)
+
 		if o.Orders[i].Ordering == DescendingOrdering {
 			fmt.Fprint(w, " DESC")
 		} else if o.Orders[i].Ordering == AscendingOrdering {

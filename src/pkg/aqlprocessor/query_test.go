@@ -19,13 +19,13 @@ func TestQuery_ToQuery(t *testing.T) {
 		},
 		{
 			"2. Select With path",
-			"SELECT\n\tc/data[at0003]/value/magintude AS mag\nFROM\n\tC c",
+			"SELECT\n\tc/data[at0003]/value/magnitude AS mag\nFROM\n\tC c",
 			false,
 		},
 		{
 			"3. several fields",
 			"SELECT\n" +
-				"\tc/data[at0003]/value/magintude AS mag,\n" +
+				"\tc/data[at0003]/value/magnitude AS mag,\n" +
 				"\tc/data[at0003]/value/unit AS unit\n" +
 				"FROM\n\tC c",
 			false,
