@@ -122,6 +122,7 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 	if ctx.IdentifiedExpr() != nil && ctx.SYM_LEFT_PAREN() != nil && ctx.SYM_RIGHT_PAREN() != nil {
 		result.Brackets = true
 		next, err := getIdentifiedExpr(ctx.IdentifiedExpr().(*aqlparser.IdentifiedExprContext))
+
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get IdentifiedExpr.IdentifiedExpr")
 		}
@@ -188,7 +189,6 @@ func (t *Terminal) write(w io.Writer) {
 		t.IdentifiedPath.write(w)
 		return
 	}
-
 }
 
 func getTerminal(ctx *aqlparser.TerminalContext) (*Terminal, error) { //nolint

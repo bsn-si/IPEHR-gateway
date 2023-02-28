@@ -114,6 +114,7 @@ func (app *ArchetypePathPredicate) write(w io.Writer) {
 	if app.ArchetypeHRID != nil {
 		fmt.Fprintf(w, "%s", *app.ArchetypeHRID)
 	}
+
 	if app.Parameter != nil {
 		fmt.Fprintf(w, "$%s", *app.Parameter)
 	}

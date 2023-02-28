@@ -41,6 +41,7 @@ func (cw *ContainsExpr) write(w io.Writer) {
 
 			fmt.Fprintf(w, "CONTAINS ")
 		}
+
 		if cw.Brackets {
 			fmt.Fprintf(w, "(")
 		}
@@ -103,6 +104,7 @@ type VersionClassExpr struct {
 
 func (vce VersionClassExpr) write(w io.Writer) {
 	fmt.Fprintf(w, "%s ", vce.Version)
+
 	if vce.Variable != nil {
 		fmt.Fprintf(w, "%s", *vce.Variable)
 	}
