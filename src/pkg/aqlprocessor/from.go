@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -11,10 +12,57 @@ type From struct {
 	ContainsExpr
 }
 
+func (f *From) write(w io.Writer) {
+	fmt.Fprint(w, "FROM\n")
+	f.ContainsExpr.write(w)
+}
+
 type ContainsExpr struct {
-	Operand  any
+	Operand  Operand
 	Contains []*ContainsExpr
 	Operator *OperatorType
+	Brackets bool
+}
+
+type Operand interface {
+	write(w io.Writer)
+}
+
+func (cw *ContainsExpr) write(w io.Writer) {
+	if cw.Operand != nil {
+		cw.Operand.write(w)
+	}
+
+	if len(cw.Contains) > 0 {
+		if cw.Operand != nil {
+			if cw.Operator != nil && *cw.Operator == NOTOperator {
+				fmt.Fprintf(w, "NOT ")
+			}
+
+			fmt.Fprintf(w, "CONTAINS ")
+		}
+		if cw.Brackets {
+			fmt.Fprintf(w, "(")
+		}
+
+		if len(cw.Contains) == 1 {
+			cw.Contains[0].write(w)
+		}
+
+		if len(cw.Contains) == 2 {
+			cw.Contains[0].write(w)
+
+			if cw.Operator != nil {
+				fmt.Fprintf(w, " %s ", *cw.Operator)
+			}
+
+			cw.Contains[1].write(w)
+		}
+
+		if cw.Brackets {
+			fmt.Fprintf(w, ")")
+		}
+	}
 }
 
 type OperatorType string
@@ -31,10 +79,61 @@ type ClassExpression struct {
 	PathPredicate *PathPredicate
 }
 
+func (ce ClassExpression) write(w io.Writer) {
+	for i := range ce.Identifiers {
+		if i != 0 {
+			fmt.Fprint(w, " ")
+		}
+
+		fmt.Fprint(w, ce.Identifiers[i])
+	}
+
+	if ce.PathPredicate != nil {
+		fmt.Fprint(w, "[")
+		ce.PathPredicate.write(w)
+		fmt.Fprint(w, "]")
+	}
+}
+
 type VersionClassExpr struct {
 	Version          string
 	Variable         *string
-	VersionPredicate *PathPredicate
+	VersionPredicate *VersionPredicate
+}
+
+func (vce VersionClassExpr) write(w io.Writer) {
+	fmt.Fprintf(w, "%s ", vce.Version)
+	if vce.Variable != nil {
+		fmt.Fprintf(w, "%s", *vce.Variable)
+	}
+
+	if vce.VersionPredicate != nil {
+		fmt.Fprint(w, "[")
+		vce.VersionPredicate.write(w)
+		fmt.Fprint(w, "]")
+	}
+}
+
+type VersionPredicate struct {
+	LatestVersion     *string
+	AllVersions       *string
+	StandartPredicate *StandartPredicate
+}
+
+func (vp VersionPredicate) write(w io.Writer) {
+	if vp.LatestVersion != nil {
+		fmt.Fprint(w, vp.LatestVersion)
+		return
+	}
+
+	if vp.AllVersions != nil {
+		fmt.Fprint(w, vp.AllVersions)
+		return
+	}
+
+	if vp.StandartPredicate != nil {
+		vp.StandartPredicate.write(w)
+	}
 }
 
 func getFrom(ctx *aqlparser.FromExprContext) (From, error) {
@@ -83,12 +182,12 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 				vce.Version = ctx.VERSION().GetText()
 				vce.Variable = toRef(ctx.IDENTIFIER().GetText())
 				if ctx.VersionPredicate() != nil {
-					pp, err := getVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
+					vp, err := getVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
 					if err != nil {
 						return nil, err
 					}
 
-					vce.VersionPredicate = &pp
+					vce.VersionPredicate = &vp
 				}
 
 				result.Operand = vce
@@ -121,17 +220,27 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 		result.Operator = toRef(NOTOperator)
 	}
 
+	if ctx.SYM_LEFT_PAREN() != nil && ctx.SYM_RIGHT_PAREN() != nil {
+		result.Brackets = true
+	}
+
 	return &result, nil
 }
 
-func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (PathPredicate, error) {
-	sp, err := getStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
-	if err != nil {
-		return PathPredicate{}, errors.Wrap(err, "cannot get VersionPredicate.StandardPredicate")
+func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (VersionPredicate, error) {
+	vp := VersionPredicate{}
+	if ctx.LATEST_VERSION() != nil {
+		vp.LatestVersion = toRef(ctx.LATEST_VERSION().GetText())
+	} else if ctx.ALL_VERSIONS() != nil {
+		vp.AllVersions = toRef(ctx.ALL_VERSIONS().GetText())
+	} else if ctx.StandardPredicate() != nil {
+		sp, err := getStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
+		if err != nil {
+			return VersionPredicate{}, errors.Wrap(err, "cannot get VersionPredicate.StandardPredicate")
+		}
+
+		vp.StandartPredicate = sp
 	}
 
-	return PathPredicate{
-		Type:              StandartPathPredicate,
-		StandartPredicate: sp,
-	}, nil
+	return vp, nil
 }

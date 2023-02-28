@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,7 +17,30 @@ import (
 )
 
 type Primitive struct {
-	Val any
+	Val  any
+	Type int
+}
+
+func (p *Primitive) write(w io.Writer) {
+	switch p.Type {
+	case aqlparser.AqlLexerINTEGER:
+		fmt.Fprintf(w, "%d", p.Val)
+	case aqlparser.AqlLexerREAL:
+		fmt.Fprintf(w, "%f", p.Val)
+	case aqlparser.AqlLexerSTRING:
+		fmt.Fprintf(w, "'%s'", p.Val)
+	case aqlparser.AqlLexerDATE:
+		t, _ := p.Val.(time.Time)
+		fmt.Fprintf(w, "'%s'", t.Format("2006-01-02T15"))
+	case aqlparser.AqlLexerTIME:
+		t, _ := p.Val.(time.Time)
+		fmt.Fprintf(w, "'%s'", t.Format("15:04:05.999"))
+	case aqlparser.AqlLexerDATETIME:
+		t, _ := p.Val.(time.Time)
+		fmt.Fprintf(w, "'%s'", t.Format("2006-01-02T15:04:05.999"))
+	default:
+		fmt.Fprint(w, "NULL")
+	}
 }
 
 func (p Primitive) Compare(val any, cmpSymbl ComparisionSymbol) bool {
@@ -81,6 +105,8 @@ func getPrimitive(prim *aqlparser.PrimitiveContext) (Primitive, error) {
 
 func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error {
 	tokenType := terminal.GetSymbol().GetTokenType()
+	p.Type = tokenType
+
 	switch tokenType {
 	case aqlparser.AqlLexerSTRING:
 		p.Val = trimString(terminal.String())
@@ -133,7 +159,11 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 		}
 
 		p.Val = val
-	} else if numeric.SYM_MINUS() != nil {
+		p.Type = aqlparser.AqlLexerINTEGER
+		return nil
+	}
+
+	if numeric.SYM_MINUS() != nil {
 		err := p.processNumericPrimitive(numeric.NumericPrimitive().(*aqlparser.NumericPrimitiveContext))
 		if err != nil {
 			return err
@@ -147,14 +177,16 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 		default:
 			return errors.New("unexpected primitive value type")
 		}
-	} else {
-		val, err := strconv.ParseFloat(numeric.GetText(), 64)
-		if err != nil {
-			return errors.Wrap(err, "cannot unmarshal numeric value")
-		}
-
-		p.Val = val
+		return nil
 	}
+
+	val, err := strconv.ParseFloat(numeric.GetText(), 64)
+	if err != nil {
+		return errors.Wrap(err, "cannot unmarshal numeric value")
+	}
+
+	p.Val = val
+	p.Type = aqlparser.AqlLexerREAL
 
 	return nil
 }

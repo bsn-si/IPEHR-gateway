@@ -163,6 +163,7 @@ func TestProcessor_From(t *testing.T) {
 							},
 							Contains: []*ContainsExpr{
 								{
+									Brackets: true,
 									Contains: []*ContainsExpr{
 										{
 											Operator: toRef(OROperator),

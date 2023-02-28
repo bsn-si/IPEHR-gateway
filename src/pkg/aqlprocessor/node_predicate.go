@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
@@ -25,6 +26,10 @@ type NodePredicate struct {
 	PathPredicateOperand *PathPredicateOperand
 	IsMatches            bool
 	ContainedRegex       *string
+}
+
+func (np *NodePredicate) write(w io.Writer) {
+	fmt.Fprint(w, "nodePridecate")
 }
 
 type NodePredicateAdditionalData struct {
