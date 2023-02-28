@@ -1,12 +1,32 @@
 package aqlprocessor
 
 import (
+	"fmt"
+	"io"
+
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Order struct {
 	Orders []OrderBy
+}
+
+func (o *Order) write(w io.Writer) {
+	fmt.Fprint(w, "ORDER BY ")
+	for i := range o.Orders {
+		if i != 0 {
+			fmt.Fprint(w, ",")
+		}
+
+		fmt.Fprint(w, " ")
+		o.Orders[i].IdentifierPath.write(w)
+		if o.Orders[i].Ordering == DescendingOrdering {
+			fmt.Fprint(w, " DESC")
+		} else if o.Orders[i].Ordering == AscendingOrdering {
+			fmt.Fprint(w, " ASC")
+		}
+	}
 }
 
 type OrderBy struct {

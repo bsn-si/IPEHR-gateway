@@ -3,6 +3,7 @@ package aqlprocessor
 import (
 	"testing"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -98,6 +99,7 @@ func TestProcessor_Where(t *testing.T) {
 				OperatorType: ANDOperator,
 				Next: []*Where{
 					{
+						Brackets: true,
 						Next: []*Where{
 							{
 								OperatorType: OROperator,
@@ -210,7 +212,8 @@ func TestProcessor_Where(t *testing.T) {
 							ComparisonOperator: toRef(SymGE),
 							Terminal: &Terminal{
 								Primitive: &Primitive{
-									Val: 140,
+									Val:  140,
+									Type: aqlparser.AqlLexerINTEGER,
 								},
 							},
 						},

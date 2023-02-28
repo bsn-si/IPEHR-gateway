@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -21,7 +22,7 @@ func TestProcessor_SelectNull(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "NULL",
-						Value: &PrimitiveSelectValue{Val: Primitive{Val: nil}},
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: nil, Type: aqlparser.AqlLexerNULL}},
 					},
 				},
 			},
@@ -61,7 +62,7 @@ func TestProcessor_SelectString(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  `'hello_world'`,
-						Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}},
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world", Type: aqlparser.AqlLexerSTRING}},
 					},
 				},
 			},
@@ -74,7 +75,7 @@ func TestProcessor_SelectString(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  `"hello_world"`,
-						Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world"}},
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: "hello_world", Type: aqlparser.AqlLexerSTRING}},
 					},
 				},
 			},
@@ -87,7 +88,7 @@ func TestProcessor_SelectString(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  `'"hello_world"'`,
-						Value: &PrimitiveSelectValue{Val: Primitive{Val: `"hello_world"`}},
+						Value: &PrimitiveSelectValue{Val: Primitive{Val: `"hello_world"`, Type: aqlparser.AqlLexerSTRING}},
 					},
 				},
 			},
@@ -172,7 +173,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "0",
-						Value: &PrimitiveSelectValue{Val: Primitive{0}},
+						Value: &PrimitiveSelectValue{Val: Primitive{0, aqlparser.AqlLexerINTEGER}},
 					},
 				},
 			},
@@ -185,7 +186,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "-1",
-						Value: &PrimitiveSelectValue{Val: Primitive{-1}},
+						Value: &PrimitiveSelectValue{Val: Primitive{-1, aqlparser.AqlLexerINTEGER}},
 					},
 				},
 			},
@@ -198,7 +199,7 @@ func TestProcessor_SelectNumeric(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "123.5e+10",
-						Value: &PrimitiveSelectValue{Val: Primitive{123.5e+10}},
+						Value: &PrimitiveSelectValue{Val: Primitive{123.5e+10, aqlparser.AqlLexerREAL}},
 					},
 				},
 			},
@@ -241,7 +242,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'2020-10-11'",
-						Value: &PrimitiveSelectValue{Val: Primitive{date}},
+						Value: &PrimitiveSelectValue{Val: Primitive{date, aqlparser.AqlLexerDATE}},
 					},
 				},
 			},
@@ -254,7 +255,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'23:58:58.123'",
-						Value: &PrimitiveSelectValue{Val: Primitive{timeValue}},
+						Value: &PrimitiveSelectValue{Val: Primitive{timeValue, aqlparser.AqlLexerTIME}},
 					},
 				},
 			},
@@ -267,7 +268,7 @@ func TestProcessor_SelectDates(t *testing.T) {
 				SelectExprs: []SelectExpr{
 					{
 						Path:  "'2020-10-11T23:58:58.123'",
-						Value: &PrimitiveSelectValue{Val: Primitive{dateTimeValue}},
+						Value: &PrimitiveSelectValue{Val: Primitive{dateTimeValue, aqlparser.AqlLexerDATETIME}},
 					},
 				},
 			},

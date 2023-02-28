@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -10,6 +11,28 @@ import (
 type Select struct {
 	Distinct    bool
 	SelectExprs []SelectExpr
+}
+
+func (s *Select) write(w io.Writer) {
+
+	if s.Distinct {
+		fmt.Fprintln(w, "SELECT DISTINCT")
+	} else {
+		fmt.Fprintln(w, "SELECT")
+	}
+
+	for i, se := range s.SelectExprs {
+		fmt.Fprintf(w, "\t%s", se.Path)
+
+		if se.AliasName != "" {
+			fmt.Fprintf(w, " AS %s", se.AliasName)
+		}
+
+		if i < len(s.SelectExprs)-1 {
+			fmt.Fprint(w, ",")
+		}
+		fmt.Fprintln(w)
+	}
 }
 
 type SelectExpr struct {

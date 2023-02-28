@@ -1,6 +1,9 @@
 package aqlprocessor
 
 import (
+	"fmt"
+	"io"
+
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
@@ -11,13 +14,37 @@ type IdentifiedPath struct {
 	ObjectPath    *ObjectPath
 }
 
+func (ip *IdentifiedPath) write(w io.Writer) {
+	fmt.Fprintf(w, "%s ", ip.Identifier)
+	if ip.PathPredicate != nil {
+		ip.PathPredicate.write(w)
+	}
+	if ip.ObjectPath != nil {
+		fmt.Fprintln(w, "/")
+		ip.ObjectPath.write(w)
+	}
+}
+
 type ObjectPath struct {
 	Paths []PartPath
+}
+
+func (op *ObjectPath) write(w io.Writer) {
+	for i := range op.Paths {
+		op.Paths[i].write(w)
+		if i < len(op.Paths)-1 {
+			fmt.Fprint(w, "/")
+		}
+	}
 }
 
 type PartPath struct {
 	Identifier    string
 	PathPredicate *PathPredicate
+}
+
+func (pp PartPath) write(w io.Writer) {
+	fmt.Fprint(w, pp.Identifier)
 }
 
 func getIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) (IdentifiedPath, error) {

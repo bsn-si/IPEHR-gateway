@@ -1,6 +1,8 @@
 package aqlprocessor
 
 import (
+	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
@@ -10,6 +12,14 @@ import (
 type Limit struct {
 	Limit  int
 	Offset int
+}
+
+func (l *Limit) write(w io.Writer) {
+	fmt.Fprintf(w, "LIMIT %d", l.Limit)
+
+	if l.Offset != 0 {
+		fmt.Fprintf(w, " OFFSET %d", l.Offset)
+	}
 }
 
 func getLimit(ctx *aqlparser.LimitClauseContext) (*Limit, error) {

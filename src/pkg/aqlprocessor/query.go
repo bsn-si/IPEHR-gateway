@@ -1,5 +1,10 @@
 package aqlprocessor
 
+import (
+	"bytes"
+	"fmt"
+)
+
 type Query struct {
 	Select Select
 	From   From
@@ -20,4 +25,27 @@ func (q *Query) addParameter(p *Parameter) {
 
 func (q *Query) ParametersCount() int {
 	return len(q.Parameters)
+}
+
+func (q *Query) String() string {
+	buffer := &bytes.Buffer{}
+	q.Select.write(buffer)
+	q.From.write(buffer)
+
+	if q.Where != nil {
+		fmt.Fprintf(buffer, "\nWHERE ")
+		q.Where.write(buffer)
+	}
+
+	if q.Order != nil {
+		fmt.Fprintln(buffer)
+		q.Order.write(buffer)
+	}
+
+	if q.Limit != nil {
+		fmt.Fprintln(buffer)
+		q.Limit.write(buffer)
+	}
+
+	return buffer.String()
 }

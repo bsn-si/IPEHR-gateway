@@ -2,6 +2,7 @@ package aqlprocessor
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -25,6 +26,17 @@ type PathPredicate struct {
 	Archetype         *ArchetypePathPredicate
 }
 
+func (pp *PathPredicate) write(w io.Writer) {
+	switch pp.Type {
+	case StandartPathPredicate:
+		pp.StandartPredicate.write(w)
+	case ArchetypedPathPredicate:
+		pp.Archetype.write(w)
+	case NodePathPredicate:
+		pp.NodePredicate.write(w)
+	}
+}
+
 type PathPredicateOperand struct {
 	Primitive  *Primitive
 	ObjectPath *ObjectPath
@@ -33,12 +45,33 @@ type PathPredicateOperand struct {
 	AtCode     *string
 }
 
+func (ppo *PathPredicateOperand) write(w io.Writer) {
+	if ppo.Primitive != nil {
+		ppo.Primitive.write(w)
+		return
+	}
+}
+
 // standardPredicate:
 // objectPath COMPARISON_OPERATOR pathPredicateOperand;
 type StandartPredicate struct {
 	ObjectPath  *ObjectPath
 	CMPOperator ComparisionSymbol
 	Operand     *PathPredicateOperand
+}
+
+func (sp *StandartPredicate) write(w io.Writer) {
+	if sp.ObjectPath != nil {
+		sp.ObjectPath.write(w)
+	}
+
+	if sp.CMPOperator != SymNone {
+		fmt.Fprintf(w, "%s", sp.CMPOperator)
+	}
+
+	if sp.Operand != nil {
+		sp.Operand.write(w)
+	}
 }
 
 type ComparisionSymbol string
@@ -75,6 +108,15 @@ func getComparisionSimbol(ctx antlr.TerminalNode) (ComparisionSymbol, error) {
 type ArchetypePathPredicate struct {
 	ArchetypeHRID *string
 	Parameter     *Parameter
+}
+
+func (app *ArchetypePathPredicate) write(w io.Writer) {
+	if app.ArchetypeHRID != nil {
+		fmt.Fprintf(w, "%s", *app.ArchetypeHRID)
+	}
+	if app.Parameter != nil {
+		fmt.Fprintf(w, "$%s", *app.Parameter)
+	}
 }
 
 type Parameter string

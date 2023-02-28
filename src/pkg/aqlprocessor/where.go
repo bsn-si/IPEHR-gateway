@@ -1,6 +1,9 @@
 package aqlprocessor
 
 import (
+	"fmt"
+	"io"
+
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
@@ -9,14 +12,70 @@ type Where struct {
 	IdentifiedExpr *IdentifiedExpr
 	Next           []*Where
 	OperatorType   OperatorType
+	Brackets       bool
+}
+
+func (wh *Where) write(w io.Writer) {
+	if wh.IdentifiedExpr != nil {
+		wh.IdentifiedExpr.write(w)
+		return
+	}
+
+	if wh.Brackets && len(wh.Next) == 1 {
+		fmt.Fprint(w, "(")
+		wh.Next[0].write(w)
+		fmt.Fprint(w, ")")
+		return
+	}
+
+	if wh.OperatorType == NOTOperator && len(wh.Next) == 1 {
+		fmt.Fprint(w, "NOT ")
+		wh.Next[0].write(w)
+		return
+	}
+
+	if (wh.OperatorType == OROperator || wh.OperatorType == ANDOperator) && len(wh.Next) == 2 {
+		wh.Next[0].write(w)
+		fmt.Fprintf(w, " %s ", wh.OperatorType)
+		wh.Next[1].write(w)
+		return
+	}
+
+	fmt.Fprintf(w, "%+v ", *wh)
 }
 
 type IdentifiedExpr struct {
 	Next               *IdentifiedExpr
-	IsExists           *bool
+	IsExists           bool
 	IdentifiedPath     *IdentifiedPath
 	Terminal           *Terminal
 	ComparisonOperator *ComparisionSymbol
+
+	Brackets bool
+}
+
+func (ie *IdentifiedExpr) write(w io.Writer) {
+	if ie.IsExists && ie.IdentifiedPath != nil {
+		fmt.Fprintf(w, "EXISTS ")
+		ie.IdentifiedPath.write(w)
+		return
+	}
+
+	if ie.Brackets && ie.Next != nil {
+		fmt.Fprintf(w, "(")
+		ie.Next.write(w)
+		fmt.Fprintf(w, ")")
+		return
+	}
+
+	if ie.IdentifiedPath != nil && ie.ComparisonOperator != nil && ie.Terminal != nil {
+		ie.IdentifiedPath.write(w)
+		fmt.Fprintf(w, " %s ", *ie.ComparisonOperator)
+		ie.Terminal.write(w)
+		return
+	}
+
+	fmt.Fprintf(w, "%+v ", ie)
 }
 
 func getWhere(ctx *aqlparser.WhereExprContext) (*Where, error) {
@@ -43,6 +102,8 @@ func getWhere(ctx *aqlparser.WhereExprContext) (*Where, error) {
 		result.OperatorType = OROperator
 	}
 
+	result.Brackets = ctx.SYM_LEFT_PAREN() != nil && ctx.SYM_RIGHT_PAREN() != nil
+
 	for _, whereExpr := range ctx.AllWhereExpr() {
 		ww, err := getWhere(whereExpr.(*aqlparser.WhereExprContext))
 		if err != nil {
@@ -58,7 +119,8 @@ func getWhere(ctx *aqlparser.WhereExprContext) (*Where, error) {
 func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, error) {
 	result := IdentifiedExpr{}
 
-	if ctx.IdentifiedExpr() != nil {
+	if ctx.IdentifiedExpr() != nil && ctx.SYM_LEFT_PAREN() != nil && ctx.SYM_RIGHT_PAREN() != nil {
+		result.Brackets = true
 		next, err := getIdentifiedExpr(ctx.IdentifiedExpr().(*aqlparser.IdentifiedExprContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get IdentifiedExpr.IdentifiedExpr")
@@ -68,7 +130,7 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 	}
 
 	if ctx.EXISTS() != nil && ctx.IdentifiedPath() != nil {
-		result.IsExists = toRef(true)
+		result.IsExists = true
 
 		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
 		if err != nil {
@@ -109,6 +171,24 @@ type Terminal struct {
 	Parameter      *Parameter
 	IdentifiedPath *IdentifiedPath
 	// FunctionCall *FunctionCall
+}
+
+func (t *Terminal) write(w io.Writer) {
+	if t.Primitive != nil {
+		t.Primitive.write(w)
+		return
+	}
+
+	if t.Parameter != nil {
+		fmt.Fprintf(w, "$%s", *t.Parameter)
+		return
+	}
+
+	if t.IdentifiedPath != nil {
+		t.IdentifiedPath.write(w)
+		return
+	}
+
 }
 
 func getTerminal(ctx *aqlparser.TerminalContext) (*Terminal, error) { //nolint

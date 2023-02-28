@@ -3,6 +3,7 @@ package aqlprocessor
 import (
 	"testing"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -25,7 +26,7 @@ func TestProcessorTestProcessor(t *testing.T) {
     o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude AS temperature, 
     o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/units AS unit 
 FROM 
-    EHR[ehr_id/value='554f896d-faca-4513-bddf-664541146308d'] 
+    EHR e[ehr_id/value='554f896d-faca-4513-bddf-664541146308d']
         CONTAINS Observation o[openEHR-EHR-OBSERVATION.body_temperature-zn.v1] 
 WHERE 
     o/data[at0002]/events[at0003]/data[at0001]/items[at0004]/value/magnitude > $temperature 
@@ -154,7 +155,7 @@ LIMIT 3`,
 				From: From{
 					ContainsExpr{
 						Operand: ClassExpression{
-							Identifiers: []string{"EHR"},
+							Identifiers: []string{"EHR", "e"},
 							PathPredicate: &PathPredicate{
 								Type: StandartPathPredicate,
 								StandartPredicate: &StandartPredicate{
@@ -166,7 +167,7 @@ LIMIT 3`,
 										},
 									},
 									Operand: &PathPredicateOperand{
-										Primitive: &Primitive{Val: "554f896d-faca-4513-bddf-664541146308d"},
+										Primitive: &Primitive{Val: "554f896d-faca-4513-bddf-664541146308d", Type: aqlparser.AqlLexerSTRING},
 									},
 								},
 							},
@@ -275,7 +276,7 @@ LIMIT 3`,
 																},
 															},
 															PathPredicateOperand: &PathPredicateOperand{
-																Primitive: &Primitive{Val: "Symptoms"},
+																Primitive: &Primitive{Val: "Symptoms", Type: aqlparser.AqlLexerSTRING},
 															},
 														},
 													},
