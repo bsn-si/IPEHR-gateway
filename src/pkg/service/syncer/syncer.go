@@ -13,16 +13,15 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
 	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/bsn-si/IPEHR-gateway/src/internal/models"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/contracts/datastore"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/contracts/ehrindexer"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/contracts/users"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/dataStore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/treeindex"
 	"github.com/pkg/errors"
 )
@@ -54,7 +53,7 @@ type Syncer struct {
 	repo         SyncerRepo
 	chunkRepo    TreeIndexChunkRepositpry
 	ethClient    *ethclient.Client
-	addrList     map[common.Address]string
+	addrList     map[string]string
 	ehrABI       *abi.ABI
 	usersABI     *abi.ABI
 	dataStoreABI *abi.ABI
@@ -74,7 +73,7 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 		repo:      repo,
 		chunkRepo: chunkRepo,
 		ethClient: ethClient,
-		addrList:  map[common.Address]string{},
+		addrList:  map[string]string{},
 		blockNum:  big.NewInt(int64(cfg.StartBlock)),
 	}
 
@@ -95,10 +94,10 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 	}
 
 	for _, c := range cfg.Contracts {
-		s.addrList[common.HexToAddress(c.Address)] = c.Name
+		s.addrList[c.Address] = c.Name
 	}
 
-	s.ehrABI, err = ehrindexer.EhrindexerMetaData.GetAbi()
+	s.ehrABI, err = ehrIndexer.EhrIndexerMetaData.GetAbi()
 	if err != nil {
 		log.Fatal("abi.JSON error: ", err)
 	}
@@ -108,7 +107,7 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 		log.Fatal("abi.JSON error: ", err)
 	}
 
-	s.dataStoreABI, err = datastore.DatastoreMetaData.GetAbi()
+	s.dataStoreABI, err = dataStore.DataStoreMetaData.GetAbi()
 	if err != nil {
 		log.Fatal("abi.JSON error: ", err)
 	}
@@ -181,7 +180,7 @@ func (s *Syncer) tryProccessNextBlock(ctx context.Context, bInt *big.Int) {
 			continue
 		}
 
-		contractName, ok := s.addrList[*blockTx.To()]
+		contractName, ok := s.addrList[blockTx.To().Hex()]
 		if !ok {
 			continue
 		}
