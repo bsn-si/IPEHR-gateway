@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -55,7 +54,7 @@ type Syncer struct {
 	repo         SyncerRepo
 	chunkRepo    TreeIndexChunkRepositpry
 	ethClient    *ethclient.Client
-	addrList     sync.Map
+	addrList     map[common.Address]string
 	ehrABI       *abi.ABI
 	usersABI     *abi.ABI
 	dataStoreABI *abi.ABI
@@ -75,7 +74,7 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 		repo:      repo,
 		chunkRepo: chunkRepo,
 		ethClient: ethClient,
-		addrList:  sync.Map{},
+		addrList:  map[common.Address]string{},
 		blockNum:  big.NewInt(int64(cfg.StartBlock)),
 	}
 
@@ -96,7 +95,7 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 	}
 
 	for _, c := range cfg.Contracts {
-		s.addrList.Store(common.HexToAddress(c.Address), c.Name)
+		s.addrList[common.HexToAddress(c.Address)] = c.Name
 	}
 
 	s.ehrABI, err = ehrindexer.EhrindexerMetaData.GetAbi()
@@ -182,12 +181,7 @@ func (s *Syncer) tryProccessNextBlock(ctx context.Context, bInt *big.Int) {
 			continue
 		}
 
-		contractNameRow, ok := s.addrList.Load(*blockTx.To())
-		if !ok {
-			continue
-		}
-
-		contractName, ok := contractNameRow.(string)
+		contractName, ok := s.addrList[*blockTx.To()]
 		if !ok {
 			continue
 		}
