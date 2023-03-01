@@ -123,19 +123,6 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 	return &s
 }
 
-func (s *Syncer) getAbiByForContract(contractName string) *abi.ABI {
-	switch contractName {
-	case "ehrIndex":
-		return s.ehrABI
-	case "users":
-		return s.usersABI
-	case "dataStore":
-		return s.dataStoreABI
-	}
-
-	return nil
-}
-
 func (s *Syncer) Start(ctx context.Context) {
 	log.Printf("[SYNC] Load tree index state from storage")
 
