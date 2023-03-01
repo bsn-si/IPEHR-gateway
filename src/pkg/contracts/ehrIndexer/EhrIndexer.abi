@@ -1,0 +1,871 @@
+[
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_accessStore",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_users",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "accessStore",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Docs.DocType",
+              "name": "docType",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "id",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "version",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Docs.AddEhrDocParams",
+          "name": "p",
+          "type": "tuple"
+        }
+      ],
+      "name": "addEhrDoc",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "allowedChange",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Docs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "docBaseUIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "version",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "deleteDoc",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "docCIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "docCIDEncr",
+          "type": "bytes"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "docGroupAddDoc",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "groupIDHash",
+              "type": "bytes32"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "address",
+              "name": "signer",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "signature",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct DocGroups.DocGroupCreateParams",
+          "name": "p",
+          "type": "tuple"
+        }
+      ],
+      "name": "docGroupCreate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "docGroupGetAttrs",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Attributes.Code",
+              "name": "code",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "value",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct Attributes.Attribute[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "groupIdHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "docGroupGetDocs",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "ehrSubject",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrID",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Docs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint32",
+          "name": "timestamp",
+          "type": "uint32"
+        }
+      ],
+      "name": "getDocByTime",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Docs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "id",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "version",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Docs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Docs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "docBaseUIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "version",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getDocByVersion",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Docs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "id",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "version",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Docs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Docs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "UIDHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getDocLastByBaseID",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Docs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "id",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "version",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Docs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userIDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Docs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        }
+      ],
+      "name": "getEhrDocs",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Docs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "id",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "version",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Docs.DocumentMeta[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "userIDHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getEhrUser",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum Docs.DocType",
+          "name": "docType",
+          "type": "uint8"
+        }
+      ],
+      "name": "getLastEhrDocByType",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "enum Docs.DocStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes",
+              "name": "id",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "version",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint32",
+              "name": "timestamp",
+              "type": "uint32"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLast",
+              "type": "bool"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "enum Attributes.Code",
+                  "name": "code",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "value",
+                  "type": "bytes"
+                }
+              ],
+              "internalType": "struct Attributes.Attribute[]",
+              "name": "attrs",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct Docs.DocumentMeta",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "data",
+          "type": "bytes[]"
+        }
+      ],
+      "name": "multicall",
+      "outputs": [
+        {
+          "internalType": "bytes[]",
+          "name": "results",
+          "type": "bytes[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nonces",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "name": "setAllowed",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "CIDHash",
+          "type": "bytes32"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum IAccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAccessStore.Access",
+          "name": "access",
+          "type": "tuple"
+        },
+        {
+          "internalType": "address",
+          "name": "userAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setDocAccess",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "subjectKey",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setEhrSubject",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "IDHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "ehrId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setEhrUser",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "users",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]

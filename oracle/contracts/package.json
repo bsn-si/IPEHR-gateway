@@ -1,0 +1,21 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "Contracts with chainlink integrations",
+  "main": "index.js",
+  "author": "Anton Shramko <antonshramko@yandex.ru>",
+  "license": "MIT",
+  "private": false,
+
+  "scripts": {
+    "build": "hardhat compile --show-stack-traces",
+    "build:n:copy": "npm run build && node ./copyArtifactsToSourceAssets.js"
+  },
+
+  "devDependencies": {
+    "hardhat": "^2.12.3"
+  },
+  "dependencies": {
+    "@chainlink/contracts": "^0.5.1"
+  }
+}

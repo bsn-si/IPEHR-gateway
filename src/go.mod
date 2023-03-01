@@ -3,6 +3,7 @@ module github.com/bsn-si/IPEHR-gateway/src
 go 1.19
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/akyoto/cache v1.0.6
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20221202181307-76fa05c21b12
 	github.com/ethereum/go-ethereum v1.11.0
@@ -15,13 +16,17 @@ require (
 	github.com/gin-contrib/timeout v0.0.3
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/ipfs/go-cid v0.2.0
+	github.com/jmoiron/sqlx v1.3.5
+	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/multiformats/go-multihash v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.1
+	github.com/swaggo/files v1.0.0
 	github.com/swaggo/gin-swagger v1.4.3
 	github.com/swaggo/swag v1.8.10
 	github.com/vmihailenco/msgpack/v5 v5.3.5
@@ -135,7 +140,6 @@ require (
 	github.com/magefile/mage v1.9.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
-	github.com/mattn/go-sqlite3 v1.14.12 // indirect
 	github.com/miekg/dns v1.1.48 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect

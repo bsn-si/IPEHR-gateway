@@ -7,8 +7,9 @@ package main
 import (
 	"flag"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/api"
-	_ "github.com/bsn-si/IPEHR-gateway/src/pkg/api/docs"
+	"github.com/bsn-si/IPEHR-gateway/src/internal/gatewayapi"
+	_ "github.com/bsn-si/IPEHR-gateway/src/internal/gatewayapi"
+	_ "github.com/bsn-si/IPEHR-gateway/src/internal/gatewayapi/docs"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 )
@@ -27,7 +28,7 @@ func main() {
 
 	infra := infrastructure.New(cfg)
 
-	a := api.New(cfg, infra).Build()
+	a := gatewayapi.New(cfg, infra).Build()
 	if err = a.Run(cfg.Host); err != nil {
 		panic(err)
 	}
