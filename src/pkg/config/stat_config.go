@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/service/syncer"
 )
 
 type StatConfig struct {
@@ -13,15 +15,7 @@ type StatConfig struct {
 		Path       string
 		Migrations string
 	}
-	Sync struct {
-		Endpoint   string
-		StartBlock uint64
-		Contracts  []struct {
-			Name    string
-			Address string
-			AbiPath string
-		}
-	}
+	Sync syncer.Config
 }
 
 const DefaultConfigPath = "config.json"

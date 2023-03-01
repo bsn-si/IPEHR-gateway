@@ -45,7 +45,6 @@ type Config struct {
 	Contracts  []struct {
 		Name    string
 		Address string
-		AbiPath string
 	}
 }
 
@@ -53,7 +52,7 @@ type Syncer struct {
 	repo         SyncerRepo
 	chunkRepo    TreeIndexChunkRepositpry
 	ethClient    *ethclient.Client
-	addrList     map[string]string
+	addrList     map[string]*abi.ABI
 	ehrABI       *abi.ABI
 	usersABI     *abi.ABI
 	dataStoreABI *abi.ABI
@@ -73,7 +72,7 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 		repo:      repo,
 		chunkRepo: chunkRepo,
 		ethClient: ethClient,
-		addrList:  map[string]string{},
+		addrList:  map[string]*abi.ABI{},
 		blockNum:  big.NewInt(int64(cfg.StartBlock)),
 	}
 
@@ -93,10 +92,6 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 		s.blockNum = big.NewInt(int64(lastBlock))
 	}
 
-	for _, c := range cfg.Contracts {
-		s.addrList[c.Address] = c.Name
-	}
-
 	s.ehrABI, err = ehrIndexer.EhrIndexerMetaData.GetAbi()
 	if err != nil {
 		log.Fatal("abi.JSON error: ", err)
@@ -112,7 +107,33 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 		log.Fatal("abi.JSON error: ", err)
 	}
 
+	for _, c := range cfg.Contracts {
+		switch c.Name {
+		case "ehrIndex":
+			s.addrList[c.Address] = s.ehrABI
+		case "users":
+			s.addrList[c.Address] = s.usersABI
+		case "dataStore":
+			s.addrList[c.Address] = s.dataStoreABI
+		default:
+			log.Fatalf("unexpected contract name: %v", c.Name)
+		}
+	}
+
 	return &s
+}
+
+func (s *Syncer) getAbiByForContract(contractName string) *abi.ABI {
+	switch contractName {
+	case "ehrIndex":
+		return s.ehrABI
+	case "users":
+		return s.usersABI
+	case "dataStore":
+		return s.dataStoreABI
+	}
+
+	return nil
 }
 
 func (s *Syncer) Start(ctx context.Context) {
@@ -180,7 +201,7 @@ func (s *Syncer) tryProccessNextBlock(ctx context.Context, bInt *big.Int) {
 			continue
 		}
 
-		contractName, ok := s.addrList[blockTx.To().Hex()]
+		contractABI, ok := s.addrList[blockTx.To().Hex()]
 		if !ok {
 			continue
 		}
@@ -194,7 +215,7 @@ func (s *Syncer) tryProccessNextBlock(ctx context.Context, bInt *big.Int) {
 			continue
 		}
 
-		s.processTransactionBlock(ctx, contractName, blockTx, ts)
+		s.processTransactionBlock(ctx, contractABI, blockTx, ts)
 	}
 
 	log.Printf("[SYNC] new block %v %v txs %d", block.Number().Int64(), time.Unix(int64(block.Time()), 0).Format("2006-01-02 15:04:05"), len(block.Transactions()))
@@ -206,13 +227,11 @@ func (s *Syncer) tryProccessNextBlock(ctx context.Context, bInt *big.Int) {
 	s.blockNum.Add(s.blockNum, bInt)
 }
 
-func (s *Syncer) processTransactionBlock(ctx context.Context, contractName string, blockTx *types.Transaction, ts time.Time) {
+func (s *Syncer) processTransactionBlock(ctx context.Context, contractABI *abi.ABI, blockTx *types.Transaction, ts time.Time) {
 	decodedSig := blockTx.Data()[:4]
 	decodedData := blockTx.Data()[4:]
 
-	abi := s.getAbiByForContract(contractName)
-
-	method, err := abi.MethodById(decodedSig)
+	method, err := contractABI.MethodById(decodedSig)
 	if err != nil {
 		log.Println("abi.MethodById error: ", err)
 		return
@@ -220,7 +239,7 @@ func (s *Syncer) processTransactionBlock(ctx context.Context, contractName strin
 
 	switch method.Name {
 	case "multicall":
-		err = s.procMulticall(ctx, abi, method, decodedData, ts)
+		err = s.procMulticall(ctx, contractABI, method, decodedData, ts)
 		if err != nil {
 			log.Fatal("[SYNC] procMulticall error: ", err)
 		}
@@ -240,19 +259,6 @@ func (s *Syncer) processTransactionBlock(ctx context.Context, contractName strin
 			log.Fatal("[SYNC] procDataUpdate error: ", err)
 		}
 	}
-}
-
-func (s *Syncer) getAbiByForContract(contractName string) *abi.ABI {
-	switch contractName {
-	case "ehrIndex":
-		return s.ehrABI
-	case "users":
-		return s.usersABI
-	case "dataStore":
-		return s.dataStoreABI
-	}
-
-	return nil
 }
 
 func (s *Syncer) procMulticall(ctx context.Context, _abi *abi.ABI, method *abi.Method, inputData []byte, ts time.Time) error {
