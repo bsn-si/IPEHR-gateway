@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"os"
 	"sync"
 	"time"
 
@@ -22,6 +21,9 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 
 	"github.com/bsn-si/IPEHR-gateway/src/internal/models"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/contracts/datastore"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/contracts/ehrindexer"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/contracts/users"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/treeindex"
 	"github.com/pkg/errors"
 )
@@ -95,34 +97,21 @@ func New(repo SyncerRepo, chunkRepo TreeIndexChunkRepositpry, ethClient *ethclie
 
 	for _, c := range cfg.Contracts {
 		s.addrList.Store(common.HexToAddress(c.Address), c.Name)
-
-		abiJSON, err := os.ReadFile(c.AbiPath)
-		if err != nil {
-			log.Fatalf("abiSON read file '%s' error: %v", c.AbiPath, err)
-		}
-
-		abi, err := abi.JSON(bytes.NewReader(abiJSON))
-		if err != nil {
-			log.Fatal("abi.JSON error: ", err)
-		}
-
-		switch c.Name {
-		case "ehrIndex":
-			s.ehrABI = &abi
-		case "users":
-			s.usersABI = &abi
-		case "dataStore":
-			s.dataStoreABI = &abi
-		}
 	}
 
-	switch {
-	case s.ehrABI == nil:
-		log.Fatal("Error: contract 'ehrIndex' definition is not found in config")
-	case s.usersABI == nil:
-		log.Fatal("Error: contract 'users' definition is not found in config")
-	case s.dataStoreABI == nil:
-		log.Fatal("Error: contract 'dataStore' definition is not found in config")
+	s.ehrABI, err = ehrindexer.EhrindexerMetaData.GetAbi()
+	if err != nil {
+		log.Fatal("abi.JSON error: ", err)
+	}
+
+	s.usersABI, err = users.UsersMetaData.GetAbi()
+	if err != nil {
+		log.Fatal("abi.JSON error: ", err)
+	}
+
+	s.dataStoreABI, err = datastore.DatastoreMetaData.GetAbi()
+	if err != nil {
+		log.Fatal("abi.JSON error: ", err)
 	}
 
 	return &s
