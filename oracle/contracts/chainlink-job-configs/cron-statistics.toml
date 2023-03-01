@@ -1,0 +1,30 @@
+type = "cron"
+
+name = "IPEHR Cron Statistics"
+externalJobID = "a64bfcb9-c559-4d85-9fbe-e1f9c7f6a8a4"
+schedule = "@every 2m"
+maxTaskDuration = "0s"
+schemaVersion = 1
+
+observationSource = """
+    fetch        [type="http" method=GET url="URL_PATH_TO_IPEHR_API_OR_MOCK" allowUnrestrictedNetworkAccess="true"]
+    parse_latest [type="jsonparse" path="data" data="$(fetch)"]
+    parse_period [type="jsonparse" path="month" data="$(fetch)"]
+
+    encode_latest_tx [
+        type="ethabiencode"
+        abi="setTotal(uint64 documents, uint64 patients, uint256 time)"
+        data="{\\"documents\\": $(parse_latest.documents), \\"patients\\": $(parse_latest.patients), \\"time\\": $(parse_latest.time)}"
+    ]
+
+    encode_period_tx [
+        type="ethabiencode"
+        abi="setPeriod(uint256 period, uint64 documents, uint64 patients, uint256 time)"
+        data="{\\"period\\": $(parse_period.time), \\"documents\\": $(parse_period.documents), \\"patients\\": $(parse_period.patients), \\"time\\": $(parse_period.time)}"
+    ]
+
+    submit_latest_tx [type="ethtx" to="STATISTICS_CONTRACT_ADDRESS" data="$(encode_latest_tx)"]
+    submit_period_tx [type="ethtx" to="STATISTICS_CONTRACT_ADDRESS" data="$(encode_period_tx)"]
+
+    fetch -> parse_latest -> parse_period -> encode_latest_tx -> encode_period_tx -> submit_latest_tx -> submit_period_tx
+"""

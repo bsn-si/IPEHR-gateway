@@ -19,7 +19,11 @@ services:
       start_period: 5s
 
   ipehr-stat:
-    image: ghcr.io/bsn-si/ipehr-stat:develop
+    build:
+      context: .
+      dockerfile: Dockerfile.stat
+    image: ipehr-stat
+    pull_policy: never
     depends_on:
       ipehr-index:
         condition: service_healthy
@@ -32,7 +36,9 @@ services:
       - ipehr-network
 
   ipehr-gateway:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
     image: ipehr-gateway
     pull_policy: never
     environment:

@@ -1,0 +1,79 @@
+basePath: /
+definitions:
+  api.ResponsePeriod:
+    properties:
+      data:
+        $ref: '#/definitions/api.Stat'
+      type:
+        type: string
+    type: object
+  api.ResponseTotal:
+    properties:
+      data:
+        $ref: '#/definitions/api.Stat'
+      month:
+        $ref: '#/definitions/api.Stat'
+      type:
+        type: string
+    type: object
+  api.Stat:
+    properties:
+      documents:
+        type: integer
+      patients:
+        type: integer
+      time:
+        type: integer
+    type: object
+host: stat.ipehr.org
+info:
+  contact:
+    email: support@bsn.si
+    name: API Support
+    url: https://bsn.si/blockchain
+  description: IPEHR Stat is an open API service for providing public statistics from
+    the IPEHR system.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: IPEHR Stat API
+  version: "0.1"
+paths:
+  /:
+    get:
+      description: Retrieve the IPEHR statistics total and current month
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ResponseTotal'
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get IPEHR statistics total
+      tags:
+      - Stat
+  /{period}:
+    get:
+      description: Retrieve the IPEHR statistics per month
+      parameters:
+      - description: 'Month in YYYYYMM format. Example: 202201'
+        in: path
+        name: period
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.ResponsePeriod'
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Get IPEHR statistics per month
+      tags:
+      - Stat
+swagger: "2.0"

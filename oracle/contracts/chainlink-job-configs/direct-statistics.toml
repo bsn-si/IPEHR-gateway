@@ -1,0 +1,34 @@
+type = "directrequest"
+schemaVersion = 1
+name = "IPEHR Statistics via Direct Request"
+externalJobID   = "a72095b3-4faa-4722-8aeb-01ae80b1355a"
+contractAddress = "OPERATOR_CONTRACT_ADDRESS"
+maxTaskDuration = "0s"
+observationSource = """
+    decode_log  [
+        type="ethabidecodelog"
+        abi="OracleRequest(bytes32 indexed specId, address requester, bytes32 requestId, uint256 payment, address callbackAddr, bytes4 callbackFunctionId, uint256 cancelExpiration, uint256 dataVersion, bytes data)"
+        data="$(jobRun.logData)"
+        topics="$(jobRun.logTopics)"
+    ]
+
+    decode_cbor  [type="cborparse" data="$(decode_log.data)"]
+    fetch        [type="http" method=GET url="$(decode_cbor.url)" allowUnrestrictedNetworkAccess="true"]
+    parse        [type="jsonparse" path="data" data="$(fetch)"]
+
+    encode_data [
+        type="ethabiencode"
+        abi="(bytes32 requestId, uint64 documents, uint64 patients, uint256 time)"
+        data="{\\"requestId\\": $(decode_log.requestId), \\"documents\\": $(parse.documents), \\"patients\\": $(parse.patients), \\"time\\": $(parse.time)}"
+    ]
+
+    encode_tx  [
+        type="ethabiencode"
+        abi="fulfillOracleRequest2(bytes32 requestId, uint256 payment, address callbackAddress, bytes4 callbackFunctionId, uint256 expiration, bytes calldata data)"
+        data="{\\"requestId\\": $(decode_log.requestId), \\"payment\\": $(decode_log.payment), \\"callbackAddress\\": $(decode_log.callbackAddr), \\"callbackFunctionId\\": $(decode_log.callbackFunctionId), \\"expiration\\": $(decode_log.cancelExpiration), \\"data\\": $(encode_data)}"
+    ]
+
+    submit_tx    [type="ethtx" to="OPERATOR_CONTRACT_ADDRESS" data="$(encode_tx)"]
+
+    decode_log -> decode_cbor -> fetch -> parse -> encode_data -> encode_tx -> submit_tx
+"""

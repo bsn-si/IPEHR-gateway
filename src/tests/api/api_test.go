@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/api"
+	"github.com/bsn-si/IPEHR-gateway/src/internal/gatewayapi"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
@@ -293,7 +293,7 @@ func prepareTest() (*httptest.Server, storage.Storager, error) {
 
 	infra := infrastructure.New(cfg)
 
-	apiHandler := api.New(cfg, infra)
+	apiHandler := gatewayapi.New(cfg, infra)
 
 	r := apiHandler.Build()
 	srv := httptest.NewServer(r)
