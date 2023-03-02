@@ -22,8 +22,7 @@ FROM alpine:3.16
 WORKDIR /srv
 
 COPY --from=build /srv/bin/ /srv
-COPY --from=build /srv/config.json.example /srv/config.json
+COPY --from=build /srv/config.json /srv/config.json
 COPY --from=build /srv/db /srv/db
-COPY --from=build /srv/pkg/indexer /srv/contracts
 
 CMD ["./ipehr-stats", "-config=./config.json"]
