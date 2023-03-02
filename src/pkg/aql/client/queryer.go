@@ -1,4 +1,4 @@
-package aqlclient
+package client
 
 import (
 	"bytes"

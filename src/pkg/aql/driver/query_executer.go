@@ -3,7 +3,7 @@ package driver
 import (
 	"database/sql/driver"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
+	aqlprocessor "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/processor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/treeindex"
 )

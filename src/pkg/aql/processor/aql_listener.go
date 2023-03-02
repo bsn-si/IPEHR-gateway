@@ -1,15 +1,14 @@
-package aqlprocessor
+package processor
 
 import (
 	"log"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
-
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 )
 
 type AQLListener struct {
-	*aqlparser.BaseAqlParserListener
+	*parser.BaseAqlParserListener
 	query Query
 }
 
@@ -27,7 +26,7 @@ func (aql *AQLListener) VisitTerminal(node antlr.TerminalNode) {
 }
 
 // EnterSelectClause is called when production selectClause is entered.
-func (aql *AQLListener) EnterSelectClause(ctx *aqlparser.SelectClauseContext) {
+func (aql *AQLListener) EnterSelectClause(ctx *parser.SelectClauseContext) {
 	slct, err := getSelect(ctx)
 	if err != nil {
 		handleError(ctx.GetParser(), ctx.GetStart(), err)
@@ -38,12 +37,12 @@ func (aql *AQLListener) EnterSelectClause(ctx *aqlparser.SelectClauseContext) {
 }
 
 // EnterFromClause is called when production fromClause is entered.
-func (aql *AQLListener) EnterFromClause(ctx *aqlparser.FromClauseContext) {
+func (aql *AQLListener) EnterFromClause(ctx *parser.FromClauseContext) {
 	if ctx.FromExpr() == nil {
 		return
 	}
 
-	from, err := getFrom(ctx.FromExpr().(*aqlparser.FromExprContext))
+	from, err := getFrom(ctx.FromExpr().(*parser.FromExprContext))
 	if err != nil {
 		handleError(ctx.GetParser(), ctx.GetStart(), err)
 		log.Printf("get From err: %v", err)
@@ -53,12 +52,12 @@ func (aql *AQLListener) EnterFromClause(ctx *aqlparser.FromClauseContext) {
 }
 
 // EnterWhereClause is called when production whereClause is entered.
-func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {
+func (aql *AQLListener) EnterWhereClause(ctx *parser.WhereClauseContext) {
 	if ctx.WhereExpr() == nil {
 		return
 	}
 
-	where, err := getWhere(ctx.WhereExpr().(*aqlparser.WhereExprContext))
+	where, err := getWhere(ctx.WhereExpr().(*parser.WhereExprContext))
 	if err != nil {
 		handleError(ctx.GetParser(), ctx.GetStart(), err)
 		log.Printf("get Where err: %v", err)
@@ -68,7 +67,7 @@ func (aql *AQLListener) EnterWhereClause(ctx *aqlparser.WhereClauseContext) {
 }
 
 // EnterOrderByClause is called when production orderByClause is entered.
-func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) {
+func (aql *AQLListener) EnterOrderByClause(ctx *parser.OrderByClauseContext) {
 	order, err := getOrder(ctx)
 	if err != nil {
 		handleError(ctx.GetParser(), ctx.GetStart(), err)
@@ -79,7 +78,7 @@ func (aql *AQLListener) EnterOrderByClause(ctx *aqlparser.OrderByClauseContext) 
 }
 
 // EnterLimitClause is called when production limitClause is entered.
-func (aql *AQLListener) EnterLimitClause(ctx *aqlparser.LimitClauseContext) {
+func (aql *AQLListener) EnterLimitClause(ctx *parser.LimitClauseContext) {
 	limit, err := getLimit(ctx)
 	if err != nil {
 		handleError(ctx.GetParser(), ctx.GetStart(), err)

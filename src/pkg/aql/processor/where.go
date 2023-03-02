@@ -1,10 +1,10 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -78,11 +78,11 @@ func (ie *IdentifiedExpr) write(w io.Writer) {
 	fmt.Fprintf(w, "%+v ", ie)
 }
 
-func getWhere(ctx *aqlparser.WhereExprContext) (*Where, error) {
+func getWhere(ctx *parser.WhereExprContext) (*Where, error) {
 	result := Where{}
 
 	if ctx.IdentifiedExpr() != nil {
-		ie, err := getIdentifiedExpr(ctx.IdentifiedExpr().(*aqlparser.IdentifiedExprContext))
+		ie, err := getIdentifiedExpr(ctx.IdentifiedExpr().(*parser.IdentifiedExprContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get Where.IdentifiedExpr")
 		}
@@ -105,7 +105,7 @@ func getWhere(ctx *aqlparser.WhereExprContext) (*Where, error) {
 	result.Brackets = ctx.SYM_LEFT_PAREN() != nil && ctx.SYM_RIGHT_PAREN() != nil
 
 	for _, whereExpr := range ctx.AllWhereExpr() {
-		ww, err := getWhere(whereExpr.(*aqlparser.WhereExprContext))
+		ww, err := getWhere(whereExpr.(*parser.WhereExprContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get Where.InnerWhere")
 		}
@@ -116,12 +116,12 @@ func getWhere(ctx *aqlparser.WhereExprContext) (*Where, error) {
 	return &result, nil
 }
 
-func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, error) {
+func getIdentifiedExpr(ctx *parser.IdentifiedExprContext) (*IdentifiedExpr, error) {
 	result := IdentifiedExpr{}
 
 	if ctx.IdentifiedExpr() != nil && ctx.SYM_LEFT_PAREN() != nil && ctx.SYM_RIGHT_PAREN() != nil {
 		result.Brackets = true
-		next, err := getIdentifiedExpr(ctx.IdentifiedExpr().(*aqlparser.IdentifiedExprContext))
+		next, err := getIdentifiedExpr(ctx.IdentifiedExpr().(*parser.IdentifiedExprContext))
 
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get IdentifiedExpr.IdentifiedExpr")
@@ -133,7 +133,7 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 	if ctx.EXISTS() != nil && ctx.IdentifiedPath() != nil {
 		result.IsExists = true
 
-		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*parser.IdentifiedPathContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get IdentifierExpr.IdentifierPath")
 		}
@@ -142,7 +142,7 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 	}
 
 	if ctx.IdentifiedPath() != nil && ctx.COMPARISON_OPERATOR() != nil {
-		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*parser.IdentifiedPathContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get IdentifierExpr.IdentifierPath")
 		}
@@ -156,7 +156,7 @@ func getIdentifiedExpr(ctx *aqlparser.IdentifiedExprContext) (*IdentifiedExpr, e
 
 		result.ComparisonOperator = &co
 
-		terminal, err := getTerminal(ctx.Terminal().(*aqlparser.TerminalContext))
+		terminal, err := getTerminal(ctx.Terminal().(*parser.TerminalContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get IdentifiedExpr.Terminal value")
 		}
@@ -191,11 +191,11 @@ func (t *Terminal) write(w io.Writer) {
 	}
 }
 
-func getTerminal(ctx *aqlparser.TerminalContext) (*Terminal, error) { //nolint
+func getTerminal(ctx *parser.TerminalContext) (*Terminal, error) { //nolint
 	t := &Terminal{}
 
 	if ctx.Primitive() != nil {
-		p, err := getPrimitive(ctx.Primitive().(*aqlparser.PrimitiveContext))
+		p, err := getPrimitive(ctx.Primitive().(*parser.PrimitiveContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get Terminal.Primitive")
 		}
@@ -213,7 +213,7 @@ func getTerminal(ctx *aqlparser.TerminalContext) (*Terminal, error) { //nolint
 	}
 
 	if ctx.IdentifiedPath() != nil {
-		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+		ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*parser.IdentifiedPathContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get Terminal.IdentifiedPath")
 		}

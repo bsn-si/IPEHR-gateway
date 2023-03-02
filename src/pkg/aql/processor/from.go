@@ -1,10 +1,10 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -138,11 +138,11 @@ func (vp VersionPredicate) write(w io.Writer) {
 	}
 }
 
-func getFrom(ctx *aqlparser.FromExprContext) (From, error) {
+func getFrom(ctx *parser.FromExprContext) (From, error) {
 	f := From{}
 
 	if ctx.ContainsExpr() != nil {
-		cExpr, err := getContainsExpr(ctx.ContainsExpr().(*aqlparser.ContainsExprContext))
+		cExpr, err := getContainsExpr(ctx.ContainsExpr().(*parser.ContainsExprContext))
 		if err != nil {
 			return From{}, errors.Wrap(err, "cannot process From.ContainsExpr")
 		}
@@ -155,12 +155,12 @@ func getFrom(ctx *aqlparser.FromExprContext) (From, error) {
 	return f, nil
 }
 
-func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) {
+func getContainsExpr(ctx *parser.ContainsExprContext) (*ContainsExpr, error) {
 	result := ContainsExpr{}
 
 	if ctx.ClassExprOperand() != nil {
 		switch ctx := ctx.ClassExprOperand().(type) {
-		case *aqlparser.ClassExpressionContext:
+		case *parser.ClassExpressionContext:
 			{
 				ce := ClassExpression{}
 				for _, id := range ctx.AllIDENTIFIER() {
@@ -168,7 +168,7 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 				}
 
 				if ctx.PathPredicate() != nil {
-					p, err := getPathPredicate(ctx.PathPredicate().(*aqlparser.PathPredicateContext))
+					p, err := getPathPredicate(ctx.PathPredicate().(*parser.PathPredicateContext))
 					if err != nil {
 						return nil, err
 					}
@@ -178,13 +178,13 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 
 				result.Operand = ce
 			}
-		case *aqlparser.VersionClassExprContext:
+		case *parser.VersionClassExprContext:
 			{
 				vce := VersionClassExpr{}
 				vce.Version = ctx.VERSION().GetText()
 				vce.Variable = toRef(ctx.IDENTIFIER().GetText())
 				if ctx.VersionPredicate() != nil {
-					vp, err := getVersionPredicate(ctx.VersionPredicate().(*aqlparser.VersionPredicateContext))
+					vp, err := getVersionPredicate(ctx.VersionPredicate().(*parser.VersionPredicateContext))
 					if err != nil {
 						return nil, err
 					}
@@ -201,7 +201,7 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 
 	if len(ctx.AllContainsExpr()) > 0 {
 		for _, ce := range ctx.AllContainsExpr() {
-			cExp, err := getContainsExpr(ce.(*aqlparser.ContainsExprContext))
+			cExp, err := getContainsExpr(ce.(*parser.ContainsExprContext))
 			if err != nil {
 				return nil, err
 			}
@@ -229,14 +229,14 @@ func getContainsExpr(ctx *aqlparser.ContainsExprContext) (*ContainsExpr, error) 
 	return &result, nil
 }
 
-func getVersionPredicate(ctx *aqlparser.VersionPredicateContext) (VersionPredicate, error) {
+func getVersionPredicate(ctx *parser.VersionPredicateContext) (VersionPredicate, error) {
 	vp := VersionPredicate{}
 	if ctx.LATEST_VERSION() != nil {
 		vp.LatestVersion = toRef(ctx.LATEST_VERSION().GetText())
 	} else if ctx.ALL_VERSIONS() != nil {
 		vp.AllVersions = toRef(ctx.ALL_VERSIONS().GetText())
 	} else if ctx.StandardPredicate() != nil {
-		sp, err := getStandartPredicate(ctx.StandardPredicate().(*aqlparser.StandardPredicateContext))
+		sp, err := getStandartPredicate(ctx.StandardPredicate().(*parser.StandardPredicateContext))
 		if err != nil {
 			return VersionPredicate{}, errors.Wrap(err, "cannot get VersionPredicate.StandardPredicate")
 		}

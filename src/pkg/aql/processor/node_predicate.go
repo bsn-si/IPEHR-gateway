@@ -1,11 +1,11 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 	"strings"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
@@ -65,7 +65,7 @@ func getCode[T ~string](tn antlr.TerminalNode, prefix string) (T, error) {
 	return T(strings.TrimLeft(str, prefix)), nil
 }
 
-func getNodePredicate(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicate(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	if ctx.AT_CODE() != nil || ctx.ID_CODE() != nil {
 		return getNodePredicateWithATOrIDCode(ctx)
 	}
@@ -97,7 +97,7 @@ func getNodePredicate(ctx *aqlparser.NodePredicateContext) (*NodePredicate, erro
 	return nil, errors.New("unexpected NodePredicate state")
 }
 
-func getNodePredicateWithATOrIDCode(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicateWithATOrIDCode(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	np := &NodePredicate{
 		Operator:          NoneOperator,
 		ComparisionSymbol: SymNone,
@@ -120,7 +120,7 @@ func getNodePredicateWithATOrIDCode(ctx *aqlparser.NodePredicateContext) (*NodeP
 	}
 
 	if ctx.SYM_COMMA() != nil && ctx.NodePredicateAdditionalData() != nil {
-		ad, err := getNodePredicateAdditionalData(ctx.NodePredicateAdditionalData().(*aqlparser.NodePredicateAdditionalDataContext))
+		ad, err := getNodePredicateAdditionalData(ctx.NodePredicateAdditionalData().(*parser.NodePredicateAdditionalDataContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get NodePredicate.SYM_COMMA")
 		}
@@ -131,7 +131,7 @@ func getNodePredicateWithATOrIDCode(ctx *aqlparser.NodePredicateContext) (*NodeP
 	return np, nil
 }
 
-func getNodePredicateWithArchetypeHIRD(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicateWithArchetypeHIRD(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	np := &NodePredicate{
 		Operator:          NoneOperator,
 		ComparisionSymbol: SymNone,
@@ -139,7 +139,7 @@ func getNodePredicateWithArchetypeHIRD(ctx *aqlparser.NodePredicateContext) (*No
 	}
 
 	if ctx.SYM_COMMA() != nil && ctx.NodePredicateAdditionalData() != nil {
-		ad, err := getNodePredicateAdditionalData(ctx.NodePredicateAdditionalData().(*aqlparser.NodePredicateAdditionalDataContext))
+		ad, err := getNodePredicateAdditionalData(ctx.NodePredicateAdditionalData().(*parser.NodePredicateAdditionalDataContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get NodePredicate.SYM_COMMA")
 		}
@@ -150,18 +150,18 @@ func getNodePredicateWithArchetypeHIRD(ctx *aqlparser.NodePredicateContext) (*No
 	return np, nil
 }
 
-func getNodePredicateWithComparisionOperator(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicateWithComparisionOperator(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	cs, err := getComparisionSimbol(ctx.COMPARISON_OPERATOR())
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get NodePredicate.ComparisionOperator")
 	}
 
-	op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+	op, err := getObjectPath(ctx.ObjectPath().(*parser.ObjectPathContext))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get NodePredicate.ObjectPath")
 	}
 
-	ppo, err := getPathPredicateOperand(ctx.PathPredicateOperand().(*aqlparser.PathPredicateOperandContext))
+	ppo, err := getPathPredicateOperand(ctx.PathPredicateOperand().(*parser.PathPredicateOperandContext))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get NodePredicate.PathPredicateOperand")
 	}
@@ -176,8 +176,8 @@ func getNodePredicateWithComparisionOperator(ctx *aqlparser.NodePredicateContext
 	return np, nil
 }
 
-func getNodePredicateWithMatches(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
-	op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+func getNodePredicateWithMatches(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
+	op, err := getObjectPath(ctx.ObjectPath().(*parser.ObjectPathContext))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get NodePredicate.ObjectPath")
 	}
@@ -193,7 +193,7 @@ func getNodePredicateWithMatches(ctx *aqlparser.NodePredicateContext) (*NodePred
 	return np, nil
 }
 
-func getNodePredicateWithParameter(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicateWithParameter(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	p, err := getParameter(ctx.PARAMETER())
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get NodePredicate.PARAMETER")
@@ -208,7 +208,7 @@ func getNodePredicateWithParameter(ctx *aqlparser.NodePredicateContext) (*NodePr
 	return np, nil
 }
 
-func getNodePredicateWithAndOperator(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicateWithAndOperator(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	np := &NodePredicate{
 		Operator:          ANDOperator,
 		ComparisionSymbol: SymNone,
@@ -216,7 +216,7 @@ func getNodePredicateWithAndOperator(ctx *aqlparser.NodePredicateContext) (*Node
 	}
 
 	for _, npCtx := range ctx.AllNodePredicate() {
-		nextNp, err := getNodePredicate(npCtx.(*aqlparser.NodePredicateContext))
+		nextNp, err := getNodePredicate(npCtx.(*parser.NodePredicateContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get NodePredicate.NodePredicate")
 		}
@@ -227,7 +227,7 @@ func getNodePredicateWithAndOperator(ctx *aqlparser.NodePredicateContext) (*Node
 	return np, nil
 }
 
-func getNodePredicateWithOrOperator(ctx *aqlparser.NodePredicateContext) (*NodePredicate, error) {
+func getNodePredicateWithOrOperator(ctx *parser.NodePredicateContext) (*NodePredicate, error) {
 	np := &NodePredicate{
 		Operator:          OROperator,
 		ComparisionSymbol: SymNone,
@@ -235,7 +235,7 @@ func getNodePredicateWithOrOperator(ctx *aqlparser.NodePredicateContext) (*NodeP
 	}
 
 	for _, npCtx := range ctx.AllNodePredicate() {
-		nextNp, err := getNodePredicate(npCtx.(*aqlparser.NodePredicateContext))
+		nextNp, err := getNodePredicate(npCtx.(*parser.NodePredicateContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get NodePredicate.NodePredicate")
 		}
@@ -246,7 +246,7 @@ func getNodePredicateWithOrOperator(ctx *aqlparser.NodePredicateContext) (*NodeP
 	return np, nil
 }
 
-func getNodePredicateAdditionalData(ctx *aqlparser.NodePredicateAdditionalDataContext) (*NodePredicateAdditionalData, error) {
+func getNodePredicateAdditionalData(ctx *parser.NodePredicateAdditionalDataContext) (*NodePredicateAdditionalData, error) {
 	result := NodePredicateAdditionalData{}
 
 	if ctx.STRING() != nil {

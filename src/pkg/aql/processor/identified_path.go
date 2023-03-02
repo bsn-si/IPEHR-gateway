@@ -1,10 +1,10 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -50,13 +50,13 @@ func (pp PartPath) write(w io.Writer) {
 	fmt.Fprint(w, pp.Identifier)
 }
 
-func getIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) (IdentifiedPath, error) {
+func getIdentifiedPath(ctx *parser.IdentifiedPathContext) (IdentifiedPath, error) {
 	ip := IdentifiedPath{
 		Identifier: ctx.IDENTIFIER().GetText(),
 	}
 
 	if pp := ctx.PathPredicate(); pp != nil {
-		predicate, err := getPathPredicate(pp.(*aqlparser.PathPredicateContext))
+		predicate, err := getPathPredicate(pp.(*parser.PathPredicateContext))
 		if err != nil {
 			return ip, errors.Wrap(err, "cannot process IdetiedPath.PathPredicate")
 		}
@@ -65,7 +65,7 @@ func getIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) (IdentifiedPath, er
 	}
 
 	if slash := ctx.SYM_SLASH(); slash != nil && ctx.ObjectPath() != nil {
-		op, err := getObjectPath(ctx.ObjectPath().(*aqlparser.ObjectPathContext))
+		op, err := getObjectPath(ctx.ObjectPath().(*parser.ObjectPathContext))
 		if err != nil {
 			return ip, errors.Wrap(err, "cannot get ObjectPath")
 		}
@@ -76,13 +76,13 @@ func getIdentifiedPath(ctx *aqlparser.IdentifiedPathContext) (IdentifiedPath, er
 	return ip, nil
 }
 
-func getObjectPath(ctx *aqlparser.ObjectPathContext) (*ObjectPath, error) {
+func getObjectPath(ctx *parser.ObjectPathContext) (*ObjectPath, error) {
 	result := ObjectPath{
 		Paths: make([]PartPath, 0, len(ctx.AllPathPart())),
 	}
 
 	for _, pp := range ctx.AllPathPart() {
-		val, err := getPathPart(pp.(*aqlparser.PathPartContext))
+		val, err := getPathPart(pp.(*parser.PathPartContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot process ObjectPath.PathPart")
 		}
@@ -93,13 +93,13 @@ func getObjectPath(ctx *aqlparser.ObjectPathContext) (*ObjectPath, error) {
 	return &result, nil
 }
 
-func getPathPart(ctx *aqlparser.PathPartContext) (PartPath, error) {
+func getPathPart(ctx *parser.PathPartContext) (PartPath, error) {
 	op := PartPath{
 		Identifier: ctx.IDENTIFIER().GetText(),
 	}
 
 	if ctx.PathPredicate() != nil {
-		pp, err := getPathPredicate(ctx.PathPredicate().(*aqlparser.PathPredicateContext))
+		pp, err := getPathPredicate(ctx.PathPredicate().(*parser.PathPredicateContext))
 		if err != nil {
 			return op, errors.Wrap(err, "cannot get PathPredicate")
 		}

@@ -1,6 +1,6 @@
-// Code generated from java-escape by ANTLR 4.11.1. DO NOT EDIT.
+// Code generated from parser.g4 by ANTLR 4.12.0. DO NOT EDIT.
 
-package aqlparser // AqlParser
+package parser // AqlParser
 import (
 	"fmt"
 	"strconv"
@@ -267,7 +267,7 @@ func aqlparserParserInit() {
 	}
 }
 
-// AqlParserInit initializes any static state used to implement AqlParser. By default the
+// AqlParserInit initializes any static state used to implement parser. By default the
 // static state used to implement the parser is lazily initialized during the first call to
 // NewAqlParser(). You can call this function if you wish to initialize the static state ahead
 // of time.
@@ -286,7 +286,7 @@ func NewAqlParser(input antlr.TokenStream) *AqlParser {
 	this.RuleNames = staticData.ruleNames
 	this.LiteralNames = staticData.literalNames
 	this.SymbolicNames = staticData.symbolicNames
-	this.GrammarFileName = "java-escape"
+	this.GrammarFileName = "parser.g4"
 
 	return this
 }
@@ -431,6 +431,15 @@ type ISelectQueryContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	SelectClause() ISelectClauseContext
+	FromClause() IFromClauseContext
+	EOF() antlr.TerminalNode
+	WhereClause() IWhereClauseContext
+	OrderByClause() IOrderByClauseContext
+	LimitClause() ILimitClauseContext
+	SYM_DOUBLE_DASH() antlr.TerminalNode
 
 	// IsSelectQueryContext differentiates from other interfaces.
 	IsSelectQueryContext()
@@ -663,6 +672,15 @@ type ISelectClauseContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	SELECT() antlr.TerminalNode
+	AllSelectExpr() []ISelectExprContext
+	SelectExpr(i int) ISelectExprContext
+	DISTINCT() antlr.TerminalNode
+	Top() ITopContext
+	AllSYM_COMMA() []antlr.TerminalNode
+	SYM_COMMA(i int) antlr.TerminalNode
+
 	// IsSelectClauseContext differentiates from other interfaces.
 	IsSelectClauseContext()
 }
@@ -871,6 +889,10 @@ type IFromClauseContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	FROM() antlr.TerminalNode
+	FromExpr() IFromExprContext
+
 	// IsFromClauseContext differentiates from other interfaces.
 	IsFromClauseContext()
 }
@@ -985,6 +1007,10 @@ type IWhereClauseContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	WHERE() antlr.TerminalNode
+	WhereExpr() IWhereExprContext
+
 	// IsWhereClauseContext differentiates from other interfaces.
 	IsWhereClauseContext()
 }
@@ -1098,6 +1124,14 @@ type IOrderByClauseContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	ORDER() antlr.TerminalNode
+	BY() antlr.TerminalNode
+	AllOrderByExpr() []IOrderByExprContext
+	OrderByExpr(i int) IOrderByExprContext
+	AllSYM_COMMA() []antlr.TerminalNode
+	SYM_COMMA(i int) antlr.TerminalNode
 
 	// IsOrderByClauseContext differentiates from other interfaces.
 	IsOrderByClauseContext()
@@ -1285,6 +1319,12 @@ type ILimitClauseContext interface {
 	// SetOffset sets the offset token.
 	SetOffset(antlr.Token)
 
+	// Getter signatures
+	LIMIT() antlr.TerminalNode
+	AllINTEGER() []antlr.TerminalNode
+	INTEGER(i int) antlr.TerminalNode
+	OFFSET() antlr.TerminalNode
+
 	// IsLimitClauseContext differentiates from other interfaces.
 	IsLimitClauseContext()
 }
@@ -1433,6 +1473,11 @@ type ISelectExprContext interface {
 	// SetAliasName sets the aliasName token.
 	SetAliasName(antlr.Token)
 
+	// Getter signatures
+	ColumnExpr() IColumnExprContext
+	AS() antlr.TerminalNode
+	IDENTIFIER() antlr.TerminalNode
+
 	// IsSelectExprContext differentiates from other interfaces.
 	IsSelectExprContext()
 }
@@ -1571,6 +1616,9 @@ type IFromExprContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	ContainsExpr() IContainsExprContext
+
 	// IsFromExprContext differentiates from other interfaces.
 	IsFromExprContext()
 }
@@ -1676,6 +1724,16 @@ type IWhereExprContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	IdentifiedExpr() IIdentifiedExprContext
+	NOT() antlr.TerminalNode
+	AllWhereExpr() []IWhereExprContext
+	WhereExpr(i int) IWhereExprContext
+	SYM_LEFT_PAREN() antlr.TerminalNode
+	SYM_RIGHT_PAREN() antlr.TerminalNode
+	AND() antlr.TerminalNode
+	OR() antlr.TerminalNode
 
 	// IsWhereExprContext differentiates from other interfaces.
 	IsWhereExprContext()
@@ -1946,6 +2004,13 @@ type IOrderByExprContext interface {
 	// SetOrder sets the order token.
 	SetOrder(antlr.Token)
 
+	// Getter signatures
+	IdentifiedPath() IIdentifiedPathContext
+	DESCENDING() antlr.TerminalNode
+	DESC() antlr.TerminalNode
+	ASCENDING() antlr.TerminalNode
+	ASC() antlr.TerminalNode
+
 	// IsOrderByExprContext differentiates from other interfaces.
 	IsOrderByExprContext()
 }
@@ -2098,6 +2163,12 @@ type IColumnExprContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	IdentifiedPath() IIdentifiedPathContext
+	Primitive() IPrimitiveContext
+	AggregateFunctionCall() IAggregateFunctionCallContext
+	FunctionCall() IFunctionCallContext
 
 	// IsColumnExprContext differentiates from other interfaces.
 	IsColumnExprContext()
@@ -2279,6 +2350,17 @@ type IContainsExprContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	ClassExprOperand() IClassExprOperandContext
+	CONTAINS() antlr.TerminalNode
+	AllContainsExpr() []IContainsExprContext
+	ContainsExpr(i int) IContainsExprContext
+	NOT() antlr.TerminalNode
+	SYM_LEFT_PAREN() antlr.TerminalNode
+	SYM_RIGHT_PAREN() antlr.TerminalNode
+	AND() antlr.TerminalNode
+	OR() antlr.TerminalNode
 
 	// IsContainsExprContext differentiates from other interfaces.
 	IsContainsExprContext()
@@ -2565,6 +2647,20 @@ type IIdentifiedExprContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	EXISTS() antlr.TerminalNode
+	IdentifiedPath() IIdentifiedPathContext
+	COMPARISON_OPERATOR() antlr.TerminalNode
+	Terminal() ITerminalContext
+	FunctionCall() IFunctionCallContext
+	LIKE() antlr.TerminalNode
+	LikeOperand() ILikeOperandContext
+	MATCHES() antlr.TerminalNode
+	MatchesOperand() IMatchesOperandContext
+	SYM_LEFT_PAREN() antlr.TerminalNode
+	IdentifiedExpr() IIdentifiedExprContext
+	SYM_RIGHT_PAREN() antlr.TerminalNode
 
 	// IsIdentifiedExprContext differentiates from other interfaces.
 	IsIdentifiedExprContext()
@@ -2860,7 +2956,6 @@ type IClassExprOperandContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
-
 	// IsClassExprOperandContext differentiates from other interfaces.
 	IsClassExprOperandContext()
 }
@@ -3141,6 +3236,12 @@ type ITerminalContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	Primitive() IPrimitiveContext
+	PARAMETER() antlr.TerminalNode
+	IdentifiedPath() IIdentifiedPathContext
+	FunctionCall() IFunctionCallContext
+
 	// IsTerminalContext differentiates from other interfaces.
 	IsTerminalContext()
 }
@@ -3310,6 +3411,12 @@ type IIdentifiedPathContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	IDENTIFIER() antlr.TerminalNode
+	PathPredicate() IPathPredicateContext
+	SYM_SLASH() antlr.TerminalNode
+	ObjectPath() IObjectPathContext
+
 	// IsIdentifiedPathContext differentiates from other interfaces.
 	IsIdentifiedPathContext()
 }
@@ -3463,6 +3570,13 @@ type IPathPredicateContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	SYM_LEFT_BRACKET() antlr.TerminalNode
+	SYM_RIGHT_BRACKET() antlr.TerminalNode
+	StandardPredicate() IStandardPredicateContext
+	ArchetypePredicate() IArchetypePredicateContext
+	NodePredicate() INodePredicateContext
 
 	// IsPathPredicateContext differentiates from other interfaces.
 	IsPathPredicateContext()
@@ -3636,6 +3750,11 @@ type IStandardPredicateContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	ObjectPath() IObjectPathContext
+	COMPARISON_OPERATOR() antlr.TerminalNode
+	PathPredicateOperand() IPathPredicateOperandContext
+
 	// IsStandardPredicateContext differentiates from other interfaces.
 	IsStandardPredicateContext()
 }
@@ -3770,6 +3889,10 @@ type IArchetypePredicateContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	ARCHETYPE_HRID() antlr.TerminalNode
+	PARAMETER() antlr.TerminalNode
+
 	// IsArchetypePredicateContext differentiates from other interfaces.
 	IsArchetypePredicateContext()
 }
@@ -3875,6 +3998,23 @@ type INodePredicateContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	ID_CODE() antlr.TerminalNode
+	AT_CODE() antlr.TerminalNode
+	SYM_COMMA() antlr.TerminalNode
+	NodePredicateAdditionalData() INodePredicateAdditionalDataContext
+	ARCHETYPE_HRID() antlr.TerminalNode
+	PARAMETER() antlr.TerminalNode
+	ObjectPath() IObjectPathContext
+	COMPARISON_OPERATOR() antlr.TerminalNode
+	PathPredicateOperand() IPathPredicateOperandContext
+	MATCHES() antlr.TerminalNode
+	CONTAINED_REGEX() antlr.TerminalNode
+	AllNodePredicate() []INodePredicateContext
+	NodePredicate(i int) INodePredicateContext
+	AND() antlr.TerminalNode
+	OR() antlr.TerminalNode
 
 	// IsNodePredicateContext differentiates from other interfaces.
 	IsNodePredicateContext()
@@ -4245,6 +4385,13 @@ type INodePredicateAdditionalDataContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	STRING() antlr.TerminalNode
+	PARAMETER() antlr.TerminalNode
+	TERM_CODE() antlr.TerminalNode
+	AT_CODE() antlr.TerminalNode
+	ID_CODE() antlr.TerminalNode
+
 	// IsNodePredicateAdditionalDataContext differentiates from other interfaces.
 	IsNodePredicateAdditionalDataContext()
 }
@@ -4362,6 +4509,11 @@ type IVersionPredicateContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	LATEST_VERSION() antlr.TerminalNode
+	ALL_VERSIONS() antlr.TerminalNode
+	StandardPredicate() IStandardPredicateContext
 
 	// IsVersionPredicateContext differentiates from other interfaces.
 	IsVersionPredicateContext()
@@ -4499,6 +4651,13 @@ type IPathPredicateOperandContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	Primitive() IPrimitiveContext
+	ObjectPath() IObjectPathContext
+	PARAMETER() antlr.TerminalNode
+	ID_CODE() antlr.TerminalNode
+	AT_CODE() antlr.TerminalNode
 
 	// IsPathPredicateOperandContext differentiates from other interfaces.
 	IsPathPredicateOperandContext()
@@ -4671,6 +4830,12 @@ type IObjectPathContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	AllPathPart() []IPathPartContext
+	PathPart(i int) IPathPartContext
+	AllSYM_SLASH() []antlr.TerminalNode
+	SYM_SLASH(i int) antlr.TerminalNode
+
 	// IsObjectPathContext differentiates from other interfaces.
 	IsObjectPathContext()
 }
@@ -4832,6 +4997,10 @@ type IPathPartContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	IDENTIFIER() antlr.TerminalNode
+	PathPredicate() IPathPredicateContext
+
 	// IsPathPartContext differentiates from other interfaces.
 	IsPathPartContext()
 }
@@ -4952,6 +5121,10 @@ type ILikeOperandContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	STRING() antlr.TerminalNode
+	PARAMETER() antlr.TerminalNode
+
 	// IsLikeOperandContext differentiates from other interfaces.
 	IsLikeOperandContext()
 }
@@ -5057,6 +5230,16 @@ type IMatchesOperandContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	SYM_LEFT_CURLY() antlr.TerminalNode
+	AllValueListItem() []IValueListItemContext
+	ValueListItem(i int) IValueListItemContext
+	SYM_RIGHT_CURLY() antlr.TerminalNode
+	AllSYM_COMMA() []antlr.TerminalNode
+	SYM_COMMA(i int) antlr.TerminalNode
+	TerminologyFunction() ITerminologyFunctionContext
+	URI() antlr.TerminalNode
 
 	// IsMatchesOperandContext differentiates from other interfaces.
 	IsMatchesOperandContext()
@@ -5280,6 +5463,11 @@ type IValueListItemContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	Primitive() IPrimitiveContext
+	PARAMETER() antlr.TerminalNode
+	TerminologyFunction() ITerminologyFunctionContext
+
 	// IsValueListItemContext differentiates from other interfaces.
 	IsValueListItemContext()
 }
@@ -5428,6 +5616,15 @@ type IPrimitiveContext interface {
 
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
+
+	// Getter signatures
+	STRING() antlr.TerminalNode
+	NumericPrimitive() INumericPrimitiveContext
+	DATE() antlr.TerminalNode
+	TIME() antlr.TerminalNode
+	DATETIME() antlr.TerminalNode
+	BOOLEAN() antlr.TerminalNode
+	NULL() antlr.TerminalNode
 
 	// IsPrimitiveContext differentiates from other interfaces.
 	IsPrimitiveContext()
@@ -5610,6 +5807,14 @@ type INumericPrimitiveContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	INTEGER() antlr.TerminalNode
+	REAL() antlr.TerminalNode
+	SCI_INTEGER() antlr.TerminalNode
+	SCI_REAL() antlr.TerminalNode
+	SYM_MINUS() antlr.TerminalNode
+	NumericPrimitive() INumericPrimitiveContext
+
 	// IsNumericPrimitiveContext differentiates from other interfaces.
 	IsNumericPrimitiveContext()
 }
@@ -5782,6 +5987,19 @@ type IFunctionCallContext interface {
 
 	// SetName sets the name token.
 	SetName(antlr.Token)
+
+	// Getter signatures
+	TerminologyFunction() ITerminologyFunctionContext
+	SYM_LEFT_PAREN() antlr.TerminalNode
+	SYM_RIGHT_PAREN() antlr.TerminalNode
+	STRING_FUNCTION_ID() antlr.TerminalNode
+	NUMERIC_FUNCTION_ID() antlr.TerminalNode
+	DATE_TIME_FUNCTION_ID() antlr.TerminalNode
+	IDENTIFIER() antlr.TerminalNode
+	AllTerminal() []ITerminalContext
+	Terminal(i int) ITerminalContext
+	AllSYM_COMMA() []antlr.TerminalNode
+	SYM_COMMA(i int) antlr.TerminalNode
 
 	// IsFunctionCallContext differentiates from other interfaces.
 	IsFunctionCallContext()
@@ -5991,7 +6209,7 @@ func (p *AqlParser) FunctionCall() (localctx IFunctionCallContext) {
 		p.GetErrorHandler().Sync(p)
 		_la = p.GetTokenStream().LA(1)
 
-		if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&2413929430336405504) != 0 || (int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&4194815) != 0 {
+		if ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&2413929430336405504) != 0) || ((int64((_la-64)) & ^0x3f) == 0 && ((int64(1)<<(_la-64))&4194815) != 0) {
 			{
 				p.SetState(359)
 				p.Terminal()
@@ -6040,6 +6258,18 @@ type IAggregateFunctionCallContext interface {
 
 	// SetName sets the name token.
 	SetName(antlr.Token)
+
+	// Getter signatures
+	SYM_LEFT_PAREN() antlr.TerminalNode
+	SYM_RIGHT_PAREN() antlr.TerminalNode
+	COUNT() antlr.TerminalNode
+	IdentifiedPath() IIdentifiedPathContext
+	SYM_ASTERISK() antlr.TerminalNode
+	DISTINCT() antlr.TerminalNode
+	MIN() antlr.TerminalNode
+	MAX() antlr.TerminalNode
+	SUM() antlr.TerminalNode
+	AVG() antlr.TerminalNode
 
 	// IsAggregateFunctionCallContext differentiates from other interfaces.
 	IsAggregateFunctionCallContext()
@@ -6272,6 +6502,15 @@ type ITerminologyFunctionContext interface {
 	// GetParser returns the parser.
 	GetParser() antlr.Parser
 
+	// Getter signatures
+	TERMINOLOGY() antlr.TerminalNode
+	SYM_LEFT_PAREN() antlr.TerminalNode
+	AllSTRING() []antlr.TerminalNode
+	STRING(i int) antlr.TerminalNode
+	AllSYM_COMMA() []antlr.TerminalNode
+	SYM_COMMA(i int) antlr.TerminalNode
+	SYM_RIGHT_PAREN() antlr.TerminalNode
+
 	// IsTerminologyFunctionContext differentiates from other interfaces.
 	IsTerminologyFunctionContext()
 }
@@ -6423,6 +6662,12 @@ type ITopContext interface {
 
 	// SetDirection sets the direction token.
 	SetDirection(antlr.Token)
+
+	// Getter signatures
+	TOP() antlr.TerminalNode
+	INTEGER() antlr.TerminalNode
+	FORWARD() antlr.TerminalNode
+	BACKWARD() antlr.TerminalNode
 
 	// IsTopContext differentiates from other interfaces.
 	IsTopContext()
