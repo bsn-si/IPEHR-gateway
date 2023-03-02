@@ -61,7 +61,7 @@ func TestCheckCounting(t *testing.T) {
 			"5. error on get data",
 			"202301",
 			func(repo *mocks.MockPatientsRepository) {
-				repo.EXPECT().StatPatientsCountGet(ctx, int64(1672531200), int64(1675209600)).Return(uint64(0), errors.New("some error")) //nilint
+				repo.EXPECT().StatPatientsCountGet(ctx, int64(1672531200), int64(1675209600)).Return(uint64(0), errors.New("some error")) //nolint
 			},
 			0,
 			true,

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/bsn-si/IPEHR-gateway/src/internal/aqlquerier"
 	"github.com/bsn-si/IPEHR-gateway/src/internal/repository"
+	_ "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/driver" //nolint
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/service/stat"
 

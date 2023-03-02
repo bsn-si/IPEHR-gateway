@@ -1,8 +1,8 @@
 package main
 
 // Generating swagger doc spec//
-//go:generate swag fmt -g ../pkg/api/api.go
-//go:generate swag init --parseDependency -g ../cmd/main.go -o ../pkg/api/docs
+//go:generate swag fmt -g ../internal/api/stat/api.go
+//go:generate swag init --parseDependency -g ../cmd/stat/main.go -o ../internal/api/stat/docs
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/bsn-si/IPEHR-gateway/src/internal/statapi"
+	"github.com/bsn-si/IPEHR-gateway/src/internal/api/stat"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/service/syncer"
@@ -53,10 +53,10 @@ func main() {
 		infra.StatsRepo,
 		infra.ChunkRepo,
 		infra.EthClient,
-		syncer.Config(cfg.Sync),
+		cfg.Sync,
 	).Start(ctx)
 
-	router := statapi.New(cfg, infra).Build()
+	router := stat.New(cfg, infra).Build()
 
 	//TODO complete CORS config
 	router.Use(cors.Default())
