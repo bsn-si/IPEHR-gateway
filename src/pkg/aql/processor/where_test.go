@@ -1,9 +1,9 @@
-package aqlprocessor
+package processor
 
 import (
 	"testing"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -213,7 +213,7 @@ func TestProcessor_Where(t *testing.T) {
 							Terminal: &Terminal{
 								Primitive: &Primitive{
 									Val:  140,
-									Type: aqlparser.AqlLexerINTEGER,
+									Type: parser.AqlLexerINTEGER,
 								},
 							},
 						},

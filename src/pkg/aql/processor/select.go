@@ -1,10 +1,10 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -57,7 +57,7 @@ type AggregateFunctionCallSelectValue struct {
 type FunctionCallSelectValue struct {
 }
 
-func getSelect(ctx *aqlparser.SelectClauseContext) (*Select, error) {
+func getSelect(ctx *parser.SelectClauseContext) (*Select, error) {
 	result := Select{}
 
 	if distinct := ctx.DISTINCT(); distinct != nil {
@@ -71,7 +71,7 @@ func getSelect(ctx *aqlparser.SelectClauseContext) (*Select, error) {
 	result.SelectExprs = make([]SelectExpr, 0, len(ctx.AllSelectExpr()))
 
 	for _, se := range ctx.AllSelectExpr() {
-		selectExpr, err := getSelectExpr(se.(*aqlparser.SelectExprContext))
+		selectExpr, err := getSelectExpr(se.(*parser.SelectExprContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get Select.SelectExpr")
 		}
@@ -82,13 +82,13 @@ func getSelect(ctx *aqlparser.SelectClauseContext) (*Select, error) {
 	return &result, nil
 }
 
-func getSelectExpr(ctx *aqlparser.SelectExprContext) (SelectExpr, error) {
+func getSelectExpr(ctx *parser.SelectExprContext) (SelectExpr, error) {
 	selectExpr := SelectExpr{}
 
 	if ctx.ColumnExpr() != nil {
 		selectExpr.Path = ctx.ColumnExpr().GetText()
 
-		columVal, err := getColumnExpr(ctx.ColumnExpr().(*aqlparser.ColumnExprContext))
+		columVal, err := getColumnExpr(ctx.ColumnExpr().(*parser.ColumnExprContext))
 		if err != nil {
 			return SelectExpr{}, errors.Wrap(err, "cannot get SelectExpr.ColumnExpr")
 		}
@@ -103,9 +103,9 @@ func getSelectExpr(ctx *aqlparser.SelectExprContext) (SelectExpr, error) {
 	return selectExpr, nil
 }
 
-func getColumnExpr(ctx *aqlparser.ColumnExprContext) (SelectValuer, error) {
+func getColumnExpr(ctx *parser.ColumnExprContext) (SelectValuer, error) {
 	switch val := ctx.GetChild(0).(type) {
-	case *aqlparser.IdentifiedPathContext:
+	case *parser.IdentifiedPathContext:
 		ip, err := getIdentifiedPath(val)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get ColumnExpr.IdentifierPath")
@@ -116,7 +116,7 @@ func getColumnExpr(ctx *aqlparser.ColumnExprContext) (SelectValuer, error) {
 		}
 
 		return ifsv, nil
-	case *aqlparser.PrimitiveContext:
+	case *parser.PrimitiveContext:
 		p, err := getPrimitive(val)
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get ColumnExpr.Primitive")
@@ -127,11 +127,11 @@ func getColumnExpr(ctx *aqlparser.ColumnExprContext) (SelectValuer, error) {
 		}
 
 		return psv, nil
-	case *aqlparser.AggregateFunctionCallContext: // nolint
+	case *parser.AggregateFunctionCallContext: // nolint
 		// selectValue = &AggregateFunctionCallSelectValue{}
 
 		return nil, errors.New("column expr Aggregate Func Call Not implemented")
-	case *aqlparser.FunctionCallContext: // nolint
+	case *parser.FunctionCallContext: // nolint
 		// selectValue = &FunctionCallSelectValue{}
 
 		return nil, errors.New("column expr Func Call Not implemented")

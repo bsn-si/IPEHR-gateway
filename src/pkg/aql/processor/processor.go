@@ -1,7 +1,7 @@
-package aqlprocessor
+package processor
 
 import (
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"github.com/antlr/antlr4/runtime/Go/antlr/v4"
@@ -10,17 +10,17 @@ import (
 //go:generate ./generate.sh
 
 type AqlProcessor struct {
-	lexer  *aqlparser.AqlLexer
-	parser *aqlparser.AqlParser
+	lexer  *parser.AqlLexer
+	parser *parser.AqlParser
 
 	listener *AQLListener
 }
 
 func NewAqlProcessor(data string) *AqlProcessor {
-	lexer := aqlparser.NewAqlLexer(antlr.NewInputStream(data))
+	lexer := parser.NewAqlLexer(antlr.NewInputStream(data))
 
 	stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
-	parser := aqlparser.NewAqlParser(stream)
+	parser := parser.NewAqlParser(stream)
 
 	return &AqlProcessor{
 		listener: NewAQLListener(),

@@ -1,6 +1,6 @@
 # AQL Language Processor
 
-In Files [AqlLexer.g4](./AqlLexer.g4) and [AqlParser.g4](./AqlParser.g4) contains [AQL Syntax Specification](https://specifications.openehr.org/releases/QUERY/latest/AQL.html#_aql_syntax_specification) on ANTLR4 grammar.
+In Files [AqlLexer.g4](./AqlLexer.g4) and [parser.g4](./parser.g4) contains [AQL Syntax Specification](https://specifications.openehr.org/releases/QUERY/latest/AQL.html#_aql_syntax_specification) on ANTLR4 grammar.
 
 ## Instal ANTRL4
 

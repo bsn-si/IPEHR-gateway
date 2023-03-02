@@ -1,10 +1,10 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -44,13 +44,13 @@ const (
 	AscendingOrdering
 )
 
-func getOrder(ctx *aqlparser.OrderByClauseContext) (*Order, error) {
+func getOrder(ctx *parser.OrderByClauseContext) (*Order, error) {
 	result := Order{
 		Orders: make([]OrderBy, 0, len(ctx.AllOrderByExpr())),
 	}
 
 	for _, orderByExpr := range ctx.AllOrderByExpr() {
-		orderBy, err := getOrderBy(orderByExpr.(*aqlparser.OrderByExprContext))
+		orderBy, err := getOrderBy(orderByExpr.(*parser.OrderByExprContext))
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get Order.OrderBy")
 		}
@@ -61,8 +61,8 @@ func getOrder(ctx *aqlparser.OrderByClauseContext) (*Order, error) {
 	return &result, nil
 }
 
-func getOrderBy(ctx *aqlparser.OrderByExprContext) (OrderBy, error) { //nolint
-	ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*aqlparser.IdentifiedPathContext))
+func getOrderBy(ctx *parser.OrderByExprContext) (OrderBy, error) { //nolint
+	ip, err := getIdentifiedPath(ctx.IdentifiedPath().(*parser.IdentifiedPathContext))
 	if err != nil {
 		return OrderBy{}, errors.Wrap(err, "cannot get OrderBy.IdentifiedPath")
 	}

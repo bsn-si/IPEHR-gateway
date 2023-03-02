@@ -1,11 +1,11 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
 	"io"
 	"strconv"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -22,10 +22,10 @@ func (l *Limit) write(w io.Writer) {
 	}
 }
 
-func getLimit(ctx *aqlparser.LimitClauseContext) (*Limit, error) {
+func getLimit(ctx *parser.LimitClauseContext) (*Limit, error) {
 	limit := Limit{}
 
-	if limitToken := ctx.GetLimit(); limitToken != nil && limitToken.GetTokenType() == aqlparser.AqlLexerINTEGER {
+	if limitToken := ctx.GetLimit(); limitToken != nil && limitToken.GetTokenType() == parser.AqlLexerINTEGER {
 		limitVal, err := strconv.Atoi(limitToken.GetText())
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot convert limit value from string to int")
@@ -37,7 +37,7 @@ func getLimit(ctx *aqlparser.LimitClauseContext) (*Limit, error) {
 		}
 	}
 
-	if offset := ctx.GetOffset(); offset != nil && offset.GetTokenType() == aqlparser.AqlLexerINTEGER {
+	if offset := ctx.GetOffset(); offset != nil && offset.GetTokenType() == parser.AqlLexerINTEGER {
 		offset, err := strconv.Atoi(offset.GetText())
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot convert offset value from string to int")

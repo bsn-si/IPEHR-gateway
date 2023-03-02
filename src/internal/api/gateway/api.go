@@ -10,7 +10,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlclient"
+	aqlclient "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/client"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/composition"

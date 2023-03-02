@@ -9,7 +9,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor"
+	aqlprocessor "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/processor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"

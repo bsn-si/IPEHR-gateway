@@ -1,4 +1,4 @@
-package aqlprocessor
+package processor
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 
 	"golang.org/x/exp/constraints"
@@ -23,19 +23,19 @@ type Primitive struct {
 
 func (p *Primitive) write(w io.Writer) {
 	switch p.Type {
-	case aqlparser.AqlLexerINTEGER:
+	case parser.AqlLexerINTEGER:
 		fmt.Fprintf(w, "%d", p.Val)
-	case aqlparser.AqlLexerREAL:
+	case parser.AqlLexerREAL:
 		fmt.Fprintf(w, "%f", p.Val)
-	case aqlparser.AqlLexerSTRING:
+	case parser.AqlLexerSTRING:
 		fmt.Fprintf(w, "'%s'", p.Val)
-	case aqlparser.AqlLexerDATE:
+	case parser.AqlLexerDATE:
 		t, _ := p.Val.(time.Time)
 		fmt.Fprintf(w, "'%s'", t.Format("2006-01-02T15"))
-	case aqlparser.AqlLexerTIME:
+	case parser.AqlLexerTIME:
 		t, _ := p.Val.(time.Time)
 		fmt.Fprintf(w, "'%s'", t.Format("15:04:05.999"))
-	case aqlparser.AqlLexerDATETIME:
+	case parser.AqlLexerDATETIME:
 		t, _ := p.Val.(time.Time)
 		fmt.Fprintf(w, "'%s'", t.Format("2006-01-02T15:04:05.999"))
 	default:
@@ -84,7 +84,7 @@ func compare[T constraints.Ordered](x, y T, cmpSymbl ComparisionSymbol) bool {
 	}
 }
 
-func getPrimitive(prim *aqlparser.PrimitiveContext) (Primitive, error) {
+func getPrimitive(prim *parser.PrimitiveContext) (Primitive, error) {
 	p := Primitive{}
 
 	switch val := prim.GetChild(0).(type) {
@@ -92,7 +92,7 @@ func getPrimitive(prim *aqlparser.PrimitiveContext) (Primitive, error) {
 		if err := p.processTerminalNode(val); err != nil {
 			return Primitive{}, errors.Wrap(err, "cannot get Primitive.TerminalNode")
 		}
-	case *aqlparser.NumericPrimitiveContext:
+	case *parser.NumericPrimitiveContext:
 		if err := p.processNumericPrimitive(val); err != nil {
 			return Primitive{}, errors.Wrap(err, "cannot get Primitive.Numeric")
 		}
@@ -108,9 +108,9 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 	p.Type = tokenType
 
 	switch tokenType {
-	case aqlparser.AqlLexerSTRING:
+	case parser.AqlLexerSTRING:
 		p.Val = trimString(terminal.String())
-	case aqlparser.AqlLexerDATE:
+	case parser.AqlLexerDATE:
 		{
 			const layout = "2006-01-02"
 			t, err := parseDateByLayout(layout, terminal.String())
@@ -120,7 +120,7 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 
 			p.Val = t
 		}
-	case aqlparser.AqlLexerTIME:
+	case parser.AqlLexerTIME:
 		{
 			const layout = "15:04:05.999"
 			t, err := parseDateByLayout(layout, terminal.String())
@@ -130,7 +130,7 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 
 			p.Val = t
 		}
-	case aqlparser.AqlLexerDATETIME:
+	case parser.AqlLexerDATETIME:
 		{
 			const layout = "2006-01-02T15:04:05.999"
 			t, err := parseDateByLayout(layout, terminal.String())
@@ -140,9 +140,9 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 
 			p.Val = t
 		}
-	case aqlparser.AqlLexerBOOLEAN:
+	case parser.AqlLexerBOOLEAN:
 		p.Val = strings.ToLower(terminal.String()) == "true"
-	case aqlparser.AqlLexerNULL:
+	case parser.AqlLexerNULL:
 		p.Val = nil
 	default:
 		return fmt.Errorf("unexpected PRIMITIVE SYMBOL type: %v", tokenType) //nolint
@@ -151,7 +151,7 @@ func (p *Primitive) processTerminalNode(terminal *antlr.TerminalNodeImpl) error 
 	return nil
 }
 
-func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveContext) error {
+func (p *Primitive) processNumericPrimitive(numeric *parser.NumericPrimitiveContext) error {
 	if numeric.INTEGER() != nil {
 		val, err := strconv.Atoi(numeric.INTEGER().GetText())
 		if err != nil {
@@ -159,12 +159,12 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 		}
 
 		p.Val = val
-		p.Type = aqlparser.AqlLexerINTEGER
+		p.Type = parser.AqlLexerINTEGER
 		return nil
 	}
 
 	if numeric.SYM_MINUS() != nil {
-		err := p.processNumericPrimitive(numeric.NumericPrimitive().(*aqlparser.NumericPrimitiveContext))
+		err := p.processNumericPrimitive(numeric.NumericPrimitive().(*parser.NumericPrimitiveContext))
 		if err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (p *Primitive) processNumericPrimitive(numeric *aqlparser.NumericPrimitiveC
 	}
 
 	p.Val = val
-	p.Type = aqlparser.AqlLexerREAL
+	p.Type = parser.AqlLexerREAL
 
 	return nil
 }

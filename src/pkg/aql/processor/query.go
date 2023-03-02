@@ -1,4 +1,4 @@
-package aqlprocessor
+package processor
 
 import (
 	"bytes"

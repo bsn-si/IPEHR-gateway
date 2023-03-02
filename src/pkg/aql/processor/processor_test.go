@@ -1,9 +1,9 @@
-package aqlprocessor
+package processor
 
 import (
 	"testing"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/aqlprocessor/aqlparser"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/aql/parser"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -167,7 +167,7 @@ LIMIT 3`,
 										},
 									},
 									Operand: &PathPredicateOperand{
-										Primitive: &Primitive{Val: "554f896d-faca-4513-bddf-664541146308d", Type: aqlparser.AqlLexerSTRING},
+										Primitive: &Primitive{Val: "554f896d-faca-4513-bddf-664541146308d", Type: parser.AqlLexerSTRING},
 									},
 								},
 							},
@@ -276,7 +276,7 @@ LIMIT 3`,
 																},
 															},
 															PathPredicateOperand: &PathPredicateOperand{
-																Primitive: &Primitive{Val: "Symptoms", Type: aqlparser.AqlLexerSTRING},
+																Primitive: &Primitive{Val: "Symptoms", Type: parser.AqlLexerSTRING},
 															},
 														},
 													},
