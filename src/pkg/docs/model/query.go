@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+
 	aqlprocessor "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/processor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
@@ -20,8 +22,11 @@ func (q *QueryRequest) Validate() error {
 	}
 
 	_, err := aqlprocessor.NewAqlProcessor(q.Query).Process()
+	if err != nil {
+		return fmt.Errorf("AqlProcessorProcess error: %w query: %s", err, q.Query)
+	}
 
-	return err
+	return nil
 }
 
 // https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-response-structure
