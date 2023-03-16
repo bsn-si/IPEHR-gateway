@@ -72,7 +72,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           # list of Docker images to use as base name for tags
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-gateway
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # generate Docker tags based on the following events/attributes
           tags: |
             type=sha
