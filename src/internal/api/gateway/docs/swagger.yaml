@@ -674,6 +674,8 @@ definitions:
     type: object
   model.QueryRequest:
     properties:
+      ehr_id:
+        type: string
       fetch:
         type: integer
       offset:
@@ -850,7 +852,7 @@ definitions:
     additionalProperties:
       $ref: '#/definitions/processing.RequestResult'
     type: object
-host: gateway.ipehr.org
+host: localhost:8085
 info:
   contact:
     email: support@bsn.si
@@ -2423,6 +2425,72 @@ paths:
       tags:
       - QUERY
   /query/aql:
+    get:
+      consumes:
+      - application/json
+      description: |
+        Execute a given ad-hoc AQL query, supplied by {q} parameter, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.
+        See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
+      parameters:
+      - description: Bearer AccessToken
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: UserId
+        in: header
+        name: AuthUserId
+        required: true
+        type: string
+      - description: Query Request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.QueryRequest'
+      - description: An optional parameter to execute the query within an EHR context.
+        in: query
+        name: ehr_id
+        type: string
+      - description: 'AQL. Example: {q=SELECT e/ehr_id/value, c/context/start_time/value
+          as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude
+          AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION
+          c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1]
+          WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude
+          >= $systolic_bp} The AQL query to be executed.'
+        in: query
+        name: q
+        type: string
+      - description: The row number in result-set to start result-set from (0-based),
+          default is 0.
+        in: query
+        name: offset
+        type: string
+      - description: Number of rows to fetch (the default depends on the implementation).
+        in: query
+        name: fetch
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.QueryResponse'
+        "400":
+          description: Is returned when the server was unable to execute the query
+            due to invalid input, e.g. a request with missing `q` parameter or an
+            invalid query syntax.
+        "408":
+          description: Is returned when there is a query execution timeout (i.e. maximum
+            query execution time reached, therefore the server aborted the execution
+            of the query).
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Execute ad-hoc AQL query
+      tags:
+      - QUERY
     post:
       consumes:
       - application/json

@@ -43,7 +43,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Docker meta Stat
-        id: meta
+        id: meta-stat
         uses: docker/metadata-action@v4
         with:
           # list of Docker images to use as base name for tags
@@ -64,11 +64,11 @@ jobs:
           file: Dockerfile.stat
           platforms: linux/amd64
           push: ${{ github.ref_name == 'develop' || github.ref_name == 'main' || github.ref_type == 'tag' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-stat.outputs.tags }}
+          labels: ${{ steps.meta-stat.outputs.labels }}
 
       - name: Docker meta
-        id: meta
+        id: meta-gateway
         uses: docker/metadata-action@v4
         with:
           # list of Docker images to use as base name for tags
@@ -89,5 +89,5 @@ jobs:
           file: Dockerfile.gateway
           platforms: linux/amd64
           push: ${{ github.ref_name == 'develop' || github.ref_name == 'main' || github.ref_type == 'tag' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta-gateway.outputs.tags }}
+          labels: ${{ steps.meta-gateway.outputs.labels }}

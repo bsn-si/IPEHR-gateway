@@ -33,7 +33,7 @@ jobs:
       contents: read
       actions: read
     
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v3
@@ -64,7 +64,7 @@ jobs:
 
       - name: Run Integration Tests
         working-directory: ./src/tests/api
-        run: go test ./... -ci_run
+        run: go test -v ./... -ci_run
 
       - name: Print Containers Logs
         run: |

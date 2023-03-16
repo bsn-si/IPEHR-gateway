@@ -46,10 +46,15 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
 		}
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			t.Error(err)
+		}
 		defer response.Body.Close()
 
 		if response.StatusCode != http.StatusOK {
-			t.Errorf("Expected success, received status: %d", response.StatusCode)
+			t.Errorf("Expected success, received status: %d body: %s", response.StatusCode, body)
 		}
 
 		_, err = io.ReadAll(response.Body)

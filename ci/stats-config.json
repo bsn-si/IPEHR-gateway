@@ -8,7 +8,7 @@
     "sync": {
         "endpoint": "http://ipehr-index:8545",
 		"endpoint_2": "https://goerli.infura.io/v3/<API-KEY>",
-        "startBlock": 10000000,
+        "startBlock": 1,
         "contracts": [
             {
                 "name": "ehrIndex",

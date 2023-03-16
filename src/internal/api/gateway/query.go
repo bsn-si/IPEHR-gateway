@@ -3,8 +3,10 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -110,7 +112,7 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 //	@Failure	400				 "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing `q` parameter or an invalid query syntax."
 //	@Failure	408				 "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
 //	@Failure	500				 "Is returned when an unexpected error occurs while processing a request"
-//	@Router		/query/aql [post]
+//	@Router		/query/aql [get]
 func (h QueryHandler) ExecGetQuery(c *gin.Context) {
 	m := map[string]string{}
 
@@ -253,17 +255,22 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 		QueryParameters: map[string]interface{}{},
 	}
 
+	var err error
+
 	for key, val := range m {
 		if key == "q" {
-			req.Query = val
+			req.Query, err = url.QueryUnescape(val)
+			if err != nil {
+				return nil, fmt.Errorf("url.QueryUnescape error: %w query: %s", err, val)
+			}
+
 			continue
 		}
 
 		if key == "ehr_id" {
 			ehrID, err := uuid.Parse(val)
 			if err != nil {
-				log.Printf("cannot parse ehr_id uuid: %f", err)
-				return nil, errors.New("ehr_id bad format")
+				return nil, fmt.Errorf("uuid.Parse error: %w val: %s", err, val)
 			}
 
 			req.EhrID = ehrID.String()
@@ -277,8 +284,7 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 
 			offset, err := strconv.Atoi(val)
 			if err != nil {
-				log.Printf("cannot parse 'offset' from string: %f", err)
-				return nil, errors.New("offset bad format")
+				return nil, fmt.Errorf("cannot parse 'offset': %w val: %s", err, val)
 			}
 
 			if offset < 0 {
@@ -293,8 +299,7 @@ func getQueryParamsFromMap(m map[string]string) (*model.QueryRequest, error) {
 		if key == "fetch" {
 			fetch, err := strconv.Atoi(val)
 			if err != nil {
-				log.Printf("cannot parse 'fetch' from string: %f", err)
-				return nil, errors.New("fetch bad format")
+				return nil, fmt.Errorf("cannot parse 'fetch': %w val: %s", err, val)
 			}
 
 			if fetch < 0 {
