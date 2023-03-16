@@ -1910,6 +1910,85 @@ const docTemplate = `{
             }
         },
         "/query/aql": {
+            "get": {
+                "description": "Execute a given ad-hoc AQL query, supplied by {q} parameter, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).\n",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "QUERY"
+                ],
+                "summary": "Execute ad-hoc AQL query",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer AccessToken",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UserId",
+                        "name": "AuthUserId",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Query Request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryRequest"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "An optional parameter to execute the query within an EHR context.",
+                        "name": "ehr_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "AQL. Example: {q=SELECT e/ehr_id/value, c/context/start_time/value as startTime, obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude AS systolic, c/uid/value AS cid, c/name FROM EHR e CONTAINS COMPOSITION c[openEHR-EHR-COMPOSITION.encounter.v1] CONTAINS OBSERVATION obs[openEHR-EHR-OBSERVATION.blood_pressure.v1] WHERE obs/data[at0001]/events[at0006]/data[at0003]/items[at0004]/value/magnitude \u003e= $systolic_bp} The AQL query to be executed.",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The row number in result-set to start result-set from (0-based), default is 0.",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Number of rows to fetch (the default depends on the implementation).",
+                        "name": "fetch",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Is returned when the server was unable to execute the query due to invalid input, e.g. a request with missing ` + "`" + `q` + "`" + ` parameter or an invalid query syntax."
+                    },
+                    "408": {
+                        "description": "Is returned when there is a query execution timeout (i.e. maximum query execution time reached, therefore the server aborted the execution of the query)."
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            },
             "post": {
                 "description": "Execute ad-hoc query, supplied by q attribute, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.\nSee also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).\n",
                 "consumes": [
@@ -3850,6 +3929,9 @@ const docTemplate = `{
         "model.QueryRequest": {
             "type": "object",
             "properties": {
+                "ehr_id": {
+                    "type": "string"
+                },
                 "fetch": {
                     "type": "integer"
                 },
@@ -4125,7 +4207,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "0.2",
-	Host:             "gateway.ipehr.org",
+	Host:             "localhost:8085",
 	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "IPEHR Gateway API",

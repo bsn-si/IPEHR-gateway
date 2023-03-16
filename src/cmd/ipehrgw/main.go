@@ -2,7 +2,7 @@ package main
 
 // Generating swagger doc spec//
 //go:generate swag fmt -g ../../internal/api/gateway/api.go
-//go:generate swag init --parseDepth 1 -g ./../../internal/api/gateway/api.go -d ./../../internal/api/gateway,./../../pkg/docs/model,./../../pkg/docs/service/processing,./../../pkg/user/model -o ./../../internal/api/gateway/docs
+//go:generate swag init --parseDepth 1 -g ./../../api/gateway/api.go -d ./../../internal/api/gateway,./../../pkg/docs/model,./../../pkg/docs/service/processing,./../../pkg/user/model -o ./../../internal/api/gateway/docs
 
 import (
 	"flag"

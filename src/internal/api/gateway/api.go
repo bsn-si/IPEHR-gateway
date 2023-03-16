@@ -10,6 +10,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway/docs"
 	aqlclient "github.com/bsn-si/IPEHR-gateway/src/pkg/aql/client"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
@@ -35,8 +36,7 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//	@host		gateway.ipehr.org
-// host      localhost:8080
+//  @host      localhost:8080
 //	@BasePath	/v1
 
 type API struct {
@@ -72,6 +72,8 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		docService,
 		gaSvc,
 	)
+
+	docs.SwaggerInfo.Host = cfg.Host
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, userSvc, docGroupSvc, gaSvc, cfg.BaseURL),
@@ -148,6 +150,7 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	gin.SetMode(gin.ReleaseMode)
 	return r
 }
