@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
 type Config struct {
-	BaseURL              string `json:"baseUrl"`
-	DataPath             string `json:"dataPath"`
+	BaseURL string `json:"baseUrl"`
+	//DataPath             string `json:"dataPath"`
 	Host                 string `json:"host"`
 	KeystoreKey          string `json:"keystoreKey"`
 	CreatingSystemID     string `json:"creatingSystemId"`
@@ -55,7 +56,7 @@ type Config struct {
 var mainConfigFile = "config.json"
 var fallbackConfigFile = "config.json.example"
 
-func New(params ...string) (cfg *Config, err error) {
+func New(params ...string) (*Config, error) {
 	var configFilePath string
 	if len(params) == 1 {
 		configFilePath = params[0]
@@ -63,19 +64,24 @@ func New(params ...string) (cfg *Config, err error) {
 
 	path, err := resolveConfigFile(configFilePath)
 	if err != nil {
-		return
+		return nil, fmt.Errorf("resolveConfigFile error: %w", err)
 	}
 
-	cfg = &Config{
+	cfg := &Config{
 		path: path,
 	}
-	err = cfg.load()
+
+	if err = cfg.load(); err != nil {
+		return nil, fmt.Errorf("config load error: %w", err)
+	}
+
+	cfg.pathNormalize()
 
 	cfgJSON, _ := json.MarshalIndent(cfg, "", "    ")
 
 	log.Println("IPEHR Config:", string(cfgJSON))
 
-	return
+	return cfg, nil
 }
 
 // Resolves which config file we can use
@@ -114,4 +120,25 @@ func (c *Config) load() (err error) {
 	}
 
 	return
+}
+
+func (c *Config) pathNormalize() {
+	paths := []*string{
+		&c.Storage.Localfile.Path,
+		&c.DB.FilePath,
+		&c.Contract.PrivKeyPath,
+	}
+
+	for _, path := range paths {
+		s := strings.Split(*path, "/")
+		if len(s) == 0 {
+			continue
+		}
+
+		if s[0] == "~" || strings.ToLower(s[0]) == "$home" {
+			s[0], _ = os.UserHomeDir()
+		}
+
+		*path = strings.Join(s, "/")
+	}
 }
