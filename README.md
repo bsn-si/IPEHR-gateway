@@ -97,16 +97,12 @@ From the point of view of a smart contract, a document is a structure that conta
 
 ```
 struct DocumentMeta {
-    DocType   docType;
-    DocStatus status;
-    bytes     CID;
-    bytes     dealCID;
-    bytes     minerAddress;
-    bytes     docUIDEncrypted;
-    bytes32   docBaseUIDHash;
-    bytes32   version;
-    bool      isLast;
-    uint32    timestamp;
+    Status      status;
+    bytes       id;
+    bytes       version;
+    uint32      timestamp;
+    isLast      bool;
+    Attribute[] attrs; 
 }
 ```
 
@@ -200,18 +196,87 @@ To read more info about access rights management, please visit the ["docs access
 To ensure the quality of the application we developed and showed a test case:
 [![Дизайн без названия (1)](https://user-images.githubusercontent.com/98888366/214616759-e0c84f22-b524-4879-acdd-68b81e775676.png)](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4)
 
-## How to
+## IPEHR-gateway installation
 
-### Install Prerequisites
+### Clone this repo
 
-### Go 
+```
+cd /srv
+git clone https://github.com/bsn-si/IPEHR-gateway
+```
+
+### Docker
+
+You can use the automatic building of components in Docker containers.  
+To do this, you will need Docker Compose installed. Installation instructions can be found [here](https://docs.docker.com/compose/install/linux/)
+
+```
+cd /srv/IPEHR-gateway
+docker compose up -d
+```
+
+After starting the service will be available at the address http://localhost:8080  
+You can interact with the service through the Swagger UI: http://localhost:8080/swagger/index.html  
+
+The containers can be stopped when the work is finished.
+
+```
+docker compose -f "docker-compose.yml" down
+```
+
+### Building from source code
+
+#### Install Prerequisites
+
+##### Go
 Please follow installation instructions provided [here](https://go.dev/doc/install).
 
+##### Build IPEHR-gateway
+
+```
+cd IPEHR-gateway/src
+go build -o ../bin/ipehr-gateway cmd/ipehrgw/main.go
+```
+
+##### Config IPEHR-gateway
+```
+cd /srv/IPEHR-gateway
+cp config.json.example config.json
+```
+
+You can change the parameters inside the configuration file according to your needs.
+
+To work, you will need a private account key in the blockchain, which will be used to send transactions. 
+By default it is located in the file $HOME/.ipehr/.blockchain.key, but you can specify another path in the config in the `contract.privKeyPath` parameter.
+
+```
+mkdir -p ~/.ipehr
+echo "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" > ~/.ipehr/.blockchain.key
+chmod 600 ~/.ipehr/.blockchain.key
+```
+
+In order for an account to be able to interact with contracts, it must be added by the contract administrator to the whitelist.
+
+##### Run IPEHR-gateway
+
+```
+cd /srv/IPEHR-gateway
+./bin/ipehr-gateway -config=config.json
+```
+
+After starting the service will be available at the address specified in the configuration file. By default: http://localhost:8080  
+You can interact with the service through the Swagger UI: http://localhost:8080/swagger/index.html
+
 ### IPFS
+
 The ipEHR gateway requires a connection to the IPFS network. You can use a third-party service or install your own node. Installation instructions can be found [here](https://github.com/ipfs/kubo#install).
 
-### Filecoin
-The ipEHR gateway requires a connection to the Filecoin network. It is necessary to install your own Lotus instance. You can run it in either full node mode or [light](https://lotus.filecoin.io/tutorials/lotus/store-and-retrieve/set-up/#install-a-lite-node) mode. Installation instructions can be found [here](https://lotus.filecoin.io/lotus/install/prerequisites/).
+### Filecoin node installation
+
+The ipEHR gateway requires a connection to the Filecoin network.  
+It is necessary to install your own Lotus instance.  
+You can use an instance deployed by the IPEHR development team [http://lotus.dev.bsn.si/rpc/v1](http://lotus.dev.bsn.si/rpc/v1) or deploy your own.  
+You can run it in either full node mode or [light](https://lotus.filecoin.io/tutorials/lotus/store-and-retrieve/set-up/#install-a-lite-node) mode.   Installation instructions can be found [here](https://lotus.filecoin.io/lotus/install/prerequisites/).
 
 Enable support for fetching data from IPFS before launching in the config `~/.lotus/config.toml`
 ```
@@ -246,30 +311,13 @@ server {
 Replace \<HOSTNAME\> and <LOTUS_DIR> with your values.
 
 
-### Clone this repo
+
+
+### Running tests
 
 ```
-git clone https://github.com/bsn-si/IPEHR-gateway
-```
-
-### Run Tests
-
-```
-cd ./src
+cd /srv/IPEHR-gateway/src
 go test -v ./...
-```
-
-### Build IPEHR-gateway
-
-```
-cd ./src
-go build -o ../bin/ipehr-gateway cmd/ipehrgw/main.go
-```
-
-### Run IPEHR-gateway
-
-```
-./bin/ipehr-gateway -config=./config.json
 ```
 
 ### Get swagger UI API documentation
@@ -303,23 +351,7 @@ For now we have the following methods:
 - Get a document access list
 - Set user access to the document
 
-## Docker
-You can start a project in Docker
-
-Before building the image, you need to create config.json (take config.json.example as a basis)
-
-The repository contains a Dockerfile
-At the root of the project run the command 
-```
-docker build -t ipehr:gtw .
-```
-
-After building the image, start the container
-```
-docker run -d --restart always -p 8080:8080 --name ipehr-gateway ipehr:gtw
-```
-
 ### Related repositories
-A [mobile app](https://github.com/bsn-si/IPEHR-access-control-app) for access management to user's (patient's) EHRs.
-A [Chainlink publisher](https://github.com/bsn-si/IPEHR-stat) for public EHR stats.
-An [ipEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) for access management, indexes storage and obtaining EHR stats.
+A [mobile app](https://github.com/bsn-si/IPEHR-access-control-app) for access management to user's (patient's) EHRs.  
+A [Chainlink publisher](https://github.com/bsn-si/IPEHR-stat) for public EHR stats.  
+An [ipEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) for access management, indexes storage and obtaining EHR stats.  
