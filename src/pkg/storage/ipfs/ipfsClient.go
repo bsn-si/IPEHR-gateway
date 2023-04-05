@@ -94,7 +94,9 @@ func (i *Client) Close() {
 
 // nolint
 func (i *Client) getVersion(url string) (string, error) {
-	resp, err := i.httpClient.Post(url+"/version", "", nil)
+	url += "/version"
+
+	resp, err := i.httpClient.Post(url, "", nil)
 	if err != nil {
 		return "", fmt.Errorf("IPFS get version error: %w URL %s", err, url)
 	}
@@ -154,7 +156,7 @@ func (i *Client) Add(ctx context.Context, fileContent []byte) (*cid.Cid, error) 
 
 		resp, err := i.httpClient.Do(req)
 		if err != nil {
-			log.Printf("IPFS add request error: %v URL: %s", err, url)
+			log.Printf("[IPFS] add request error: %v URL: %s", err, url)
 
 			endpoint.Status = inactive
 
@@ -164,7 +166,7 @@ func (i *Client) Add(ctx context.Context, fileContent []byte) (*cid.Cid, error) 
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			log.Printf("IPFS add request status %s", resp.Status)
+			log.Printf("[IPFS] add request status %s", resp.Status)
 
 			endpoint.Status = inactive
 
@@ -215,14 +217,14 @@ func (i *Client) Get(ctx context.Context, CID *cid.Cid) (io.ReadCloser, error) {
 		resp, err := i.httpClient.Do(request)
 		if err != nil {
 			if !strings.Contains(err.Error(), "context deadline exceeded") {
-				log.Printf("IPFS get request error: %v URL: %s", err, url)
+				log.Printf("[IPFS] get request error: %v URL: %s", err, url)
 			}
 
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			log.Printf("IPFS get request error: %v status %s", errors.ErrCustom, resp.Status)
+			log.Printf("[IPFS] get request error: %v status %s", errors.ErrCustom, resp.Status)
 
 			endpoint.Status = inactive
 
@@ -250,6 +252,8 @@ func (i *Client) checkEndpointStatus() {
 
 		_, err := i.getVersion(endpoint.APIURL)
 		if err != nil {
+			log.Printf("[IPFS] getVersion error: %v", err)
+
 			endpoint.Status = inactive
 		} else {
 			endpoint.Status = active

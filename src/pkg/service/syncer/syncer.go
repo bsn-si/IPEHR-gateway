@@ -169,43 +169,48 @@ func (s *Syncer) tryProccessNextBlock(ctx context.Context, bInt *big.Int) {
 	// get the full block details, using a custom jsonrpc ID as a test
 	block, err := s.ethClient.BlockByNumber(ctx, s.blockNum)
 	if err != nil {
-		if err.Error() == "not found" {
+		switch err.Error() {
+		case "not found", "requested a future epoch (beyond 'latest')":
 			time.Sleep(BlockNotFoundTimeout)
-		} else {
+			return
+		case "requested epoch was a null round":
+			// skip block
+		default:
 			log.Printf("[SYNC] Block %d %v get error:", s.blockNum, err)
 			log.Printf("[SYNC] BlockByNumber error: %v Sleeping %s...", err, BlockGetErrorTimeout)
 			time.Sleep(BlockGetErrorTimeout)
+			return
 		}
-
-		return
 	}
 
-	ts := time.Unix(int64(block.Time()), 0)
+	if block != nil {
+		ts := time.Unix(int64(block.Time()), 0)
 
-	for _, blockTx := range block.Transactions() {
-		if blockTx.To() == nil {
-			// contract creation
-			continue
+		for _, blockTx := range block.Transactions() {
+			if blockTx.To() == nil {
+				// contract creation
+				continue
+			}
+
+			contractABI, ok := s.addrList[blockTx.To().Hex()]
+			if !ok {
+				continue
+			}
+
+			receipt, err := s.ethClient.TransactionReceipt(ctx, blockTx.Hash())
+			if err != nil {
+				log.Printf("[SYNC] tx %s receipt get error: %v", blockTx.Hash().String(), err)
+			}
+
+			if receipt.Status == types.ReceiptStatusFailed {
+				continue
+			}
+
+			s.processTransactionBlock(ctx, contractABI, blockTx, ts)
 		}
 
-		contractABI, ok := s.addrList[blockTx.To().Hex()]
-		if !ok {
-			continue
-		}
-
-		receipt, err := s.ethClient.TransactionReceipt(ctx, blockTx.Hash())
-		if err != nil {
-			log.Printf("[SYNC] tx %s receipt get error: %v", blockTx.Hash().String(), err)
-		}
-
-		if receipt.Status == types.ReceiptStatusFailed {
-			continue
-		}
-
-		s.processTransactionBlock(ctx, contractABI, blockTx, ts)
+		log.Printf("[SYNC] new block %v %v txs %d", block.Number().Int64(), time.Unix(int64(block.Time()), 0).Format("2006-01-02 15:04:05"), len(block.Transactions()))
 	}
-
-	log.Printf("[SYNC] new block %v %v txs %d", block.Number().Int64(), time.Unix(int64(block.Time()), 0).Format("2006-01-02 15:04:05"), len(block.Transactions()))
 
 	if err := s.repo.SyncLastBlockSet(ctx, s.blockNum.Uint64()); err != nil {
 		log.Fatal("[SYNC] SyncLastBlockSet error: ", err)

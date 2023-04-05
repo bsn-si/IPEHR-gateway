@@ -10,13 +10,14 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
 )
 
-func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T) {
+func queryExecSuccess(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		targetURL := testWrap.serverURL + "/v1/query/aql"
+		targetURL := testData.serverURL + "/v1/query/aql"
 
 		request, err := http.NewRequest(http.MethodGet, targetURL, nil)
 		if err != nil {
@@ -26,7 +27,6 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 
 		q := request.URL.Query()
 
-		user := testData.users[0]
 		q.Add("ehr_id", user.ehrID)
 
 		query := url.QueryEscape(`SELECT e/ehr_id/value AS ID FROM EHR e [ehr_id/value=$ehr_id]`)
@@ -41,7 +41,7 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 		request.Header.Set("AuthUserId", user.id)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
@@ -65,16 +65,15 @@ func (testWrap *testWrap) queryExecSuccess(testData *TestData) func(t *testing.T
 	}
 }
 
-func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testing.T) {
+func queryExecPostSuccess(testData *TestData) func(t *testing.T) {
 	// TODO should be realize after AQL inserts will done
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
-		url := testWrap.serverURL + "/v1/query/aql"
+		url := testData.serverURL + "/v1/query/aql"
 
 		request, err := http.NewRequest(http.MethodPost, url, queryExecPostCreateBodyRequest(user.ehrID))
 		if err != nil {
@@ -86,7 +85,7 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 		request.Header.Set("AuthUserId", user.id)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
@@ -99,15 +98,14 @@ func (testWrap *testWrap) queryExecPostSuccess(testData *TestData) func(t *testi
 	}
 }
 
-func (testWrap *testWrap) queryExecPostFail(testData *TestData) func(t *testing.T) {
+func queryExecPostFail(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			t.Fatal("Test user required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
-		url := testWrap.serverURL + "/v1/query/aql"
+		url := testData.serverURL + "/v1/query/aql"
 
 		request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader([]byte("111qqqEEE")))
 		if err != nil {
@@ -119,7 +117,7 @@ func (testWrap *testWrap) queryExecPostFail(testData *TestData) func(t *testing.
 		request.Header.Set("AuthUserId", user.id)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return

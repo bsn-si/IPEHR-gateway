@@ -6,20 +6,20 @@
 		"migrations": "/srv/IPEHR-gateway/db/migrations"
 	},
     "sync": {
-		"endpoint": "https://goerli.infura.io/v3/<API-KEY>",
-        "startBlock": 10000000,
+		"endpoint": "https://api.hyperspace.node.glif.io/rpc/v1",
+        "startBlock": 228033,
         "contracts": [
             {
                 "name": "ehrIndex",
-                "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+                "address": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
             },
             {
                 "name": "users",
-                "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                "address": "0xFF576328EC76e7f88bbE1b733c11eFAb7c7F1BAC",
             },
             {
                 "name": "dataStore",
-                "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+                "address": "0x1d53a8af051C5485E1f1639A92f83D66efb6eABD"
             }
         ]
     }

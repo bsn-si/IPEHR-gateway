@@ -195,10 +195,10 @@ func (a *API) buildEhrDirectoryAPI() handlerBuilder {
 		r.Use(auth(a))
 		r.Use(ehrSystemID)
 		// TODO check permission only doctor can do it
-		r.POST("/:ehrid/directory/", a.Directory.Create)
-		r.PUT("/:ehrid/directory/", a.Directory.Update)
-		r.DELETE("/:ehrid/directory/", a.Directory.Delete)
-		r.GET("/:ehrid/directory/", a.Directory.GetByTime)
+		r.POST("/:ehrid/directory", a.Directory.Create)
+		r.PUT("/:ehrid/directory", a.Directory.Update)
+		r.DELETE("/:ehrid/directory", a.Directory.Delete)
+		r.GET("/:ehrid/directory", a.Directory.GetByTime)
 		r.GET("/:ehrid/directory/:version_uid", a.Directory.GetByVersion)
 	}
 }

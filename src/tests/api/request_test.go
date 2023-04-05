@@ -22,7 +22,7 @@ type Request struct {
 	user *User
 }
 
-func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
+func requests(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		var req *Request
 
@@ -41,13 +41,13 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 		}
 
 		if req.user.accessToken == "" {
-			err := req.user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
+			err := req.user.login(testData.ehrSystemID, testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatal("User login error:", err)
 			}
 		}
 
-		request, err := http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/requests/"+req.id, nil)
+		request, err := http.NewRequest(http.MethodGet, testData.serverURL+"/v1/requests/"+req.id, nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -58,7 +58,7 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 		request.Header.Set("Authorization", "Bearer "+req.user.accessToken)
 		request.Header.Set("Prefer", "return=representation")
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
@@ -71,7 +71,7 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 
 		t.Log("Requests: GetAll")
 
-		request, err = http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/requests/", nil)
+		request, err = http.NewRequest(http.MethodGet, testData.serverURL+"/v1/requests/", nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -82,7 +82,7 @@ func (testWrap *testWrap) requests(testData *TestData) func(t *testing.T) {
 		request.Header.Set("Authorization", "Bearer "+req.user.accessToken)
 		request.Header.Set("Prefer", "return=representation")
 
-		response, err = testWrap.httpClient.Do(request)
+		response, err = testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
@@ -108,7 +108,7 @@ func requestWait(userID, accessToken, requestID, baseURL string, client *http.Cl
 		request.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 
-	timeout := time.Now().Add(1 * time.Minute)
+	timeout := time.Now().Add(2 * time.Minute)
 
 	for {
 		time.Sleep(2 * time.Second)

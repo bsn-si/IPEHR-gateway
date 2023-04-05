@@ -84,7 +84,7 @@ func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
 	return nil
 }
 
-func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
+func userLogin(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		userHelper := testhelpers.UserHelper{}
 
@@ -189,7 +189,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 				docBytes, _ = json.Marshal(jwt)
 			}
 
-			request, err := http.NewRequest(httpMethod, testWrap.serverURL+"/v1/user/"+data.action, bytes.NewReader(docBytes))
+			request, err := http.NewRequest(httpMethod, testData.serverURL+"/v1/user/"+data.action, bytes.NewReader(docBytes))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -208,7 +208,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 			request.Header.Set("Prefer", "return=representation")
 			request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-			response, err := testWrap.httpClient.Do(request)
+			response, err := testData.httpClient.Do(request)
 			if err != nil {
 				t.Fatalf("Expected nil, received %s", err.Error())
 			}
@@ -256,7 +256,7 @@ func (testWrap *testWrap) userLogin(testData *TestData) func(t *testing.T) {
 	}
 }
 
-func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) {
+func doctorRegister(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		doctor := &Doctor{
 			User: User{
@@ -269,25 +269,25 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 			PictureURL: "https://media.filmz.ru/photos/full/filmz.ru_f_48951.jpg",
 		}
 
-		reqID, err := registerDoctor(doctor, testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
+		reqID, err := registerDoctor(doctor, testData.ehrSystemID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatalf("Can not register user, err: %v", err)
 		}
 
-		err = requestWait(doctor.id, "", reqID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(doctor.id, "", reqID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal("registerPatient requestWait error: ", err)
 		}
 
 		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
+			err := doctor.login(testData.ehrSystemID, testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
 		// getting doctor code
-		url := testWrap.serverURL + "/v1/user/" + doctor.id
+		url := testData.serverURL + "/v1/user/" + doctor.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -298,7 +298,7 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 		request.Header.Set("AuthUserId", doctor.id)
 		request.Header.Set("Authorization", "Bearer "+doctor.accessToken)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -326,22 +326,14 @@ func (testWrap *testWrap) doctorRegister(testData *TestData) func(t *testing.T) 
 	}
 }
 
-func (testWrap *testWrap) userInfoDoctor(testData *TestData) func(t *testing.T) {
+func userInfoDoctor(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.doctors) == 0 {
-			testWrap.doctorRegister(testData)(t)
+		doctor, err := checkDoctor0LoggedIn(testData)
+		if err != nil {
+			t.Fatal("checkDoctor0LoggedIn error:", err)
 		}
 
-		doctor := testData.doctors[0]
-
-		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		url := testWrap.serverURL + "/v1/user/" + doctor.id
+		url := testData.serverURL + "/v1/user/" + doctor.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -352,7 +344,7 @@ func (testWrap *testWrap) userInfoDoctor(testData *TestData) func(t *testing.T) 
 		request.Header.Set("AuthUserId", doctor.id)
 		request.Header.Set("Authorization", "Bearer "+doctor.accessToken)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -380,7 +372,7 @@ func (testWrap *testWrap) userInfoDoctor(testData *TestData) func(t *testing.T) 
 	}
 }
 
-func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T) {
+func userInfoPatient(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.users) == 0 {
 			t.Fatal("empty test users litst")
@@ -389,13 +381,13 @@ func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T)
 		user := testData.users[0]
 
 		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
+			err := user.login(testData.ehrSystemID, testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
 		}
 
-		url := testWrap.serverURL + "/v1/user/" + user.id
+		url := testData.serverURL + "/v1/user/" + user.id
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -406,7 +398,7 @@ func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T)
 		request.Header.Set("AuthUserId", user.id)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -433,22 +425,14 @@ func (testWrap *testWrap) userInfoPatient(testData *TestData) func(t *testing.T)
 	}
 }
 
-func (testWrap *testWrap) userInfoByCode(testData *TestData) func(t *testing.T) {
+func userInfoByCode(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.doctors) == 0 {
-			testWrap.doctorRegister(testData)(t)
+		doctor, err := checkDoctor0LoggedIn(testData)
+		if err != nil {
+			t.Fatal("checkDoctor0LoggedIn error:", err)
 		}
 
-		doctor := testData.doctors[0]
-
-		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		url := testWrap.serverURL + "/v1/user/code/" + doctor.Code
+		url := testData.serverURL + "/v1/user/code/" + doctor.Code
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -459,7 +443,7 @@ func (testWrap *testWrap) userInfoByCode(testData *TestData) func(t *testing.T) 
 		request.Header.Set("Authorization", "Bearer "+doctor.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}

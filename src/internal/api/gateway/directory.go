@@ -65,7 +65,7 @@ func NewDirectoryHandler(cS DirectoryService, uS UserService, indexer Indexer, b
 //	@Failure		404	"Is returned when an EHR with {ehr_id}  does not exist"
 //	@Failure		409	"Is returned when a resource with same identifier(s) already exists, or previous request still in progress"
 //	@Failure		500	"Is returned when an unexpected error occurs while processing a request"
-//	@Router			/ehr/{ehr_id}/directory/ [post]
+//	@Router			/ehr/{ehr_id}/directory [post]
 func (h *DirectoryHandler) Create(ctx *gin.Context) {
 	errResponse := model.ErrorResponse{}
 

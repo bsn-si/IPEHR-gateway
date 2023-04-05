@@ -220,6 +220,7 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 			c.AbortWithStatus(http.StatusConflict)
 			return
 		} else if errors.Is(err, errors.ErrAccessDenied) {
+			log.Println("GroupAddUser error: ", err)
 			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}

@@ -76,13 +76,13 @@ func main() {
 
 	<-ctx.Done()
 
-	log.Println("Server shotdowning...")
+	log.Println("Server shutdowning...")
 
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer stopCancel()
 
 	if err := srv.Shutdown(stopCtx); err != nil {
-		log.Fatalf("Server shotdown error: %v", err)
+		log.Fatalf("Server shutdown error: %v", err)
 	}
 
 	log.Println("Server stopped")

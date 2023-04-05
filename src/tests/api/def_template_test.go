@@ -9,42 +9,27 @@ import (
 	"testing"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
 	docModel "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func (testWrap *testWrap) definitionTemplate14Upload(testData *TestData) func(t *testing.T) {
+func definitionTemplate14Upload(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
 		if err != nil {
-			t.Fatal(err)
-		}
-
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal("User login error:", err)
-			}
-		}
-
-		err = testWrap.checkEhr(testData, user)
-		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
 		templateID := fakeData.GetRandomStringWithLength(10)
 
-		tmpl, reqID, err := uploadTemplate14(user.id, testData.ehrSystemID, templateID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
+		tmpl, reqID, err := uploadTemplate14(user.id, testData.ehrSystemID, templateID, user.accessToken, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatalf("Unexpected template upload, received error: %v", err)
 		}
 
 		t.Logf("Waiting for request %s done", reqID)
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -53,22 +38,20 @@ func (testWrap *testWrap) definitionTemplate14Upload(testData *TestData) func(t 
 	}
 }
 
-func (testWrap *testWrap) definitionTemplate14GetByID(testData *TestData) func(t *testing.T) {
+func definitionTemplate14GetByID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
 		if len(user.templates) == 0 {
-			testWrap.definitionTemplate14Upload(testData)(t)
+			definitionTemplate14Upload(testData)(t)
 		}
 
 		tmpl1 := user.templates[0]
 
-		url := testWrap.serverURL + "/v1/definition/template/adl1.4/" + tmpl1.TemplateID
+		url := testData.serverURL + "/v1/definition/template/adl1.4/" + tmpl1.TemplateID
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -80,7 +63,7 @@ func (testWrap *testWrap) definitionTemplate14GetByID(testData *TestData) func(t
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.Header.Set("Accept", docModel.ADLTypeXML)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -101,22 +84,20 @@ func (testWrap *testWrap) definitionTemplate14GetByID(testData *TestData) func(t
 	}
 }
 
-func (testWrap *testWrap) definitionTemplate14List(testData *TestData) func(t *testing.T) {
+func definitionTemplate14List(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
 		if len(user.templates) == 0 {
-			testWrap.definitionTemplate14Upload(testData)(t)
+			definitionTemplate14Upload(testData)(t)
 		}
 
 		tmpl1 := user.templates[0]
 
-		url := testWrap.serverURL + "/v1/definition/template/adl1.4"
+		url := testData.serverURL + "/v1/definition/template/adl1.4"
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -128,7 +109,7 @@ func (testWrap *testWrap) definitionTemplate14List(testData *TestData) func(t *t
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.Header.Set("ConvertType", "application/json")
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -157,12 +138,7 @@ func (testWrap *testWrap) definitionTemplate14List(testData *TestData) func(t *t
 }
 
 func uploadTemplate14(userID, ehrSystemID, templateID, accessToken, baseURL string, client *http.Client) (*docModel.Template, string, error) {
-	rootDir, err := utils.ProjectRootDir()
-	if err != nil {
-		return nil, "", err
-	}
-
-	filePath := rootDir + "/data/mock/ehr/template14.xml"
+	filePath := "./test_fixtures/template14.xml"
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {

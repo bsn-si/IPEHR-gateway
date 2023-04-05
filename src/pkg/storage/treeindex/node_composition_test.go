@@ -119,7 +119,7 @@ func Test_EncodeDecodeComposition(t *testing.T) {
 		},
 		{
 			"2. large composition file",
-			"./../../../../data/mock/ehr/composition.json",
+			"./test_fixtures/composition.json",
 		},
 	}
 
