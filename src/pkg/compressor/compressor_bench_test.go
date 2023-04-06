@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 )
@@ -66,12 +65,7 @@ func TestCompressionRatio(t *testing.T) {
 }
 
 func testData() (data []byte, err error) {
-	rootDir, err := utils.ProjectRootDir()
-	if err != nil {
-		return
-	}
-
-	filePath := rootDir + "/data/mock/ehr/composition.json"
+	filePath := "./test_fixtures/composition.json"
 
 	data, err = os.ReadFile(filePath)
 

@@ -1,6 +1,6 @@
 {
     "baseUrl": "http://localhost:8080",
-    "dataPath1": "~/.ipehr/data",
+    "dataPath": "/Users/dish/Projects/bsn/IPEHR-gateway/data",
     "host": "localhost:8080",
     "keystoreKey": "fb5b72b901e8419969057bc7f73f8731bf3e3599ee3d8fac26b2c4bc6c7b6627",
     "creatingSystemId": "openEHRSys.example.com",
@@ -8,10 +8,10 @@
     "compressionLevel": 5,
     "defaultUserId": "8dc598d2-a3fa-462b-a513-a69a32c5ab4f",
     "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
-    "statsServiceURL": "https://stat.ipehr.org",
+    "statsServiceURL": "http://localhost:8081",
     "storage": {
         "localfile": {
-            "path": "~/.ipehr/data/storage"
+            "path": "/Users/dish/Projects/bsn/IPEHR-gateway/data/storage"
         },
         "ipfs": {
             "endpointURLs": [
@@ -27,15 +27,15 @@
         }
     },
     "contract": {
-        "addressEhrIndex": "0xF1DD803076184aFA468d09535A89316502F75f07",
-        "addressAccessStore": "0x23d6152faD9AF8C6E762201884071B60eeE44960",
-        "addressUsers": "0x589F60f143AC5A7ab62738c3A8f66A7556Bc6041",
-        "addressDataStore": "0x911C8b389FFD8f5Ae93004B2e19a1aC8A7e7963a",
-        "endpoint": "https://goerli.infura.io/v3/a1fe02a4f1be4fadb5a393992e211b19",
-        "privKeyPath": "~/.ipehr/.blockchain.key",
+        "addressEhrIndex": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
+        "addressAccessStore": "0x6FCaf3818eF8c50325D9F478b2a5939EF6298f02",
+        "addressUsers": "0xFF576328EC76e7f88bbE1b733c11eFAb7c7F1BAC",
+        "addressDataStore": "0x1d53a8af051C5485E1f1639A92f83D66efb6eABD",
+        "endpoint": "https://api.hyperspace.node.glif.io/rpc/v1",
+        "privKeyPath": "/Users/dish/Projects/bsn/IPEHR-gateway/.blockchain.key",
         "gasTipCap" : 100000
     },
     "db": {
-        "filePath": "~/.ipehr/data/local.db"
+        "filePath": "/Users/dish/Projects/bsn/IPEHR-gateway/data/local.db"
     }
 }

@@ -104,8 +104,7 @@ func TestComposition_UnmarshalJSON(t *testing.T) {
 }
 
 func TestParseComposition(t *testing.T) {
-	wd, _ := os.Getwd()
-	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+	filePath := "./test_fixtures/composition.json"
 
 	inJSON, err := os.ReadFile(filePath)
 	if err != nil {
@@ -125,8 +124,7 @@ func TestParseComposition(t *testing.T) {
 }
 
 func TestMarshalAndUnmarshalComposition(t *testing.T) {
-	wd, _ := os.Getwd()
-	filePath := wd + "/../../../../data/mock/ehr/composition.json"
+	filePath := "./test_fixtures/composition.json"
 
 	inJSON, err := os.ReadFile(filePath)
 	if err != nil {

@@ -6,7 +6,7 @@ const (
 	OpenEhrTimeFormat                = "2006-01-02T15:04:05.999-07:00"
 	EhrSystemID                      = "openEHRSys.example.com"
 	PageLimit                        = 10
-	BlockchainTxProcAwaitTime        = time.Millisecond * 500
+	BlockchainTxProcAwaitTime        = time.Second * 1
 	FilecoinTxProcAwaitTime          = time.Second * 5
 	JWTExpires                       = time.Minute * 15
 	JWTRefreshExpires                = time.Hour * 24 * 7

@@ -19,27 +19,26 @@ import (
 	"github.com/google/uuid"
 )
 
-func (testWrap *testWrap) ehrCreate(testData *TestData) func(t *testing.T) {
+func ehrCreate(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			t.Fatal("Test user required")
+		err := checkUser(testData)
+		if err != nil {
+			t.Fatal("checkUser error:", err)
 		}
 
 		user := testData.users[0]
 
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal("User login error:", err)
-			}
+		err = checkUserLogin(testData, user)
+		if err != nil {
+			t.Fatal("checkUserLogin error:", err)
 		}
 
-		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
+		ehr, reqID, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testData.serverURL, "", testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -55,7 +54,7 @@ func (testWrap *testWrap) ehrCreate(testData *TestData) func(t *testing.T) {
 	}
 }
 
-func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T) {
+func ehrCreateWithID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.users) < 2 {
 			t.Fatal("Test user2 required")
@@ -63,16 +62,14 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 
 		user := testData.users[1]
 
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal("User login error:", err)
-			}
+		err := checkUserLogin(testData, user)
+		if err != nil {
+			t.Fatal("checkUserLogin error:", err)
 		}
 
 		ehrID2 := uuid.New().String()
 
-		ehr, _, err := createEhrWithID(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, ehrID2, testWrap.httpClient)
+		ehr, _, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testData.serverURL, ehrID2, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -84,32 +81,30 @@ func (testWrap *testWrap) ehrCreateWithID(testData *TestData) func(t *testing.T)
 	}
 }
 
-func (testWrap *testWrap) ehrCreateWithIDForSameUser(testData *TestData) func(t *testing.T) {
+func ehrCreateWithIDForSameUser(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		t.Parallel()
 
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
-		_, _, err := createEhr(user.id, testData.ehrSystemID, user.accessToken, testWrap.serverURL, testWrap.httpClient)
+		_, _, err = createEhr(user.id, testData.ehrSystemID, user.accessToken, testData.serverURL, "", testData.httpClient)
 		if err == nil {
 			t.Fatal("Expected error, received EHR")
 		}
 	}
 }
 
-func (testWrap *testWrap) ehrGetByID(testData *TestData) func(t *testing.T) {
+func ehrGetByID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
-		request, err := http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/ehr/"+user.ehrID, nil)
+		request, err := http.NewRequest(http.MethodGet, testData.serverURL+"/v1/ehr/"+user.ehrID, nil)
 		if err != nil {
 			t.Error(err)
 			return
@@ -119,7 +114,7 @@ func (testWrap *testWrap) ehrGetByID(testData *TestData) func(t *testing.T) {
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
@@ -150,21 +145,20 @@ func (testWrap *testWrap) ehrGetByID(testData *TestData) func(t *testing.T) {
 	}
 }
 
-func (testWrap *testWrap) ehrGetBySubject(testData *TestData) func(t *testing.T) {
+func ehrGetBySubject(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
-		testEhrStatus, err := testWrap.getEhrStatus(user.ehrID, user.ehrStatusID, user.id, testData.ehrSystemID, user.accessToken)
+		testEhrStatus, err := getEhrStatus(testData)
 		if err != nil {
 			log.Fatalf("Expected model.EhrStatus, received %s", err.Error())
 		}
 
 		// Check document by subject
-		url := testWrap.serverURL + "/v1/ehr?subject_id=" + testEhrStatus.Subject.ExternalRef.ID.Value + "&subject_namespace=" + testEhrStatus.Subject.ExternalRef.Namespace
+		url := testData.serverURL + "/v1/ehr?subject_id=" + testEhrStatus.Subject.ExternalRef.ID.Value + "&subject_namespace=" + testEhrStatus.Subject.ExternalRef.Namespace
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -177,7 +171,7 @@ func (testWrap *testWrap) ehrGetBySubject(testData *TestData) func(t *testing.T)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.Header.Set("Prefer", "return=representation")
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -205,15 +199,14 @@ func (testWrap *testWrap) ehrGetBySubject(testData *TestData) func(t *testing.T)
 	}
 }
 
-func (testWrap *testWrap) ehrStatusGet(testData *TestData) func(t *testing.T) {
+func ehrStatusGet(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			t.Fatal("Test user required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
-
-		url := testWrap.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", user.ehrID, user.ehrStatusID)
+		url := testData.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", user.ehrID, user.ehrStatusID)
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -225,7 +218,7 @@ func (testWrap *testWrap) ehrStatusGet(testData *TestData) func(t *testing.T) {
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Errorf("Expected nil, received %s", err.Error())
 			return
@@ -253,16 +246,16 @@ func (testWrap *testWrap) ehrStatusGet(testData *TestData) func(t *testing.T) {
 	}
 }
 
-func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *TestData) func(t *testing.T) {
+func ehrStatusGetByVersionTime(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
-		user := testData.users[0]
 		versionAtTime := time.Now()
 
-		request, err := http.NewRequest(http.MethodGet, testWrap.serverURL+fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID), nil)
+		request, err := http.NewRequest(http.MethodGet, testData.serverURL+fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -275,7 +268,7 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *TestData) func(t *
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 		request.URL.RawQuery = q.Encode()
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -287,13 +280,12 @@ func (testWrap *testWrap) ehrStatusGetByVersionTime(testData *TestData) func(t *
 	}
 }
 
-func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T) {
+func ehrStatusUpdate(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
-
-		user := testData.users[0]
 
 		// replace substring in ehrStatusID
 		objectVersionID, err := base.NewObjectVersionID(user.ehrStatusID, testData.ehrSystemID)
@@ -340,7 +332,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 		  "is_queryable": true
 		}`, newEhrStatusID))
 
-		url := testWrap.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID)
+		url := testData.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status", user.ehrID)
 
 		request, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(req))
 		if err != nil {
@@ -354,7 +346,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -386,13 +378,13 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 
 		t.Logf("Waiting for request %s done", requestID)
 
-		err = requestWait(user.id, user.accessToken, requestID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, requestID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		// Checking EHR_STATUS changes
-		request, err = http.NewRequest(http.MethodGet, testWrap.serverURL+"/v1/ehr/"+user.ehrID, nil)
+		request, err = http.NewRequest(http.MethodGet, testData.serverURL+"/v1/ehr/"+user.ehrID, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -401,7 +393,7 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err = testWrap.httpClient.Do(request)
+		response, err = testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -430,8 +422,13 @@ func (testWrap *testWrap) ehrStatusUpdate(testData *TestData) func(t *testing.T)
 	}
 }
 
-func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID, accessToken string) (*model.EhrStatus, error) {
-	url := testWrap.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", ehrID, statusID)
+func getEhrStatus(testData *TestData) (*model.EhrStatus, error) {
+	user, err := checkUser0LoggedInAndEhrCreated(testData)
+	if err != nil {
+		return nil, fmt.Errorf("checkUser0LoggedInAndEhrCreated error: %w", err)
+	}
+
+	url := testData.serverURL + fmt.Sprintf("/v1/ehr/%s/ehr_status/%s", user.ehrID, user.ehrStatusID)
 
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -440,11 +437,11 @@ func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID, acc
 
 	request.Header.Set("Content-type", "application/json")
 	request.Header.Set("Prefer", "return=representation")
-	request.Header.Set("AuthUserId", userID)
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-	request.Header.Set("EhrSystemId", ehrSystemID)
+	request.Header.Set("AuthUserId", user.id)
+	request.Header.Set("Authorization", "Bearer "+user.accessToken)
+	request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-	response, err := testWrap.httpClient.Do(request)
+	response, err := testData.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
@@ -468,44 +465,17 @@ func (testWrap *testWrap) getEhrStatus(ehrID, statusID, userID, ehrSystemID, acc
 	return &ehrStatus, err
 }
 
-func createEhr(userID, ehrSystemID, accessToken, baseURL string, client *http.Client) (ehr *model.EHR, requestID string, err error) {
-	request, err := http.NewRequest(http.MethodPost, baseURL+"/v1/ehr", ehrCreateBodyRequest())
-	if err != nil {
-		return nil, "", err
+func createEhr(userID, ehrSystemID, accessToken, baseURL, ehrID string, client *http.Client) (ehr *model.EHR, requestID string, err error) {
+	var method string
+
+	switch {
+	case len(ehrID) == 0:
+		method = http.MethodPost
+	case len(ehrID) > 0:
+		method = http.MethodPut
 	}
 
-	request.Header.Set("Content-type", "application/json")
-	request.Header.Set("AuthUserId", userID)
-	request.Header.Set("Prefer", "return=representation")
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-	request.Header.Set("EhrSystemId", ehrSystemID)
-
-	response, err := client.Do(request)
-	if err != nil {
-		return nil, "", err
-	}
-	defer response.Body.Close()
-
-	data, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if response.StatusCode != http.StatusCreated {
-		return nil, "", errors.New(response.Status)
-	}
-
-	if err = json.Unmarshal(data, &ehr); err != nil {
-		return nil, "", err
-	}
-
-	requestID = response.Header.Get("RequestId")
-
-	return ehr, requestID, nil
-}
-
-func createEhrWithID(userID, ehrSystemID, accessToken, baseURL, ehrID string, client *http.Client) (ehr *model.EHR, requestID string, err error) {
-	request, err := http.NewRequest(http.MethodPut, baseURL+"/v1/ehr/"+ehrID, ehrCreateBodyRequest())
+	request, err := http.NewRequest(method, baseURL+"/v1/ehr/"+ehrID, ehrCreateBodyRequest())
 	if err != nil {
 		return nil, "", err
 	}

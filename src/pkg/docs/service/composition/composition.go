@@ -577,6 +577,9 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		return fmt.Errorf("data compressinon error: %w", err)
 	}
 
+	//DEBUG
+	fmt.Println("Composition compressed data length: ", len(compressed))
+
 	txHash, err := s.indexer.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
 	if err != nil {
 		return fmt.Errorf("Index.DataUpdate error: %w", err)

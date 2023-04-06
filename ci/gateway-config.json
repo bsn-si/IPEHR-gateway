@@ -15,8 +15,6 @@
         },
         "ipfs": {
             "endpointURLs": [
-                "http://lotus.dev.bsn.si:5001/api/v0",
-                "http://lotus.dev.bsn.si:5001/api/v0",
                 "http://lotus.dev.bsn.si:5001/api/v0"
             ]
         },
@@ -25,7 +23,7 @@
             "baseURL": "http://lotus.dev.bsn.si",
             "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.IXRD51_C2V8RcgkAjFg3ZKl6eKGV_5Moda535yuolX4",
             "dealsMaxPrice": 1000000000,
-            "miners": ["f01412953"]
+            "miners": ["t01129", "t01130"]
         }
     },
     "contract": {
@@ -34,7 +32,6 @@
         "addressUsers": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
         "addressDataStore": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
         "endpoint": "http://ipehr-index:8545",
-        "endpoint2": "https://goerli.infura.io/v3/<API-KEY>",
         "privKeyPath": "/srv/.blockchain.key",
         "gasTipCap" : 100000
     },

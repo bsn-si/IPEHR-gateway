@@ -10,8 +10,7 @@ import (
 )
 
 func TestParseEhr(t *testing.T) {
-	wd, _ := os.Getwd()
-	filePath := wd + "/../../../../data/mock/ehr/ehr.json"
+	filePath := "./test_fixtures/ehr.json"
 
 	inJSON, err := os.ReadFile(filePath)
 	if err != nil {

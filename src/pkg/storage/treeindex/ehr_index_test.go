@@ -23,7 +23,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 		{
 			"1. success add new EHR object",
 			func() (model.EHR, error) {
-				ehr, err := loadEHRFromFile("./../../../../data/mock/ehr/ehr.json")
+				ehr, err := loadEHRFromFile("./test_fixtures/ehr.json")
 				if err != nil {
 					return model.EHR{}, err
 				}
@@ -49,7 +49,7 @@ func TestEHRIndex_AddEHR(t *testing.T) {
 		{
 			"2. EHR with simple Composition",
 			func() (model.EHR, error) {
-				ehr, err := loadEHRFromFile("./test_fixtures/ehr.json")
+				ehr, err := loadEHRFromFile("./test_fixtures/ehr_with_composition.json")
 				if err != nil {
 					return model.EHR{}, err
 				}
@@ -138,7 +138,7 @@ func TestEHRIndex_MessagePack(t *testing.T) {
 		{
 			"1. success add new EHR object",
 			func() (model.EHR, error) {
-				ehr, err := loadEHRFromFile("./../../../../data/mock/ehr/ehr.json")
+				ehr, err := loadEHRFromFile("./test_fixtures/ehr.json")
 				if err != nil {
 					return model.EHR{}, err
 				}

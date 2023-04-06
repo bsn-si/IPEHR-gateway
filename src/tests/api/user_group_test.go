@@ -13,65 +13,52 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
-func (testWrap *testWrap) userGroupCreate(testData *TestData) func(t *testing.T) {
+func userGroupCreate(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedIn(testData)
 		if err != nil {
-			t.Fatal(err)
-		}
-
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
+			t.Fatal("checkUser0LoggedIn error:", err)
 		}
 
 		name := fakeData.GetRandomStringWithLength(10)
 		description := fakeData.GetRandomStringWithLength(10)
 
-		userGroup, _, err := userGroupCreate(user, testData.ehrSystemID, testWrap.serverURL, name, description, testWrap.httpClient)
+		userGroup, reqID, err := _userGroupCreate(testData, user, name, description)
 		if err != nil {
 			t.Fatal(err)
+		}
+
+		err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
+		if err != nil {
+			t.Fatal("requestWait error: %w reqID: %w", err, reqID)
 		}
 
 		testData.userGroups = append(testData.userGroups, userGroup)
 	}
 }
 
-func (testWrap *testWrap) userGroupAddUser(testData *TestData) func(t *testing.T) {
+func userGroupAddUser(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedIn(testData)
 		if err != nil {
-			t.Fatal(err)
-		}
-
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
+			t.Fatal("checkUser0LoggedIn error:", err)
 		}
 
 		addingUser := testData.users[1]
 
-		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
+		err = checkUserGroup(testData, user)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
 
 		userGroup := testData.userGroups[0]
 
-		reqID, err := userGroupAddUser(user, addingUser, userGroup, testData, testWrap.serverURL, testWrap.httpClient)
+		reqID, err := _userGroupAddUser(user, addingUser, userGroup, testData)
 		if err != nil {
 			t.Fatal("userGroupAddUser error: ", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal("requestWait error: %w reqID: %w", err, reqID)
 		}
@@ -80,23 +67,14 @@ func (testWrap *testWrap) userGroupAddUser(testData *TestData) func(t *testing.T
 	}
 }
 
-func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testing.T) {
+func userGroupRemoveUser(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedIn(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedIn error:", err)
 		}
 
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
+		err = checkUserGroup(testData, user)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
@@ -106,12 +84,12 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		if len(userGroup.Members) == 0 {
 			addingUser := testData.users[1]
 
-			reqID, err := userGroupAddUser(user, addingUser, userGroup, testData, testWrap.serverURL, testWrap.httpClient)
+			reqID, err := _userGroupAddUser(user, addingUser, userGroup, testData)
 			if err != nil {
 				t.Fatal("userGroupAddUser error: ", err)
 			}
 
-			err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
+			err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatal("requestWait error: %w reqID: %w", err, reqID)
 			}
@@ -119,7 +97,7 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 
 		removingUserID := userGroup.Members[0]
 
-		url := testWrap.serverURL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_remove/" + removingUserID
+		url := testData.serverURL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_remove/" + removingUserID
 
 		request, err := http.NewRequest(http.MethodPost, url, nil)
 		if err != nil {
@@ -130,7 +108,7 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -146,7 +124,7 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		}
 
 		// Checking that the user has been deleted
-		url = testWrap.serverURL + "/v1/user/group/" + userGroup.GroupID.String()
+		url = testData.serverURL + "/v1/user/group/" + userGroup.GroupID.String()
 
 		request, err = http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -157,7 +135,7 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err = testWrap.httpClient.Do(request)
+		response, err = testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -189,30 +167,21 @@ func (testWrap *testWrap) userGroupRemoveUser(testData *TestData) func(t *testin
 	}
 }
 
-func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T) {
+func userGroupGetByID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedIn(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedIn error:", err)
 		}
 
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
+		err = checkUserGroup(testData, user)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
 
 		userGroup1 := testData.userGroups[0]
 
-		url := testWrap.serverURL + "/v1/user/group/" + userGroup1.GroupID.String()
+		url := testData.serverURL + "/v1/user/group/" + userGroup1.GroupID.String()
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -223,7 +192,7 @@ func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -251,28 +220,19 @@ func (testWrap *testWrap) userGroupGetByID(testData *TestData) func(t *testing.T
 	}
 }
 
-func (testWrap *testWrap) userGroupGetList(testData *TestData) func(t *testing.T) {
+func userGroupGetList(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := testWrap.checkUser(testData)
+		user, err := checkUser0LoggedIn(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedIn error:", err)
 		}
 
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		err = checkUserGroup(user, testData, testWrap.serverURL, testWrap.httpClient)
+		err = checkUserGroup(testData, user)
 		if err != nil {
 			t.Fatal("checkUserGroup error: ", err)
 		}
 
-		url := testWrap.serverURL + "/v1/user/group"
+		url := testData.serverURL + "/v1/user/group"
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -283,7 +243,7 @@ func (testWrap *testWrap) userGroupGetList(testData *TestData) func(t *testing.T
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -311,14 +271,14 @@ func (testWrap *testWrap) userGroupGetList(testData *TestData) func(t *testing.T
 	}
 }
 
-func userGroupCreate(user *User, systemID, baseURL, name, description string, client *http.Client) (*model.UserGroup, string, error) {
+func _userGroupCreate(testData *TestData, user *User, name, description string) (*model.UserGroup, string, error) {
 	userGroup := &model.UserGroup{
 		Name:        name,
 		Description: description,
 	}
 
 	data, _ := json.Marshal(userGroup)
-	url := baseURL + "/v1/user/group"
+	url := testData.serverURL + "/v1/user/group"
 
 	request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
@@ -327,9 +287,9 @@ func userGroupCreate(user *User, systemID, baseURL, name, description string, cl
 
 	request.Header.Set("AuthUserId", user.id)
 	request.Header.Set("Authorization", "Bearer "+user.accessToken)
-	request.Header.Set("EhrSystemId", systemID)
+	request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-	response, err := client.Do(request)
+	response, err := testData.httpClient.Do(request)
 	if err != nil {
 		return nil, "", err
 	}
@@ -364,17 +324,17 @@ func userGroupCreate(user *User, systemID, baseURL, name, description string, cl
 	return &userGroup2, requestID, nil
 }
 
-func checkUserGroup(user *User, testData *TestData, baseURL string, client *http.Client) error {
+func checkUserGroup(testData *TestData, user *User) error {
 	if len(testData.userGroups) == 0 {
 		name := fakeData.GetRandomStringWithLength(10)
 		description := fakeData.GetRandomStringWithLength(10)
 
-		userGroup, reqID, err := userGroupCreate(user, testData.ehrSystemID, baseURL, name, description, client)
+		userGroup, reqID, err := _userGroupCreate(testData, user, name, description)
 		if err != nil {
 			return fmt.Errorf("userGroupCreate error: %w", err)
 		}
 
-		err = requestWait(user.id, user.accessToken, reqID, baseURL, client)
+		err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			return fmt.Errorf("requestWait error, err: %w", err)
 		}
@@ -385,15 +345,8 @@ func checkUserGroup(user *User, testData *TestData, baseURL string, client *http
 	return nil
 }
 
-func userGroupAddUser(user, addingUser *User, userGroup *model.UserGroup, testData *TestData, baseURL string, client *http.Client) (string, error) {
-	if user.accessToken == "" {
-		err := user.login(testData.ehrSystemID, baseURL, client)
-		if err != nil {
-			return "", fmt.Errorf("user.login error: %w", err)
-		}
-	}
-
-	url := baseURL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_add/" + addingUser.id + "/admin"
+func _userGroupAddUser(user, addingUser *User, userGroup *model.UserGroup, testData *TestData) (string, error) {
+	url := testData.serverURL + "/v1/user/group/" + userGroup.GroupID.String() + "/user_add/" + addingUser.id + "/admin"
 
 	request, err := http.NewRequest(http.MethodPut, url, nil)
 	if err != nil {
@@ -404,7 +357,7 @@ func userGroupAddUser(user, addingUser *User, userGroup *model.UserGroup, testDa
 	request.Header.Set("Authorization", "Bearer "+user.accessToken)
 	request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-	response, err := client.Do(request)
+	response, err := testData.httpClient.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("http request error: %w", err)
 	}

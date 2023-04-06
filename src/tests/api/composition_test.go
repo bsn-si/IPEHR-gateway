@@ -12,48 +12,33 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/utils"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model/base"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
-func (testWrap *testWrap) compositionCreateFail(testData *TestData) func(t *testing.T) {
+func compositionCreateFail(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			t.Fatal("Test user required")
-		}
-
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal("User login error:", err)
-			}
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
 		ehrID := uuid.New().String()
 		groupAccessID := ""
 
-		composition, _, err := createComposition(user.id, ehrID, testData.ehrSystemID, user.accessToken, groupAccessID, testWrap.serverURL, testWrap.httpClient)
+		composition, _, err := createComposition(user.id, ehrID, testData.ehrSystemID, user.accessToken, groupAccessID, testData.serverURL, testData.httpClient)
 		if err == nil {
 			t.Fatalf("Expected error, received status: %v", composition)
 		}
 	}
 }
 
-func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *testing.T) {
+func compositionCreateSuccess(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			t.Fatal("Test user required")
-		}
-
-		user := testData.users[0]
-
-		err := testWrap.checkEhr(testData, user)
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
 		if len(testData.groupsAccess) == 0 {
@@ -64,14 +49,14 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 
 		ga := testData.groupsAccess[0]
 
-		c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, ga.GroupUUID.String(), testWrap.serverURL, testWrap.httpClient)
+		c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, ga.GroupUUID.String(), testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatalf("Unexpected composition, received error: %v", err)
 		}
 
 		t.Logf("Waiting for request %s done", reqID)
 
-		err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -80,13 +65,12 @@ func (testWrap *testWrap) compositionCreateSuccess(testData *TestData) func(t *t
 	}
 }
 
-func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing.T) {
+func compositionGetByID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			t.Fatal("Test user required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
-
-		user := testData.users[0]
 
 		if len(testData.groupsAccess) == 0 {
 			uuid := uuid.New()
@@ -102,7 +86,7 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 
 		comp := user.compositions[0]
 
-		url := testWrap.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.UID.Value
+		url := testData.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.UID.Value
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -114,7 +98,7 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 		request.Header.Set("GroupAccessId", ga.GroupUUID.String())
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -140,17 +124,16 @@ func (testWrap *testWrap) compositionGetByID(testData *TestData) func(t *testing
 	}
 }
 
-func (testWrap *testWrap) compositionGetByWrongID(testData *TestData) func(t *testing.T) {
+func compositionGetByWrongID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
-
-		user := testData.users[0]
 
 		wrongCompositionID := uuid.NewString() + "::" + testData.ehrSystemID + "::1"
 
-		url := testWrap.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + wrongCompositionID
+		url := testData.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + wrongCompositionID
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -161,7 +144,7 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *TestData) func(t *te
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -173,38 +156,22 @@ func (testWrap *testWrap) compositionGetByWrongID(testData *TestData) func(t *te
 	}
 }
 
-func (testWrap *testWrap) compositionGetList(testData *TestData) func(t *testing.T) {
+func compositionGetList(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 {
-			err := testWrap.checkUser(testData)
-			if err != nil {
-				t.Fatal(err)
-			}
-		}
-
-		user := testData.users[0]
-
-		if user.accessToken == "" {
-			err := user.login(testData.ehrSystemID, testWrap.serverURL, testWrap.httpClient)
-			if err != nil {
-				t.Fatal("User login error:", err)
-			}
-		}
-
-		err := testWrap.checkEhr(testData, user)
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
 
 		if len(user.compositions) == 0 {
-			c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, "", testWrap.serverURL, testWrap.httpClient)
+			c, reqID, err := createComposition(user.id, user.ehrID, testData.ehrSystemID, user.accessToken, "", testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatalf("Unexpected composition, received error: %v", err)
 			}
 
 			t.Logf("Waiting for request %s done", reqID)
 
-			err = requestWait(user.id, user.accessToken, reqID, testWrap.serverURL, testWrap.httpClient)
+			err = requestWait(user.id, user.accessToken, reqID, testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -212,7 +179,7 @@ func (testWrap *testWrap) compositionGetList(testData *TestData) func(t *testing
 			user.compositions = append(user.compositions, c)
 		}
 
-		url := testWrap.serverURL + "/v1/ehr/" + user.ehrID + "/composition"
+		url := testData.serverURL + "/v1/ehr/" + user.ehrID + "/composition"
 
 		request, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
@@ -223,7 +190,7 @@ func (testWrap *testWrap) compositionGetList(testData *TestData) func(t *testing
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -251,13 +218,12 @@ func (testWrap *testWrap) compositionGetList(testData *TestData) func(t *testing
 	}
 }
 
-func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.T) {
+func compositionUpdate(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
-		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
-			t.Fatal("Created EHR required")
+		user, err := checkUser0LoggedInAndEhrCreated(testData)
+		if err != nil {
+			t.Fatal("checkUser0LoggedInAndEhrCreated error:", err)
 		}
-
-		user := testData.users[0]
 
 		if len(testData.groupsAccess) == 0 {
 			uuid := uuid.New()
@@ -283,7 +249,7 @@ func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.
 		comp.Name.Value = "Updated text"
 		updatedComposition, _ := json.Marshal(comp)
 
-		url := testWrap.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.ObjectVersionID.BasedID()
+		url := testData.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.ObjectVersionID.BasedID()
 
 		request, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(updatedComposition))
 		if err != nil {
@@ -298,7 +264,7 @@ func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.
 		request.Header.Set("Prefer", "return=representation")
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -326,14 +292,14 @@ func (testWrap *testWrap) compositionUpdate(testData *TestData) func(t *testing.
 
 		t.Logf("Waiting for request %s done", requestID)
 
-		err = requestWait(user.id, user.accessToken, requestID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, requestID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 }
 
-func (testWrap *testWrap) compositionDeleteByWrongID(testData *TestData) func(t *testing.T) {
+func compositionDeleteByWrongID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")
@@ -341,7 +307,7 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *TestData) func(t 
 
 		user := testData.users[0]
 
-		url := testWrap.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + uuid.New().String()
+		url := testData.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + uuid.New().String()
 
 		request, err := http.NewRequest(http.MethodDelete, url, nil)
 		if err != nil {
@@ -352,7 +318,7 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *TestData) func(t 
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -364,7 +330,7 @@ func (testWrap *testWrap) compositionDeleteByWrongID(testData *TestData) func(t 
 	}
 }
 
-func (testWrap *testWrap) compositionDeleteByID(testData *TestData) func(t *testing.T) {
+func compositionDeleteByID(testData *TestData) func(t *testing.T) {
 	return func(t *testing.T) {
 		if len(testData.users) == 0 || testData.users[0].ehrID == "" {
 			t.Fatal("Created EHR required")
@@ -378,7 +344,7 @@ func (testWrap *testWrap) compositionDeleteByID(testData *TestData) func(t *test
 
 		comp := user.compositions[0]
 
-		url := testWrap.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.UID.Value
+		url := testData.serverURL + "/v1/ehr/" + user.ehrID + "/composition/" + comp.UID.Value
 
 		request, err := http.NewRequest(http.MethodDelete, url, nil)
 		if err != nil {
@@ -389,7 +355,7 @@ func (testWrap *testWrap) compositionDeleteByID(testData *TestData) func(t *test
 		request.Header.Set("Authorization", "Bearer "+user.accessToken)
 		request.Header.Set("EhrSystemId", testData.ehrSystemID)
 
-		response, err := testWrap.httpClient.Do(request)
+		response, err := testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -403,14 +369,14 @@ func (testWrap *testWrap) compositionDeleteByID(testData *TestData) func(t *test
 
 		t.Logf("Waiting for request %s done", requestID)
 
-		err = requestWait(user.id, user.accessToken, requestID, testWrap.serverURL, testWrap.httpClient)
+		err = requestWait(user.id, user.accessToken, requestID, testData.serverURL, testData.httpClient)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		t.Log("Checking the status of a re-request to remove")
 
-		response, err = testWrap.httpClient.Do(request)
+		response, err = testData.httpClient.Do(request)
 		if err != nil {
 			t.Fatalf("Expected nil, received %s", err.Error())
 		}
@@ -423,12 +389,7 @@ func (testWrap *testWrap) compositionDeleteByID(testData *TestData) func(t *test
 }
 
 func compositionCreateBodyRequest(ehrSystemID string) (*bytes.Reader, error) {
-	rootDir, err := utils.ProjectRootDir()
-	if err != nil {
-		return nil, err
-	}
-
-	filePath := rootDir + "/data/mock/ehr/composition.json"
+	filePath := "./test_fixtures/composition_1.json"
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
