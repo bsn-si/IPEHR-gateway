@@ -1,0 +1,1178 @@
+go test -v -timeout=30m
+2023/04/07 11:51:46 IPEHR Config: {
+    "baseUrl": "http://localhost:8080",
+    "host": "localhost:8080",
+    "keystoreKey": "fb5b72b901e8419969057bc7f73f8731bf3e3599ee3d8fac26b2c4bc6c7b6627",
+    "creatingSystemId": "openEHRSys.example.com",
+    "compressionEnabled": true,
+    "compressionLevel": 5,
+    "defaultUserId": "8dc598d2-a3fa-462b-a513-a69a32c5ab4f",
+    "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
+    "statsServiceURL": "http://localhost:8081",
+    "Storage": {
+        "Localfile": {
+            "Path": "/Users/dish/Projects/bsn/IPEHR-gateway/data/storage"
+        },
+        "Ipfs": {
+            "endpointURLs": [
+                "http://lotus.dev.bsn.si:5001/api/v0"
+            ]
+        },
+        "Filecoin": {
+            "LotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v1",
+            "BaseURL": "http://lotus.dev.bsn.si",
+            "AuthToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.yAIABB7qXJnC_cNNdP3zTk0BbF-TNuX6AzbwcuXsGU4",
+            "DealsMaxPrice": 1000000000,
+            "Miners": [
+                "t01129",
+                "t01130"
+            ]
+        }
+    },
+    "Contract": {
+        "AddressEhrIndex": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
+        "AddressAccessStore": "0x6FCaf3818eF8c50325D9F478b2a5939EF6298f02",
+        "AddressUsers": "0xFF576328EC76e7f88bbE1b733c11eFAb7c7F1BAC",
+        "AddressDataStore": "0x1d53a8af051C5485E1f1639A92f83D66efb6eABD",
+        "Endpoint": "https://api.hyperspace.node.glif.io/rpc/v1",
+        "PrivKeyPath": "/Users/dish/Projects/bsn/IPEHR-gateway/.blockchain.key",
+        "GasTipCap": 100000
+    },
+    "db": {
+        "filePath": "/Users/dish/Projects/bsn/IPEHR-gateway/data/local.db"
+    }
+}
+2023/04/07 11:51:46 Notice: storage path '/Users/dish/Projects/bsn/IPEHR-gateway/data/storage/test_1680850306285576000' is out of base path: /var/folders/d5/3b6mwl7969q6z1tccfb2hcq80000gn/T/go-build1662240425/b001
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[PROC] 2023-04-07 11:51:48 | Started
+[GIN-debug] GET    /                         --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.setRedirections.func1 (2 handlers)
+[GIN-debug] HEAD   /                         --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.setRedirections.func1 (2 handlers)
+[GIN-debug] GET    /v1/user/code/:code       --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).InfoByCode-fm (5 handlers)
+[GIN-debug] POST   /v1/user/register         --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).Register-fm (6 handlers)
+[GIN-debug] POST   /v1/user/login            --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).Login-fm (6 handlers)
+[GIN-debug] GET    /v1/user/refresh          --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).RefreshToken-fm (6 handlers)
+[GIN-debug] GET    /v1/user/:user_id         --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).Info-fm (7 handlers)
+[GIN-debug] POST   /v1/user/logout           --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).Logout-fm (7 handlers)
+[GIN-debug] POST   /v1/user/group            --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).GroupCreate-fm (7 handlers)
+[GIN-debug] GET    /v1/user/group            --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).GroupGetList-fm (7 handlers)
+[GIN-debug] GET    /v1/user/group/:group_id  --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).GroupGetByID-fm (7 handlers)
+[GIN-debug] PUT    /v1/user/group/:group_id/user_add/:user_id/:access_level --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).GroupAddUser-fm (7 handlers)
+[GIN-debug] POST   /v1/user/group/:group_id/user_remove/:user_id --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*UserHandler).GroupRemoveUser-fm (7 handlers)
+[GIN-debug] POST   /v1/ehr                   --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrHandler).Create-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr                   --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrHandler).GetBySubjectIDAndNamespace-fm (7 handlers)
+[GIN-debug] PUT    /v1/ehr/:ehrid            --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrHandler).CreateWithID-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid            --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrHandler).GetByID-fm (7 handlers)
+[GIN-debug] PUT    /v1/ehr/:ehrid/ehr_status --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrStatusHandler).Update-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/ehr_status/:versionid --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrStatusHandler).GetByID-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/ehr_status --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*EhrStatusHandler).GetStatusByTime-fm (7 handlers)
+[GIN-debug] POST   /v1/ehr/:ehrid/composition --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*CompositionHandler).Create-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/composition --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.CompositionHandler.GetList-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/composition/:version_uid --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*CompositionHandler).GetByID-fm (7 handlers)
+[GIN-debug] DELETE /v1/ehr/:ehrid/composition/:preceding_version_uid --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*CompositionHandler).Delete-fm (7 handlers)
+[GIN-debug] PUT    /v1/ehr/:ehrid/composition/:versioned_object_uid --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.CompositionHandler.Update-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/contribution/:contribution_uid --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*ContributionHandler).GetByID-fm (7 handlers)
+[GIN-debug] POST   /v1/ehr/:ehrid/contribution/ --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*ContributionHandler).Create-fm (7 handlers)
+[GIN-debug] POST   /v1/ehr/:ehrid/directory  --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DirectoryHandler).Create-fm (7 handlers)
+[GIN-debug] PUT    /v1/ehr/:ehrid/directory  --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DirectoryHandler).Update-fm (7 handlers)
+[GIN-debug] DELETE /v1/ehr/:ehrid/directory  --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DirectoryHandler).Delete-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/directory  --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DirectoryHandler).GetByTime-fm (7 handlers)
+[GIN-debug] GET    /v1/ehr/:ehrid/directory/:version_uid --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DirectoryHandler).GetByVersion-fm (7 handlers)
+[GIN-debug] POST   /v1/access/document       --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DocAccessHandler).Set-fm (6 handlers)
+[GIN-debug] GET    /v1/access/document/      --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*DocAccessHandler).List-fm (6 handlers)
+[GIN-debug] GET    /v1/query/:qualified_query_name --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.QueryHandler.ExecStoredQuery-fm (7 handlers)
+[GIN-debug] POST   /v1/query/:qualified_query_name --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.QueryHandler.PostExecStoredQuery-fm (7 handlers)
+[GIN-debug] GET    /v1/query/aql             --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.QueryHandler.ExecGetQuery-fm (7 handlers)
+[GIN-debug] POST   /v1/query/aql             --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.QueryHandler.ExecPostQuery-fm (7 handlers)
+[GIN-debug] GET    /v1/definition/template/adl1.4/:template_id --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*TemplateHandler).GetByID-fm (6 handlers)
+[GIN-debug] GET    /v1/definition/template/adl1.4 --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*TemplateHandler).ListStored-fm (6 handlers)
+[GIN-debug] POST   /v1/definition/template/adl1.4 --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*TemplateHandler).Store-fm (6 handlers)
+[GIN-debug] GET    /v1/definition/query/:qualified_query_name --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*QueryHandler).ListStored-fm (6 handlers)
+[GIN-debug] GET    /v1/definition/query/:qualified_query_name/:version --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*QueryHandler).GetStoredByVersion-fm (6 handlers)
+[GIN-debug] PUT    /v1/definition/query/:qualified_query_name --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*QueryHandler).Store-fm (6 handlers)
+[GIN-debug] PUT    /v1/definition/query/:qualified_query_name/:version --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.(*QueryHandler).StoreVersion-fm (6 handlers)
+[GIN-debug] GET    /v1/requests/:reqID       --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.RequestHandler.GetByID-fm (5 handlers)
+[GIN-debug] GET    /v1/requests/             --> github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway.RequestHandler.GetAll-fm (5 handlers)
+[GIN-debug] GET    /swagger/*any             --> github.com/swaggo/gin-swagger.CustomWrapHandler.func1 (4 handlers)
+=== RUN   Test_API
+2023/04/07 11:51:48 Generete new keys for userID 8586881c-6f3d-4ec1-8278-9c1dc5373cd2
+[GIN] 2023-04-07 11:51:53 | f922d76740cc | 201 |  5.505922261s |       127.0.0.1 | POST    "/v1/user/register"
+[GIN] 2023-04-07 11:51:55 | 6899039650d9 | 200 |     882.253µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:51:57 | 40e41226b52a | 200 |      577.58µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:51:58 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:51:59 | 481bcf1f644d | 200 |      539.83µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:01 | cd59adc5ee5e | 200 |     555.584µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:03 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:03 | dff548fdab51 | 200 |     551.578µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:05 | 6332568fb470 | 200 |     606.758µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:07 | 5b27d963ce0f | 200 |     533.182µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:08 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:09 | 9643ff798f0a | 200 |     489.419µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:11 | 52b94d14e902 | 200 |     540.709µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:13 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:13 | 19331c090809 | 200 |     544.777µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:15 | 05f6e8e4827d | 200 |     982.643µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:17 | 9bb0c3049480 | 200 |     603.328µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:18 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:19 | bd0b961a71b1 | 200 |     496.576µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:21 | 706ecd8e8cf8 | 200 |     589.927µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:23 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:24 | 964e16c36ee8 | 200 |     500.502µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:26 | f2768ed9f67d | 200 |     620.288µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:28 | 7b25a8c82878 | 200 |     619.207µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:28 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:30 | a959aa35f828 | 200 |     475.486µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:32 | 46e4eb94e648 | 200 |     486.947µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:33 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:34 | a194701a7155 | 200 |     429.379µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:36 | 284761deac4b | 200 |     492.958µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:38 | 52e87fb6ba17 | 200 |     582.694µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:38 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:40 | 9e0d617359f9 | 200 |     552.415µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:42 | 6f2281d7d478 | 200 |     485.201µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:43 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:44 | b3b45fb648ff | 200 |     466.949µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:46 | e0726a3ad18f | 200 |     646.573µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:48 | ec5211198726 | 200 |     509.496µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:48 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[PROC] 2023-04-07 11:52:48 | Filecoin retrieve started
+[PROC] 2023-04-07 11:52:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 11:52:48 | DealFinisher started
+[PROC] 2023-04-07 11:52:48 | DealFinisher finished
+[GIN] 2023-04-07 11:52:50 | 175e3343765d | 200 |     511.575µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:52 | 34d637c54bb3 | 200 |     497.111µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:53 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:52:54 | 8ee152d55d78 | 200 |     531.416µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:56 | 987b7817a6e1 | 200 |     602.885µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:52:58 | c70049264350 | 200 |     597.436µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:52:58 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Pending
+[GIN] 2023-04-07 11:53:00 | a34b234749bc | 200 |     484.796µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[GIN] 2023-04-07 11:53:02 | f563274d22ca | 200 |     609.201µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+[PROC] 2023-04-07 11:53:03 | Tx: 0xf53475860d249cf5c223a2504d7757e909445b3060e6aa7dc2d74eb49c48dba3 status: Success
+[GIN] 2023-04-07 11:53:04 | 52a693d9e93c | 200 |     518.033µs |       127.0.0.1 | GET     "/v1/requests/f922d76740cc_register"
+2023/04/07 11:53:04 Generete new keys for userID 1487d7ee-bd91-496d-84ce-91fc7a4b0102
+[GIN] 2023-04-07 11:53:09 | 0a29ed19f028 | 201 |  5.774129913s |       127.0.0.1 | POST    "/v1/user/register"
+[GIN] 2023-04-07 11:53:11 | f9ee95a9bf84 | 200 |     660.437µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:13 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:13 | c4102552f8e4 | 200 |     480.194µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:15 | 68548a9e261d | 200 |     727.348µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:17 | 6381cedb7782 | 200 |     482.067µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:18 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:19 | 7c82f3277927 | 200 |     499.696µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:21 | c42da4d81cb2 | 200 |     527.781µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:23 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:23 | f399f8d2cea9 | 200 |     796.701µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:25 | f9d4bf181c6d | 200 |     582.394µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:27 | 9fec71db0084 | 200 |     590.147µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:28 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:29 | 1d3b651fc192 | 200 |     466.404µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:31 | 541bfd9df345 | 200 |     468.363µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:33 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:33 | 45844bddedf6 | 200 |     712.949µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:35 | 645a169625c5 | 200 |     424.073µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:37 | b07a1a8b5e05 | 200 |     500.076µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:38 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:39 | 58adee0949f2 | 200 |     432.613µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:41 | 963db2ccc18c | 200 |     527.779µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:43 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:43 | b3805102e6f0 | 200 |     603.326µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:45 | cd7f69ac5b25 | 200 |     469.823µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:47 | 8915ecf61e05 | 200 |      627.22µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:48 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[PROC] 2023-04-07 11:53:48 | Filecoin retrieve started
+[PROC] 2023-04-07 11:53:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 11:53:48 | DealFinisher started
+[PROC] 2023-04-07 11:53:48 | DealFinisher finished
+[GIN] 2023-04-07 11:53:49 | b7f598a3ae88 | 200 |     556.116µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:51 | a55270d2ccae | 200 |     449.112µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:53 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:53 | d11f2188d95b | 200 |     688.526µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:55 | 5961eb8ad7f0 | 200 |     521.732µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:53:57 | 09307099ff24 | 200 |     497.861µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:53:58 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:53:59 | 2475d8d53529 | 200 |     562.888µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:01 | eaada61a0fbc | 200 |     568.796µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:03 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:54:03 | 6d5249e5df85 | 200 |     508.096µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:05 | f2dc6716ad88 | 200 |     483.531µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:07 | 759c5c788bc6 | 200 |     542.256µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:08 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:54:09 | dc4d2bd4724e | 200 |     494.381µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:11 | 7333c31102e7 | 200 |     715.882µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:13 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:54:13 | f0eea928c517 | 200 |     637.525µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:16 | 9846d0be0bcb | 200 |     669.822µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:18 | d07420aeae21 | 200 |     660.493µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:18 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:54:20 | 180830d26554 | 200 |     493.157µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:22 | 3d4b39f0e6dd | 200 |      504.32µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:23 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:54:24 | f11abfa9af45 | 200 |     460.947µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:26 | de6a86859b2a | 200 |     487.864µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:28 | f1b4f3960730 | 200 |     564.249µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:28 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Pending
+[GIN] 2023-04-07 11:54:30 | e09953add5f1 | 200 |     517.392µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[GIN] 2023-04-07 11:54:32 | c53b68aca1ee | 200 |     480.335µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+[PROC] 2023-04-07 11:54:33 | Tx: 0x73f22c006baf0bf4c7a19112a6a67bb84ec2740657cedf6afe7e11fa6b6048dc status: Success
+[GIN] 2023-04-07 11:54:34 | 921f6b485e52 | 200 |     498.045µs |       127.0.0.1 | GET     "/v1/requests/0a29ed19f028_register"
+2023/04/07 11:54:34 Generete new keys for userID 6223ef38-b6c6-424e-a640-1f403a5ce09a
+[GIN] 2023-04-07 11:54:39 | 601f312eb8e0 | 201 |   5.75058362s |       127.0.0.1 | POST    "/v1/user/register"
+[GIN] 2023-04-07 11:54:41 | 993c52a8ced1 | 200 |     535.375µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:54:43 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:54:43 | 8120a9e861e8 | 200 |     545.239µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:54:45 | aee46c69e7b4 | 200 |     496.563µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:54:47 | afd9340e42f1 | 200 |     512.155µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:54:48 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[PROC] 2023-04-07 11:54:48 | Filecoin retrieve started
+[PROC] 2023-04-07 11:54:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 11:54:48 | DealFinisher started
+[PROC] 2023-04-07 11:54:48 | DealFinisher finished
+[GIN] 2023-04-07 11:54:49 | 13e2ed2cd2a9 | 200 |     477.153µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:54:51 | 735f743c1a1c | 200 |     510.118µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:54:53 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:54:53 | f0211010a27e | 200 |      484.17µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:54:55 | 32da16d0b370 | 200 |     517.097µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:54:57 | 0b136abbe787 | 200 |     606.717µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:54:58 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:54:59 | a33514def71a | 200 |     527.527µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:01 | 3cebfad104c7 | 200 |     439.984µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:03 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:03 | 2ffeeb6c1b37 | 200 |     760.103µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:05 | 3694de0a2590 | 200 |     504.004µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:07 | 3a6d5ade78a9 | 200 |     771.816µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:08 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:09 | 778d680fa1fe | 200 |     546.666µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:11 | 0fa6b43e5317 | 200 |     520.975µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:13 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:13 | d60a3b82452d | 200 |     508.967µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:15 | 69208cc160ae | 200 |     498.164µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:17 | 1ad12d8d7daa | 200 |     479.622µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:18 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:19 | b78d7818fae3 | 200 |     607.136µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:21 | 778f6ca2c9c8 | 200 |     481.568µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:23 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:23 | b6e2cb2eb48c | 200 |     571.944µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:25 | 6fade611d87f | 200 |     509.099µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:27 | 6700e901b27e | 200 |     499.501µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:28 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:29 | 063406746a9f | 200 |     475.705µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:31 | 997864bb457f | 200 |     660.717µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:33 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:33 | 0a4138ba6f0d | 200 |     568.325µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:35 | ca8f25ea66f7 | 200 |     946.805µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:37 | a67837a0a516 | 200 |     710.304µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:38 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:39 | 4be807a1984f | 200 |     465.141µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:41 | 4d7f81c6a3a1 | 200 |     643.251µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:43 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:43 | 091930d907d4 | 200 |     487.098µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:45 | 8e15be52c5a4 | 200 |     561.167µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:47 | 9ed7ed7c4c58 | 200 |     563.655µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:48 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[PROC] 2023-04-07 11:55:48 | Filecoin retrieve started
+[PROC] 2023-04-07 11:55:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 11:55:48 | DealFinisher started
+[PROC] 2023-04-07 11:55:48 | DealFinisher finished
+[GIN] 2023-04-07 11:55:49 | 1cfba1791c57 | 200 |     611.393µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:51 | 7d1b28d39ac1 | 200 |     590.625µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:53 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:53 | 169a836f5540 | 200 |     482.307µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:55 | 77ceccb5c564 | 200 |     637.766µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:55:57 | 54bf8d9e76d4 | 200 |     519.961µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:55:58 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Pending
+[GIN] 2023-04-07 11:55:59 | 2645ecbf0dfb | 200 |      447.68µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[GIN] 2023-04-07 11:56:01 | ccff2fc09d24 | 200 |     521.524µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+[PROC] 2023-04-07 11:56:03 | Tx: 0x6a9fc79e8cb893a2d5f83774f10b678f191d4f9816677c81c5f6384f6fd5d25e status: Success
+[GIN] 2023-04-07 11:56:03 | 50979e451c5c | 200 |     575.785µs |       127.0.0.1 | GET     "/v1/requests/601f312eb8e0_register"
+=== RUN   Test_API/User_login
+[GIN] 2023-04-07 11:56:03 | 15a8f8e1bf18 | 400 |     206.206µs |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: Empty userID and password, response: {"error":{}}
+[GIN] 2023-04-07 11:56:03 | af74bc47814c | 400 |     124.297µs |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: Empty userID, response: {"error":{}}
+[GIN] 2023-04-07 11:56:03 | 99b1216519d2 | 400 |     133.356µs |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: Empty password, response: {"error":{}}
+2023/04/07 11:56:03 Generete new keys for userID 94d834c1-1433-417a-af06-15a46fb83151
+[GIN] 2023-04-07 11:56:04 | af6dbfbacd20 | 404 |  239.669699ms |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: UserID not exist, response: "Not found"
+[GIN] 2023-04-07 11:56:07 | b9502bddea5b | 401 |  3.133708088s |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: Password incorrect, response: "Authorization error"
+[GIN] 2023-04-07 11:56:10 | b9871e528169 | 200 |  3.137129063s |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: Successfully auth, response: {"access_token":"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJleHAiOjE2ODA4NTE0NzB9.opeLM7CPcPRkHVq_QWws4s8FU6k9f-a6V4DkI1JFUXQ5tpCgw2lsaH5d0KaQvqIHL25KrUQsagHePpAX2O0bvA","refresh_token":"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJleHAiOjE2ODE0NTUzNzB9.ebU08Iu8IB_TtcCHRnD9rOYvPECQ8ReeiGqvmh3fRukrA1mSfQEGQGkVQNDKm1U0udrqZ3B9rwaOkAAhVoGzcA"}
+[GIN] 2023-04-07 11:56:10 | 4ea3916ad4ad | 422 |     129.268µs |       127.0.0.1 | POST    "/v1/user/login"
+    users_test.go:226: User login test: Fail if already logged, response: "You are already authorised, please use logout"
+[GIN] 2023-04-07 11:56:10 | 9aa4e42376f9 | 200 |     737.311µs |       127.0.0.1 | GET     "/v1/user/refresh"
+    users_test.go:226: User login test: Refresh token, response: {"access_token":"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjowLCJleHAiOjE2ODA4NTE0NzB9.jv5EBtwiV84wp0ka6DtMWA1daytE6Q4WPDqAJaeRkovntzyOY3vIOMjrVkuzFXEnUl70zNAxTVYjw3Tw0KswxA","refresh_token":"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoxLCJleHAiOjE2ODE0NTUzNzB9.9CcrCSuKX1wosHeiVwjGUpqjwXAoTUUOQZJcJkiRnpQm3vcMx4HnY-4U-5QIkerBmbPUJurF_9Tf3ONyhIaUbg"}
+[GIN] 2023-04-07 11:56:10 | fadec3aa472b | 200 |     982.599µs |       127.0.0.1 | POST    "/v1/user/logout"
+    users_test.go:226: User login test: Successfully logout, response: "Successfully logged out"
+=== RUN   Test_API/User_register_with_doctor_role
+2023/04/07 11:56:10 Generete new keys for userID cfe7d942-e5f5-4c4f-b043-152c1d8b8bac
+[GIN] 2023-04-07 11:56:16 | d6f5f00f3c5a | 201 |  5.669608239s |       127.0.0.1 | POST    "/v1/user/register"
+[GIN] 2023-04-07 11:56:18 | 451825611f9d | 200 |     526.927µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:18 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:20 | 24d7a69d2e97 | 200 |     536.624µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:22 | 53b69fde98ff | 200 |     528.264µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:23 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:24 | f933df3830a6 | 200 |     470.259µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:26 | ad7d2b2853a1 | 200 |     442.425µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:28 | b32caecb95ef | 200 |     549.768µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:28 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:30 | 4c3c2f1bcf3c | 200 |     482.714µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:32 | 2c0e5f6a6305 | 200 |     522.779µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:33 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:34 | 06c7b069e107 | 200 |     488.365µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:36 | a055cbe962f9 | 200 |     525.737µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:38 | d787ff6306be | 200 |     463.235µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:38 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:40 | ce59ec76d973 | 200 |     475.693µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:42 | 3d941e3b54b8 | 200 |     465.482µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:43 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:44 | 914d970bb75e | 200 |     506.569µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:46 | 68547ccecab2 | 200 |      435.43µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:48 | 34dfe9916fb2 | 200 |     495.641µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:48 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[PROC] 2023-04-07 11:56:48 | Filecoin retrieve started
+[PROC] 2023-04-07 11:56:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 11:56:48 | Filecoin deals started
+[PROC] 2023-04-07 11:56:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu: datastore: key not found CID bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu dealCID: bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu
+[PROC] 2023-04-07 11:56:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa: datastore: key not found CID bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa dealCID: bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa
+[PROC] 2023-04-07 11:56:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy: datastore: key not found CID bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy dealCID: bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy
+[PROC] 2023-04-07 11:56:49 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi: datastore: key not found CID bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi dealCID: bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi
+[PROC] 2023-04-07 11:56:49 | Filecoin deals finished
+[PROC] 2023-04-07 11:56:49 | DealFinisher started
+[PROC] 2023-04-07 11:56:49 | DealFinisher finished
+[GIN] 2023-04-07 11:56:50 | e98a53e3a084 | 200 |     562.361µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:52 | f091ad814ef5 | 200 |     883.904µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:53 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:56:54 | 33c1525ad04c | 200 |     568.681µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:56 | 07069e41b3be | 200 |     456.366µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:56:58 | 242749ccff08 | 200 |     788.965µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:56:58 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:00 | 6580864f26be | 200 |     489.478µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:02 | 33598936eee7 | 200 |     490.346µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:03 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:04 | fc4b266c7e8f | 200 |     541.556µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:06 | 3e410ce8d7dc | 200 |     485.497µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:08 | 0c86e528e1be | 200 |     474.164µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:08 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:10 | 745c0708605d | 200 |     481.134µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:12 | 5ce814e822c7 | 200 |     455.072µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:13 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:14 | e5c2bb5d4762 | 200 |     541.271µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:16 | f462ff224bb5 | 200 |     501.346µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:18 | 600d3ba65c2f | 200 |     478.916µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:18 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:20 | 76e5a14b6f3d | 200 |     553.809µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:22 | c41c97228ccb | 200 |     473.731µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:23 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:24 | daf1a4fcf558 | 200 |     562.708µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:26 | 73f1df915436 | 200 |     448.919µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:28 | 4bc08e67b649 | 200 |     458.712µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:28 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Pending
+[GIN] 2023-04-07 11:57:30 | 6916e651dfea | 200 |     468.042µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:32 | 3a0008b4ea85 | 200 |     530.754µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[PROC] 2023-04-07 11:57:33 | Tx: 0x698c4ef73226b1095cb5addaa5afb4a062b5a994d854f3f47de13f7a8ff72356 status: Success
+[GIN] 2023-04-07 11:57:34 | 65e7893ac376 | 200 |     525.469µs |       127.0.0.1 | GET     "/v1/requests/d6f5f00f3c5a_register"
+[GIN] 2023-04-07 11:57:37 | fae204d0ae95 | 200 |  3.097576834s |       127.0.0.1 | POST    "/v1/user/login"
+[GIN] 2023-04-07 11:57:37 | 3ada2dab691e | 200 |  225.097864ms |       127.0.0.1 | GET     "/v1/user/cfe7d942-e5f5-4c4f-b043-152c1d8b8bac"
+=== RUN   Test_API/User_get_info_doctor
+[GIN] 2023-04-07 11:57:37 | 696d36632782 | 200 |  224.828226ms |       127.0.0.1 | GET     "/v1/user/cfe7d942-e5f5-4c4f-b043-152c1d8b8bac"
+=== RUN   Test_API/User_get_info_by_code
+[GIN] 2023-04-07 11:57:38 | c61da2773d6c | 200 |  225.420652ms |       127.0.0.1 | GET     "/v1/user/code/19253949"
+=== RUN   Test_API/EHR_creating
+[GIN] 2023-04-07 11:57:41 | cd515f9f8eb4 | 200 |  3.093448271s |       127.0.0.1 | POST    "/v1/user/login"
+[GIN] 2023-04-07 11:57:47 | 8b0a64b9649a | 201 |  6.698199777s |       127.0.0.1 | POST    "/v1/ehr"
+[PROC] 2023-04-07 11:57:48 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:57:48 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:57:49 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[PROC] 2023-04-07 11:57:49 | DealFinisher started
+[PROC] 2023-04-07 11:57:49 | DealFinisher finished
+[PROC] 2023-04-07 11:57:49 | Filecoin retrieve started
+[PROC] 2023-04-07 11:57:49 | Filecoin retrieve finished
+[GIN] 2023-04-07 11:57:49 | a959e509f1eb | 200 |      1.6345ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:57:51 | a45ac49cd99a | 200 |     972.023µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:57:53 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[GIN] 2023-04-07 11:57:53 | 82f18f5bedf7 | 200 |    1.026157ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:57:53 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:57:54 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:57:55 | 393ed71887be | 200 |     890.351µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:57:57 | 27e64c88eb89 | 200 |     907.221µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:57:58 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:57:58 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:57:59 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:57:59 | 06f288f64c9b | 200 |      996.03µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:01 | 95efc8916c11 | 200 |    1.300321ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:03 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:03 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[GIN] 2023-04-07 11:58:03 | 78a75d223f58 | 200 |     922.981µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:04 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:05 | dfa48f198f7b | 200 |     1.05184ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:07 | a4a4652f5044 | 200 |     910.122µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:08 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:08 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:58:09 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:09 | 16956679b149 | 200 |     920.029µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:11 | 87ecbba11e8e | 200 |    1.377904ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:13 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:13 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[GIN] 2023-04-07 11:58:13 | 2668db7d672f | 200 |    1.014842ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:14 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:15 | fdba287831da | 200 |    1.301744ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:17 | 2784c184b9d0 | 200 |     965.556µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:18 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:18 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:58:19 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:19 | 1712187c9b81 | 200 |     946.464µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:21 | ec2aaed054ea | 200 |     942.978µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:23 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:23 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[GIN] 2023-04-07 11:58:23 | eceae94a8326 | 200 |     921.756µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:24 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:25 | 9909da64afe9 | 200 |     886.934µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:27 | 7dff06e99348 | 200 |    1.084919ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:28 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:28 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:58:29 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:29 | adb226aae380 | 200 |    1.120359ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:31 | b969279f689a | 200 |     983.798µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:33 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:33 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[GIN] 2023-04-07 11:58:33 | 83839f10bb38 | 200 |     901.527µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:34 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:35 | b1f525bc1da6 | 200 |     1.55025ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:37 | b0983fcb69ba | 200 |     941.992µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:38 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:39 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:58:39 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:39 | b0ab4319574e | 200 |    1.301253ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:41 | 6e097f376338 | 200 |     1.13339ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:43 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:43 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[GIN] 2023-04-07 11:58:43 | 2f7e71057c35 | 200 |    1.062963ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:44 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:45 | 4f481b823517 | 200 |     979.485µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:47 | 773e440133bb | 200 |     904.581µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:48 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:48 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:58:49 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[PROC] 2023-04-07 11:58:49 | DealFinisher started
+[PROC] 2023-04-07 11:58:49 | DealFinisher finished
+[PROC] 2023-04-07 11:58:49 | Filecoin retrieve started
+[PROC] 2023-04-07 11:58:49 | Filecoin retrieve finished
+[GIN] 2023-04-07 11:58:49 | c8bf2d7f7643 | 200 |     790.711µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:51 | a07fffba9ce7 | 200 |     796.466µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:53 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:53 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[GIN] 2023-04-07 11:58:53 | 266b51888dde | 200 |    1.085902ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:54 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:55 | beb1cebc677c | 200 |     932.605µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:58:57 | f84b5171d243 | 200 |     911.022µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:58:58 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Pending
+[PROC] 2023-04-07 11:58:58 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Pending
+[PROC] 2023-04-07 11:58:59 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Pending
+[GIN] 2023-04-07 11:58:59 | 2dde8d2738ce | 200 |     915.695µs |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[GIN] 2023-04-07 11:59:01 | 03b36e982b92 | 200 |    1.054281ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+[PROC] 2023-04-07 11:59:03 | Tx: 0xb50b3bdcd807fcbc17682408d45b069447a7a57699eb2e6eb36a5bb8c61d4fb4 status: Success
+[PROC] 2023-04-07 11:59:03 | Tx: 0xe39c7a2eccf4defdc3c4363f164911b8802932b389f723774aae4f6b5580bc77 status: Success
+[GIN] 2023-04-07 11:59:04 | d146f085b977 | 200 |    1.055477ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+=== RUN   Test_API/Get_transaction_requests
+[GIN] 2023-04-07 11:59:04 | 5762d7c5d597 | 200 |    1.029653ms |       127.0.0.1 | GET     "/v1/requests/8b0a64b9649a"
+    request_test.go:72: Requests: GetAll
+[GIN] 2023-04-07 11:59:04 | bc91e3240992 | 200 |    1.248152ms |       127.0.0.1 | GET     "/v1/requests/"
+=== RUN   Test_API/EHR_creating_with_id
+[PROC] 2023-04-07 11:59:04 | Tx: 0xfb0724f4a5fd043b8ef454f13b6cc05715a9d42f025a28f2d9c12ce05f400eeb status: Success
+[GIN] 2023-04-07 11:59:07 | 7c4e41c69142 | 200 |  3.517182294s |       127.0.0.1 | POST    "/v1/user/login"
+[GIN] 2023-04-07 11:59:14 | 4a8d1089336b | 201 |  6.559286822s |       127.0.0.1 | PUT     "/v1/ehr/3c96072f-2bcb-4dde-aff3-be374500cb15"
+=== RUN   Test_API/EHR_creating_with_id_for_the_same_user
+=== PAUSE Test_API/EHR_creating_with_id_for_the_same_user
+=== RUN   Test_API/EHR_getting
+[GIN] 2023-04-07 11:59:14 | a75d9fad5217 | 200 |  693.383877ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27"
+=== RUN   Test_API/EHR_get_by_subject
+[GIN] 2023-04-07 11:59:15 | 68dda8e58966 | 200 |  618.404374ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/ehr_status/19862ff4-ca67-4300-8281-c20a873a1063::openEHRSys.example.com::1"
+[GIN] 2023-04-07 11:59:16 | d9b83f573b27 | 200 |  874.327279ms |       127.0.0.1 | GET     "/v1/ehr?subject_id=2d91c6d5-5d54-4014-b1ad-4017a7ecc3ef&subject_namespace=test"
+=== RUN   Test_API/EHR_STATUS_getting
+[GIN] 2023-04-07 11:59:16 | 591ebdf1910c | 200 |  622.147936ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/ehr_status/19862ff4-ca67-4300-8281-c20a873a1063::openEHRSys.example.com::1"
+=== RUN   Test_API/EHR_STATUS_getting_by_version_time
+[GIN] 2023-04-07 11:59:17 | 1b0b90a5e67c | 200 |  702.547712ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/ehr_status?version_at_time=2023-04-07T11%3A59%3A16.893%2B05%3A00"
+=== RUN   Test_API/EHR_STATUS_update
+[PROC] 2023-04-07 11:59:18 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:19 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:19 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:22 | 4e868518719b | 200 |  4.907167582s |       127.0.0.1 | PUT     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/ehr_status"
+    ehr_test.go:379: Waiting for request 4e868518719b done
+[PROC] 2023-04-07 11:59:23 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:23 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:24 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:24 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:24 | e932da49f3aa | 200 |    1.203966ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:26 | d1e76a9b70a7 | 200 |     965.489µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:28 | 0878d6314460 | 200 |     846.942µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:28 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:28 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:29 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:29 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:30 | de53e1b33c33 | 200 |     854.459µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:32 | 9bed97ffd79a | 200 |     881.807µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:33 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:33 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:34 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:34 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:34 | 683ee6a386c6 | 200 |    1.300649ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:36 | 2a91ea6fa33a | 200 |    1.068224ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:38 | eba420cd8999 | 200 |     925.086µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:38 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:38 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:39 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:39 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:40 | 131d5daab0ef | 200 |     836.875µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:42 | da6fb34805a3 | 200 |     886.378µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:43 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:43 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:44 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:44 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:44 | c43be70ca033 | 200 |     976.914µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:46 | c757ff7382aa | 200 |     1.23389ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:48 | cee6f91d569a | 200 |     953.124µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:48 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:48 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:49 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:49 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[PROC] 2023-04-07 11:59:49 | Filecoin retrieve started
+[PROC] 2023-04-07 11:59:49 | Filecoin retrieve finished
+[PROC] 2023-04-07 11:59:49 | DealFinisher started
+[PROC] 2023-04-07 11:59:49 | DealFinisher finished
+[GIN] 2023-04-07 11:59:50 | e97b3a1181a7 | 200 |     863.505µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:52 | 2fc95ff6e4a1 | 200 |     848.574µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:53 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:53 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:54 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:54 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 11:59:54 | 45ddeae0bfbd | 200 |    1.406406ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:56 | f5c6e3af8142 | 200 |     911.798µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 11:59:58 | 2dd5cee42ae2 | 200 |    1.055195ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 11:59:58 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 11:59:58 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 11:59:59 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 11:59:59 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:00 | 9d015b4551ba | 200 |     782.282µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:02 | 6025e8495683 | 200 |    1.017951ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:03 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 12:00:03 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 12:00:04 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 12:00:04 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:04 | ca30bea3f70f | 200 |     891.351µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:06 | f26dc3e390fa | 200 |     889.337µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:08 | 8d7b0e0bf3f9 | 200 |     899.391µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:08 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 12:00:08 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 12:00:09 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 12:00:09 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:10 | eb1d918e138b | 200 |    1.531315ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:12 | 875528ba7cc8 | 200 |    1.230287ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:13 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 12:00:13 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 12:00:14 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 12:00:14 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:14 | 9299a4c5f211 | 200 |    1.068327ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:16 | e1bb3c078f7e | 200 |     927.864µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:18 | 8f37e11084af | 200 |     995.302µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:18 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 12:00:18 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 12:00:19 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 12:00:19 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:20 | 793e576726f0 | 200 |     882.989µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:22 | eb20a640ea7c | 200 |    1.086846ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:23 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[PROC] 2023-04-07 12:00:23 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 12:00:24 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 12:00:24 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:24 | 135ec337d529 | 200 |     924.839µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:26 | b0a091542770 | 200 |    1.053236ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:28 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Pending
+[GIN] 2023-04-07 12:00:28 | d93dbcb324a4 | 200 |     905.317µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:28 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Pending
+[PROC] 2023-04-07 12:00:29 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Pending
+[PROC] 2023-04-07 12:00:29 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Pending
+[GIN] 2023-04-07 12:00:30 | dc877a379a43 | 200 |     879.775µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:32 | 2190a509813f | 200 |     889.458µs |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[PROC] 2023-04-07 12:00:33 | Tx: 0x4ec99927d12ce17cf3dff940f1a25f71a81b321c70a99e8a00e49fe17cd5a5b3 status: Success
+[PROC] 2023-04-07 12:00:33 | Tx: 0xa485a452626c4151381723940e4ff2bcbf3fbfeedc2505176229b3cfe58134e5 status: Success
+[PROC] 2023-04-07 12:00:34 | Tx: 0xdcbe16156295fb710df665d25840bdb94ff4a2ac41fd8a81968ba72212fb8afa status: Success
+[PROC] 2023-04-07 12:00:34 | Tx: 0xe2d885aa3fbb3306b8cfd313755a6209891fbe90fcfe129fe10ac501888164fb status: Success
+[GIN] 2023-04-07 12:00:34 | f8154bc91510 | 200 |    1.018353ms |       127.0.0.1 | GET     "/v1/requests/4e868518719b"
+[GIN] 2023-04-07 12:00:35 | 7b4f3203660d | 200 |  730.429824ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27"
+=== RUN   Test_API/User_get_info_patient
+[GIN] 2023-04-07 12:00:35 | fb69aecbb8eb | 200 |  586.755002ms |       127.0.0.1 | GET     "/v1/user/8586881c-6f3d-4ec1-8278-9c1dc5373cd2"
+=== RUN   Test_API/COMPOSITION_create_Expected_fail_with_wrong_EhrId
+2023/04/07 12:00:36 userEhrUUID and ehrUUID is not equal: c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27 != 37caec26-0182-4304-8d5a-a9261aa9e4dc
+[GIN] 2023-04-07 12:00:36 | 32c43d2b408d | 500 |  292.763064ms |       127.0.0.1 | POST    "/v1/ehr/37caec26-0182-4304-8d5a-a9261aa9e4dc/composition"
+=== RUN   Test_API/COMPOSITION_create_Expected_success_with_correct_EhrId
+Composition compressed data length:  988
+[GIN] 2023-04-07 12:00:41 | 265648d6f90b | 201 |  4.820386197s |       127.0.0.1 | POST    "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition"
+    composition_test.go:57: Waiting for request 265648d6f90b done
+[GIN] 2023-04-07 12:00:43 | 75d9bb32b680 | 200 |    1.227252ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:00:43 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:00:43 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:00:45 | 5c81ad4eb459 | 200 |     860.458µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:00:47 | 70fec604b72a | 200 |      874.88µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:00:48 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:00:48 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[PROC] 2023-04-07 12:00:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:00:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 12:00:48 | DealFinisher started
+[PROC] 2023-04-07 12:00:48 | DealFinisher finished
+[GIN] 2023-04-07 12:00:49 | 5b7894f881b3 | 200 |     876.536µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:00:51 | 923da35c4a45 | 200 |     969.779µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:00:53 | 541a3017d01f | 200 |     890.835µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:00:53 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:00:53 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:00:55 | e16f81bf5cbf | 200 |    1.019461ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:00:57 | 72206e116f6f | 200 |      914.42µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:00:58 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:00:58 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:00:59 | ef5a0a013808 | 200 |     810.702µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:01 | c34572161fef | 200 |     813.803µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:03 | bc053df9de20 | 200 |     876.544µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:03 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:03 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:05 | 502eb09f3b91 | 200 |    1.220942ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:07 | 485b193a2066 | 200 |    1.402755ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:08 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:08 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:09 | a8b5e35746e9 | 200 |    1.361537ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:11 | 35d2e2206223 | 200 |     856.096µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:13 | 5efdb8e71e3e | 200 |    1.159497ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:13 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:13 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:15 | 226759b4bed5 | 200 |     943.182µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:17 | ad43034d6500 | 200 |     848.091µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:18 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:18 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:19 | 78c87ee9464f | 200 |    1.056911ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:21 | 41c6e2a05455 | 200 |     837.642µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:23 | 43a958ebc1d5 | 200 |    1.361926ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:23 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:23 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:25 | 9a2f4852c55e | 200 |     938.092µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:27 | ac174bd263ca | 200 |    1.225809ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:28 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:28 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:29 | 0fdaffc61b7e | 200 |      877.62µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:31 | e0ab645be835 | 200 |     918.409µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:33 | 7e77ccf382bd | 200 |     844.343µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:33 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:33 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:35 | 39b1fd19117d | 200 |    1.001923ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:37 | 85cde6072b01 | 200 |     909.872µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:38 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:38 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:39 | b22f8347ce70 | 200 |    1.019079ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:41 | 81e4cefae3f2 | 200 |    1.328656ms |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:43 | 8c7f973fa4fe | 200 |     922.331µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:43 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:43 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:45 | 66a5a75cec40 | 200 |     849.861µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:47 | 2738a27ccd76 | 200 |     916.535µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:48 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:48 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[PROC] 2023-04-07 12:01:48 | DealFinisher started
+[PROC] 2023-04-07 12:01:48 | DealFinisher finished
+[PROC] 2023-04-07 12:01:48 | Filecoin deals started
+[PROC] 2023-04-07 12:01:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu: datastore: key not found CID bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu dealCID: bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu
+[PROC] 2023-04-07 12:01:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa: datastore: key not found CID bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa dealCID: bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa
+[PROC] 2023-04-07 12:01:49 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy: datastore: key not found CID bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy dealCID: bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy
+[PROC] 2023-04-07 12:01:49 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi: datastore: key not found CID bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi dealCID: bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi
+[GIN] 2023-04-07 12:01:49 | 2b258848f120 | 200 |     956.388µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:49 | Filecoin deals finished
+[PROC] 2023-04-07 12:01:49 | Filecoin retrieve started
+[PROC] 2023-04-07 12:01:49 | Filecoin retrieve finished
+[GIN] 2023-04-07 12:01:51 | 6e2150b0d8ef | 200 |     816.143µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:53 | 5fcab6a96003 | 200 |     925.804µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:53 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:53 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:55 | 5d352ef78e0b | 200 |     927.858µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:01:57 | dc0a257f3be5 | 200 |     935.095µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:01:58 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Pending
+[PROC] 2023-04-07 12:01:58 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Pending
+[GIN] 2023-04-07 12:01:59 | 3f085c279326 | 200 |     879.991µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:02:01 | 01a77844fc1f | 200 |     898.711µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[GIN] 2023-04-07 12:02:03 | be54b4fcefcd | 200 |     870.502µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+[PROC] 2023-04-07 12:02:03 | Tx: 0x9d998404410ff05ce42eea938a8efeb9198c65fefe17d9f90991470c0d16911c status: Success
+[PROC] 2023-04-07 12:02:03 | Tx: 0xabb41e51279d6da5469557fda05d46658273de0d010f0e4d88c99c25fef8248f status: Success
+[GIN] 2023-04-07 12:02:05 | 5a1c61c06349 | 200 |     917.997µs |       127.0.0.1 | GET     "/v1/requests/265648d6f90b"
+=== RUN   Test_API/COMPOSITION_getting_with_correct_EhrId
+[GIN] 2023-04-07 12:02:06 | 25af20eb8e29 | 200 |  788.004567ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition/ca8f9e20-45bc-4e78-ac94-5484e6d069bd::openEHRSys.example.com::1"
+=== RUN   Test_API/COMPOSITION_getting_with_wrong_EhrId
+[GIN] 2023-04-07 12:02:06 | 68f747b67854 | 404 |  556.000995ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition/25b22bee-16f7-4188-bb2a-4ae26c234492::openEHRSys.example.com::1"
+=== RUN   Test_API/COMPOSITION_update
+Composition compressed data length:  976
+[GIN] 2023-04-07 12:02:12 | ca1d1f5b961f | 200 |  5.629848648s |       127.0.0.1 | PUT     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition/ca8f9e20-45bc-4e78-ac94-5484e6d069bd::openEHRSys.example.com"
+    composition_test.go:293: Waiting for request ca1d1f5b961f done
+[PROC] 2023-04-07 12:02:13 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:13 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:14 | 42de98270b9a | 200 |     878.804µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:16 | 7675e1debb7a | 200 |     838.017µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:18 | c3e835ce1007 | 200 |     863.167µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:18 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:18 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:20 | b6cacab2fd79 | 200 |     955.648µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:22 | 67343b73ede1 | 200 |     894.591µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:23 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:23 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:24 | ec5b584e3656 | 200 |     837.019µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:26 | 7032c7a66a30 | 200 |     836.742µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:28 | b940f066a0ed | 200 |     1.03553ms |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:28 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:28 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:30 | 5a0b85c09c8c | 200 |     997.119µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:32 | 3a6538dd608b | 200 |     875.048µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:33 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:33 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:34 | 324829f6a162 | 200 |    1.312479ms |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:36 | 48a68b1e2967 | 200 |     978.716µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:38 | 45571004e1d4 | 200 |     872.055µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:38 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:38 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:40 | 2656b2cc529f | 200 |     891.012µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:42 | 6f5372919cce | 200 |    1.008571ms |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:43 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:43 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:44 | a5ee5eb08c8e | 200 |     933.193µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:46 | 37590852a94b | 200 |      995.74µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:48 | 68009dee42f6 | 200 |     883.291µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:48 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:48 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[PROC] 2023-04-07 12:02:48 | DealFinisher started
+[PROC] 2023-04-07 12:02:48 | DealFinisher finished
+[PROC] 2023-04-07 12:02:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:02:48 | Filecoin retrieve finished
+[GIN] 2023-04-07 12:02:50 | 998f2a59366b | 200 |     991.595µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:52 | 1164c6411565 | 200 |     878.279µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:53 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:53 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:02:54 | a2e519fe03ba | 200 |     821.274µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:56 | c560a71e8a31 | 200 |     892.011µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:02:58 | fe4632731aca | 200 |     825.928µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:02:58 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:02:58 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:00 | 0b1de33e9cae | 200 |     839.362µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:02 | 5eee69840e16 | 200 |    1.232451ms |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:03 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:03:03 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:04 | f8e30c22a999 | 200 |     919.857µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:06 | c2452291a49f | 200 |       702.7µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:08 | 0de034c2dcac | 200 |     865.648µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:08 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:03:08 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:10 | ecb548bf8f0d | 200 |     856.317µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:12 | 93657f492ed2 | 200 |     976.022µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:13 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:03:13 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:14 | 715634bbfda5 | 200 |     828.543µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:16 | 9d310766d722 | 200 |      970.64µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:18 | a6b1639ae8a0 | 200 |    1.256476ms |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:18 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:03:18 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:20 | 79005c426a50 | 200 |     850.036µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:22 | bd1e4248b45d | 200 |     824.332µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:23 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:03:23 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:24 | 74b29a920549 | 200 |     779.405µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:26 | 7f6ac6676b8e | 200 |     878.593µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:28 | bee4455961f3 | 200 |     885.557µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:28 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Pending
+[PROC] 2023-04-07 12:03:28 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Pending
+[GIN] 2023-04-07 12:03:30 | 78ab53f6663c | 200 |     950.233µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[GIN] 2023-04-07 12:03:32 | 7a2be49a21d9 | 200 |     904.114µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+[PROC] 2023-04-07 12:03:33 | Tx: 0x5189dc2177c630c3d12165eea0f0b2ff752fe028f3aba661a365e51a50a78461 status: Success
+[PROC] 2023-04-07 12:03:33 | Tx: 0x67a4bf841a153752679d602f8a1dfc94abca63210128056c31059c66926ebfe2 status: Success
+[GIN] 2023-04-07 12:03:34 | f56a076c66f4 | 200 |     840.471µs |       127.0.0.1 | GET     "/v1/requests/ca1d1f5b961f"
+=== RUN   Test_API/COMPOSITION_get_list
+[GIN] 2023-04-07 12:03:34 | d24cb2f4c88d | 200 |  234.197059ms |       127.0.0.1 | GET     "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition"
+=== RUN   Test_API/COMPOSITION_delete_by_wrong_UID
+[GIN] 2023-04-07 12:03:35 | 45c8103b08c8 | 404 |  1.316986684s |       127.0.0.1 | DELETE  "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition/a432ac3d-5fbc-42ee-806b-0649df1e02d6"
+=== RUN   Test_API/COMPOSITION_delete
+[GIN] 2023-04-07 12:03:37 | cb60baa957bb | 204 |  1.535189394s |       127.0.0.1 | DELETE  "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition/ca8f9e20-45bc-4e78-ac94-5484e6d069bd::openEHRSys.example.com::1"
+    composition_test.go:370: Waiting for request cb60baa957bb done
+[PROC] 2023-04-07 12:03:38 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:03:39 | f7e370c95738 | 200 |     847.899µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:03:41 | c0bf50990cac | 200 |     887.838µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:03:43 | 1258a97a81b2 | 200 |     942.904µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:03:43 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:03:45 | f55194d04b35 | 200 |     810.878µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:03:47 | 2e8f14429626 | 200 |     788.708µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:03:48 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[PROC] 2023-04-07 12:03:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:03:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 12:03:48 | DealFinisher started
+[PROC] 2023-04-07 12:03:48 | DealFinisher finished
+[GIN] 2023-04-07 12:03:49 | 022dc5d342b2 | 200 |     971.202µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:03:51 | 645283c3bdc0 | 200 |    1.289705ms |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:03:53 | ae15c1bd8463 | 200 |     871.703µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:03:53 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:03:55 | 819c17a3b160 | 200 |    1.022169ms |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:03:57 | a2c8d690f9a8 | 200 |     843.009µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:03:58 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:03:59 | 609bc7907276 | 200 |     877.857µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:01 | 01c22700c4af | 200 |      822.79µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:03 | f9657f054b5b | 200 |     918.084µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:03 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:04:05 | 53618b43494a | 200 |      814.31µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:07 | 3873edf38286 | 200 |     729.345µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:08 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:04:09 | e076a7d0bf30 | 200 |     997.646µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:11 | 5f46ee691411 | 200 |    1.451245ms |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:13 | dc76c38e7c33 | 200 |      953.87µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:13 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:04:15 | e411aabc78f1 | 200 |     891.153µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:17 | 2fb3e9709c2f | 200 |     817.224µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:18 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:04:19 | 9a49be4c74ad | 200 |     912.839µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:21 | afff46c5b4c3 | 200 |     948.804µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:23 | daa008675c68 | 200 |     915.889µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:23 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:04:25 | 8bf910a83ce7 | 200 |     873.197µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:27 | d47000ad4bca | 200 |     860.674µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:28 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Pending
+[GIN] 2023-04-07 12:04:29 | f8bdd68c7b3d | 200 |     810.834µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:31 | bb4594d8ba25 | 200 |      817.14µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[GIN] 2023-04-07 12:04:33 | 69a890bc45d8 | 200 |     854.033µs |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+[PROC] 2023-04-07 12:04:33 | Tx: 0x4e1ec0542285e67adc544982d40daee52fe2369beba8831dbce4975d98a0def5 status: Success
+[GIN] 2023-04-07 12:04:35 | 80028fd95046 | 200 |    1.004586ms |       127.0.0.1 | GET     "/v1/requests/cb60baa957bb"
+    composition_test.go:377: Checking the status of a re-request to remove
+[GIN] 2023-04-07 12:04:37 | 72a200af39ae | 400 |  1.772523627s |       127.0.0.1 | DELETE  "/v1/ehr/c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27/composition/ca8f9e20-45bc-4e78-ac94-5484e6d069bd::openEHRSys.example.com::1"
+=== RUN   Test_API/DIRECTORY_create
+    directory_test.go:27:
+=== RUN   Test_API/DEFINITION_Store_a_invalid_query
+[GIN] 2023-04-07 12:04:37 | cab95f4108f9 | 400 |    3.359976ms |       127.0.0.1 | PUT     "/v1/definition/query/iodmoauhaq?query_type=AQL"
+=== RUN   Test_API/DEFINITION_Store_a_query
+[GIN] 2023-04-07 12:04:39 | 04960ca61232 | 200 |  1.958821764s |       127.0.0.1 | PUT     "/v1/definition/query/fimgaxwdfn?query_type=AQL"
+[GIN] 2023-04-07 12:04:41 | aef41b8634e9 | 200 |     892.138µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:04:43 | fcb56768565c | 200 |     989.544µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:04:43 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:04:45 | 05f25f12e20e | 200 |     987.884µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:04:47 | beb9d840c162 | 200 |     939.137µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:04:48 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[PROC] 2023-04-07 12:04:48 | DealFinisher started
+[PROC] 2023-04-07 12:04:48 | DealFinisher finished
+[PROC] 2023-04-07 12:04:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:04:48 | Filecoin retrieve finished
+[GIN] 2023-04-07 12:04:49 | 9a2831538d53 | 200 |     809.139µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:04:51 | a87e697178a5 | 200 |    1.469821ms |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:04:53 | c0d0efd35bd8 | 200 |      970.04µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:04:53 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:04:55 | efb54cbcb807 | 200 |     928.766µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:04:57 | 6715ddd8e5dd | 200 |     829.992µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:04:58 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:04:59 | 52ea23ea4959 | 200 |     855.539µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:01 | d032a2f8c5a9 | 200 |     794.274µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:03 | e59c526c8d0b | 200 |     906.578µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:03 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:05 | 67fed6fe58a3 | 200 |     769.633µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:07 | 2074c076dfdd | 200 |     842.636µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:08 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:09 | ea91f25d8b78 | 200 |     777.247µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:11 | e7825134c745 | 200 |     839.057µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:13 | c54a41066944 | 200 |     638.188µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:13 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:15 | a9deb58a955f | 200 |     660.032µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:17 | 8ea8f75702b5 | 200 |     990.212µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:18 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:19 | 9b5343bf8908 | 200 |     767.249µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:21 | 31d6bd71b5bb | 200 |     737.071µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:23 | 1bfe709befd9 | 200 |     888.234µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:23 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:25 | b1cf177b5d66 | 200 |     866.755µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:27 | 3d97d7bfc032 | 200 |     829.875µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:28 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:29 | 1e76728758c9 | 200 |     798.847µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:31 | 881903aa20e1 | 200 |     851.639µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:33 | 11227883cdc1 | 200 |     881.581µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:33 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:35 | 8dff5c8a2cea | 200 |     804.368µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:37 | 24d418de3081 | 200 |     790.652µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:38 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:39 | 5f07c1e73d7c | 200 |    1.016982ms |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:41 | fc8c0fea7c42 | 200 |    1.112504ms |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:43 | f4db9d6a0ee5 | 200 |     960.277µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:43 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:45 | 265c80cd4742 | 200 |     959.763µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:47 | d3e8417e0043 | 200 |     964.545µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:48 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[PROC] 2023-04-07 12:05:48 | DealFinisher started
+[PROC] 2023-04-07 12:05:48 | DealFinisher finished
+[PROC] 2023-04-07 12:05:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:05:48 | Filecoin retrieve finished
+[GIN] 2023-04-07 12:05:49 | df8ea0b9a474 | 200 |     834.763µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:51 | a895de1156ae | 200 |     832.696µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:53 | e20d17c012fd | 200 |     786.801µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:53 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:55 | c11247bb3163 | 200 |     959.799µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:05:57 | 3bec1bae7920 | 200 |    1.204771ms |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:05:58 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Pending
+[GIN] 2023-04-07 12:05:59 | a5b43694a7b7 | 200 |     835.714µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:06:01 | 1424512a4662 | 200 |     838.858µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[GIN] 2023-04-07 12:06:03 | 4c89e0226d83 | 200 |     835.528µs |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+[PROC] 2023-04-07 12:06:03 | Tx: 0xb3f35e7f4c5bce2c14896cba4ab5a22ac794e318bb4ca4aca1223967145bd0d9 status: Success
+[GIN] 2023-04-07 12:06:05 | 30dabb02dec0 | 200 |     1.00107ms |       127.0.0.1 | GET     "/v1/requests/04960ca61232"
+=== RUN   Test_API/DEFINITION_Store_a_query_version
+[GIN] 2023-04-07 12:06:08 | b065f7a36380 | 200 |  2.981921462s |       127.0.0.1 | PUT     "/v1/definition/query/rqdtnwmjqk/1.2.3?query_type=AQL"
+[GIN] 2023-04-07 12:06:10 | bc218bade5a9 | 200 |     1.03407ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:12 | edce5975ee54 | 200 |     777.711µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:13 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:14 | 1d78e05ae473 | 200 |     864.264µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:16 | cfd2f3d220f3 | 200 |    1.255194ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:18 | b641e24957fe | 200 |    1.046316ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:18 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:20 | df16055bc3d6 | 200 |     943.349µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:22 | 6fa12240c6f2 | 200 |     998.319µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:23 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:24 | 195eba4e6f35 | 200 |     827.908µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:26 | 9d0b6b3fa9ac | 200 |     1.06827ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:28 | af7e6bd89d1a | 200 |      955.57µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:28 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:30 | 7259df653741 | 200 |      908.36µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:32 | 7f6807041b57 | 200 |     886.136µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:33 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:34 | a3be3613e083 | 200 |     892.524µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:36 | 8a1e9880bc5d | 200 |    1.174603ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:38 | 080b6786e768 | 200 |       928.3µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:38 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:40 | 486335d24bb9 | 200 |     855.007µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:42 | 30a13985b901 | 200 |     854.041µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:43 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:44 | af09fd5a0de7 | 200 |    1.012798ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:46 | 88e171cdf559 | 200 |    1.011917ms |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:48 | e840aed7acd2 | 200 |     905.912µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:48 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[PROC] 2023-04-07 12:06:48 | DealFinisher started
+[PROC] 2023-04-07 12:06:48 | DealFinisher finished
+[PROC] 2023-04-07 12:06:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:06:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 12:06:48 | Filecoin deals started
+[PROC] 2023-04-07 12:06:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu: datastore: key not found CID bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu dealCID: bafyreif2ontxsbsstbbzsuoav5ym7xbkcomearl7hqzokhfov4kb3fivgu
+[PROC] 2023-04-07 12:06:48 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa: datastore: key not found CID bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa dealCID: bafyreidn4wb4y2bgtguyh43gmqve74ghyuveoonyvggoov3nqejoe7m2fa
+[PROC] 2023-04-07 12:06:49 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy: datastore: key not found CID bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy dealCID: bafyreifam6sgnot4v4zn5fxvu3fhmwawn2cn3xxtzj2ae2sd2sccwwy7zy
+[PROC] 2023-04-07 12:06:49 | filecoinClient.GetDealStatus error: Lotus ClientGetDealInfo error: No state for /bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi: datastore: key not found CID bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi dealCID: bafyreiciyxzazpilvtxazdkumuyyct2k2efvhlhn5x2gh7vf64t5bsqshi
+[PROC] 2023-04-07 12:06:49 | Filecoin deals finished
+[GIN] 2023-04-07 12:06:50 | 9a14945a1a9a | 200 |     924.832µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:52 | de509843c93b | 200 |     966.891µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:53 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:06:54 | 387bb5576c22 | 200 |     875.463µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:56 | b817580b1328 | 200 |     842.026µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:06:58 | e47177d7d38e | 200 |     934.994µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:06:58 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Pending
+[GIN] 2023-04-07 12:07:00 | a5b1acd51910 | 200 |     928.239µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[GIN] 2023-04-07 12:07:02 | b4598289a94c | 200 |     841.729µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+[PROC] 2023-04-07 12:07:03 | Tx: 0xd65fe4231aa4afc9bde888f70097f5185d084b78ddcf631e5149cf94a0f0cdac status: Success
+[GIN] 2023-04-07 12:07:04 | c6d9dda874a2 | 200 |     942.561µs |       127.0.0.1 | GET     "/v1/requests/b065f7a36380"
+=== RUN   Test_API/DEFINITION_Store_a_query_version_with_same_ID
+[GIN] 2023-04-07 12:07:05 | 28804b1e4d73 | 409 |  449.162109ms |       127.0.0.1 | PUT     "/v1/definition/query/rqdtnwmjqk/1.2.3?query_type=AQL"
+=== RUN   Test_API/DEFINITION_Get_stored_query_by_ID
+[GIN] 2023-04-07 12:07:05 | a0b81a136659 | 200 |  448.982862ms |       127.0.0.1 | GET     "/v1/definition/query/rqdtnwmjqk/1.2.3"
+=== RUN   Test_API/DEFINITION_List_stored_queries
+[GIN] 2023-04-07 12:07:05 | b99155802d27 | 200 |  228.908054ms |       127.0.0.1 | GET     "/v1/definition/query/fimgaxwdfn"
+=== RUN   Test_API/DEFINITION_Template14_upload
+[GIN] 2023-04-07 12:07:08 | 02f415b8482f | 201 |  2.792313565s |       127.0.0.1 | POST    "/v1/definition/template/adl1.4"
+    def_template_test.go:30: Waiting for request 02f415b8482f done
+[GIN] 2023-04-07 12:07:10 | 61df7b8d14d2 | 200 |    1.171805ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:12 | b5c15aa77773 | 200 |     818.872µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:13 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:14 | 432e48f6b9c6 | 200 |    1.353387ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:16 | afb9813df277 | 200 |     834.942µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:18 | ddaa1a145ad7 | 200 |      906.39µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:18 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:20 | 8131c5e707d7 | 200 |    1.065988ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:22 | d06b0572bf5c | 200 |     845.063µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:23 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:24 | fb21167452e7 | 200 |     915.168µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:26 | e6c51f5b986a | 200 |     733.214µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:28 | 29bf1272ba1a | 200 |     830.353µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:28 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:30 | 9cff0b908fb4 | 200 |    1.027791ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:32 | bcb18fd76e2d | 200 |     1.00669ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:33 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:34 | 78ae6d649f63 | 200 |    1.051696ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:36 | 9f0ca0ced72a | 200 |    1.477486ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:38 | 96a8e1ab3f5b | 200 |     861.816µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:38 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:40 | c3e1e84a9248 | 200 |     889.116µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:42 | 6d59c51e0f7f | 200 |    1.183253ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:43 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:44 | 153b3e1199c7 | 200 |     935.104µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:46 | 9fdbd652ec12 | 200 |      981.43µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:48 | f9e4c8c25885 | 200 |     955.501µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:48 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[PROC] 2023-04-07 12:07:48 | DealFinisher started
+[PROC] 2023-04-07 12:07:48 | DealFinisher finished
+[PROC] 2023-04-07 12:07:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:07:48 | Filecoin retrieve finished
+[GIN] 2023-04-07 12:07:50 | 9c0c70ad77e4 | 200 |     864.322µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:52 | 9b06fae8f263 | 200 |      854.27µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:53 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:07:54 | 6b146c132651 | 200 |    1.285083ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:56 | 0f9ab5db9de7 | 200 |    1.031718ms |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:07:58 | 8f466f45bd79 | 200 |     890.375µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:07:58 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Pending
+[GIN] 2023-04-07 12:08:00 | 4de9b9875104 | 200 |     832.328µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[GIN] 2023-04-07 12:08:02 | 408178f224d2 | 200 |     870.851µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+[PROC] 2023-04-07 12:08:03 | Tx: 0x85c1211e206f4d4d800c7c1ba400a4f278e3286d9ed7b5c7aad6825ca0f55541 status: Success
+[GIN] 2023-04-07 12:08:04 | 10e13736c96f | 200 |     909.804µs |       127.0.0.1 | GET     "/v1/requests/02f415b8482f"
+=== RUN   Test_API/DEFINITION_Template14_get_by_ID
+[GIN] 2023-04-07 12:08:05 | e11070448406 | 200 |  731.551931ms |       127.0.0.1 | GET     "/v1/definition/template/adl1.4/pwmvbxfeau"
+=== RUN   Test_API/DEFINITION_Template14_list_stored
+[GIN] 2023-04-07 12:08:05 | a97a37babb6a | 200 |  227.251905ms |       127.0.0.1 | GET     "/v1/definition/template/adl1.4"
+=== RUN   Test_API/QUERY_execute_with_GET_Expected_success_with_correct_query
+[GIN] 2023-04-07 12:08:05 | 12025356416b | 200 |    8.977602ms |       127.0.0.1 | GET     "/v1/query/aql?ehr_id=c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27&ehr_id=c8e5a12f-5d86-44a0-8f32-6f6f5d5a3a27&fetch=10&offset=0&q=SELECT%2Be%252Fehr_id%252Fvalue%2BAS%2BID%2BFROM%2BEHR%2Be%2B%255Behr_id%252Fvalue%253D%2524ehr_id%255D"
+=== RUN   Test_API/QUERY_execute_with_POST_Expected_success_with_correct_query
+[GIN] 2023-04-07 12:08:05 | 6d145550708f | 200 |   11.751639ms |       127.0.0.1 | POST    "/v1/query/aql"
+=== RUN   Test_API/QUERY_execute_with_POST_Expected_fail_with_wrong_query
+2023/04/07 12:08:05 cannot parse request body: &{%!f(string=number) %!f(*reflect.rtype=&{56 56 1671300234 7 8 8 25 <nil> 0x10148f8fa 203188 1019680}) %!f(int64=3) %!f(string=) %!f(string=)}
+[GIN] 2023-04-07 12:08:05 | bd97c2d278f9 | 400 |     557.193µs |       127.0.0.1 | POST    "/v1/query/aql"
+=== RUN   Test_API/User_group_create
+[GIN] 2023-04-07 12:08:08 | f98d49e1b50b | 201 |  2.648654384s |       127.0.0.1 | POST    "/v1/user/group"
+[PROC] 2023-04-07 12:08:08 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:10 | 2247ff62b27c | 200 |     982.802µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:12 | 4df706a4e737 | 200 |     895.604µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:13 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:14 | 9a14eea446b5 | 200 |     826.615µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:16 | 370815203042 | 200 |     852.807µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:18 | 2765843cf904 | 200 |     933.279µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:18 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:20 | 3064bb897ded | 200 |     856.533µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:22 | cb7d22b39c39 | 200 |     840.739µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:23 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:24 | ac5fe0556b67 | 200 |     1.09488ms |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:26 | e67deb9f50e4 | 200 |     860.114µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:28 | 847c9285bff2 | 200 |    1.286849ms |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:28 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:30 | 47e803a3300b | 200 |      867.53µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:32 | a6e8a77465a1 | 200 |     772.321µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:33 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:34 | 43941e68fad2 | 200 |     842.466µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:36 | f5138932a484 | 200 |     787.315µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:38 | fc79418c2184 | 200 |    1.290126ms |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:38 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:40 | 37a8f97cd840 | 200 |     819.457µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:42 | 63aaf6286e04 | 200 |    1.420581ms |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:43 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:44 | 06cfca6b270b | 200 |     829.149µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:46 | d2fdbf17b8e3 | 200 |     906.247µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:48 | 0f13f932a5f6 | 200 |    1.004467ms |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:48 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[PROC] 2023-04-07 12:08:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:08:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 12:08:48 | DealFinisher started
+[PROC] 2023-04-07 12:08:48 | DealFinisher finished
+[GIN] 2023-04-07 12:08:50 | 7c321ed98585 | 200 |     847.397µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:52 | 25715cf352e4 | 200 |     859.615µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:53 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:08:54 | 1b58a90af7b1 | 200 |     807.846µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:56 | 6f2ea098f4e0 | 200 |     804.473µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:08:58 | cd59cb124557 | 200 |      841.59µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:08:58 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Pending
+[GIN] 2023-04-07 12:09:00 | fdf29068f134 | 200 |     806.089µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[GIN] 2023-04-07 12:09:02 | 67102b86b8d7 | 200 |     854.906µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+[PROC] 2023-04-07 12:09:03 | Tx: 0x7b11b033c79050f6c4c5f5ed7a0d78ed1aa97808edef53ff87bb614dbc01be67 status: Success
+[GIN] 2023-04-07 12:09:04 | 50573f4ffceb | 200 |     914.393µs |       127.0.0.1 | GET     "/v1/requests/f98d49e1b50b"
+=== RUN   Test_API/User_group_add_user
+[GIN] 2023-04-07 12:09:06 | d2362bde9c03 | 200 |  2.400813794s |       127.0.0.1 | PUT     "/v1/user/group/6916a387-09c9-49b5-96d9-f8745fa72171/user_add/1487d7ee-bd91-496d-84ce-91fc7a4b0102/admin"
+[PROC] 2023-04-07 12:09:08 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:08 | aafce32d0d6a | 200 |     842.571µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:10 | d7207101c4cc | 200 |     962.851µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:12 | a28a840f732f | 200 |     840.898µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:13 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:14 | a4dcef323413 | 200 |    1.162429ms |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:16 | 095f9de4a9ca | 200 |     923.675µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:18 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:18 | 1e2bb37f4002 | 200 |     955.563µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:20 | f691fd2e5b48 | 200 |     842.256µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:22 | 76e8ab8476c9 | 200 |    1.399003ms |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:23 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:24 | 1f7eab1f10e0 | 200 |     915.064µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:26 | bdf8ba5a0e84 | 200 |     821.041µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:28 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:28 | ea3f9c3a31d3 | 200 |      812.87µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:30 | c8a60ae97e38 | 200 |     859.108µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:32 | ef93bfad4d03 | 200 |     837.645µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:33 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:34 | f644a4ad65a6 | 200 |     783.895µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:36 | 3adc68e49380 | 200 |    1.223158ms |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:38 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:38 | 000e44c575d6 | 200 |     828.848µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:40 | 0b9ab48d496d | 200 |     979.665µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:42 | 965eff4c7a29 | 200 |     902.596µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:43 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:44 | 1a0fc3e7a142 | 200 |     816.143µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:46 | 1853af7748fb | 200 |    1.079055ms |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:48 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[PROC] 2023-04-07 12:09:48 | Filecoin retrieve started
+[PROC] 2023-04-07 12:09:48 | Filecoin retrieve finished
+[PROC] 2023-04-07 12:09:48 | DealFinisher started
+[PROC] 2023-04-07 12:09:48 | DealFinisher finished
+[GIN] 2023-04-07 12:09:48 | 88e4dd35d53c | 200 |     833.639µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:50 | 03f160822dea | 200 |      860.58µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:52 | ce29031c4210 | 200 |      847.54µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:53 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:54 | c3e45497d8bd | 200 |     786.997µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:09:56 | 82b991507047 | 200 |     948.031µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:09:58 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Pending
+[GIN] 2023-04-07 12:09:58 | 243806272445 | 200 |     824.027µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:10:00 | 95709b83eb71 | 200 |     878.916µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[GIN] 2023-04-07 12:10:02 | 9d739e3b8c8b | 200 |     871.276µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+[PROC] 2023-04-07 12:10:03 | Tx: 0x6d80f837e99e19a55d91e30240d059a2bb1e771caeecd8a7d6f16f462a3a77c0 status: Success
+[GIN] 2023-04-07 12:10:04 | e54340e14e71 | 200 |     879.073µs |       127.0.0.1 | GET     "/v1/requests/d2362bde9c03"
+=== RUN   Test_API/User_group_get_by_ID
+[GIN] 2023-04-07 12:10:05 | c50d1059531f | 200 |  484.381103ms |       127.0.0.1 | GET     "/v1/user/group/6916a387-09c9-49b5-96d9-f8745fa72171"
+=== RUN   Test_API/User_group_get_list
+[GIN] 2023-04-07 12:10:06 | c1384d6da98c | 200 |  716.962146ms |       127.0.0.1 | GET     "/v1/user/group"
+=== RUN   Test_API/User_group_remove_user
+[GIN] 2023-04-07 12:10:08 | f855c4b6a12f | 200 |  2.219866315s |       127.0.0.1 | POST    "/v1/user/group/6916a387-09c9-49b5-96d9-f8745fa72171/user_remove/1487d7ee-bd91-496d-84ce-91fc7a4b0102"
+[PROC] 2023-04-07 12:10:08 | Tx: 0x080235b501f0fd58f01e57c3b21902a0c6f68df7d7cab7deaba0015c990f7d45 status: Pending
+[GIN] 2023-04-07 12:10:09 | bbc1c1a95b6c | 200 |  679.132198ms |       127.0.0.1 | GET     "/v1/user/group/6916a387-09c9-49b5-96d9-f8745fa72171"
+=== CONT  Test_API/EHR_creating_with_id_for_the_same_user
+[GIN] 2023-04-07 12:10:09 | 2f9f38d801a2 | 409 |   231.32439ms |       127.0.0.1 | POST    "/v1/ehr"
+--- PASS: Test_API (1100.60s)
+    --- PASS: Test_API/User_login (6.52s)
+    --- PASS: Test_API/User_register_with_doctor_role (87.14s)
+    --- PASS: Test_API/User_get_info_doctor (0.23s)
+    --- PASS: Test_API/User_get_info_by_code (0.23s)
+    --- PASS: Test_API/EHR_creating (85.96s)
+    --- PASS: Test_API/Get_transaction_requests (0.00s)
+    --- PASS: Test_API/EHR_creating_with_id (10.08s)
+    --- PASS: Test_API/EHR_getting (0.69s)
+    --- PASS: Test_API/EHR_get_by_subject (1.49s)
+    --- PASS: Test_API/EHR_STATUS_getting (0.62s)
+    --- PASS: Test_API/EHR_STATUS_getting_by_version_time (0.70s)
+    --- PASS: Test_API/EHR_STATUS_update (77.79s)
+    --- PASS: Test_API/User_get_info_patient (0.59s)
+    --- PASS: Test_API/COMPOSITION_create_Expected_fail_with_wrong_EhrId (0.29s)
+    --- PASS: Test_API/COMPOSITION_create_Expected_success_with_correct_EhrId (89.01s)
+    --- PASS: Test_API/COMPOSITION_getting_with_correct_EhrId (0.79s)
+    --- PASS: Test_API/COMPOSITION_getting_with_wrong_EhrId (0.56s)
+    --- PASS: Test_API/COMPOSITION_update (87.78s)
+    --- PASS: Test_API/COMPOSITION_get_list (0.23s)
+    --- PASS: Test_API/COMPOSITION_delete_by_wrong_UID (1.32s)
+    --- PASS: Test_API/COMPOSITION_delete (61.41s)
+    --- SKIP: Test_API/DIRECTORY_create (0.00s)
+    --- PASS: Test_API/DEFINITION_Store_a_invalid_query (0.00s)
+    --- PASS: Test_API/DEFINITION_Store_a_query (88.13s)
+    --- PASS: Test_API/DEFINITION_Store_a_query_version (59.10s)
+    --- PASS: Test_API/DEFINITION_Store_a_query_version_with_same_ID (0.45s)
+    --- PASS: Test_API/DEFINITION_Get_stored_query_by_ID (0.45s)
+    --- PASS: Test_API/DEFINITION_List_stored_queries (0.23s)
+    --- PASS: Test_API/DEFINITION_Template14_upload (58.91s)
+    --- PASS: Test_API/DEFINITION_Template14_get_by_ID (0.73s)
+    --- PASS: Test_API/DEFINITION_Template14_list_stored (0.23s)
+    --- PASS: Test_API/QUERY_execute_with_GET_Expected_success_with_correct_query (0.01s)
+    --- PASS: Test_API/QUERY_execute_with_POST_Expected_success_with_correct_query (0.01s)
+    --- PASS: Test_API/QUERY_execute_with_POST_Expected_fail_with_wrong_query (0.00s)
+    --- PASS: Test_API/User_group_create (58.78s)
+    --- PASS: Test_API/User_group_add_user (60.53s)
+    --- PASS: Test_API/User_group_get_by_ID (0.48s)
+    --- PASS: Test_API/User_group_get_list (0.72s)
+    --- PASS: Test_API/User_group_remove_user (2.90s)
+    --- PASS: Test_API/EHR_creating_with_id_for_the_same_user (0.23s)
+PASS
+ok  	github.com/bsn-si/IPEHR-gateway/src/tests/api	1103.771s
