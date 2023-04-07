@@ -137,7 +137,7 @@ func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint
 		EpochPrice:        types.NewInt(c.dealsMaxPrice / 1e3), // TODO get from miner ask
 		MinBlocksDuration: 518400,                              // epoch = 30 sec, 2880 per day, 180 days * 2880 = 518400
 		//DealStartEpoch:    200,
-		VerifiedDeal:  false,
+		VerifiedDeal:  true,
 		FastRetrieval: true,
 		//ProviderCollateral big.Int
 	})
