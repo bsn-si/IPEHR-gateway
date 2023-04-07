@@ -27,11 +27,11 @@
         }
     },
     "contract": {
-        "addressEhrIndex": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
-        "addressAccessStore": "0x6FCaf3818eF8c50325D9F478b2a5939EF6298f02",
-        "addressUsers": "0xFF576328EC76e7f88bbE1b733c11eFAb7c7F1BAC",
-        "addressDataStore": "0x1d53a8af051C5485E1f1639A92f83D66efb6eABD",
-        "endpoint": "https://api.hyperspace.node.glif.io/rpc/v1",
+        "addressEhrIndex": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+        "addressAccessStore": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+        "addressUsers": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+        "addressDataStore": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "endpoint": "http://7.7.7.30:8545",
         "privKeyPath": "~/.ipehr/.blockchain.key",
         "gasTipCap" : 100000
     },
