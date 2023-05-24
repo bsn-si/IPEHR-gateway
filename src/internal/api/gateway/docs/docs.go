@@ -2424,6 +2424,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "The identifier of the system, typically a reverse domain identifier",
+                        "name": "EhrSystemId",
+                        "in": "header"
+                    },
+                    {
                         "description": "User group",
                         "name": "Request",
                         "in": "body",

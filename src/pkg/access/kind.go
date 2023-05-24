@@ -5,10 +5,10 @@ import "strings"
 type Kind = uint8
 
 const (
-	Doc Kind = iota
+	NoKind Kind = iota
+	Doc
 	DocGroup
 	UserGroup
-	Unknown = 255
 )
 
 func KindFromString(str string) Kind {
@@ -20,6 +20,6 @@ func KindFromString(str string) Kind {
 	case "usergroup":
 		return UserGroup
 	default:
-		return Unknown
+		return NoKind
 	}
 }

@@ -76,16 +76,18 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 		return nil, errors.ErrFieldIsEmpty("ContentEncr")
 	}
 
-	groupKeyEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeKeyEncr)
-	if groupKeyEncr == nil {
-		return nil, errors.ErrFieldIsEmpty("KeyEncr")
-	}
+	/*
+		groupKeyEncr := model.AttributesUsers(ug.Attrs).GetByCode(model.AttributeKeyEncr)
+		if groupKeyEncr == nil {
+			return nil, errors.ErrFieldIsEmpty("KeyEncr")
+		}
+	*/
 
 	userGroup := &userModel.UserGroup{
-		GroupID:      groupID,
-		ContentEncr:  contentEncr,
-		GroupKeyEncr: groupKeyEncr,
-		Members:      []string{},
+		GroupID:     groupID,
+		ContentEncr: contentEncr,
+		//GroupKeyEncr: groupKeyEncr,
+		Members: []string{},
 	}
 
 	for _, m := range ug.Members {

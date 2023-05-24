@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -14,11 +15,12 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/parser/adl14"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/parser/adl2"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
-	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/status"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/types"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/helper"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 
 	"github.com/ipfs/go-cid"
@@ -108,18 +110,18 @@ func (s *Service) GetByID(ctx context.Context, userID, systemID, templateID stri
 	return t, nil
 }
 
-func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *model.Template) error {
+func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, tmpl *model.Template) error {
 	userPubKey, userPrivKey, err := s.docSvc.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	if m.Body == nil {
+	if tmpl.Body == nil {
 		return errors.ErrFieldIsEmpty("Body")
 	}
 
-	docBytes := make([]byte, len(m.Body))
-	copy(docBytes, m.Body)
+	docBytes := make([]byte, len(tmpl.Body))
+	copy(docBytes, tmpl.Body)
 
 	if s.docSvc.Infra.Compressor != nil {
 		docBytes, err = s.docSvc.Infra.Compressor.Compress(docBytes)
@@ -128,33 +130,80 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 		}
 	}
 
-	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
-	// Document encryption
-	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(m.UID))
+	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(tmpl.UID))
 	if err != nil {
 		return fmt.Errorf("EncryptWithAuthData error: %w", err)
 	}
 
-	// IPFS saving
 	CID, err := s.docSvc.Infra.IpfsClient.Add(ctx, docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
-	// Filecoin saving
 	dealCID, minerAddr, err := s.docSvc.Infra.FilecoinClient.StartDeal(ctx, CID, uint64(len(docEncrypted)))
 	if err != nil {
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
 	}
 
-	docIDEncrypted, err := key.Encrypt([]byte(m.UID))
+	procRequest, err := s.docSvc.Proc.NewRequest(reqID, userID, "", proc.RequestTemplateCreate)
+	if err != nil {
+		return fmt.Errorf("Proc.NewRequest error: %w", err)
+	}
+
+	procRequest.AddFilecoinTx(proc.TxSaveTemplate, CID.String(), dealCID.String(), minerAddr)
+
+	multiCallTx, err := s.docSvc.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
+	}
+
+	err = s.addMetaData(ctx, multiCallTx, key, tmpl, CID, dealCID, minerAddr, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("addDataIndex error: %w", err)
+	}
+
+	txHash, err := multiCallTx.Commit()
+	if err != nil {
+		return fmt.Errorf("Create template commit error: %w", err)
+	}
+
+	for _, txKind := range multiCallTx.GetTxKinds() {
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+	}
+
+	err = s.setDocAccess(ctx, procRequest, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("setDocAccess error: %w", err)
+	}
+
+	if err := procRequest.Commit(); err != nil {
+		return fmt.Errorf("ProcRequest commit error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) addMetaData(ctx context.Context, multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, tmpl *model.Template, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+	if err != nil {
+		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+	}
+
+	CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
+	if err != nil {
+		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+	}
+
+	docIDEncrypted, err := key.Encrypt([]byte(tmpl.UID))
 	if err != nil {
 		return fmt.Errorf("key.Encrypt error: %w", err)
 	}
 
-	content, err := msgpack.Marshal(m)
+	tmplIDHash := sha3.Sum256([]byte(tmpl.TemplateID))
+
+	content, err := msgpack.Marshal(tmpl)
 	if err != nil {
 		return fmt.Errorf("msgpack.Marshal error: %w", err)
 	}
@@ -169,36 +218,10 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 		return fmt.Errorf("key.Encrypt content error: %w", err)
 	}
 
-	procRequest, err := s.docSvc.Proc.NewRequest(reqID, userID, "", processing.RequestTemplateCreate)
-	if err != nil {
-		return fmt.Errorf("Proc.NewRequest error: %w", err)
-	}
-
-	// Add filecoin tx
-	procRequest.AddFilecoinTx(processing.TxSaveTemplate, CID.String(), dealCID.String(), minerAddr)
-
-	multiCallTx, err := s.docSvc.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
-	if err != nil {
-		return fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
-	}
-
-	// Index Docs
-	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-	if err != nil {
-		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-	}
-
-	CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
-	if err != nil {
-		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-	}
-
-	tmplIDHash := sha3.Sum256([]byte(m.TemplateID))
-
 	docMeta := &model.DocumentMeta{
 		Status:    uint8(status.ACTIVE),
 		Id:        CID.Bytes(),
-		Version:   []byte(m.Version),
+		Version:   []byte(tmpl.Version),
 		Timestamp: uint32(time.Now().Unix()),
 		IsLast:    true,
 		Attrs: []ehrIndexer.AttributesAttribute{
@@ -217,20 +240,39 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, m *
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
 
-	multiCallTx.Add(uint8(processing.TxAddEhrDoc), packed)
+	multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 
-	txHash, err := multiCallTx.Commit()
+	return nil
+}
+
+func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+	userIDHash := sha3.Sum256([]byte(userID + systemID))
+	docIDHash := indexer.Keccak256(CID.Bytes())
+
+	CIDEncr, err := key.Encrypt(CID.Bytes())
 	if err != nil {
-		return fmt.Errorf("Create template commit error: %w", err)
+		return fmt.Errorf("CID encryption error: %w", err)
 	}
 
-	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(processing.TxKind(txKind), txHash)
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+	if err != nil {
+		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
 	}
 
-	if err := procRequest.Commit(); err != nil {
-		return fmt.Errorf("ProcRequest commit error: %w", err)
+	accessObj := indexer.AccessObject{
+		Kind:    access.Doc,
+		IdHash:  *docIDHash,
+		IdEncr:  CIDEncr,
+		KeyEncr: keyEncr,
+		Level:   accessLevel,
 	}
+
+	txHash, err := s.docSvc.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	if err != nil {
+		return fmt.Errorf("Index.SetAccess user to template error: %w", err)
+	}
+
+	req.AddEthereumTx(proc.TxSetDocAccess, txHash)
 
 	return nil
 }

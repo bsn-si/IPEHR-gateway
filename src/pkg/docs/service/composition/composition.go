@@ -13,6 +13,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
@@ -41,6 +42,7 @@ type (
 		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
 		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
 		DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, error)
+		SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *indexer.AccessObject, userPrivKey *[32]byte, nonce *big.Int) (string, error)
 	}
 
 	IpfsService interface {
@@ -258,25 +260,47 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		}
 	}
 
-	// Document encryption key generation
 	key := chachaPoly.GenerateKey()
 
-	// Document encryption
 	docEncrypted, err := key.EncryptWithAuthData(docBytes, []byte(objectVersionID.String()))
 	if err != nil {
 		return fmt.Errorf("EncryptWithAuthData error: %w", err)
 	}
 
-	// IPFS saving
 	CID, err := s.ipfs.Add(ctx, docEncrypted)
 	if err != nil {
 		return fmt.Errorf("IpfsClient.Add error: %w", err)
 	}
 
-	// Filecoin saving
 	dealCID, minerAddr, err := s.fileCoin.StartDeal(ctx, CID, uint64(len(docEncrypted)))
 	if err != nil {
 		return fmt.Errorf("FilecoinClient.StartDeal error: %w", err)
+	}
+
+	procRequest.AddFilecoinTx(proc.TxSaveComposition, CID.String(), dealCID.String(), minerAddr)
+
+	err = s.addMetaData(ctx, multiCallTx, key, objectVersionID, CID, dealCID, minerAddr, doc.Name.Value, dataIndexUUID, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("addMetaData error: %w", err)
+	}
+
+	err = s.setDocAccess(ctx, procRequest, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("setDocAccess error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) addMetaData(ctx context.Context, multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID, dealCID *cid.Cid, minerAddr, docName string, dataIndexUUID *uuid.UUID, userPubKey, userPrivKey *[32]byte) error {
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+	if err != nil {
+		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+	}
+
+	nameEncr, err := key.Encrypt([]byte(docName))
+	if err != nil {
+		return fmt.Errorf("Encrypt name error: %w", err)
 	}
 
 	docIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
@@ -284,56 +308,72 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		return fmt.Errorf("EncryptWithAuthData error: %w", err)
 	}
 
-	nameEncr, err := key.Encrypt([]byte(doc.Name.Value))
-	if err != nil {
-		return fmt.Errorf("Encrypt name error: %w", err)
-	}
-
 	dataIndexIDEncr, err := key.Encrypt(dataIndexUUID[:])
 	if err != nil {
 		return fmt.Errorf("Encrypt dataIndexID error: %w", err)
 	}
 
-	// Add filecoin tx
-	procRequest.AddFilecoinTx(proc.TxSaveComposition, CID.String(), dealCID.String(), minerAddr)
-
-	// Index Docs ehr_id -> doc_meta
-	{
-		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		}
-
-		CIDEncr, err := key.Encrypt(CID.Bytes())
-		if err != nil {
-			return fmt.Errorf("CID encryption error error: %w", err)
-		}
-
-		docMeta := &model.DocumentMeta{
-			Status:    uint8(status.ACTIVE),
-			Id:        CID.Bytes(),
-			Version:   objectVersionID.VersionBytes()[:],
-			Timestamp: uint32(time.Now().Unix()),
-			IsLast:    true,
-			Attrs: []ehrIndexer.AttributesAttribute{
-				{Code: model.AttributeIDEncr, Value: CIDEncr},
-				{Code: model.AttributeKeyEncr, Value: keyEncr},
-				{Code: model.AttributeDocUIDHash, Value: objectVersionID.BaseIDHash()[:]},
-				{Code: model.AttributeDocUIDEncr, Value: docIDEncrypted},
-				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
-				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
-				{Code: model.AttributeNameEncr, Value: nameEncr},
-				{Code: model.AttributeDataIndexID, Value: dataIndexIDEncr},
-			},
-		}
-
-		packed, err := s.indexer.AddEhrDoc(ctx, types.Composition, docMeta, userPrivKey, multiCallTx.Nonce())
-		if err != nil {
-			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
+	CIDEncr, err := key.Encrypt(CID.Bytes())
+	if err != nil {
+		return fmt.Errorf("CID encryption error error: %w", err)
 	}
+
+	docMeta := &model.DocumentMeta{
+		Status:    uint8(status.ACTIVE),
+		Id:        CID.Bytes(),
+		Version:   objectVersionID.VersionBytes()[:],
+		Timestamp: uint32(time.Now().Unix()),
+		IsLast:    true,
+		Attrs: []ehrIndexer.AttributesAttribute{
+			{Code: model.AttributeIDEncr, Value: CIDEncr},
+			{Code: model.AttributeKeyEncr, Value: keyEncr},
+			{Code: model.AttributeDocUIDHash, Value: objectVersionID.BaseIDHash()[:]},
+			{Code: model.AttributeDocUIDEncr, Value: docIDEncrypted},
+			{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
+			{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
+			{Code: model.AttributeNameEncr, Value: nameEncr},
+			{Code: model.AttributeDataIndexID, Value: dataIndexIDEncr},
+		},
+	}
+
+	packed, err := s.indexer.AddEhrDoc(ctx, types.Composition, docMeta, userPrivKey, multiCallTx.Nonce())
+	if err != nil {
+		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
+
+	return nil
+}
+
+func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+	userIDHash := sha3.Sum256([]byte(userID + systemID))
+	docIDHash := indexer.Keccak256(CID.Bytes())
+
+	CIDEncr, err := key.Encrypt(CID.Bytes())
+	if err != nil {
+		return fmt.Errorf("CID encryption error: %w", err)
+	}
+
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+	if err != nil {
+		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+	}
+
+	accessObj := indexer.AccessObject{
+		Kind:    access.Doc,
+		IdHash:  *docIDHash,
+		IdEncr:  CIDEncr,
+		KeyEncr: keyEncr,
+		Level:   accessLevel,
+	}
+
+	txHash, err := s.indexer.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	if err != nil {
+		return fmt.Errorf("Index.SetAccess user to composition error: %w", err)
+	}
+
+	req.AddEthereumTx(proc.TxSetDocAccess, txHash)
 
 	return nil
 }

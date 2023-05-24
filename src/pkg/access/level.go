@@ -27,7 +27,7 @@ func LevelFromString(str string) Level {
 	case "read":
 		return Read
 	default:
-		return Unknown
+		return NoAccess
 	}
 }
 

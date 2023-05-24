@@ -10,6 +10,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
@@ -61,9 +62,6 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		return fmt.Errorf("SaveStatus error: %w versionUID %s ehrSystemID %s", err, objectVersionID.String(), systemID)
 	}
 
-	baseDocumentUID := []byte(objectVersionID.BasedID())
-	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
-
 	statusBytes, err := json.Marshal(status)
 	if err != nil {
 		return fmt.Errorf("json.Marshal error: %w", err)
@@ -111,68 +109,65 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		multiCallTx.Add(uint8(proc.TxSetEhrBySubject), setSubjectPacked)
 	}
 
-	// Index Docs ehr_id -> doc_meta
-	{
-		statusIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
-		if err != nil {
-			return fmt.Errorf("EncryptWithAuthData error: %w ehrID: %s statusUid: %s", err, ehrUUID.String(), status.UID.Value)
-		}
-
-		//CIDEncr, err := keybox.SealAnonymous(CID.Bytes(), userPubKey)
-		//if err != nil {
-		//	return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		//}
-
-		CIDEncr, err := key.Encrypt(CID.Bytes())
-		if err != nil {
-			return fmt.Errorf("CID encryption error: %w", err)
-		}
-
-		keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
-		if err != nil {
-			return fmt.Errorf("keybox.SealAnonymous error: %w", err)
-		}
-
-		docMeta := &model.DocumentMeta{
-			Status:    uint8(docStatus.ACTIVE),
-			Id:        CID.Bytes(),
-			Version:   objectVersionID.VersionBytes()[:],
-			Timestamp: uint32(time.Now().Unix()),
-			IsLast:    true,
-			Attrs: []ehrIndexer.AttributesAttribute{
-				{Code: model.AttributeIDEncr, Value: CIDEncr},
-				{Code: model.AttributeKeyEncr, Value: keyEncr},
-				{Code: model.AttributeDocUIDHash, Value: baseDocumentUIDHash[:]},
-				{Code: model.AttributeDocUIDEncr, Value: statusIDEncrypted},
-				{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
-				{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
-			},
-		}
-
-		packed, err := s.Infra.Index.AddEhrDoc(ctx, types.EhrStatus, docMeta, userPrivKey, multiCallTx.Nonce())
-		if err != nil {
-			return fmt.Errorf("Index.AddEhrDoc error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
+	err = s.addEhrStatusMetaData(ctx, multiCallTx, key, objectVersionID, CID, dealCID, minerAddr, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	// Adding EHR_STATUS doc into 'all documents'
-	{
-		docCIDHash := indexer.Keccak256(CID.Bytes())
-
-		docCIDEncr, err := allDocsGroup.GroupKey.Encrypt(CID.Bytes())
-		if err != nil {
-			return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
-		}
-
-		packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocsGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, multiCallTx.Nonce())
-		if err != nil {
-			return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
+	err = s.setDocAccess(ctx, procRequest, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("setDocAccess error: %w", err)
 	}
+
+	err = s.addDocumentToGroup(ctx, multiCallTx, CID, allDocsGroup, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("addDocumentToGroup error: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) addEhrStatusMetaData(ctx context.Context, multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
+	statusIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
+	if err != nil {
+		return fmt.Errorf("Encrypt error: %w objectVersionID %s", err, objectVersionID.String())
+	}
+
+	CIDEncr, err := key.Encrypt(CID.Bytes())
+	if err != nil {
+		return fmt.Errorf("CID encryption error: %w", err)
+	}
+
+	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
+	if err != nil {
+		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+	}
+
+	baseDocumentUID := []byte(objectVersionID.BasedID())
+	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
+
+	docMeta := &model.DocumentMeta{
+		Status:    uint8(docStatus.ACTIVE),
+		Id:        CID.Bytes(),
+		Version:   objectVersionID.VersionBytes()[:],
+		Timestamp: uint32(time.Now().Unix()),
+		IsLast:    true,
+		Attrs: []ehrIndexer.AttributesAttribute{
+			{Code: model.AttributeIDEncr, Value: CIDEncr},
+			{Code: model.AttributeKeyEncr, Value: keyEncr},
+			{Code: model.AttributeDocUIDHash, Value: baseDocumentUIDHash[:]},
+			{Code: model.AttributeDocUIDEncr, Value: statusIDEncrypted},
+			{Code: model.AttributeDealCid, Value: dealCID.Bytes()},
+			{Code: model.AttributeMinerAddress, Value: []byte(minerAddr)},
+		},
+	}
+
+	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.EhrStatus, docMeta, userPrivKey, multiCallTx.Nonce())
+	if err != nil {
+		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
 
 	return nil
 }

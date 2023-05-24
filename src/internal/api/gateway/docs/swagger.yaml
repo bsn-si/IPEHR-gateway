@@ -2738,6 +2738,10 @@ paths:
         name: AuthUserId
         required: true
         type: string
+      - description: The identifier of the system, typically a reverse domain identifier
+        in: header
+        name: EhrSystemId
+        type: string
       - description: User group
         in: body
         name: Request

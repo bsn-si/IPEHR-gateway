@@ -8,8 +8,10 @@ type UserGroup struct {
 	Description string     `json:"description"`
 	Members     []string   `json:"members"`
 
-	GroupKey     [32]byte `json:"-"`
-	GroupKeyEncr []byte   `json:"-"`
-	ContentEncr  []byte   `json:"-"`
-	MembersEncr  [][]byte `json:"-"`
+	Key         [32]byte `json:"-" msgpack:"-"`
+	KeyEncr     []byte   `json:"-" msgpack:"-"`
+	IDEncr      []byte   `json:"-" msgpack:"-"`
+	ContentEncr []byte   `json:"-" msgpack:"-"`
+	MembersEncr [][]byte `json:"-" msgpack:"-"`
+	Packed      []byte   `json:"-" msgpack:"-"`
 }

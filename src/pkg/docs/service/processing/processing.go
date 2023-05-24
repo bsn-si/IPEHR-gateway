@@ -60,6 +60,7 @@ const (
 	TxSetEhrDocs
 	TxSetDocAccess
 	TxSetDocGroupAccess
+	TxSetUserGroupAccess
 	TxDeleteDoc
 	TxFilecoinStartDeal
 	TxEhrCreateWithID
@@ -97,6 +98,7 @@ var (
 		TxSetEhrDocs:          "SetEhrDocs",
 		TxSetDocAccess:        "SetDocAccess",
 		TxSetDocGroupAccess:   "SetDocGroupAccess",
+		TxSetUserGroupAccess:  "SetUserGroupAccess",
 		TxDeleteDoc:           "DeleteDoc",
 		TxFilecoinStartDeal:   "FilecoinStartDeal",
 		TxEhrCreateWithID:     "EhrCreateWithID",

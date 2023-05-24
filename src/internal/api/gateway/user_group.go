@@ -23,6 +23,7 @@ import (
 //	@Accept		json
 //	@Param		Authorization	header		string			true	"Bearer AccessToken"
 //	@Param		AuthUserId		header		string			true	"UserId"
+//	@Param		EhrSystemId		header		string			false	"The identifier of the system, typically a reverse domain identifier"
 //	@Param		Request			body		model.UserGroup	true	"User group"
 //	@Success	201				{object}	model.UserGroup	"Indicates that the request has succeeded and transaction about create new user group has been created"
 //	@Header		201				{string}	RequestID		"Request identifier"
@@ -38,6 +39,8 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		return
 	}
 
+	systemID := c.GetString("ehrSystemID")
+
 	data, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
@@ -50,9 +53,9 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		return
 	}
 
-	var userGroup model.UserGroup
+	var userGroup = &model.UserGroup{}
 
-	err = json.Unmarshal(data, &userGroup)
+	err = json.Unmarshal(data, userGroup)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
@@ -63,9 +66,16 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		return
 	}
 
-	var txHash string
+	reqID := c.GetString("reqID")
 
-	txHash, userGroup.GroupID, err = h.service.GroupCreate(c, userID, userGroup.Name, userGroup.Description)
+	procRequest, err := h.service.NewProcRequest(reqID, userID, processing.RequestUserGroupCreate)
+	if err != nil {
+		log.Println("Proc.NewRequest error: ", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	userGroup, err = h.service.GroupCreate(c, procRequest, userID, systemID, userGroup.Name, userGroup.Description)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -79,17 +89,6 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-
-	reqID := c.GetString("reqID")
-
-	procRequest, err := h.service.NewProcRequest(reqID, userID, processing.RequestUserGroupCreate)
-	if err != nil {
-		log.Println("Proc.NewRequest error: ", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	procRequest.AddEthereumTx(processing.TxUserGroupCreate, txHash)
 
 	if err := procRequest.Commit(); err != nil {
 		log.Println("UserGroup create procRequest.Commit error: ", err)
@@ -203,7 +202,7 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 	}
 
 	level := access.LevelFromString(c.Param("access_level"))
-	if level == access.Unknown {
+	if level == access.NoAccess {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "access_level is incorrect"})
 		return
 	}

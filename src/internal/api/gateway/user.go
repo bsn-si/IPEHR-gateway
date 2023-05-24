@@ -15,6 +15,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
+	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
@@ -36,7 +37,7 @@ type UserService interface {
 	AddTokenInBlackList(tokenRaw string, expires int64)
 	GetTokenHash(tokenRaw string) [32]byte
 	VerifyAndGetTokenDetails(userID, accessToken, refreshToken string) (*userService.TokenDetails, error)
-	GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error)
+	GroupCreate(ctx context.Context, req proc.RequestInterface, userID, systemID, groupName, groupDescription string) (*model.UserGroup, error)
 	GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*model.UserGroup, error)
 	GroupAddUser(ctx context.Context, userID, systemID, addUserID, addSystemID, reqID string, level access.Level, groupID *uuid.UUID) error
 	GroupRemoveUser(ctx context.Context, userID, systemID, removingUserID, removeSystemID, reqID string, groupID *uuid.UUID) error

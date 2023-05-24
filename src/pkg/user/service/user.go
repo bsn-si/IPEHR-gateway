@@ -18,12 +18,14 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	docModel "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	proc "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service/processing"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
@@ -68,7 +70,7 @@ func (s *Service) NewProcRequest(reqID, userID string, kind processing.RequestKi
 }
 
 func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, systemID, reqID string) (err error) {
-	_, userPrivKey, err := s.Infra.Keystore.Get(user.UserID)
+	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(user.UserID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, user.UserID)
 	}
@@ -121,18 +123,19 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 
 	multiCallTx.Add(uint8(proc.TxUserNew), userNewPacked)
 
+	var userGroupDoctors *model.UserGroup
 	if user.Role == uint8(roles.Patient) {
 		// 'doctors' userGroup creating
 		{
 			groupName := common.DefaultGroupDoctors
 			groupDescription := ""
 
-			userGroupCreatePacked, _, err := s.groupCreatePack(ctx, user.UserID, groupName, groupDescription, nil)
+			userGroupDoctors, err = s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey, nil)
 			if err != nil {
 				return fmt.Errorf("service.GroupCreate error: %w", err)
 			}
 
-			multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupCreatePacked)
+			multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupDoctors.Packed)
 		}
 	}
 
@@ -149,6 +152,27 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
 		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+	}
+
+	if user.Role == uint8(roles.Patient) && userGroupDoctors != nil {
+		//Granting access to the group 'doctors' for user
+		userIDHash := sha3.Sum256([]byte(user.UserID + systemID))
+		doctorsGroupIDHash := indexer.Keccak256(userGroupDoctors.GroupID[:])
+
+		accessObj := indexer.AccessObject{
+			Kind:    access.UserGroup,
+			IdHash:  *doctorsGroupIDHash,
+			IdEncr:  userGroupDoctors.IDEncr,
+			KeyEncr: userGroupDoctors.KeyEncr,
+			Level:   access.Owner,
+		}
+
+		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+		if err != nil {
+			return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
+		}
+
+		procRequest.AddEthereumTx(proc.TxSetUserGroupAccess, txHash)
 	}
 
 	if err := procRequest.Commit(); err != nil {
