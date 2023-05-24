@@ -89,7 +89,7 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 	}
 
 	level := access.LevelFromString(req.AccessLevel)
-	if level == access.Unknown {
+	if level == access.NoAccess {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "AccessLevel is incorrect"})
 		return
 	}

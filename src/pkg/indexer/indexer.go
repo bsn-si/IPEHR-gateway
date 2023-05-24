@@ -38,9 +38,10 @@ type Index struct {
 	users       *users.Users
 	dataStore   *dataStore.DataStore
 
-	ehrIndexAbi  *abi.ABI
-	usersAbi     *abi.ABI
-	dataStoreAbi *abi.ABI
+	ehrIndexAbi    *abi.ABI
+	usersAbi       *abi.ABI
+	dataStoreAbi   *abi.ABI
+	accessStoreAbi *abi.ABI
 }
 
 const (
@@ -112,7 +113,7 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		log.Fatal(err)
 	}
 
-	accessStore, err := accessStore.NewAccessStore(common.HexToAddress(accessStoreAddr), client)
+	_accessStore, err := accessStore.NewAccessStore(common.HexToAddress(accessStoreAddr), client)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -130,6 +131,7 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 	ehrIndexAbi, _ := ehrIndexer.EhrIndexerMetaData.GetAbi()
 	usersAbi, _ := users.UsersMetaData.GetAbi()
 	dataStoreAbi, _ := dataStore.DataStoreMetaData.GetAbi()
+	accessStoreAbi, _ := accessStore.AccessStoreMetaData.GetAbi()
 
 	transactOpts, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
@@ -147,13 +149,14 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		signerAddress: signerAddress,
 
 		ehrIndex:    ehrIndex,
-		accessStore: accessStore,
+		accessStore: _accessStore,
 		users:       _users,
 		dataStore:   _dataStore,
 
-		ehrIndexAbi:  ehrIndexAbi,
-		usersAbi:     usersAbi,
-		dataStoreAbi: dataStoreAbi,
+		ehrIndexAbi:    ehrIndexAbi,
+		usersAbi:       usersAbi,
+		dataStoreAbi:   dataStoreAbi,
+		accessStoreAbi: accessStoreAbi,
 	}
 }
 

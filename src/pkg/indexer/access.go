@@ -3,9 +3,11 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -13,6 +15,8 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
 )
+
+type AccessObject = accessStore.IAccessStoreAccess
 
 func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind access.Kind, accessID []byte) ([]byte, access.Level, error) {
 	accessIDHash := Keccak256(accessID)
@@ -29,22 +33,39 @@ func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind ac
 	return acc.KeyEncr, acc.Level, nil
 }
 
-func (i *Index) SetAccess(ctx context.Context, IDHash, objectID *[32]byte, IDEncr, keyEncr []byte, kind access.Kind, level access.Level) (string, error) {
-	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*objectID, kind)
+func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte, nonce *big.Int) (string, error) {
+	userKey, err := crypto.ToECDSA(userPrivKey[:])
+	if err != nil {
+		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*subjectIDHash, accessObj.Kind)
 	if err != nil {
 		return "", fmt.Errorf("args.Pack error: %w", err)
 	}
 
 	accessID := Keccak256(data)
 
-	access := accessStore.IAccessStoreAccess{
-		IdHash:  *IDHash,
-		IdEncr:  IDEncr,
-		KeyEncr: keyEncr,
-		Level:   level,
+	data, err = i.accessStoreAbi.Pack("setAccess", accessID, *accessObj, userAddress, make([]byte, signatureLength))
+	if err != nil {
+		return "", fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	tx, err := i.accessStore.SetAccess(i.transactOpts, *accessID, access)
+	if nonce == nil {
+		nonce, err = i.Nonce(ctx, i.accessStore, &userAddress)
+		if err != nil {
+			return "", fmt.Errorf("accessNonce error: %w address: %s", err, userAddress.String())
+		}
+	}
+
+	signature, err := makeSignature(data, nonce, userKey)
+	if err != nil {
+		return "", fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	tx, err := i.accessStore.SetAccess(i.transactOpts, *accessID, *accessObj, userAddress, signature)
 	if err != nil {
 		return "", fmt.Errorf("accessStore.SetAccess error: %w", err)
 	}

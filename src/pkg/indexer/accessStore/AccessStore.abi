@@ -2,6 +2,25 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "allowedChange",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes32",
           "name": "accessID",
           "type": "bytes32"
@@ -11,6 +30,11 @@
       "outputs": [
         {
           "components": [
+            {
+              "internalType": "enum IAccessStore.AccessKind",
+              "name": "kind",
+              "type": "uint8"
+            },
             {
               "internalType": "bytes32",
               "name": "idHash",
@@ -58,6 +82,11 @@
         {
           "components": [
             {
+              "internalType": "enum IAccessStore.AccessKind",
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
               "internalType": "bytes32",
               "name": "idHash",
               "type": "bytes32"
@@ -89,12 +118,36 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nonces",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes32",
           "name": "accessID",
           "type": "bytes32"
         },
         {
           "components": [
+            {
+              "internalType": "enum IAccessStore.AccessKind",
+              "name": "kind",
+              "type": "uint8"
+            },
             {
               "internalType": "bytes32",
               "name": "idHash",
@@ -117,14 +170,24 @@
             }
           ],
           "internalType": "struct IAccessStore.Access",
-          "name": "o",
+          "name": "a",
           "type": "tuple"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
         }
       ],
       "name": "setAccess",
       "outputs": [
         {
-          "internalType": "uint8",
+          "internalType": "enum IAccessStore.AccessAction",
           "name": "",
           "type": "uint8"
         }
@@ -135,8 +198,52 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "addr",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "allowed",
+          "type": "bool"
+        }
+      ],
+      "name": "setAllowed",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_users",
+          "type": "address"
+        }
+      ],
+      "name": "setUsersContractAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes32",
-          "name": "userID",
+          "name": "userIDHash",
           "type": "bytes32"
         },
         {
@@ -155,6 +262,11 @@
         {
           "components": [
             {
+              "internalType": "enum IAccessStore.AccessKind",
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
               "internalType": "bytes32",
               "name": "idHash",
               "type": "bytes32"
@@ -178,6 +290,19 @@
           "internalType": "struct IAccessStore.Access",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "users",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",

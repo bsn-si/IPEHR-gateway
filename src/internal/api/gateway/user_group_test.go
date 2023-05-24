@@ -65,7 +65,7 @@ func TestUserHandler_GroupCreate(t *testing.T) {
 			"",
 			ugBytes,
 			func(svc *mocks.MockUserService) {
-				svc.EXPECT().GroupCreate(gomock.Any(), userID, ug.Name, ug.Description).Return("", ug.GroupID, nil)
+				svc.EXPECT().GroupCreate(gomock.Any(), gomock.Any(), userID, systemID, ug.Name, ug.Description).Return("", ug.GroupID, nil)
 				svc.EXPECT().NewProcRequest(gomock.Any(), userID, processing.RequestUserGroupCreate).Return(&MockRequest{}, nil)
 			},
 			http.StatusCreated,

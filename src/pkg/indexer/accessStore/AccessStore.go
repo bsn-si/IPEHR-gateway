@@ -30,6 +30,7 @@ var (
 
 // IAccessStoreAccess is an auto generated low-level Go binding around an user-defined struct.
 type IAccessStoreAccess struct {
+	Kind    uint8
 	IdHash  [32]byte
 	IdEncr  []byte
 	KeyEncr []byte
@@ -38,7 +39,7 @@ type IAccessStoreAccess struct {
 
 // AccessStoreMetaData contains all meta data concerning the AccessStore contract.
 var AccessStoreMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"}],\"name\":\"getAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"accessIdHash\",\"type\":\"bytes32\"}],\"name\":\"getAccessByIdHash\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"o\",\"type\":\"tuple\"}],\"name\":\"setAccess\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userID\",\"type\":\"bytes32\"},{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"}],\"name\":\"userAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"}],\"name\":\"getAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"accessIdHash\",\"type\":\"bytes32\"}],\"name\":\"getAccessByIdHash\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"a\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setAccess\",\"outputs\":[{\"internalType\":\"enumIAccessStore.AccessAction\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_users\",\"type\":\"address\"}],\"name\":\"setUsersContractAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"}],\"name\":\"userAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // AccessStoreABI is the input ABI used to generate the binding from.
@@ -187,9 +188,40 @@ func (_AccessStore *AccessStoreTransactorRaw) Transact(opts *bind.TransactOpts, 
 	return _AccessStore.Contract.contract.Transact(opts, method, params...)
 }
 
+// AllowedChange is a free data retrieval call binding the contract method 0xe9b5b29a.
+//
+// Solidity: function allowedChange(address ) view returns(bool)
+func (_AccessStore *AccessStoreCaller) AllowedChange(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
+	var out []interface{}
+	err := _AccessStore.contract.Call(opts, &out, "allowedChange", arg0)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// AllowedChange is a free data retrieval call binding the contract method 0xe9b5b29a.
+//
+// Solidity: function allowedChange(address ) view returns(bool)
+func (_AccessStore *AccessStoreSession) AllowedChange(arg0 common.Address) (bool, error) {
+	return _AccessStore.Contract.AllowedChange(&_AccessStore.CallOpts, arg0)
+}
+
+// AllowedChange is a free data retrieval call binding the contract method 0xe9b5b29a.
+//
+// Solidity: function allowedChange(address ) view returns(bool)
+func (_AccessStore *AccessStoreCallerSession) AllowedChange(arg0 common.Address) (bool, error) {
+	return _AccessStore.Contract.AllowedChange(&_AccessStore.CallOpts, arg0)
+}
+
 // GetAccess is a free data retrieval call binding the contract method 0x3347fcbe.
 //
-// Solidity: function getAccess(bytes32 accessID) view returns((bytes32,bytes,bytes,uint8)[])
+// Solidity: function getAccess(bytes32 accessID) view returns((uint8,bytes32,bytes,bytes,uint8)[])
 func (_AccessStore *AccessStoreCaller) GetAccess(opts *bind.CallOpts, accessID [32]byte) ([]IAccessStoreAccess, error) {
 	var out []interface{}
 	err := _AccessStore.contract.Call(opts, &out, "getAccess", accessID)
@@ -206,21 +238,21 @@ func (_AccessStore *AccessStoreCaller) GetAccess(opts *bind.CallOpts, accessID [
 
 // GetAccess is a free data retrieval call binding the contract method 0x3347fcbe.
 //
-// Solidity: function getAccess(bytes32 accessID) view returns((bytes32,bytes,bytes,uint8)[])
+// Solidity: function getAccess(bytes32 accessID) view returns((uint8,bytes32,bytes,bytes,uint8)[])
 func (_AccessStore *AccessStoreSession) GetAccess(accessID [32]byte) ([]IAccessStoreAccess, error) {
 	return _AccessStore.Contract.GetAccess(&_AccessStore.CallOpts, accessID)
 }
 
 // GetAccess is a free data retrieval call binding the contract method 0x3347fcbe.
 //
-// Solidity: function getAccess(bytes32 accessID) view returns((bytes32,bytes,bytes,uint8)[])
+// Solidity: function getAccess(bytes32 accessID) view returns((uint8,bytes32,bytes,bytes,uint8)[])
 func (_AccessStore *AccessStoreCallerSession) GetAccess(accessID [32]byte) ([]IAccessStoreAccess, error) {
 	return _AccessStore.Contract.GetAccess(&_AccessStore.CallOpts, accessID)
 }
 
 // GetAccessByIdHash is a free data retrieval call binding the contract method 0x9ae2da76.
 //
-// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((bytes32,bytes,bytes,uint8))
+// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((uint8,bytes32,bytes,bytes,uint8))
 func (_AccessStore *AccessStoreCaller) GetAccessByIdHash(opts *bind.CallOpts, accessID [32]byte, accessIdHash [32]byte) (IAccessStoreAccess, error) {
 	var out []interface{}
 	err := _AccessStore.contract.Call(opts, &out, "getAccessByIdHash", accessID, accessIdHash)
@@ -237,24 +269,55 @@ func (_AccessStore *AccessStoreCaller) GetAccessByIdHash(opts *bind.CallOpts, ac
 
 // GetAccessByIdHash is a free data retrieval call binding the contract method 0x9ae2da76.
 //
-// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((bytes32,bytes,bytes,uint8))
+// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((uint8,bytes32,bytes,bytes,uint8))
 func (_AccessStore *AccessStoreSession) GetAccessByIdHash(accessID [32]byte, accessIdHash [32]byte) (IAccessStoreAccess, error) {
 	return _AccessStore.Contract.GetAccessByIdHash(&_AccessStore.CallOpts, accessID, accessIdHash)
 }
 
 // GetAccessByIdHash is a free data retrieval call binding the contract method 0x9ae2da76.
 //
-// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((bytes32,bytes,bytes,uint8))
+// Solidity: function getAccessByIdHash(bytes32 accessID, bytes32 accessIdHash) view returns((uint8,bytes32,bytes,bytes,uint8))
 func (_AccessStore *AccessStoreCallerSession) GetAccessByIdHash(accessID [32]byte, accessIdHash [32]byte) (IAccessStoreAccess, error) {
 	return _AccessStore.Contract.GetAccessByIdHash(&_AccessStore.CallOpts, accessID, accessIdHash)
 }
 
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
+//
+// Solidity: function nonces(address ) view returns(uint256)
+func (_AccessStore *AccessStoreCaller) Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _AccessStore.contract.Call(opts, &out, "nonces", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
+//
+// Solidity: function nonces(address ) view returns(uint256)
+func (_AccessStore *AccessStoreSession) Nonces(arg0 common.Address) (*big.Int, error) {
+	return _AccessStore.Contract.Nonces(&_AccessStore.CallOpts, arg0)
+}
+
+// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
+//
+// Solidity: function nonces(address ) view returns(uint256)
+func (_AccessStore *AccessStoreCallerSession) Nonces(arg0 common.Address) (*big.Int, error) {
+	return _AccessStore.Contract.Nonces(&_AccessStore.CallOpts, arg0)
+}
+
 // UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
 //
-// Solidity: function userAccess(bytes32 userID, uint8 kind, bytes32 idHash) view returns((bytes32,bytes,bytes,uint8))
-func (_AccessStore *AccessStoreCaller) UserAccess(opts *bind.CallOpts, userID [32]byte, kind uint8, idHash [32]byte) (IAccessStoreAccess, error) {
+// Solidity: function userAccess(bytes32 userIDHash, uint8 kind, bytes32 idHash) view returns((uint8,bytes32,bytes,bytes,uint8))
+func (_AccessStore *AccessStoreCaller) UserAccess(opts *bind.CallOpts, userIDHash [32]byte, kind uint8, idHash [32]byte) (IAccessStoreAccess, error) {
 	var out []interface{}
-	err := _AccessStore.contract.Call(opts, &out, "userAccess", userID, kind, idHash)
+	err := _AccessStore.contract.Call(opts, &out, "userAccess", userIDHash, kind, idHash)
 
 	if err != nil {
 		return *new(IAccessStoreAccess), err
@@ -268,35 +331,129 @@ func (_AccessStore *AccessStoreCaller) UserAccess(opts *bind.CallOpts, userID [3
 
 // UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
 //
-// Solidity: function userAccess(bytes32 userID, uint8 kind, bytes32 idHash) view returns((bytes32,bytes,bytes,uint8))
-func (_AccessStore *AccessStoreSession) UserAccess(userID [32]byte, kind uint8, idHash [32]byte) (IAccessStoreAccess, error) {
-	return _AccessStore.Contract.UserAccess(&_AccessStore.CallOpts, userID, kind, idHash)
+// Solidity: function userAccess(bytes32 userIDHash, uint8 kind, bytes32 idHash) view returns((uint8,bytes32,bytes,bytes,uint8))
+func (_AccessStore *AccessStoreSession) UserAccess(userIDHash [32]byte, kind uint8, idHash [32]byte) (IAccessStoreAccess, error) {
+	return _AccessStore.Contract.UserAccess(&_AccessStore.CallOpts, userIDHash, kind, idHash)
 }
 
 // UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
 //
-// Solidity: function userAccess(bytes32 userID, uint8 kind, bytes32 idHash) view returns((bytes32,bytes,bytes,uint8))
-func (_AccessStore *AccessStoreCallerSession) UserAccess(userID [32]byte, kind uint8, idHash [32]byte) (IAccessStoreAccess, error) {
-	return _AccessStore.Contract.UserAccess(&_AccessStore.CallOpts, userID, kind, idHash)
+// Solidity: function userAccess(bytes32 userIDHash, uint8 kind, bytes32 idHash) view returns((uint8,bytes32,bytes,bytes,uint8))
+func (_AccessStore *AccessStoreCallerSession) UserAccess(userIDHash [32]byte, kind uint8, idHash [32]byte) (IAccessStoreAccess, error) {
+	return _AccessStore.Contract.UserAccess(&_AccessStore.CallOpts, userIDHash, kind, idHash)
 }
 
-// SetAccess is a paid mutator transaction binding the contract method 0x2547e2fd.
+// Users is a free data retrieval call binding the contract method 0xf2020275.
 //
-// Solidity: function setAccess(bytes32 accessID, (bytes32,bytes,bytes,uint8) o) returns(uint8)
-func (_AccessStore *AccessStoreTransactor) SetAccess(opts *bind.TransactOpts, accessID [32]byte, o IAccessStoreAccess) (*types.Transaction, error) {
-	return _AccessStore.contract.Transact(opts, "setAccess", accessID, o)
+// Solidity: function users() view returns(address)
+func (_AccessStore *AccessStoreCaller) Users(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _AccessStore.contract.Call(opts, &out, "users")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
-// SetAccess is a paid mutator transaction binding the contract method 0x2547e2fd.
+// Users is a free data retrieval call binding the contract method 0xf2020275.
 //
-// Solidity: function setAccess(bytes32 accessID, (bytes32,bytes,bytes,uint8) o) returns(uint8)
-func (_AccessStore *AccessStoreSession) SetAccess(accessID [32]byte, o IAccessStoreAccess) (*types.Transaction, error) {
-	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, o)
+// Solidity: function users() view returns(address)
+func (_AccessStore *AccessStoreSession) Users() (common.Address, error) {
+	return _AccessStore.Contract.Users(&_AccessStore.CallOpts)
 }
 
-// SetAccess is a paid mutator transaction binding the contract method 0x2547e2fd.
+// Users is a free data retrieval call binding the contract method 0xf2020275.
 //
-// Solidity: function setAccess(bytes32 accessID, (bytes32,bytes,bytes,uint8) o) returns(uint8)
-func (_AccessStore *AccessStoreTransactorSession) SetAccess(accessID [32]byte, o IAccessStoreAccess) (*types.Transaction, error) {
-	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, o)
+// Solidity: function users() view returns(address)
+func (_AccessStore *AccessStoreCallerSession) Users() (common.Address, error) {
+	return _AccessStore.Contract.Users(&_AccessStore.CallOpts)
+}
+
+// SetAccess is a paid mutator transaction binding the contract method 0xf44e860f.
+//
+// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, bytes signature) returns(uint8)
+func (_AccessStore *AccessStoreTransactor) SetAccess(opts *bind.TransactOpts, accessID [32]byte, a IAccessStoreAccess, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _AccessStore.contract.Transact(opts, "setAccess", accessID, a, signer, signature)
+}
+
+// SetAccess is a paid mutator transaction binding the contract method 0xf44e860f.
+//
+// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, bytes signature) returns(uint8)
+func (_AccessStore *AccessStoreSession) SetAccess(accessID [32]byte, a IAccessStoreAccess, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, a, signer, signature)
+}
+
+// SetAccess is a paid mutator transaction binding the contract method 0xf44e860f.
+//
+// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, bytes signature) returns(uint8)
+func (_AccessStore *AccessStoreTransactorSession) SetAccess(accessID [32]byte, a IAccessStoreAccess, signer common.Address, signature []byte) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, a, signer, signature)
+}
+
+// SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
+//
+// Solidity: function setAllowed(address addr, bool allowed) returns()
+func (_AccessStore *AccessStoreTransactor) SetAllowed(opts *bind.TransactOpts, addr common.Address, allowed bool) (*types.Transaction, error) {
+	return _AccessStore.contract.Transact(opts, "setAllowed", addr, allowed)
+}
+
+// SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
+//
+// Solidity: function setAllowed(address addr, bool allowed) returns()
+func (_AccessStore *AccessStoreSession) SetAllowed(addr common.Address, allowed bool) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetAllowed(&_AccessStore.TransactOpts, addr, allowed)
+}
+
+// SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.
+//
+// Solidity: function setAllowed(address addr, bool allowed) returns()
+func (_AccessStore *AccessStoreTransactorSession) SetAllowed(addr common.Address, allowed bool) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetAllowed(&_AccessStore.TransactOpts, addr, allowed)
+}
+
+// SetUsersContractAddress is a paid mutator transaction binding the contract method 0xdbfadfe2.
+//
+// Solidity: function setUsersContractAddress(address _users) returns()
+func (_AccessStore *AccessStoreTransactor) SetUsersContractAddress(opts *bind.TransactOpts, _users common.Address) (*types.Transaction, error) {
+	return _AccessStore.contract.Transact(opts, "setUsersContractAddress", _users)
+}
+
+// SetUsersContractAddress is a paid mutator transaction binding the contract method 0xdbfadfe2.
+//
+// Solidity: function setUsersContractAddress(address _users) returns()
+func (_AccessStore *AccessStoreSession) SetUsersContractAddress(_users common.Address) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetUsersContractAddress(&_AccessStore.TransactOpts, _users)
+}
+
+// SetUsersContractAddress is a paid mutator transaction binding the contract method 0xdbfadfe2.
+//
+// Solidity: function setUsersContractAddress(address _users) returns()
+func (_AccessStore *AccessStoreTransactorSession) SetUsersContractAddress(_users common.Address) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetUsersContractAddress(&_AccessStore.TransactOpts, _users)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_AccessStore *AccessStoreTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
+	return _AccessStore.contract.Transact(opts, "transferOwnership", newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_AccessStore *AccessStoreSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _AccessStore.Contract.TransferOwnership(&_AccessStore.TransactOpts, newOwner)
+}
+
+// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
+//
+// Solidity: function transferOwnership(address newOwner) returns()
+func (_AccessStore *AccessStoreTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
+	return _AccessStore.Contract.TransferOwnership(&_AccessStore.TransactOpts, newOwner)
 }

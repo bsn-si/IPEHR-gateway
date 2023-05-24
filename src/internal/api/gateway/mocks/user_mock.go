@@ -126,19 +126,18 @@ func (mr *MockUserServiceMockRecorder) GroupAddUser(ctx, userID, systemID, addUs
 }
 
 // GroupCreate mocks base method.
-func (m *MockUserService) GroupCreate(ctx context.Context, userID, name, description string) (string, *uuid.UUID, error) {
+func (m *MockUserService) GroupCreate(ctx context.Context, req processing.RequestInterface, userID, systemID, groupName, groupDescription string) (*model.UserGroup, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GroupCreate", ctx, userID, name, description)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(*uuid.UUID)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "GroupCreate", ctx, req, userID, systemID, groupName, groupDescription)
+	ret0, _ := ret[0].(*model.UserGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GroupCreate indicates an expected call of GroupCreate.
-func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, userID, name, description interface{}) *gomock.Call {
+func (mr *MockUserServiceMockRecorder) GroupCreate(ctx, req, userID, systemID, groupName, groupDescription interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, userID, name, description)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupCreate", reflect.TypeOf((*MockUserService)(nil).GroupCreate), ctx, req, userID, systemID, groupName, groupDescription)
 }
 
 // GroupGetByID mocks base method.
