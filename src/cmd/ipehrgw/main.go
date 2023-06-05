@@ -13,11 +13,11 @@ import (
 	"os/signal"
 	"time"
 
+	gatewayapi "github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway"
 	_ "github.com/bsn-si/IPEHR-gateway/src/internal/api/gateway/docs"
 	"github.com/bsn-si/IPEHR-gateway/src/internal/observability"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/infrastructure"
-	"github.com/circonus-labs/circonus-gometrics/api"
 )
 
 func main() {
@@ -39,7 +39,7 @@ func main() {
 
 	infra := infrastructure.New(cfg)
 
-	handler := api.New(cfg, infra).Build()
+	handler := gatewayapi.New(cfg, infra).Build()
 
 	server := http.Server{
 		Addr:    cfg.Host,
