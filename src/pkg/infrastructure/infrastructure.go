@@ -56,41 +56,41 @@ func New(cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	// ks := keystore.New(cfg.KeystoreKey)
+	ks := keystore.New(cfg.KeystoreKey)
 
-	// ethClient, err := ethclient.Dial(cfg.Contract.Endpoint)
-	// if err != nil {
-	// log.Fatal(err)
-	// }
+	ethClient, err := ethclient.Dial(cfg.Contract.Endpoint)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// ipfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURLs)
-	// if err != nil {
-	// log.Fatal(err)
-	// }
+	ipfsClient, err := ipfs.NewClient(cfg.Storage.Ipfs.EndpointURLs)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// filecoinCfg := filecoin.Config(cfg.Storage.Filecoin)
-	//
-	// filecoinClient, err := filecoin.NewClient(&filecoinCfg)
-	// if err != nil {
-	// log.Fatal(err)
-	// }
+	filecoinCfg := filecoin.Config(cfg.Storage.Filecoin)
+
+	filecoinClient, err := filecoin.NewClient(&filecoinCfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return &Infra{
-		LocalDB: db,
-		// Keystore:       ks,
-		HTTPClient: http.DefaultClient,
-		// EthClient:      ethClient,
-		// IpfsClient:     ipfsClient,
-		// FilecoinClient: filecoinClient,
-		// Index: indexer.New(
-		// 	cfg.Contract.AddressEhrIndex,
-		// 	cfg.Contract.AddressAccessStore,
-		// 	cfg.Contract.AddressUsers,
-		// 	cfg.Contract.AddressDataStore,
-		// 	cfg.Contract.PrivKeyPath,
-		// 	nil,
-		// 	cfg.Contract.GasTipCap,
-		// ),
+		LocalDB:        db,
+		Keystore:       ks,
+		HTTPClient:     http.DefaultClient,
+		EthClient:      ethClient,
+		IpfsClient:     ipfsClient,
+		FilecoinClient: filecoinClient,
+		Index: indexer.New(
+			cfg.Contract.AddressEhrIndex,
+			cfg.Contract.AddressAccessStore,
+			cfg.Contract.AddressUsers,
+			cfg.Contract.AddressDataStore,
+			cfg.Contract.PrivKeyPath,
+			ethClient,
+			cfg.Contract.GasTipCap,
+		),
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,

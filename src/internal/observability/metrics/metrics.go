@@ -67,6 +67,8 @@ func SetupMetrics(serviceName string) {
 	if err != nil {
 		log.Fatalf("error on blocks counter: %v", err)
 	}
+
+	Middleware = middleware
 }
 
 func getServiceResource(serviceName string) *resource.Resource {

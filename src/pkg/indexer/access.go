@@ -54,7 +54,7 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 	}
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.accessStore, &userAddress)
+		nonce, err = Nonce(ctx, i.accessStore, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("accessNonce error: %w address: %s", err, userAddress.String())
 		}

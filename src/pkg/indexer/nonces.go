@@ -13,8 +13,12 @@ type Noncer interface {
 	Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error)
 }
 
-func (i *Index) Nonce(ctx context.Context, noncer Noncer, address *common.Address) (*big.Int, error) {
-	nonce, err := noncer.Nonces(&bind.CallOpts{Context: ctx}, *address)
+func Nonce(ctx context.Context, noncer Noncer, address *common.Address) (*big.Int, error) {
+	opts := &bind.CallOpts{
+		Context: ctx,
+	}
+
+	nonce, err := noncer.Nonces(opts, *address)
 	if err != nil {
 		return nil, fmt.Errorf("Index.Nonces error: %w address: %s", err, address.String())
 	}

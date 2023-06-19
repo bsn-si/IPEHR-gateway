@@ -26,7 +26,7 @@ func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMe
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
+		nonce, err = Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -166,7 +166,7 @@ func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
+		nonce, err = Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -228,7 +228,7 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 	defer i.Unlock()
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
+		nonce, err = Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}

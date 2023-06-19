@@ -79,7 +79,7 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 	toUserAddress := crypto.PubkeyToAddress(toUserKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
+		nonce, err = Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}

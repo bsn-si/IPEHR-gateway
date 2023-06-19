@@ -14,7 +14,7 @@ func (i *Index) DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUI
 	copy(dID[:], dataID[:])
 	copy(eID[:], ehrID[:])
 
-	nonce, err := i.Nonce(ctx, i.dataStore, &i.signerAddress)
+	nonce, err := Nonce(ctx, i.dataStore, &i.signerAddress)
 	if err != nil {
 		return "", fmt.Errorf("Nonce error: %w address: %s", err, i.signerAddress.String())
 	}

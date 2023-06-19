@@ -9,7 +9,11 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func Middleware(c *gin.Context) {
+var Middleware func(c *gin.Context) = func(c *gin.Context) {
+	c.Next()
+}
+
+func middleware(c *gin.Context) {
 	startTime := time.Now()
 	reqSize := computeApproximateRequestSize(c.Request)
 

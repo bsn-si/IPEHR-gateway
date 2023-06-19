@@ -175,7 +175,7 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.users, &userAddress)
+		nonce, err = Nonce(ctx, i.users, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}

@@ -116,6 +116,9 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 		return fmt.Errorf("MultiCallUsersNew error: %w. userID: %s", err, user.UserID)
 	}
 
+	// nonce, err := indexer.Nonce(ctx, multiCallTx.Nonce(), s.in)
+	// nonce := multiCallTx.Nonce()
+
 	userNewPacked, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivKey, nil)
 	if err != nil {
 		return fmt.Errorf("Index.UserNew error: %w", err)

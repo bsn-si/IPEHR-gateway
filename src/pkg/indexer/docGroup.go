@@ -43,7 +43,7 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 	}
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
+		nonce, err = Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
@@ -90,7 +90,7 @@ func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *
 	}
 
 	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
+		nonce, err = Nonce(ctx, i.ehrIndex, &userAddress)
 		if err != nil {
 			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
 		}
