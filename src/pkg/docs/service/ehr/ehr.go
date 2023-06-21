@@ -85,14 +85,11 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
-	if err != nil {
-		return nil, fmt.Errorf("MultiCallEhrNew error: %w. userID: %s", err, userID)
-	}
+	multiCallTx := s.Infra.Index.MultiCallEhrNew()
 
 	// Index EHR userIDHash -> ehrUUID
 	{
-		packed, err := s.Infra.Index.SetEhrUser(ctx, userID, systemID, ehrUUID, userPrivKey, multiCallTx.Nonce())
+		packed, err := s.Infra.Index.SetEhrUser(ctx, userID, systemID, ehrUUID, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetEhrUser error: %w", err)
 		}
@@ -129,7 +126,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			return nil, fmt.Errorf("keybox.SealAnonymous error: %w", err)
 		}
 
-		packed, err := s.Infra.Index.DocGroupCreate(ctx, &allDocsGroup.GroupID, groupIDEncr, groupKeyEncr, groupNameEncr, userPrivKey, multiCallTx.Nonce())
+		packed, err := s.Infra.Index.DocGroupCreate(ctx, &allDocsGroup.GroupID, groupIDEncr, groupKeyEncr, groupNameEncr, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.DocGroupCreate error: %w", err)
 		}
@@ -149,7 +146,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Owner,
 		}
 
-		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 		}
@@ -224,7 +221,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Read,
 		}
 
-		txHash, err := s.Infra.Index.SetAccess(ctx, doctorsGroupIDHash, &accessObj, userPrivKey, nil)
+		txHash, err := s.Infra.Index.SetAccess(ctx, doctorsGroupIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess doctorsGroup to allDocsGroup error: %w", err)
 		}
@@ -339,7 +336,7 @@ func (s *Service) addEhrMetaData(ctx context.Context, multiCallTx *indexer.Multi
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Ehr, docMeta, userPrivKey, multiCallTx.Nonce())
+	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Ehr, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -371,7 +368,7 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}
@@ -389,7 +386,7 @@ func (s *Service) addDocumentToGroup(ctx context.Context, multiCallTx *indexer.M
 		return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
 	}
 
-	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &groupToAdd.GroupID, docCIDHash, docCIDEncr, userPrivKey, multiCallTx.Nonce())
+	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &groupToAdd.GroupID, docCIDHash, docCIDEncr, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 	}

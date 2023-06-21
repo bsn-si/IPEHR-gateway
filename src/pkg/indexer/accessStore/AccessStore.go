@@ -39,7 +39,7 @@ type IAccessStoreAccess struct {
 
 // AccessStoreMetaData contains all meta data concerning the AccessStore contract.
 var AccessStoreMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"}],\"name\":\"getAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"accessIdHash\",\"type\":\"bytes32\"}],\"name\":\"getAccessByIdHash\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"a\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setAccess\",\"outputs\":[{\"internalType\":\"enumIAccessStore.AccessAction\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_users\",\"type\":\"address\"}],\"name\":\"setUsersContractAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"}],\"name\":\"userAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"}],\"name\":\"getAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"accessIdHash\",\"type\":\"bytes32\"}],\"name\":\"getAccessByIdHash\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"accessID\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"a\",\"type\":\"tuple\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"setAccess\",\"outputs\":[{\"internalType\":\"enumIAccessStore.AccessAction\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_users\",\"type\":\"address\"}],\"name\":\"setUsersContractAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"}],\"name\":\"userAccess\",\"outputs\":[{\"components\":[{\"internalType\":\"enumIAccessStore.AccessKind\",\"name\":\"kind\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"idHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"idEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"}],\"internalType\":\"structIAccessStore.Access\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // AccessStoreABI is the input ABI used to generate the binding from.
@@ -281,37 +281,6 @@ func (_AccessStore *AccessStoreCallerSession) GetAccessByIdHash(accessID [32]byt
 	return _AccessStore.Contract.GetAccessByIdHash(&_AccessStore.CallOpts, accessID, accessIdHash)
 }
 
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_AccessStore *AccessStoreCaller) Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _AccessStore.contract.Call(opts, &out, "nonces", arg0)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_AccessStore *AccessStoreSession) Nonces(arg0 common.Address) (*big.Int, error) {
-	return _AccessStore.Contract.Nonces(&_AccessStore.CallOpts, arg0)
-}
-
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_AccessStore *AccessStoreCallerSession) Nonces(arg0 common.Address) (*big.Int, error) {
-	return _AccessStore.Contract.Nonces(&_AccessStore.CallOpts, arg0)
-}
-
 // UserAccess is a free data retrieval call binding the contract method 0xa93f7898.
 //
 // Solidity: function userAccess(bytes32 userIDHash, uint8 kind, bytes32 idHash) view returns((uint8,bytes32,bytes,bytes,uint8))
@@ -374,25 +343,25 @@ func (_AccessStore *AccessStoreCallerSession) Users() (common.Address, error) {
 	return _AccessStore.Contract.Users(&_AccessStore.CallOpts)
 }
 
-// SetAccess is a paid mutator transaction binding the contract method 0xf44e860f.
+// SetAccess is a paid mutator transaction binding the contract method 0x04847979.
 //
-// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, bytes signature) returns(uint8)
-func (_AccessStore *AccessStoreTransactor) SetAccess(opts *bind.TransactOpts, accessID [32]byte, a IAccessStoreAccess, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _AccessStore.contract.Transact(opts, "setAccess", accessID, a, signer, signature)
+// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, uint256 deadline, bytes signature) returns(uint8)
+func (_AccessStore *AccessStoreTransactor) SetAccess(opts *bind.TransactOpts, accessID [32]byte, a IAccessStoreAccess, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _AccessStore.contract.Transact(opts, "setAccess", accessID, a, signer, deadline, signature)
 }
 
-// SetAccess is a paid mutator transaction binding the contract method 0xf44e860f.
+// SetAccess is a paid mutator transaction binding the contract method 0x04847979.
 //
-// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, bytes signature) returns(uint8)
-func (_AccessStore *AccessStoreSession) SetAccess(accessID [32]byte, a IAccessStoreAccess, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, a, signer, signature)
+// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, uint256 deadline, bytes signature) returns(uint8)
+func (_AccessStore *AccessStoreSession) SetAccess(accessID [32]byte, a IAccessStoreAccess, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, a, signer, deadline, signature)
 }
 
-// SetAccess is a paid mutator transaction binding the contract method 0xf44e860f.
+// SetAccess is a paid mutator transaction binding the contract method 0x04847979.
 //
-// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, bytes signature) returns(uint8)
-func (_AccessStore *AccessStoreTransactorSession) SetAccess(accessID [32]byte, a IAccessStoreAccess, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, a, signer, signature)
+// Solidity: function setAccess(bytes32 accessID, (uint8,bytes32,bytes,bytes,uint8) a, address signer, uint256 deadline, bytes signature) returns(uint8)
+func (_AccessStore *AccessStoreTransactorSession) SetAccess(accessID [32]byte, a IAccessStoreAccess, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _AccessStore.Contract.SetAccess(&_AccessStore.TransactOpts, accessID, a, signer, deadline, signature)
 }
 
 // SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.

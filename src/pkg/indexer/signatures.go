@@ -11,15 +11,15 @@ import (
 
 const signatureLength = 65
 
-func makeSignature(data []byte, nonce *big.Int, pk *ecdsa.PrivateKey) ([]byte, error) {
+func makeSignature(data []byte, pk *ecdsa.PrivateKey, deadline *big.Int) ([]byte, error) {
 	data = data[:len(data)-(signatureLength+32)]
 
-	nonceBytes, _ := abi.Arguments{{Type: Uint256}}.Pack(nonce)
+	deadlineBytes, _ := abi.Arguments{{Type: Uint256}}.Pack(deadline)
 
 	prefixedHash := crypto.Keccak256Hash(
 		[]byte("\x19Ethereum Signed Message:\n32"),
 		crypto.Keccak256(data),
-		nonceBytes,
+		deadlineBytes,
 	)
 
 	sig, err := crypto.Sign(prefixedHash.Bytes(), pk)

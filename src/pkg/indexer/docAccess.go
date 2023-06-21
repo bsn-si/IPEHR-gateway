@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -50,7 +51,7 @@ func (i *Index) GetAccessList(ctx context.Context, IDHash *[32]byte, kind access
 	return l, nil
 }
 
-func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, accessLevel uint8, userPrivKey, toUserPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, accessLevel uint8, userPrivKey, toUserPrivKey *[32]byte) ([]byte, error) {
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -78,13 +79,6 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 	toUserAddress := crypto.PubkeyToAddress(toUserKey.PublicKey)
 
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
 	sig := make([]byte, signatureLength)
 
 	data, err = i.ehrIndexAbi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
@@ -92,12 +86,14 @@ func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, 
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	sig, err = makeSignature(data, nonce, userKey)
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	sig, err = makeSignature(data, userKey, deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.ehrIndexAbi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setDocAccess", CID, accessObj, toUserAddress, userAddress, deadline, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}

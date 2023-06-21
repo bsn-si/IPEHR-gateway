@@ -184,7 +184,7 @@ func (s *Service) addMetaData(ctx context.Context, req proc.RequestInterface, ke
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Directory, docMeta, userPrivKey, nil)
+	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Directory, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -227,7 +227,7 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}
@@ -245,7 +245,7 @@ func (s *Service) addDocGroupData(ctx context.Context, req proc.RequestInterface
 		return fmt.Errorf("CID encryption error: %w", err)
 	}
 
-	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey, nil)
+	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 	}
@@ -303,7 +303,7 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Directory, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey, nil)
+	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Directory, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err

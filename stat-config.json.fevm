@@ -1,0 +1,26 @@
+{
+	"host": "localhost:8081",
+	"baseURL": "http://localhost:8081",
+	"localDB": {
+		"path": "/srv/IPEHR-stat/db/local.db",
+		"migrations": "/srv/IPEHR-stat/db/migrations"
+	},
+    "sync": {
+		"endpoint": "https://api.calibration.node.glif.io/rpc/v1",
+        "startBlock": 667365,
+        "contracts": [
+            {
+                "name": "ehrIndex",
+                "address": "0xbd185A20ECd4A117bbCB3DAed7E2E0ae9031f759"
+            },
+            {
+                "name": "users",
+                "address": "0x1d53a8af051C5485E1f1639A92f83D66efb6eABD"
+            },
+            {
+                "name": "dataStore",
+                "address": "0x4E6fE7eF9CeFD59F9206A78CA27bAD1981E3Ef8d"
+            }
+        ]
+    }
+}

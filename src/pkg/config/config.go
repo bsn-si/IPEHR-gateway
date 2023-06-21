@@ -35,6 +35,7 @@ type Config struct {
 			AuthToken        string
 			DealsMaxPrice    uint64
 			Miners           []string
+			VerifiedDeals    bool
 		}
 	}
 	Contract struct {

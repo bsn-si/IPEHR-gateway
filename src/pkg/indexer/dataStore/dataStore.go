@@ -30,7 +30,7 @@ var (
 
 // DataStoreMetaData contains all meta data concerning the DataStore contract.
 var DataStoreMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_users\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"dataID\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrID\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"DataUpdate\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"accessStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"dataUpdate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ehrIndex\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_users\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"dataID\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"ehrID\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"DataUpdate\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"accessStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"dataID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"ehrID\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"dataUpdate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ehrIndex\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // DataStoreABI is the input ABI used to generate the binding from.
@@ -272,37 +272,6 @@ func (_DataStore *DataStoreCallerSession) EhrIndex() (common.Address, error) {
 	return _DataStore.Contract.EhrIndex(&_DataStore.CallOpts)
 }
 
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_DataStore *DataStoreCaller) Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _DataStore.contract.Call(opts, &out, "nonces", arg0)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_DataStore *DataStoreSession) Nonces(arg0 common.Address) (*big.Int, error) {
-	return _DataStore.Contract.Nonces(&_DataStore.CallOpts, arg0)
-}
-
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_DataStore *DataStoreCallerSession) Nonces(arg0 common.Address) (*big.Int, error) {
-	return _DataStore.Contract.Nonces(&_DataStore.CallOpts, arg0)
-}
-
 // Users is a free data retrieval call binding the contract method 0xf2020275.
 //
 // Solidity: function users() view returns(address)
@@ -334,25 +303,25 @@ func (_DataStore *DataStoreCallerSession) Users() (common.Address, error) {
 	return _DataStore.Contract.Users(&_DataStore.CallOpts)
 }
 
-// DataUpdate is a paid mutator transaction binding the contract method 0xbd97b9c2.
+// DataUpdate is a paid mutator transaction binding the contract method 0x03144fad.
 //
-// Solidity: function dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, bytes signature) returns()
-func (_DataStore *DataStoreTransactor) DataUpdate(opts *bind.TransactOpts, groupID [32]byte, dataID [32]byte, ehrID [32]byte, data []byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _DataStore.contract.Transact(opts, "dataUpdate", groupID, dataID, ehrID, data, signer, signature)
+// Solidity: function dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, uint256 deadline, bytes signature) returns()
+func (_DataStore *DataStoreTransactor) DataUpdate(opts *bind.TransactOpts, groupID [32]byte, dataID [32]byte, ehrID [32]byte, data []byte, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _DataStore.contract.Transact(opts, "dataUpdate", groupID, dataID, ehrID, data, signer, deadline, signature)
 }
 
-// DataUpdate is a paid mutator transaction binding the contract method 0xbd97b9c2.
+// DataUpdate is a paid mutator transaction binding the contract method 0x03144fad.
 //
-// Solidity: function dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, bytes signature) returns()
-func (_DataStore *DataStoreSession) DataUpdate(groupID [32]byte, dataID [32]byte, ehrID [32]byte, data []byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _DataStore.Contract.DataUpdate(&_DataStore.TransactOpts, groupID, dataID, ehrID, data, signer, signature)
+// Solidity: function dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, uint256 deadline, bytes signature) returns()
+func (_DataStore *DataStoreSession) DataUpdate(groupID [32]byte, dataID [32]byte, ehrID [32]byte, data []byte, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _DataStore.Contract.DataUpdate(&_DataStore.TransactOpts, groupID, dataID, ehrID, data, signer, deadline, signature)
 }
 
-// DataUpdate is a paid mutator transaction binding the contract method 0xbd97b9c2.
+// DataUpdate is a paid mutator transaction binding the contract method 0x03144fad.
 //
-// Solidity: function dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, bytes signature) returns()
-func (_DataStore *DataStoreTransactorSession) DataUpdate(groupID [32]byte, dataID [32]byte, ehrID [32]byte, data []byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _DataStore.Contract.DataUpdate(&_DataStore.TransactOpts, groupID, dataID, ehrID, data, signer, signature)
+// Solidity: function dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, uint256 deadline, bytes signature) returns()
+func (_DataStore *DataStoreTransactorSession) DataUpdate(groupID [32]byte, dataID [32]byte, ehrID [32]byte, data []byte, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _DataStore.Contract.DataUpdate(&_DataStore.TransactOpts, groupID, dataID, ehrID, data, signer, deadline, signature)
 }
 
 // SetAllowed is a paid mutator transaction binding the contract method 0x4697f05d.

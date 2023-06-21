@@ -27,6 +27,7 @@ type Client struct {
 	authToken     string
 	dealsMaxPrice uint64
 	miners        []string
+	verified      bool
 	api           *lotusapi.FullNodeStruct
 	closer        jsonrpc.ClientCloser
 	httpClient    *http.Client
@@ -38,6 +39,7 @@ type Config struct {
 	AuthToken        string
 	DealsMaxPrice    uint64
 	Miners           []string
+	VerifiedDeals    bool
 }
 
 // nolint
@@ -94,6 +96,7 @@ func NewClient(cfg *Config) (*Client, error) {
 		authToken:     cfg.AuthToken,
 		dealsMaxPrice: cfg.DealsMaxPrice,
 		miners:        cfg.Miners,
+		verified:      cfg.VerifiedDeals,
 		api:           &lotusapi.FullNodeStruct{},
 		httpClient:    http.DefaultClient,
 	}
@@ -136,9 +139,9 @@ func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint
 		Miner:             *minerAddr,
 		EpochPrice:        types.NewInt(c.dealsMaxPrice / 1e3), // TODO get from miner ask
 		MinBlocksDuration: 518400,                              // epoch = 30 sec, 2880 per day, 180 days * 2880 = 518400
+		VerifiedDeal:      c.verified,
+		FastRetrieval:     true,
 		//DealStartEpoch:    200,
-		VerifiedDeal:  true,
-		FastRetrieval: true,
 		//ProviderCollateral big.Int
 	})
 	if err != nil {

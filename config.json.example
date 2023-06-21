@@ -21,9 +21,10 @@
         "filecoin": {
             "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v1",
             "baseURL": "http://lotus.dev.bsn.si",
-            "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.yAIABB7qXJnC_cNNdP3zTk0BbF-TNuX6AzbwcuXsGU4",
+            "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.z7NsLu8Wy9LJLo6frwXKwfaIQEDZLIBPn2T2H_MHFpk",
             "dealsMaxPrice": 1000000000,
-            "miners": ["t01129", "t01130"]
+            "miners": ["t046407", "t034415"],
+            "verifiedDeals": false
         }
     },
     "contract": {

@@ -2,7 +2,7 @@ package model
 
 import "github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 
-type DocumentMeta ehrIndexer.DocsDocumentMeta
+type DocumentMeta ehrIndexer.IDocsDocumentMeta
 
 func (dm *DocumentMeta) GetAttr(code Attribute) []byte {
 	for _, attr := range dm.Attrs {
