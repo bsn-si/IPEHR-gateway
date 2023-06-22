@@ -35,8 +35,6 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 		if err != nil {
 			return nil, fmt.Errorf("signerNonce error: %w address: %s", err, i.signerAddress.String())
 		}
-
-		fmt.Printf("NONCE : %v\n", nonce.String())
 	}
 
 	var attrs []users.AttributesAttribute

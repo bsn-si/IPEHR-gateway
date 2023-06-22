@@ -18,8 +18,8 @@ let session = new Httpx({
 chai.config.logFailures = true;
 
 export const options = {
-    vus: 2,
-    iterations: 3,
+    vus: 1,
+    iterations: 5,
     // vus: 10,
     // duration: '10s',
     ext: {
@@ -45,10 +45,10 @@ export default function testSuite() {
     let user = null;
 
     describe('Register user', () => {
-            user = register_user(ctx);
-        });
+        user = register_user(ctx);
+    });
 
     describe('Login user', () => {
-            login_user(ctx, user.userID, user.password);
-        });
+        login_user(ctx, user.userID, user.password);
+    });
 }

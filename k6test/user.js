@@ -8,28 +8,36 @@ import { Httpx, Get, Post } from 'https://jslib.k6.io/httpx/0.0.6/index.js';
 import {ServerUrl, EHRSystemID} from "./consts.js";
 
 
+const USER_ROLE = 0;
+const DOCTOR_ROLE = 1;
 
 // register new user
 export function register_user(ctx) {
+    return register_user_with_role(ctx, DOCTOR_ROLE);
+}
+
+// register new Doctor
+export function register_doctor(ctx) {
+    return register_user_with_role(ctx, DOCTOR_ROLE);
+}
+
+function register_user_with_role(ctx, role) {
     let user = {
         userID: uuidv4(),
         username: randomString(10, `aeioubcdfghijpqrstuv`),
         password: randomString(10, `aeioubcdfghijpqrstuv`),
     }
-    //a const username = randomString(10, `aeioubcdfghijpqrstuv`);
-    // const password = randomString(10, `aeioubcdfghijpqrstuv`);
-    // const userID = uuidv4();
 
     ctx.session.addHeader('AuthYserId', user.userID);
 
     const payload = JSON.stringify({
-        address: "enim eu fugiat sunt",
-        description: "dolore in eu Lorem dolor",
-        name: user.username,
-        pictureURL: "des",
-        password: user.password,
-        role: 0,
+        role: role,
         userID: user.userID,
+        name: user.username,
+        password: user.password,
+        address: "some docktor adderess",
+        description: "any description for doctor",
+        pictureURL: "some url for doctor picture",
     });
 
     let response = ctx.session.post(`/user/register/`, payload);
@@ -55,7 +63,6 @@ export function login_user(ctx, userID, password) {
     const access_token = response.json('access_token');
     const refresh_token = response.json('refresh_token');
 
-    ctx.session.addHeader('Authorization', `Bearer ${access_token}`);
     ctx.session = new Httpx({
         baseURL: ServerUrl,
         headers: {
@@ -67,4 +74,51 @@ export function login_user(ctx, userID, password) {
 
     ctx.access_token = access_token;
     ctx.refresh_token = refresh_token;
+}
+
+export function refresh_token(ctx) {
+    ctx.session = new Httpx({
+        baseURL: ServerUrl,
+        headers: {
+            AuthUserId: userID,
+            EhrSystemId: EHRSystemID,
+            Authorization: `Bearer ${ctx.refresh_token}`,
+        },
+    });
+
+    let response = ctx.session.get(`/user/refresh/`);
+
+    expect(response.status, "refresh JWT token").to.equal(200);
+    expect(response).to.have.validJsonBody()
+
+    const access_token = response.json('access_token');
+    const refresh_token = response.json('refresh_token');
+
+    ctx.session = new Httpx({
+        baseURL: ServerUrl,
+        headers: {
+            AuthUserId: userID,
+            EhrSystemId: EHRSystemID,
+            Authorization: `Bearer ${access_token}`,
+        },
+    });
+
+    ctx.access_token = access_token;
+    ctx.refresh_token = refresh_token;
+}
+
+export function get_user_info(ctx, user) {
+    let response = ctx.session.get('/user/' + user.userID);
+
+    expect(response.status, "Get User Info").to.equal(200);
+    expect(response).to.have.validJsonBody()
+
+    expect(response.json('userID'), "Correct User ID").to.equal(user.userID);
+}
+
+export function log_out(ctx) {
+    let response = ctx.session.get('/user/logout');
+    
+    expect(response.status, "User Logout").to.equal(200);
+    expect(response).to.have.validJsonBody()
 }
