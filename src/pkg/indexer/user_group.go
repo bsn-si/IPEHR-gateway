@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -18,20 +19,13 @@ import (
 	userModel "github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 )
 
-func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte) ([]byte, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	if nonce == nil {
-		nonce, err = Nonce(ctx, i.users, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
 
 	attrs := []users.AttributesAttribute{
 		{Code: model.AttributeKeyEncr, Value: keyEncr},         // encrypted by userKey
@@ -41,17 +35,19 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 
 	IDHash := Keccak256(groupID[:])
 
-	data, err := i.usersAbi.Pack("userGroupCreate", IDHash, attrs, userAddress, make([]byte, signatureLength))
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err := i.usersAbi.Pack("userGroupCreate", IDHash, attrs, userAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	signature, err := makeSignature(data, nonce, userKey)
+	signature, err := makeSignature(data, userKey, deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.usersAbi.Pack("userGroupCreate", IDHash, attrs, userAddress, signature)
+	data, err = i.usersAbi.Pack("userGroupCreate", IDHash, attrs, userAddress, deadline, signature)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -97,7 +93,7 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 	return userGroup, nil
 }
 
-func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte) (string, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -105,14 +101,9 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	if nonce == nil {
-		nonce, err = Nonce(ctx, i.users, &userAddress)
-		if err != nil {
-			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
 	groupIDHash := Keccak256(groupID[:])
+
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
 
 	params := users.IUsersGroupAddUserParams{
 		GroupIDHash: *groupIDHash,
@@ -121,6 +112,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 		UserIDEncr:  addingUserIDEncr,
 		KeyEncr:     groupKeyEncr,
 		Signer:      userAddress,
+		Deadline:    deadline,
 		Signature:   make([]byte, signatureLength),
 	}
 
@@ -129,7 +121,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
 
-	params.Signature, err = makeSignature(data, nonce, userKey)
+	params.Signature, err = makeSignature(data, userKey, deadline)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
@@ -148,7 +140,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 	return tx.Hash().Hex(), nil
 }
 
-func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSystemID string, groupID *uuid.UUID, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSystemID string, groupID *uuid.UUID, privKey *[32]byte) (string, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -156,27 +148,21 @@ func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSys
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	if nonce == nil {
-		nonce, err = Nonce(ctx, i.users, &userAddress)
-		if err != nil {
-			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
 	groupIDHash := Keccak256(groupID[:])
 	removeUserIDHash := sha3.Sum256([]byte(removeUserID + removeSystemID))
+	deadline := big.NewInt(time.Now().Add(5 * time.Minute).Unix())
 
-	data, err := i.usersAbi.Pack("groupRemoveUser", groupIDHash, removeUserIDHash, userAddress, make([]byte, signatureLength))
+	data, err := i.usersAbi.Pack("groupRemoveUser", groupIDHash, removeUserIDHash, userAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
 
-	signature, err := makeSignature(data, nonce, userKey)
+	signature, err := makeSignature(data, userKey, deadline)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.users.GroupRemoveUser(i.transactOpts, *groupIDHash, removeUserIDHash, userAddress, signature)
+	tx, err := i.users.GroupRemoveUser(i.transactOpts, *groupIDHash, removeUserIDHash, userAddress, deadline, signature)
 	if err != nil {
 		if strings.Contains(err.Error(), "DNY") {
 			return "", errors.ErrAccessDenied

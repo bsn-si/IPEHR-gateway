@@ -100,7 +100,7 @@ func (s *Service) Set(ctx context.Context, userID, systemID, toUserID, reqID str
 		}
 	}
 
-	data, err := s.Infra.Index.DocAccessSet(ctx, CID.Bytes(), CIDEncr, keyEncr, accessLevel, userPrivKey, toUserPrivKey, nil)
+	data, err := s.Infra.Index.DocAccessSet(ctx, CID.Bytes(), CIDEncr, keyEncr, accessLevel, userPrivKey, toUserPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.DocAccessSet error: %w", err)
 	}

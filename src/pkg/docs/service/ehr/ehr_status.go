@@ -101,7 +101,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		subjectID := status.Subject.ExternalRef.ID.Value
 		subjectNamespace := status.Subject.ExternalRef.Namespace
 
-		setSubjectPacked, err := s.Infra.Index.SetEhrSubject(ctx, ehrUUID, subjectID, subjectNamespace, userPrivKey, multiCallTx.Nonce())
+		setSubjectPacked, err := s.Infra.Index.SetEhrSubject(ctx, ehrUUID, subjectID, subjectNamespace, userPrivKey)
 		if err != nil {
 			return fmt.Errorf("Index.SetSubject error: %w ehrID: %s subjectID: %s subjectNamespace: %s", err, ehrUUID.String(), subjectID, subjectNamespace)
 		}
@@ -162,7 +162,7 @@ func (s *Service) addEhrStatusMetaData(ctx context.Context, multiCallTx *indexer
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.EhrStatus, docMeta, userPrivKey, multiCallTx.Nonce())
+	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.EhrStatus, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -173,11 +173,6 @@ func (s *Service) addEhrStatusMetaData(ctx context.Context, multiCallTx *indexer
 }
 
 func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
-	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
-	if err != nil {
-		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
-	}
-
 	// Searching 'all documents' group
 	var allDocGroup *model.DocumentGroup
 	{
@@ -198,12 +193,9 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 		}
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
-	if err != nil {
-		return fmt.Errorf("MultiCallEhrNew error: %w", err)
-	}
+	multiCallTx := s.Infra.Index.MultiCallEhrNew()
 
-	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status, allDocGroup)
+	err := s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, status, allDocGroup)
 	if err != nil {
 		return fmt.Errorf("SaveStatus error: %w", err)
 	}

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -32,6 +33,7 @@ type Index struct {
 	transactOpts  *bind.TransactOpts
 	signerKey     *ecdsa.PrivateKey
 	signerAddress common.Address
+	txTimeout     time.Duration
 
 	ehrIndex    *ehrIndexer.EhrIndexer
 	accessStore *accessStore.AccessStore
@@ -147,6 +149,7 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		transactOpts:  transactOpts,
 		signerKey:     privateKey,
 		signerAddress: signerAddress,
+		txTimeout:     5 * time.Minute,
 
 		ehrIndex:    ehrIndex,
 		accessStore: _accessStore,
@@ -160,7 +163,7 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 	}
 }
 
-func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, privKey *[32]byte) ([]byte, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -174,26 +177,21 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	if nonce == nil {
-		nonce, err = Nonce(ctx, i.users, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
 	sig := make([]byte, signatureLength)
 
-	data, err := i.ehrIndexAbi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err := i.ehrIndexAbi.Pack("setEhrUser", IDHash, eID, userAddress, deadline, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	sig, err = makeSignature(data, nonce, userKey)
+	sig, err = makeSignature(data, userKey, deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.ehrIndexAbi.Pack("setEhrUser", IDHash, eID, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setEhrUser", IDHash, eID, userAddress, deadline, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -248,63 +246,6 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string,
 	return accessObj.KeyEncr, nil
 }
 
-/*
-func (i *Index) SetGroupAccess(ctx context.Context, key *[32]byte, value []byte, accessLevel uint8, privKey *[32]byte, nonce *big.Int) (string, error) {
-	i.Lock()
-	defer i.Unlock()
-
-	userKey, err := crypto.ToECDSA(privKey[:])
-	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
-	}
-
-	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	access := ehrIndexer.EhrAccessAccess{
-		Level:        accessLevel,
-		KeyEncrypted: value,
-	}
-
-	if nonce == nil {
-		nonce, err = i.userNonce(ctx, &userAddress)
-		if err != nil {
-			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	sig, err := makeSignature(
-		userKey,
-		abi.Arguments{{Type: String}, {Type: Bytes32}, {Type: Access}, {Type: Uint256}},
-		"setGroupAccess", *key, access, nonce,
-	)
-	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
-	}
-
-	tx, err := i.ehrIndex.SetGroupAccess(i.transactOpts, *key, access, nonce, userAddress, sig)
-	if err != nil {
-		return "", fmt.Errorf("ehrIndex.SetGroupAccess error: %w", err)
-	}
-
-	return tx.Hash().Hex(), nil
-}
-
-func (i *Index) GetGroupAccess(ctx context.Context, userID string, groupUUID *uuid.UUID) ([]byte, error) {
-	groupAccessIndexKey := sha3.Sum256(append([]byte(userID), groupUUID[:]...))
-
-	access, err := i.ehrIndex.AccessStore(&bind.CallOpts{Context: ctx}, groupAccessIndexKey)
-	if err != nil {
-		return nil, fmt.Errorf("ehrIndex.GroupAccess error: %w", err)
-	}
-
-	if len(access.KeyEncrypted) == 0 {
-		return nil, errors.ErrIsNotExist
-	}
-
-	return access.KeyEncrypted, nil
-}
-*/
-
 func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) {
 	i.Lock()
 	defer i.Unlock()
@@ -316,140 +257,3 @@ func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) 
 
 	return tx.Hash().Hex(), nil
 }
-
-/*
-func Init(name string) *Index {
-	if name == "" {
-		log.Fatal("name is empty")
-	}
-
-	id := sha3.Sum256([]byte(name))
-
-	stor := storage.Storage()
-
-	data, err := stor.Get(&id)
-	if err != nil && !errors.Is(err, errors.ErrIsNotExist) {
-		log.Fatal(err)
-	}
-
-	var cache map[string][]byte
-	if errors.Is(err, errors.ErrIsNotExist) {
-		cache = make(map[string][]byte)
-	} else {
-		err = msgpack.Unmarshal(data, &cache)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	return &Index{
-		id:      &id,
-		name:    name,
-		cache:   cache,
-		storage: stor,
-	}
-}
-
-func (i *Index) Add(itemID string, item interface{}) (err error) {
-	i.Lock()
-	defer func() {
-		if err != nil {
-			delete(i.cache, itemID)
-		}
-		i.Unlock()
-	}()
-
-	if _, ok := i.cache[itemID]; ok {
-		return errors.ErrAlreadyExist
-	}
-
-	data, err := msgpack.Marshal(item)
-	if err != nil {
-		return fmt.Errorf("item marshal error: %w", err)
-	}
-
-	i.cache[itemID] = data
-
-	data, err = msgpack.Marshal(i.cache)
-	if err != nil {
-		return fmt.Errorf("cache marshal error: %w", err)
-	}
-
-	if err = i.storage.ReplaceWithID(i.id, data); err != nil {
-		return fmt.Errorf("storage.ReplaceWithID error: %w", err)
-	}
-
-	return nil
-}
-
-func (i *Index) Replace(itemID string, item interface{}) (err error) {
-	i.Lock()
-	defer func() {
-		if err != nil {
-			delete(i.cache, itemID)
-		}
-		i.Unlock()
-	}()
-
-	data, err := msgpack.Marshal(item)
-	if err != nil {
-		return fmt.Errorf("item marshal error: %w", err)
-	}
-
-	i.cache[itemID] = data
-
-	data, err = msgpack.Marshal(i.cache)
-	if err != nil {
-		return err
-	}
-
-	err = i.storage.ReplaceWithID(i.id, data)
-	if err != nil {
-		return fmt.Errorf("storage.ReplaceWithID error: %w", err)
-	}
-
-	return nil
-}
-
-func (i *Index) GetByID(itemID string, dst interface{}) error {
-	i.RLock()
-	item, ok := i.cache[itemID]
-	i.RUnlock()
-
-	if !ok {
-		return errors.ErrIsNotExist
-	}
-
-	if err := msgpack.Unmarshal(item, dst); err != nil {
-		return fmt.Errorf("item unmarshal error: %w", err)
-	}
-
-	return nil
-}
-
-func (i *Index) Delete(itemID string) error {
-	i.Lock()
-	defer i.Unlock()
-
-	item, ok := i.cache[itemID]
-	if !ok {
-		return errors.ErrIsNotExist
-	}
-
-	delete(i.cache, itemID)
-
-	data, err := msgpack.Marshal(i.cache)
-	if err != nil {
-		i.cache[itemID] = item
-		return err
-	}
-
-	err = i.storage.ReplaceWithID(i.id, data)
-	if err != nil {
-		i.cache[itemID] = item
-		return err
-	}
-
-	return nil
-}
-*/

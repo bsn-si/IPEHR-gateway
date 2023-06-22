@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -33,7 +34,7 @@ func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind ac
 	return acc.KeyEncr, acc.Level, nil
 }
 
-func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) (string, error) {
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
 		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -48,24 +49,19 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 
 	accessID := Keccak256(data)
 
-	data, err = i.accessStoreAbi.Pack("setAccess", accessID, *accessObj, userAddress, make([]byte, signatureLength))
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err = i.accessStoreAbi.Pack("setAccess", accessID, *accessObj, userAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	if nonce == nil {
-		nonce, err = Nonce(ctx, i.accessStore, &userAddress)
-		if err != nil {
-			return "", fmt.Errorf("accessNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	signature, err := makeSignature(data, nonce, userKey)
+	signature, err := makeSignature(data, userKey, deadline)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.accessStore.SetAccess(i.transactOpts, *accessID, *accessObj, userAddress, signature)
+	tx, err := i.accessStore.SetAccess(i.transactOpts, *accessID, *accessObj, userAddress, deadline, signature)
 	if err != nil {
 		return "", fmt.Errorf("accessStore.SetAccess error: %w", err)
 	}

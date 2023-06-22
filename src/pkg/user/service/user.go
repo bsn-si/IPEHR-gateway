@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -111,15 +112,9 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 		return fmt.Errorf("NewProcRequest error: %w", err)
 	}
 
-	multiCallTx, err := s.Infra.Index.MultiCallUsersNew(ctx, userPrivKey)
-	if err != nil {
-		return fmt.Errorf("MultiCallUsersNew error: %w. userID: %s", err, user.UserID)
-	}
+	multiCallTx := s.Infra.Index.MultiCallUsersNew(ctx, userPrivKey)
 
-	// nonce, err := indexer.Nonce(ctx, multiCallTx.Nonce(), s.in)
-	// nonce := multiCallTx.Nonce()
-
-	userNewPacked, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivKey, nil)
+	userNewPacked, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.UserNew error: %w", err)
 	}
@@ -133,7 +128,7 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 			groupName := common.DefaultGroupDoctors
 			groupDescription := ""
 
-			userGroupDoctors, err = s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey, nil)
+			userGroupDoctors, err = s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
 			if err != nil {
 				return fmt.Errorf("service.GroupCreate error: %w", err)
 			}
@@ -170,7 +165,7 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 			Level:   access.Owner,
 		}
 
-		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 		}
@@ -422,6 +417,8 @@ func (s *Service) VerifyToken(userID, tokenString string, tokenType TokenType) (
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
+
+	log.Println("tokenString:", tokenString)
 
 	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {

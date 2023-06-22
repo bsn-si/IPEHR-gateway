@@ -42,6 +42,7 @@ type IUsersGroupAddUserParams struct {
 	UserIDEncr  []byte
 	KeyEncr     []byte
 	Signer      common.Address
+	Deadline    *big.Int
 	Signature   []byte
 }
 
@@ -66,7 +67,7 @@ type IUsersUserGroup struct {
 
 // UsersMetaData contains all meta data concerning the Users contract.
 var UsersMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_accessStore\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"accessStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ehrIndex\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"getUser\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structIUsers.User\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"code\",\"type\":\"uint64\"}],\"name\":\"getUserByCode\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structIUsers.User\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"groupIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"userIDEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structIUsers.GroupAddUserParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"groupAddUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"groupRemoveUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonces\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"userGroupCreate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"}],\"name\":\"userGroupGetByID\",\"outputs\":[{\"components\":[{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"userIDEncr\",\"type\":\"bytes\"}],\"internalType\":\"structIUsers.GroupMember[]\",\"name\":\"members\",\"type\":\"tuple[]\"}],\"internalType\":\"structIUsers.UserGroup\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"userNew\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_accessStore\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"accessStore\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"allowedChange\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ehrIndex\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"getUser\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structIUsers.User\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"code\",\"type\":\"uint64\"}],\"name\":\"getUserByCode\",\"outputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"}],\"internalType\":\"structIUsers.User\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"groupIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIAccessStore.AccessLevel\",\"name\":\"level\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"userIDEncr\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"keyEncr\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"internalType\":\"structIUsers.GroupAddUserParams\",\"name\":\"p\",\"type\":\"tuple\"}],\"name\":\"groupAddUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"groupRemoveUser\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes[]\",\"name\":\"data\",\"type\":\"bytes[]\"}],\"name\":\"multicall\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"results\",\"type\":\"bytes[]\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bool\",\"name\":\"allowed\",\"type\":\"bool\"}],\"name\":\"setAllowed\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"userGroupCreate\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"groupIdHash\",\"type\":\"bytes32\"}],\"name\":\"userGroupGetByID\",\"outputs\":[{\"components\":[{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"bytes32\",\"name\":\"userIDHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"userIDEncr\",\"type\":\"bytes\"}],\"internalType\":\"structIUsers.GroupMember[]\",\"name\":\"members\",\"type\":\"tuple[]\"}],\"internalType\":\"structIUsers.UserGroup\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"IDHash\",\"type\":\"bytes32\"},{\"internalType\":\"enumIUsers.Role\",\"name\":\"role\",\"type\":\"uint8\"},{\"components\":[{\"internalType\":\"enumAttributes.Code\",\"name\":\"code\",\"type\":\"uint8\"},{\"internalType\":\"bytes\",\"name\":\"value\",\"type\":\"bytes\"}],\"internalType\":\"structAttributes.Attribute[]\",\"name\":\"attrs\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"deadline\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"userNew\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"users\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 }
 
 // UsersABI is the input ABI used to generate the binding from.
@@ -370,37 +371,6 @@ func (_Users *UsersCallerSession) GetUserByCode(code uint64) (IUsersUser, error)
 	return _Users.Contract.GetUserByCode(&_Users.CallOpts, code)
 }
 
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_Users *UsersCaller) Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _Users.contract.Call(opts, &out, "nonces", arg0)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_Users *UsersSession) Nonces(arg0 common.Address) (*big.Int, error) {
-	return _Users.Contract.Nonces(&_Users.CallOpts, arg0)
-}
-
-// Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
-//
-// Solidity: function nonces(address ) view returns(uint256)
-func (_Users *UsersCallerSession) Nonces(arg0 common.Address) (*big.Int, error) {
-	return _Users.Contract.Nonces(&_Users.CallOpts, arg0)
-}
-
 // UserGroupGetByID is a free data retrieval call binding the contract method 0xc1dfff99.
 //
 // Solidity: function userGroupGetByID(bytes32 groupIdHash) view returns(((uint8,bytes)[],(bytes32,bytes)[]))
@@ -463,46 +433,46 @@ func (_Users *UsersCallerSession) Users() (common.Address, error) {
 	return _Users.Contract.Users(&_Users.CallOpts)
 }
 
-// GroupAddUser is a paid mutator transaction binding the contract method 0xa544050a.
+// GroupAddUser is a paid mutator transaction binding the contract method 0x074ff531.
 //
-// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,bytes) p) returns()
+// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,uint256,bytes) p) returns()
 func (_Users *UsersTransactor) GroupAddUser(opts *bind.TransactOpts, p IUsersGroupAddUserParams) (*types.Transaction, error) {
 	return _Users.contract.Transact(opts, "groupAddUser", p)
 }
 
-// GroupAddUser is a paid mutator transaction binding the contract method 0xa544050a.
+// GroupAddUser is a paid mutator transaction binding the contract method 0x074ff531.
 //
-// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,bytes) p) returns()
+// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,uint256,bytes) p) returns()
 func (_Users *UsersSession) GroupAddUser(p IUsersGroupAddUserParams) (*types.Transaction, error) {
 	return _Users.Contract.GroupAddUser(&_Users.TransactOpts, p)
 }
 
-// GroupAddUser is a paid mutator transaction binding the contract method 0xa544050a.
+// GroupAddUser is a paid mutator transaction binding the contract method 0x074ff531.
 //
-// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,bytes) p) returns()
+// Solidity: function groupAddUser((bytes32,bytes32,uint8,bytes,bytes,address,uint256,bytes) p) returns()
 func (_Users *UsersTransactorSession) GroupAddUser(p IUsersGroupAddUserParams) (*types.Transaction, error) {
 	return _Users.Contract.GroupAddUser(&_Users.TransactOpts, p)
 }
 
-// GroupRemoveUser is a paid mutator transaction binding the contract method 0xb94e5cee.
+// GroupRemoveUser is a paid mutator transaction binding the contract method 0x6c1ce42b.
 //
-// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, bytes signature) returns()
-func (_Users *UsersTransactor) GroupRemoveUser(opts *bind.TransactOpts, groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.contract.Transact(opts, "groupRemoveUser", groupIDHash, userIDHash, signer, signature)
+// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersTransactor) GroupRemoveUser(opts *bind.TransactOpts, groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.contract.Transact(opts, "groupRemoveUser", groupIDHash, userIDHash, signer, deadline, signature)
 }
 
-// GroupRemoveUser is a paid mutator transaction binding the contract method 0xb94e5cee.
+// GroupRemoveUser is a paid mutator transaction binding the contract method 0x6c1ce42b.
 //
-// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, bytes signature) returns()
-func (_Users *UsersSession) GroupRemoveUser(groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.Contract.GroupRemoveUser(&_Users.TransactOpts, groupIDHash, userIDHash, signer, signature)
+// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersSession) GroupRemoveUser(groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.Contract.GroupRemoveUser(&_Users.TransactOpts, groupIDHash, userIDHash, signer, deadline, signature)
 }
 
-// GroupRemoveUser is a paid mutator transaction binding the contract method 0xb94e5cee.
+// GroupRemoveUser is a paid mutator transaction binding the contract method 0x6c1ce42b.
 //
-// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, bytes signature) returns()
-func (_Users *UsersTransactorSession) GroupRemoveUser(groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.Contract.GroupRemoveUser(&_Users.TransactOpts, groupIDHash, userIDHash, signer, signature)
+// Solidity: function groupRemoveUser(bytes32 groupIDHash, bytes32 userIDHash, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersTransactorSession) GroupRemoveUser(groupIDHash [32]byte, userIDHash [32]byte, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.Contract.GroupRemoveUser(&_Users.TransactOpts, groupIDHash, userIDHash, signer, deadline, signature)
 }
 
 // Multicall is a paid mutator transaction binding the contract method 0xac9650d8.
@@ -568,44 +538,44 @@ func (_Users *UsersTransactorSession) TransferOwnership(newOwner common.Address)
 	return _Users.Contract.TransferOwnership(&_Users.TransactOpts, newOwner)
 }
 
-// UserGroupCreate is a paid mutator transaction binding the contract method 0xc430bb90.
+// UserGroupCreate is a paid mutator transaction binding the contract method 0x938b13dc.
 //
-// Solidity: function userGroupCreate(bytes32 groupIdHash, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_Users *UsersTransactor) UserGroupCreate(opts *bind.TransactOpts, groupIdHash [32]byte, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.contract.Transact(opts, "userGroupCreate", groupIdHash, attrs, signer, signature)
+// Solidity: function userGroupCreate(bytes32 groupIdHash, (uint8,bytes)[] attrs, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersTransactor) UserGroupCreate(opts *bind.TransactOpts, groupIdHash [32]byte, attrs []AttributesAttribute, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.contract.Transact(opts, "userGroupCreate", groupIdHash, attrs, signer, deadline, signature)
 }
 
-// UserGroupCreate is a paid mutator transaction binding the contract method 0xc430bb90.
+// UserGroupCreate is a paid mutator transaction binding the contract method 0x938b13dc.
 //
-// Solidity: function userGroupCreate(bytes32 groupIdHash, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_Users *UsersSession) UserGroupCreate(groupIdHash [32]byte, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.Contract.UserGroupCreate(&_Users.TransactOpts, groupIdHash, attrs, signer, signature)
+// Solidity: function userGroupCreate(bytes32 groupIdHash, (uint8,bytes)[] attrs, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersSession) UserGroupCreate(groupIdHash [32]byte, attrs []AttributesAttribute, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.Contract.UserGroupCreate(&_Users.TransactOpts, groupIdHash, attrs, signer, deadline, signature)
 }
 
-// UserGroupCreate is a paid mutator transaction binding the contract method 0xc430bb90.
+// UserGroupCreate is a paid mutator transaction binding the contract method 0x938b13dc.
 //
-// Solidity: function userGroupCreate(bytes32 groupIdHash, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_Users *UsersTransactorSession) UserGroupCreate(groupIdHash [32]byte, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.Contract.UserGroupCreate(&_Users.TransactOpts, groupIdHash, attrs, signer, signature)
+// Solidity: function userGroupCreate(bytes32 groupIdHash, (uint8,bytes)[] attrs, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersTransactorSession) UserGroupCreate(groupIdHash [32]byte, attrs []AttributesAttribute, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.Contract.UserGroupCreate(&_Users.TransactOpts, groupIdHash, attrs, signer, deadline, signature)
 }
 
-// UserNew is a paid mutator transaction binding the contract method 0x1bd5a4f9.
+// UserNew is a paid mutator transaction binding the contract method 0x4d0eda61.
 //
-// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_Users *UsersTransactor) UserNew(opts *bind.TransactOpts, addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.contract.Transact(opts, "userNew", addr, IDHash, role, attrs, signer, signature)
+// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersTransactor) UserNew(opts *bind.TransactOpts, addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.contract.Transact(opts, "userNew", addr, IDHash, role, attrs, signer, deadline, signature)
 }
 
-// UserNew is a paid mutator transaction binding the contract method 0x1bd5a4f9.
+// UserNew is a paid mutator transaction binding the contract method 0x4d0eda61.
 //
-// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_Users *UsersSession) UserNew(addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.Contract.UserNew(&_Users.TransactOpts, addr, IDHash, role, attrs, signer, signature)
+// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersSession) UserNew(addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.Contract.UserNew(&_Users.TransactOpts, addr, IDHash, role, attrs, signer, deadline, signature)
 }
 
-// UserNew is a paid mutator transaction binding the contract method 0x1bd5a4f9.
+// UserNew is a paid mutator transaction binding the contract method 0x4d0eda61.
 //
-// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, bytes signature) returns()
-func (_Users *UsersTransactorSession) UserNew(addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, signature []byte) (*types.Transaction, error) {
-	return _Users.Contract.UserNew(&_Users.TransactOpts, addr, IDHash, role, attrs, signer, signature)
+// Solidity: function userNew(address addr, bytes32 IDHash, uint8 role, (uint8,bytes)[] attrs, address signer, uint256 deadline, bytes signature) returns()
+func (_Users *UsersTransactorSession) UserNew(addr common.Address, IDHash [32]byte, role uint8, attrs []AttributesAttribute, signer common.Address, deadline *big.Int, signature []byte) (*types.Transaction, error) {
+	return _Users.Contract.UserNew(&_Users.TransactOpts, addr, IDHash, role, attrs, signer, deadline, signature)
 }
