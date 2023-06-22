@@ -329,9 +329,9 @@ func (s *Syncer) procDataUpdate(ctx context.Context, method *abi.Method, inputDa
 		return fmt.Errorf("UnpackValues error: %w", err)
 	}
 
-	// interface: function unction dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, bytes calldata signature)
-	if len(args) != 6 {
-		return fmt.Errorf("args length(%d) != 6", len(args)) //nolint
+	// interface: function unction dataUpdate(bytes32 groupID, bytes32 dataID, bytes32 ehrID, bytes data, address signer, uint deadline, bytes calldata signature)
+	if len(args) != 7 {
+		return fmt.Errorf("args length(%d) != 7", len(args)) //nolint
 	}
 
 	// groupID
