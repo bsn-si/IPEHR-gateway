@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"time"
 
 	"golang.org/x/crypto/sha3"
@@ -35,14 +34,14 @@ type (
 	}
 
 	Indexer interface {
-		MultiCallEhrNew(ctx context.Context, pk *[32]byte) (*indexer.MultiCallTx, error)
+		MultiCallEhrNew() *indexer.MultiCallTx
 		GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
-		AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error)
+		AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte) ([]byte, error)
 		GetDocLastByBaseID(ctx context.Context, userID, systemID string, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
-		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error)
+		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, error)
 		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
 		DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, error)
-		SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *indexer.AccessObject, userPrivKey *[32]byte, nonce *big.Int) (string, error)
+		SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *indexer.AccessObject, userPrivKey *[32]byte) (string, error)
 	}
 
 	IpfsService interface {
@@ -113,15 +112,7 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 		return nil, fmt.Errorf("%w objectVersionID %s", errors.ErrAlreadyExist, objectVersionID.String())
 	}
 
-	_, userPrivKey, err := s.keyStore.Get(userID)
-	if err != nil {
-		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
-	}
-
-	multiCallTx, err := s.indexer.MultiCallEhrNew(ctx, userPrivKey)
-	if err != nil {
-		return nil, fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
-	}
+	multiCallTx := s.indexer.MultiCallEhrNew()
 
 	dataIndexUUID := uuid.New()
 
@@ -183,15 +174,7 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID,
 		return nil, fmt.Errorf("dataIndexID UUID parse error: %w", err)
 	}
 
-	_, userPrivKey, err := s.keyStore.Get(userID)
-	if err != nil {
-		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
-	}
-
-	multiCallTx, err := s.indexer.MultiCallEhrNew(ctx, userPrivKey)
-	if err != nil {
-		return nil, fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
-	}
+	multiCallTx := s.indexer.MultiCallEhrNew()
 
 	err = s.save(ctx, multiCallTx, procRequest, userID, systemID, &dataIndexUUID, composition)
 	if err != nil {
@@ -336,7 +319,7 @@ func (s *Service) addMetaData(ctx context.Context, multiCallTx *indexer.MultiCal
 		},
 	}
 
-	packed, err := s.indexer.AddEhrDoc(ctx, types.Composition, docMeta, userPrivKey, multiCallTx.Nonce())
+	packed, err := s.indexer.AddEhrDoc(ctx, types.Composition, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -368,7 +351,7 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.indexer.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	txHash, err := s.indexer.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to composition error: %w", err)
 	}
@@ -478,7 +461,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey, nil)
+	txHash, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err
@@ -487,9 +470,6 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 	}
 
 	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
-
-	// Waiting for tx processed and pending nonce increased
-	//time.Sleep(common.BlockchainTxProcAwaitTime)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

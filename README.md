@@ -354,5 +354,5 @@ For now we have the following methods:
 ### Related repositories
 A [mobile app](https://github.com/bsn-si/IPEHR-access-control-app) for access management to user's (patient's) EHRs.  
 A [Chainlink publisher](https://github.com/bsn-si/IPEHR-stat) for public EHR stats.  
-An [ipEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) for access management, indexes storage and obtaining EHR stats.  
+An [ipEHR smart contract](https://github.com/bsn-si/IPEHR-blockchain-indexes) for access management, indexes storage and obtaining EHR stats.
 

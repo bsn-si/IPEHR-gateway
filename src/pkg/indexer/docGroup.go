@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -16,7 +17,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 )
 
-func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKeyEncr, gNameEncr []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKeyEncr, gNameEncr []byte, userPrivKey *[32]byte) ([]byte, error) {
 	gIDHash := Keccak256(gID[:])
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
@@ -26,6 +27,8 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
 	params := ehrIndexer.DocGroupsDocGroupCreateParams{
 		GroupIDHash: *gIDHash,
 		Attrs: []ehrIndexer.AttributesAttribute{
@@ -34,6 +37,7 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 			{Code: model.AttributeNameEncr, Value: gNameEncr},
 		},
 		Signer:    userAddress,
+		Deadline:  deadline,
 		Signature: make([]byte, signatureLength),
 	}
 
@@ -42,14 +46,7 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	params.Signature, err = makeSignature(data, nonce, userKey)
+	params.Signature, err = makeSignature(data, userKey, params.Deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
@@ -74,7 +71,7 @@ func (i *Index) DocGroupGetDocs(ctx context.Context, gID *uuid.UUID) ([][]byte, 
 	return CIDs, nil
 }
 
-func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr []byte, userPrivKey *[32]byte) ([]byte, error) {
 	groupIDHash := Keccak256(gID[:])
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
@@ -84,24 +81,19 @@ func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	data, err := i.ehrIndexAbi.Pack("docGroupAddDoc", groupIDHash, docCIDHash, docCIDEncr, userAddress, make([]byte, signatureLength))
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err := i.ehrIndexAbi.Pack("docGroupAddDoc", groupIDHash, docCIDHash, docCIDEncr, userAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	sig, err := makeSignature(data, nonce, userKey)
+	sig, err := makeSignature(data, userKey, deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.ehrIndexAbi.Pack("docGroupAddDoc", groupIDHash, docCIDHash, docCIDEncr, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("docGroupAddDoc", groupIDHash, docCIDHash, docCIDEncr, userAddress, deadline, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}

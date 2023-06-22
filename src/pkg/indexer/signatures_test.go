@@ -10,21 +10,21 @@ import (
 
 func Test_MakeSignature(t *testing.T) {
 	tests := []struct {
-		name    string
-		data    func() []byte
-		nonce   *big.Int
-		pk      string
-		want    string
-		wantErr bool
+		name     string
+		data     func() []byte
+		deadline *big.Int
+		pk       string
+		want     string
+		wantErr  bool
 	}{
 		{
 			"1. make signature correct",
 			func() []byte {
 				return []byte("Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. ")
 			},
-			big.NewInt(0),
+			big.NewInt(1687339154),
 			"ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-			"8bb3c32716200a33fa59b92878adb2970b379e615780e8eea7bc6cc91b11b3da3f6d1262bd31f48607f0e37cb12d493f44782c646b53c80582c87220aab0b0a91b",
+			"ed64670b1ca78aa9fdedf3656a28d941e2452247b791be26209d04dafa666e537107abb0aa0ef67f1b0bd804011a4f0913720fb1c2131cf111feba40208b91451c",
 			false,
 		},
 	}
@@ -41,7 +41,7 @@ func Test_MakeSignature(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			sig, err := makeSignature(tt.data(), tt.nonce, pk)
+			sig, err := makeSignature(tt.data(), pk, tt.deadline)
 			if err != nil {
 				t.Fatal(err)
 			}

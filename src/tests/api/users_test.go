@@ -13,6 +13,7 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common/fakeData"
 	docModel "github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 	"github.com/bsn-si/IPEHR-gateway/src/tests/api/testhelpers"
@@ -70,7 +71,7 @@ func (u *User) login(ehrSystemID, baseURL string, client *http.Client) error {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return err
+		return errors.Errorf("User login error: %s %s", response.Status, content)
 	}
 
 	jwt := model.JWT{}
@@ -280,7 +281,7 @@ func doctorRegister(testData *TestData) func(t *testing.T) {
 		}
 
 		if doctor.accessToken == "" {
-			err := doctor.login(testData.ehrSystemID, testData.serverURL, testData.httpClient)
+			err = doctor.login(testData.ehrSystemID, testData.serverURL, testData.httpClient)
 			if err != nil {
 				t.Fatal(err)
 			}

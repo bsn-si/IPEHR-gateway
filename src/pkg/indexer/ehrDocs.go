@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,7 +18,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 )
 
-func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte) ([]byte, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -25,20 +26,14 @@ func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMe
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
-	params := ehrIndexer.DocsAddEhrDocParams{
+	params := ehrIndexer.IDocsAddEhrDocParams{
 		DocType:   uint8(docType),
 		Id:        docMeta.Id,
 		Version:   docMeta.Version,
 		Timestamp: docMeta.Timestamp,
 		Attrs:     docMeta.Attrs,
 		Signer:    userAddress,
+		Deadline:  big.NewInt(time.Now().Add(i.txTimeout).Unix()),
 		Signature: make([]byte, signatureLength),
 	}
 
@@ -47,7 +42,7 @@ func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMe
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	params.Signature, err = makeSignature(data, nonce, userKey)
+	params.Signature, err = makeSignature(data, userKey, params.Deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
@@ -151,7 +146,7 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 	return (*model.DocumentMeta)(&docMeta), nil
 }
 
-func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string, privKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string, privKey *[32]byte) ([]byte, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -165,26 +160,21 @@ func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
-		if err != nil {
-			return nil, fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
 
 	sig := make([]byte, signatureLength)
 
-	data, err := i.ehrIndexAbi.Pack("setEhrSubject", subjectKey, eID, userAddress, sig)
+	data, err := i.ehrIndexAbi.Pack("setEhrSubject", subjectKey, eID, userAddress, deadline, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	sig, err = makeSignature(data, nonce, userKey)
+	sig, err = makeSignature(data, userKey, deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.ehrIndexAbi.Pack("setEhrSubject", subjectKey, eID, userAddress, sig)
+	data, err = i.ehrIndexAbi.Pack("setEhrSubject", subjectKey, eID, userAddress, deadline, sig)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
@@ -212,7 +202,7 @@ func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNames
 	return &ehrUUID, nil
 }
 
-func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte, nonce *big.Int) (string, error) {
+func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, error) {
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -227,26 +217,21 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 	i.Lock()
 	defer i.Unlock()
 
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.ehrIndex, &userAddress)
-		if err != nil {
-			return "", fmt.Errorf("userNonce error: %w address: %s", err, userAddress.String())
-		}
-	}
-
 	sig := make([]byte, signatureLength)
 
-	data, err := i.ehrIndexAbi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, version, userAddress, sig)
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err := i.ehrIndexAbi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, version, userAddress, deadline, sig)
 	if err != nil {
 		return "", fmt.Errorf("abi.Pack error: %w", err)
 	}
 
-	sig, err = makeSignature(data, nonce, userKey)
+	sig, err = makeSignature(data, userKey, deadline)
 	if err != nil {
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version, userAddress, sig)
+	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version, userAddress, deadline, sig)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return "", errors.ErrNotFound

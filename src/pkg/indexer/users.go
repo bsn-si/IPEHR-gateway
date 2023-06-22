@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -17,7 +18,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/user/roles"
 )
 
-func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte, nonce *big.Int) ([]byte, error) {
+func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte) ([]byte, error) {
 	i.Lock()
 	defer i.Unlock()
 
@@ -29,13 +30,6 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
-
-	if nonce == nil {
-		nonce, err = i.Nonce(ctx, i.users, &i.signerAddress)
-		if err != nil {
-			return nil, fmt.Errorf("signerNonce error: %w address: %s", err, i.signerAddress.String())
-		}
-	}
 
 	var attrs []users.AttributesAttribute
 
@@ -53,17 +47,19 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 		return nil, errors.ErrFieldIsIncorrect("role")
 	}
 
-	data, err := i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, make([]byte, signatureLength))
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err := i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
-	signature, err := makeSignature(data, nonce, i.signerKey)
+	signature, err := makeSignature(data, i.signerKey, deadline)
 	if err != nil {
 		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	data, err = i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, signature)
+	data, err = i.usersAbi.Pack("userNew", userAddress, IDHash, role, attrs, i.signerAddress, deadline, signature)
 	if err != nil {
 		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}

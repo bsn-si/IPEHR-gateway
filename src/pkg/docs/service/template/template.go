@@ -154,10 +154,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, tmp
 
 	procRequest.AddFilecoinTx(proc.TxSaveTemplate, CID.String(), dealCID.String(), minerAddr)
 
-	multiCallTx, err := s.docSvc.Infra.Index.MultiCallEhrNew(ctx, userPrivKey)
-	if err != nil {
-		return fmt.Errorf("MultiCallEhrNew error: %w userID %s", err, userID)
-	}
+	multiCallTx := s.docSvc.Infra.Index.MultiCallEhrNew()
 
 	err = s.addMetaData(ctx, multiCallTx, key, tmpl, CID, dealCID, minerAddr, userPubKey, userPrivKey)
 	if err != nil {
@@ -235,7 +232,7 @@ func (s *Service) addMetaData(ctx context.Context, multiCallTx *indexer.MultiCal
 		},
 	}
 
-	packed, err := s.docSvc.Infra.Index.AddEhrDoc(ctx, types.Template, docMeta, userPrivKey, nil)
+	packed, err := s.docSvc.Infra.Index.AddEhrDoc(ctx, types.Template, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -267,7 +264,7 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.docSvc.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	txHash, err := s.docSvc.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to template error: %w", err)
 	}

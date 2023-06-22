@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/google/uuid"
@@ -27,7 +26,7 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	userGroup, err := s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey, nil)
+	userGroup, err := s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("groupCreatePack error: %w", err)
 	}
@@ -152,7 +151,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID,
 		return fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, addUserID, addSystemID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey, nil)
+	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, addUserID, addSystemID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -183,7 +182,7 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupRemoveUser(ctx, removeUserID, removeSystemID, groupID, userPrivKey, nil)
+	txHash, err := s.Infra.Index.UserGroupRemoveUser(ctx, removeUserID, removeSystemID, groupID, userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -258,7 +257,7 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 	return userGroupList, nil
 }
 
-func (s *Service) groupCreate(ctx context.Context, name, description string, userPubKey, userPrivKey *[32]byte, nonce *big.Int) (*model.UserGroup, error) {
+func (s *Service) groupCreate(ctx context.Context, name, description string, userPubKey, userPrivKey *[32]byte) (*model.UserGroup, error) {
 	groupID := uuid.New()
 
 	userGroup := &model.UserGroup{
@@ -296,7 +295,7 @@ func (s *Service) groupCreate(ctx context.Context, name, description string, use
 		return nil, fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
-	userGroup.Packed, err = s.Infra.Index.UserGroupCreate(ctx, &groupID, userGroup.IDEncr, userGroup.KeyEncr, userGroup.ContentEncr, userPrivKey, nonce)
+	userGroup.Packed, err = s.Infra.Index.UserGroupCreate(ctx, &groupID, userGroup.IDEncr, userGroup.KeyEncr, userGroup.ContentEncr, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("Index.GroupCreate error: %w", err)
 	}
@@ -316,7 +315,7 @@ func (s *Service) setGroupAccess(ctx context.Context, req proc.RequestInterface,
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey, nil)
+	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to composition error: %w", err)
 	}
