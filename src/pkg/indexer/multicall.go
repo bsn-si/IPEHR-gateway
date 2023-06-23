@@ -27,7 +27,7 @@ func (i *Index) MultiCallEhrNew() *MultiCallTx {
 	return &MultiCallTx{index: i, kind: MulticallEhr}
 }
 
-func (i *Index) MultiCallUsersNew(ctx context.Context, pk *[32]byte) *MultiCallTx {
+func (i *Index) MultiCallUsersNew() *MultiCallTx {
 	return &MultiCallTx{index: i, kind: MulticallUsers}
 }
 

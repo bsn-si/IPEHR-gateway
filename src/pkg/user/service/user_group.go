@@ -26,12 +26,23 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
+	multiCallTx := s.Infra.Index.MultiCallUsersNew()
+
 	userGroup, err := s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("groupCreatePack error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.SendSingle(ctx, userGroup.Packed, indexer.MulticallUsers)
+	multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroup.Packed)
+
+	packed, err := s.setGroupAccess(userGroup, userID, systemID, access.Owner, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("setGroupAccess error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), packed)
+
+	txHash, err := multiCallTx.Commit()
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
@@ -39,15 +50,10 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 			return nil, errors.ErrAlreadyExist
 		}
 
-		return nil, fmt.Errorf("Index.SendSingle error: %w", err)
+		return nil, fmt.Errorf("multiCallTx.Commit error: %w", err)
 	}
 
 	req.AddEthereumTx(processing.TxUserGroupCreate, txHash)
-
-	err = s.setGroupAccess(ctx, req, userGroup, userID, systemID, access.Owner, userPrivKey)
-	if err != nil {
-		return nil, fmt.Errorf("setGroupAccess error: %w", err)
-	}
 
 	return userGroup, nil
 }
@@ -182,15 +188,25 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupRemoveUser(ctx, removeUserID, removeSystemID, groupID, userPrivKey)
-	if err != nil {
-		if errors.Is(err, errors.ErrAccessDenied) {
-			return err
-		} else if errors.Is(err, errors.ErrNotFound) {
-			return err
-		}
+	multiCallTx := s.Infra.Index.MultiCallUsersNew()
 
+	packed, err := s.Infra.Index.UserGroupRemoveUser(removeUserID, removeSystemID, groupID, userPrivKey)
+	if err != nil {
 		return fmt.Errorf("Index.UserGroupRemoveUser error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxUserGroupRemoveUser), packed)
+
+	packed, err = s.setGroupAccess(&model.UserGroup{GroupID: groupID}, removeUserID, removeSystemID, access.NoAccess, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("setGroupAccess error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), packed)
+
+	txHash, err := multiCallTx.Commit()
+	if err != nil {
+		return fmt.Errorf("multiCallTx.Commit error: %w", err)
 	}
 
 	procRequest, err := s.Proc.NewRequest(reqID, userID, "", processing.RequestUserGroupRemoveUser)
@@ -199,11 +215,6 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 	}
 
 	procRequest.AddEthereumTx(processing.TxUserGroupRemoveUser, txHash)
-
-	err = s.setGroupAccess(ctx, procRequest, &model.UserGroup{GroupID: groupID}, removeUserID, removeSystemID, access.NoAccess, userPrivKey)
-	if err != nil {
-		return fmt.Errorf("setGroupAccess error: %w", err)
-	}
 
 	if err := procRequest.Commit(); err != nil {
 		return fmt.Errorf("Remove user from group procRequest commit error: %w", err)
@@ -303,7 +314,7 @@ func (s *Service) groupCreate(ctx context.Context, name, description string, use
 	return userGroup, nil
 }
 
-func (s *Service) setGroupAccess(ctx context.Context, req proc.RequestInterface, userGroup *model.UserGroup, userID, systemID string, accessLevel access.Level, userPrivKey *[32]byte) error {
+func (s *Service) setGroupAccess(userGroup *model.UserGroup, userID, systemID string, accessLevel access.Level, userPrivKey *[32]byte) ([]byte, error) {
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	groupIDHash := indexer.Keccak256(userGroup.GroupID[:])
 
@@ -315,12 +326,10 @@ func (s *Service) setGroupAccess(ctx context.Context, req proc.RequestInterface,
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
 	if err != nil {
-		return fmt.Errorf("Index.SetAccess user to composition error: %w", err)
+		return nil, fmt.Errorf("Index.SetAccess user to composition error: %w", err)
 	}
 
-	req.AddEthereumTx(proc.TxSetDocAccess, txHash)
-
-	return nil
+	return packed, nil
 }

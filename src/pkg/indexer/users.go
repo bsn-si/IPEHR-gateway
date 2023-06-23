@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -109,4 +110,39 @@ func (i *Index) GetUserByCode(ctx context.Context, code uint64) (*userModel.User
 	}
 
 	return &user, nil
+}
+
+func (i *Index) SetAccessWrapper(subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) ([]byte, error) {
+	userKey, err := crypto.ToECDSA(userPrivKey[:])
+	if err != nil {
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
+	}
+
+	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
+
+	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*subjectIDHash, accessObj.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("args.Pack error: %w", err)
+	}
+
+	accessID := Keccak256(data)
+
+	deadline := big.NewInt(time.Now().Add(i.txTimeout).Unix())
+
+	data, err = i.usersAbi.Pack("setAccess", accessID, *accessObj, userAddress, deadline, make([]byte, signatureLength))
+	if err != nil {
+		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
+	}
+
+	signature, err := makeSignature(data, userKey, deadline)
+	if err != nil {
+		return nil, fmt.Errorf("makeSignature error: %w", err)
+	}
+
+	data, err = i.usersAbi.Pack("setAccess", accessID, *accessObj, userAddress, deadline, signature)
+	if err != nil {
+		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
+	}
+
+	return data, nil
 }

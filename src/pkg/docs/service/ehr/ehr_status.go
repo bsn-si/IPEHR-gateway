@@ -109,17 +109,17 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		multiCallTx.Add(uint8(proc.TxSetEhrBySubject), setSubjectPacked)
 	}
 
-	err = s.addEhrStatusMetaData(ctx, multiCallTx, key, objectVersionID, CID, dealCID, minerAddr, userPubKey, userPrivKey)
+	err = s.addEhrStatusMetaData(multiCallTx, key, objectVersionID, CID, dealCID, minerAddr, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	err = s.setDocAccess(ctx, procRequest, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	err = s.setDocAccess(multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
 
-	err = s.addDocumentToGroup(ctx, multiCallTx, CID, allDocsGroup, userPrivKey)
+	err = s.addDocumentToGroup(multiCallTx, CID, allDocsGroup, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("addDocumentToGroup error: %w", err)
 	}
@@ -127,7 +127,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 	return nil
 }
 
-func (s *Service) addEhrStatusMetaData(ctx context.Context, multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) addEhrStatusMetaData(multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
 	statusIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
 	if err != nil {
 		return fmt.Errorf("Encrypt error: %w objectVersionID %s", err, objectVersionID.String())
@@ -162,7 +162,7 @@ func (s *Service) addEhrStatusMetaData(ctx context.Context, multiCallTx *indexer
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.EhrStatus, docMeta, userPrivKey)
+	packed, err := s.Infra.Index.AddEhrDoc(types.EhrStatus, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}

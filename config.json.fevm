@@ -21,16 +21,16 @@
         "filecoin": {
             "lotusRPCEndpoint": "http://lotus.dev.bsn.si/rpc/v1",
             "baseURL": "http://lotus.dev.bsn.si",
-            "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.yAIABB7qXJnC_cNNdP3zTk0BbF-TNuX6AzbwcuXsGU4",
+            "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.z7NsLu8Wy9LJLo6frwXKwfaIQEDZLIBPn2T2H_MHFpk",
             "dealsMaxPrice": 1000000000,
             "miners": ["t017840"]
         }
     },
     "contract": {
-        "addressEhrIndex": "0xbd185A20ECd4A117bbCB3DAed7E2E0ae9031f759",
-        "addressAccessStore": "0x40262d9ab8891b8a830Ce29777a258Af86e30c8F",
-        "addressUsers": "0x1d53a8af051C5485E1f1639A92f83D66efb6eABD",
-        "addressDataStore": "0x4E6fE7eF9CeFD59F9206A78CA27bAD1981E3Ef8d",
+        "addressEhrIndex": "0x6ba52Acf048e3513A9865DA3B4298Ec00edC548c",
+        "addressAccessStore": "0x0EF6Cf7673E466CE90603a61C3e68D9f6fA5552C",
+        "addressUsers": "0x6bB07fDDf802dC29515C50A6ee64077C26994b12",
+        "addressDataStore": "0xaFB2197De97aF194765c25696fD0d497eb1f20Bb",
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
         "privKeyPath": "~/.ipehr/.blockchain.key",
         "gasTipCap" : 100000

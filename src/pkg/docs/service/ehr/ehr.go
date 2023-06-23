@@ -88,14 +88,12 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 	multiCallTx := s.Infra.Index.MultiCallEhrNew()
 
 	// Index EHR userIDHash -> ehrUUID
-	{
-		packed, err := s.Infra.Index.SetEhrUser(ctx, userID, systemID, ehrUUID, userPrivKey)
-		if err != nil {
-			return nil, fmt.Errorf("Index.SetEhrUser error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxSetEhrUser), packed)
+	packed, err := s.Infra.Index.SetEhrUser(ctx, userID, systemID, ehrUUID, userPrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("Index.SetEhrUser error: %w", err)
 	}
+
+	multiCallTx.Add(uint8(proc.TxSetEhrUser), packed)
 
 	// 'All documents' docGroup creating
 	allDocsGroup := &model.DocumentGroup{
@@ -146,12 +144,12 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Owner,
 		}
 
-		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 		}
 
-		procRequest.AddEthereumTx(proc.TxSetDocGroupAccess, txHash)
+		multiCallTx.Add(uint8(proc.TxSetDocAccess), setAccessPacked)
 	}
 
 	err = s.SaveStatus(ctx, multiCallTx, procRequest, userID, systemID, ehrUUID, doc, allDocsGroup)
@@ -165,15 +163,6 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 	err = s.SaveEhr(ctx, multiCallTx, procRequest, userID, systemID, &ehr, allDocsGroup)
 	if err != nil {
 		return nil, fmt.Errorf("SaveEhr error: %w", err)
-	}
-
-	txHash, err := multiCallTx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("EhrCreateWithID commit error: %w", err)
-	}
-
-	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	// Granting access to the group 'All documents' for the 'Doctors' group
@@ -221,12 +210,21 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Read,
 		}
 
-		txHash, err := s.Infra.Index.SetAccess(ctx, doctorsGroupIDHash, &accessObj, userPrivKey)
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(doctorsGroupIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess doctorsGroup to allDocsGroup error: %w", err)
 		}
 
-		procRequest.AddEthereumTx(proc.TxSetDocGroupAccess, txHash)
+		multiCallTx.Add(uint8(proc.TxSetDocAccess), setAccessPacked)
+	}
+
+	txHash, err := multiCallTx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("EhrCreateWithID commit error: %w", err)
+	}
+
+	for _, txKind := range multiCallTx.GetTxKinds() {
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
 	}
 
 	// Adding dataStore index
@@ -286,17 +284,17 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 
 	procRequest.AddFilecoinTx(proc.TxSaveEhr, CID.String(), dealCID.String(), minerAddr)
 
-	err = s.addEhrMetaData(ctx, multiCallTx, key, &ehrUUID, CID, dealCID, minerAddr, userPubKey, userPrivKey)
+	err = s.addEhrMetaData(multiCallTx, key, &ehrUUID, CID, dealCID, minerAddr, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	err = s.setDocAccess(ctx, procRequest, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	err = s.setDocAccess(multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
 
-	err = s.addDocumentToGroup(ctx, multiCallTx, CID, allDocsGroup, userPrivKey)
+	err = s.addDocumentToGroup(multiCallTx, CID, allDocsGroup, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("addDocumentToGroup error: %w", err)
 	}
@@ -304,7 +302,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 	return nil
 }
 
-func (s *Service) addEhrMetaData(ctx context.Context, multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, ehrUUID *uuid.UUID, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) addEhrMetaData(multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, ehrUUID *uuid.UUID, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
 	ehrIDEncrypted, err := key.Encrypt(ehrUUID[:])
 	if err != nil {
 		return fmt.Errorf("Encrypt error: %w ehrID: %s", err, ehrUUID.String())
@@ -336,7 +334,7 @@ func (s *Service) addEhrMetaData(ctx context.Context, multiCallTx *indexer.Multi
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Ehr, docMeta, userPrivKey)
+	packed, err := s.Infra.Index.AddEhrDoc(types.Ehr, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
@@ -346,7 +344,7 @@ func (s *Service) addEhrMetaData(ctx context.Context, multiCallTx *indexer.Multi
 	return nil
 }
 
-func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	docIDHash := indexer.Keccak256(CID.Bytes())
 
@@ -368,17 +366,17 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}
 
-	req.AddEthereumTx(proc.TxSetDocAccess, txHash)
+	multiCallTx.Add(uint8(proc.TxSetDocAccess), packed)
 
 	return nil
 }
 
-func (s *Service) addDocumentToGroup(ctx context.Context, multiCallTx *indexer.MultiCallTx, CID *cid.Cid, groupToAdd *model.DocumentGroup, userPrivKey *[32]byte) error {
+func (s *Service) addDocumentToGroup(multiCallTx *indexer.MultiCallTx, CID *cid.Cid, groupToAdd *model.DocumentGroup, userPrivKey *[32]byte) error {
 	docCIDHash := indexer.Keccak256(CID.Bytes())
 
 	docCIDEncr, err := groupToAdd.GroupKey.Encrypt(CID.Bytes())
@@ -386,7 +384,7 @@ func (s *Service) addDocumentToGroup(ctx context.Context, multiCallTx *indexer.M
 		return fmt.Errorf("EHR_STATUS CID encryption error: %w", err)
 	}
 
-	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &groupToAdd.GroupID, docCIDHash, docCIDEncr, userPrivKey)
+	packed, err := s.Infra.Index.DocGroupAddDoc(&groupToAdd.GroupID, docCIDHash, docCIDEncr, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 	}

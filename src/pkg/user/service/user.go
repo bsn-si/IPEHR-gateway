@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -112,7 +111,7 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 		return fmt.Errorf("NewProcRequest error: %w", err)
 	}
 
-	multiCallTx := s.Infra.Index.MultiCallUsersNew(ctx, userPrivKey)
+	multiCallTx := s.Infra.Index.MultiCallUsersNew()
 
 	userNewPacked, err := s.Infra.Index.UserNew(ctx, user.UserID, systemID, user.Role, pwdHash, content, userPrivKey)
 	if err != nil {
@@ -121,20 +120,36 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 
 	multiCallTx.Add(uint8(proc.TxUserNew), userNewPacked)
 
-	var userGroupDoctors *model.UserGroup
 	if user.Role == uint8(roles.Patient) {
 		// 'doctors' userGroup creating
-		{
-			groupName := common.DefaultGroupDoctors
-			groupDescription := ""
+		groupName := common.DefaultGroupDoctors
+		groupDescription := ""
 
-			userGroupDoctors, err = s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
-			if err != nil {
-				return fmt.Errorf("service.GroupCreate error: %w", err)
-			}
-
-			multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupDoctors.Packed)
+		userGroupDoctors, err := s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
+		if err != nil {
+			return fmt.Errorf("service.GroupCreate error: %w", err)
 		}
+
+		multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupDoctors.Packed)
+
+		//Granting access to the group 'doctors' for user
+		userIDHash := sha3.Sum256([]byte(user.UserID + systemID))
+		doctorsGroupIDHash := indexer.Keccak256(userGroupDoctors.GroupID[:])
+
+		accessObj := indexer.AccessObject{
+			Kind:    access.UserGroup,
+			IdHash:  *doctorsGroupIDHash,
+			IdEncr:  userGroupDoctors.IDEncr,
+			KeyEncr: userGroupDoctors.KeyEncr,
+			Level:   access.Owner,
+		}
+
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+		if err != nil {
+			return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
+		}
+
+		multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), setAccessPacked)
 	}
 
 	txHash, err := multiCallTx.Commit()
@@ -150,27 +165,6 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
 		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
-	}
-
-	if user.Role == uint8(roles.Patient) && userGroupDoctors != nil {
-		//Granting access to the group 'doctors' for user
-		userIDHash := sha3.Sum256([]byte(user.UserID + systemID))
-		doctorsGroupIDHash := indexer.Keccak256(userGroupDoctors.GroupID[:])
-
-		accessObj := indexer.AccessObject{
-			Kind:    access.UserGroup,
-			IdHash:  *doctorsGroupIDHash,
-			IdEncr:  userGroupDoctors.IDEncr,
-			KeyEncr: userGroupDoctors.KeyEncr,
-			Level:   access.Owner,
-		}
-
-		txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
-		if err != nil {
-			return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
-		}
-
-		procRequest.AddEthereumTx(proc.TxSetUserGroupAccess, txHash)
 	}
 
 	if err := procRequest.Commit(); err != nil {
@@ -417,8 +411,6 @@ func (s *Service) VerifyToken(userID, tokenString string, tokenType TokenType) (
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w userID %s", err, userID)
 	}
-
-	log.Println("tokenString:", tokenString)
 
 	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {

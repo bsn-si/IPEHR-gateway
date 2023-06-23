@@ -156,7 +156,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, tmp
 
 	multiCallTx := s.docSvc.Infra.Index.MultiCallEhrNew()
 
-	err = s.addMetaData(ctx, multiCallTx, key, tmpl, CID, dealCID, minerAddr, userPubKey, userPrivKey)
+	err = s.addMetaData(multiCallTx, key, tmpl, CID, dealCID, minerAddr, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("addDataIndex error: %w", err)
 	}
@@ -182,7 +182,7 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, tmp
 	return nil
 }
 
-func (s *Service) addMetaData(ctx context.Context, multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, tmpl *model.Template, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) addMetaData(multiCallTx *indexer.MultiCallTx, key *chachaPoly.Key, tmpl *model.Template, CID, dealCID *cid.Cid, minerAddr string, userPubKey, userPrivKey *[32]byte) error {
 	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 	if err != nil {
 		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
@@ -232,7 +232,7 @@ func (s *Service) addMetaData(ctx context.Context, multiCallTx *indexer.MultiCal
 		},
 	}
 
-	packed, err := s.docSvc.Infra.Index.AddEhrDoc(ctx, types.Template, docMeta, userPrivKey)
+	packed, err := s.docSvc.Infra.Index.AddEhrDoc(types.Template, docMeta, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
