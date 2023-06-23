@@ -6,7 +6,7 @@ import { randomString } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import chai, { describe, expect } from 'https://jslib.k6.io/k6chaijs/4.3.4.3/index.js';
 import { Httpx, Get, Post } from 'https://jslib.k6.io/httpx/0.0.6/index.js';
 import { ServerUrl, EHRSystemID } from "./consts.js";
-import { register_user, login_user } from './user.js';
+import * as user from './user.js' // import all exported functions from user.js;
 
 let session = new Httpx({
     baseURL: ServerUrl,
@@ -19,7 +19,7 @@ chai.config.logFailures = true;
 
 export const options = {
     vus: 1,
-    iterations: 5,
+    iterations: 1,
     // vus: 10,
     // duration: '10s',
     ext: {
@@ -42,13 +42,23 @@ export default function testSuite() {
         session: session,
     };
 
-    let user = null;
+    let u = null;
 
     describe('Register user', () => {
-        user = register_user(ctx);
+        u = user.register_user(ctx);
+        console.log("USER:" + JSON.stringify(u));
     });
 
     describe('Login user', () => {
-        login_user(ctx, user.userID, user.password);
+        console.log(JSON.stringify(u));
+        user.login_user(ctx, u.userID, u.password);
+    });
+
+    describe('Get user', () => {
+        user.get_user_info(ctx, u);
+    });
+
+    describe('Logout user', () => {
+        user.log_out(ctx);
     });
 }

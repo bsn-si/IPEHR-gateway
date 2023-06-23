@@ -13,7 +13,7 @@ const DOCTOR_ROLE = 1;
 
 // register new user
 export function register_user(ctx) {
-    return register_user_with_role(ctx, DOCTOR_ROLE);
+    return register_user_with_role(ctx, USER_ROLE);
 }
 
 // register new Doctor
