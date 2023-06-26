@@ -71,7 +71,7 @@ func (i *Index) DocGroupGetDocs(ctx context.Context, gID *uuid.UUID) ([][]byte, 
 	return CIDs, nil
 }
 
-func (i *Index) DocGroupAddDoc(ctx context.Context, gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr []byte, userPrivKey *[32]byte) ([]byte, error) {
+func (i *Index) DocGroupAddDoc(gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr []byte, userPrivKey *[32]byte) ([]byte, error) {
 	groupIDHash := Keccak256(gID[:])
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
