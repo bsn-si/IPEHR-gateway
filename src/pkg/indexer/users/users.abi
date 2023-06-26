@@ -261,6 +261,66 @@
     {
       "inputs": [
         {
+          "internalType": "bytes32",
+          "name": "accessID",
+          "type": "bytes32"
+        },
+        {
+          "components": [
+            {
+              "internalType": "enum IAccessStore.AccessKind",
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "idHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "idEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "bytes",
+              "name": "keyEncr",
+              "type": "bytes"
+            },
+            {
+              "internalType": "enum IAccessStore.AccessLevel",
+              "name": "level",
+              "type": "uint8"
+            }
+          ],
+          "internalType": "struct IAccessStore.Access",
+          "name": "a",
+          "type": "tuple"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "setAccess",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "addr",
           "type": "address"

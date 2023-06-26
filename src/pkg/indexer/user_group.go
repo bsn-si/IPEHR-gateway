@@ -140,10 +140,10 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 	return tx.Hash().Hex(), nil
 }
 
-func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSystemID string, groupID *uuid.UUID, privKey *[32]byte) (string, error) {
+func (i *Index) UserGroupRemoveUser(removeUserID, removeSystemID string, groupID *uuid.UUID, privKey *[32]byte) ([]byte, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
@@ -154,24 +154,18 @@ func (i *Index) UserGroupRemoveUser(ctx context.Context, removeUserID, removeSys
 
 	data, err := i.usersAbi.Pack("groupRemoveUser", groupIDHash, removeUserIDHash, userAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack error: %w", err)
+		return nil, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
 	signature, err := makeSignature(data, userKey, deadline)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return nil, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.users.GroupRemoveUser(i.transactOpts, *groupIDHash, removeUserIDHash, userAddress, deadline, signature)
+	data, err = i.usersAbi.Pack("groupRemoveUser", groupIDHash, removeUserIDHash, userAddress, deadline, signature)
 	if err != nil {
-		if strings.Contains(err.Error(), "DNY") {
-			return "", errors.ErrAccessDenied
-		} else if strings.Contains(err.Error(), "NFD") {
-			return "", errors.ErrNotFound
-		}
-
-		return "", fmt.Errorf("users.GroupRemoveUser error: %w", err)
+		return nil, fmt.Errorf("abi.Pack2 error: %w", err)
 	}
 
-	return tx.Hash().Hex(), nil
+	return data, nil
 }

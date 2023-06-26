@@ -18,7 +18,7 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/ehrIndexer"
 )
 
-func (i *Index) AddEhrDoc(ctx context.Context, docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte) ([]byte, error) {
+func (i *Index) AddEhrDoc(docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte) ([]byte, error) {
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)

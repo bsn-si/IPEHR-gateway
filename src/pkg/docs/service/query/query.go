@@ -206,7 +206,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Query, docMeta, userPrivKey)
+	packed, err := s.Infra.Index.AddEhrDoc(types.Query, docMeta, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}

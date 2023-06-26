@@ -98,17 +98,41 @@ func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes 
 		return err
 	}
 
-	if err = s.addMetaData(ctx, req, key, objectVersionID, CID, dealCID, userPubKey, encName, baseDocumentUIDHash, minerAddr, userPrivKey); err != nil {
+	multiCallTx := s.Infra.Index.MultiCallEhrNew()
+
+	packed, err := s.addMetaData(key, objectVersionID, CID, dealCID, userPubKey, encName, baseDocumentUIDHash, minerAddr, userPrivKey)
+	if err != nil {
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	if err = s.addDocGroupData(ctx, req, CID, allDocGroup, userPrivKey); err != nil {
+	multiCallTx.Add(uint8(proc.TxAddEhrDoc), packed)
+
+	packed, err = s.addDocGroupData(CID, allDocGroup, userPrivKey)
+	if err != nil {
 		return fmt.Errorf("addDocGroupData error: %w", err)
 	}
 
-	if err = s.setDocAccess(ctx, req, patientID, systemID, CID, key, access.Owner, userPubKey, userPrivKey); err != nil {
+	multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
+
+	packed, err = s.setDocAccess(patientID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
+
+	multiCallTx.Add(uint8(proc.TxSetDocAccess), packed)
+
+	txHash, err := multiCallTx.Commit()
+	if err != nil {
+		if strings.Contains(err.Error(), "NFD") {
+			return errors.ErrNotFound
+		} else if strings.Contains(err.Error(), "AEX") {
+			return errors.ErrAlreadyExist
+		}
+
+		return fmt.Errorf("multiCallTx.Commit error: %w", err)
+	}
+
+	req.AddEthereumTx(proc.TxCreateDirectory, txHash)
 
 	return nil
 }
@@ -146,25 +170,25 @@ func (s *Service) fileCoinSaving(ctx context.Context, req proc.RequestInterface,
 	return CID, dealCID, minerAddr, nil
 }
 
-func (s *Service) addMetaData(ctx context.Context, req proc.RequestInterface, key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID, dealCID *cid.Cid, userPubKey *[32]byte, encName string, baseDocumentUIDHash [32]byte, minerAddr string, userPrivKey *[32]byte) error {
+func (s *Service) addMetaData(key *chachaPoly.Key, objectVersionID *base.ObjectVersionID, CID, dealCID *cid.Cid, userPubKey *[32]byte, encName string, baseDocumentUIDHash [32]byte, minerAddr string, userPrivKey *[32]byte) ([]byte, error) {
 	docIDEncrypted, err := key.Encrypt([]byte(objectVersionID.String()))
 	if err != nil {
-		return fmt.Errorf("EncryptWithAuthData error: %w", err)
+		return nil, fmt.Errorf("EncryptWithAuthData error: %w", err)
 	}
 
 	CIDEncr, err := key.Encrypt(CID.Bytes())
 	if err != nil {
-		return fmt.Errorf("CID encryption error: %w", err)
+		return nil, fmt.Errorf("CID encryption error: %w", err)
 	}
 
 	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 	if err != nil {
-		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		return nil, fmt.Errorf("keybox.SealAnonymous error: %w", err)
 	}
 
 	nameEncr, err := key.Encrypt([]byte(encName))
 	if err != nil {
-		return fmt.Errorf("Encrypt name error: %w", err)
+		return nil, fmt.Errorf("Encrypt name error: %w", err)
 	}
 
 	docMeta := &model.DocumentMeta{
@@ -184,39 +208,26 @@ func (s *Service) addMetaData(ctx context.Context, req proc.RequestInterface, ke
 		},
 	}
 
-	packed, err := s.Infra.Index.AddEhrDoc(ctx, types.Directory, docMeta, userPrivKey)
+	packed, err := s.Infra.Index.AddEhrDoc(types.Directory, docMeta, userPrivKey)
 	if err != nil {
-		return fmt.Errorf("Index.AddEhrDoc error: %w", err)
+		return nil, fmt.Errorf("Index.AddEhrDoc error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return errors.ErrNotFound
-		} else if strings.Contains(err.Error(), "AEX") {
-			return errors.ErrAlreadyExist
-		}
-
-		return fmt.Errorf("Index.SendSingle error: %w", err)
-	}
-
-	req.AddEthereumTx(processing.TxAddEhrDoc, txHash)
-
-	return nil
+	return packed, nil
 }
 
-func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) setDocAccess(userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) ([]byte, error) {
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	docIDHash := indexer.Keccak256(CID.Bytes())
 
 	CIDEncr, err := key.Encrypt(CID.Bytes())
 	if err != nil {
-		return fmt.Errorf("CID encryption error: %w", err)
+		return nil, fmt.Errorf("CID encryption error: %w", err)
 	}
 
 	keyEncr, err := keybox.SealAnonymous(key.Bytes(), userPubKey)
 	if err != nil {
-		return fmt.Errorf("keybox.SealAnonymous error: %w", err)
+		return nil, fmt.Errorf("keybox.SealAnonymous error: %w", err)
 	}
 
 	accessObj := indexer.AccessObject{
@@ -227,43 +238,28 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
 	if err != nil {
-		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
+		return nil, fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}
 
-	req.AddEthereumTx(proc.TxSetDocAccess, txHash)
-
-	return nil
+	return packed, nil
 }
 
-func (s *Service) addDocGroupData(ctx context.Context, req proc.RequestInterface, CID *cid.Cid, allDocGroup *model.DocumentGroup, userPrivKey *[32]byte) error {
+func (s *Service) addDocGroupData(CID *cid.Cid, allDocGroup *model.DocumentGroup, userPrivKey *[32]byte) ([]byte, error) {
 	docCIDHash := indexer.Keccak256(CID.Bytes())
 
 	docCIDEncr, err := allDocGroup.GroupKey.Encrypt(CID.Bytes())
 	if err != nil {
-		return fmt.Errorf("CID encryption error: %w", err)
+		return nil, fmt.Errorf("CID encryption error: %w", err)
 	}
 
-	packed, err := s.Infra.Index.DocGroupAddDoc(ctx, &allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey)
+	packed, err := s.Infra.Index.DocGroupAddDoc(&allDocGroup.GroupID, docCIDHash, docCIDEncr, userPrivKey)
 	if err != nil {
-		return fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
+		return nil, fmt.Errorf("Index.DocGroupAddDoc error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
-	if err != nil {
-		if strings.Contains(err.Error(), "NFD") {
-			return errors.ErrNotFound
-		} else if strings.Contains(err.Error(), "AEX") {
-			return errors.ErrAlreadyExist
-		}
-
-		return fmt.Errorf("Index.SendSingle error: %w", err)
-	}
-
-	req.AddEthereumTx(processing.TxDocGroupAddDoc, txHash)
-
-	return nil
+	return packed, nil
 }
 
 func (s *Service) Update(ctx context.Context, req processing.RequestInterface, systemID string, userID string, d *model.Directory) error {
