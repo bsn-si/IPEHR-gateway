@@ -26,7 +26,7 @@ import (
 )
 
 //	@title			IPEHR Gateway API
-//	@version		0.2
+//	@version		0.7
 //	@description	The IPEHR Gateway is an openEHR compliant EHR server implementation that stores encrypted medical data in a Filecoin distributed file storage.
 
 //	@contact.name	API Support
@@ -36,7 +36,7 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-//  @host      localhost:8080
+//  @host      gateway.ipehr.org/v1
 //	@BasePath	/v1
 
 type API struct {
@@ -73,7 +73,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		gaSvc,
 	)
 
-	docs.SwaggerInfo.Host = cfg.Host
+	docs.SwaggerInfo.Host = cfg.BaseURL
 
 	return &API{
 		Ehr:         NewEhrHandler(docService, userSvc, docGroupSvc, gaSvc, cfg.BaseURL),

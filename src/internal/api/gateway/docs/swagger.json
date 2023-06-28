@@ -12,9 +12,9 @@
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "0.2"
+        "version": "0.7"
     },
-    "host": "localhost:8080",
+    "host": "gateway.ipehr.org/v1",
     "basePath": "/v1",
     "paths": {
         "/access/document": {
