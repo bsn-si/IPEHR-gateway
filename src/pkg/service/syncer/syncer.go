@@ -297,8 +297,6 @@ func (s *Syncer) procAddEhrDoc(ctx context.Context, method *abi.Method, inputDat
 }
 
 func (s *Syncer) procUserNew(ctx context.Context, method *abi.Method, inputData []byte, ts time.Time) error {
-	log.Println("[STAT] new patient registered")
-
 	args, err := method.Inputs.Unpack(inputData)
 	if err != nil {
 		return fmt.Errorf("UnpackValues error: %w", err)
@@ -316,6 +314,10 @@ func (s *Syncer) procUserNew(ctx context.Context, method *abi.Method, inputData 
 		if err != nil {
 			return fmt.Errorf("StatPatientsCountIncrement error: %w", err)
 		}
+
+		log.Println("[STAT] new patient registered")
+	} else if role == RoleDoctor {
+		log.Println("[STAT] new doctor registered")
 	}
 
 	return nil

@@ -852,7 +852,7 @@ definitions:
     additionalProperties:
       $ref: '#/definitions/processing.RequestResult'
     type: object
-host: localhost:8080
+host: gateway.ipehr.org/v1
 info:
   contact:
     email: support@bsn.si
@@ -864,7 +864,7 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   title: IPEHR Gateway API
-  version: "0.2"
+  version: "0.7"
 paths:
   /access/document:
     post:

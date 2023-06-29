@@ -27,10 +27,10 @@
         }
     },
     "contract": {
-        "addressEhrIndex": "0x6ba52Acf048e3513A9865DA3B4298Ec00edC548c",
-        "addressAccessStore": "0x0EF6Cf7673E466CE90603a61C3e68D9f6fA5552C",
-        "addressUsers": "0x6bB07fDDf802dC29515C50A6ee64077C26994b12",
-        "addressDataStore": "0xaFB2197De97aF194765c25696fD0d497eb1f20Bb",
+        "addressEhrIndex": "0x9944D37bFeC481868baad7b6E05b76Db01cA0865",
+        "addressAccessStore": "0x946e8BB742AAe895F9D369Fa44eF41414607A0CA",
+        "addressUsers": "0xe95dB24EA185c7a7D4ED6e8D20Caaa4cCb852AF4",
+        "addressDataStore": "0x0d223203D54c453Fb70A1462C3901AC59CE1F103",
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
         "privKeyPath": "~/.ipehr/.blockchain.key",
         "gasTipCap" : 100000
