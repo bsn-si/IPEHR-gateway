@@ -5,7 +5,7 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import chai, { describe, expect } from 'https://jslib.k6.io/k6chaijs/4.3.4.3/index.js';
 import { Httpx, Get, Post } from 'https://jslib.k6.io/httpx/0.0.6/index.js';
-import {ServerUrl, EHRSystemID} from "./consts.js";
+import { ServerUrl, EHRSystemID } from "./consts.js";
 
 
 const USER_ROLE = 0;
@@ -44,6 +44,8 @@ function register_user_with_role(ctx, role) {
 
     expect(response.status, "registration status").to.equal(201);
     expect(response).to.have.validJsonBody();
+    
+    console.log(response.body);
 
     return user;
 }
@@ -116,9 +118,15 @@ export function get_user_info(ctx, user) {
     expect(response.json('userID'), "Correct User ID").to.equal(user.userID);
 }
 
+export function get_doctor_info(ctx, user, code) {
+    const response = ctx.session.get('/user/code/' + code);
+
+    expect(response.status, "Get Doctor By Code").to.equal(200);
+}
+
 export function log_out(ctx) {
     let response = ctx.session.get('/user/logout');
-    
+
     expect(response.status, "User Logout").to.equal(200);
     expect(response).to.have.validJsonBody()
 }
