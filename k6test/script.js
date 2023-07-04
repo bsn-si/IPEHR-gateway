@@ -5,8 +5,8 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import chai, { describe, expect } from 'https://jslib.k6.io/k6chaijs/4.3.4.3/index.js';
 import { Httpx, Get, Post } from 'https://jslib.k6.io/httpx/0.0.6/index.js';
-import { ServerUrl, EHRSystemID } from "./consts.js";
-import * as user from './user.js' // import all exported functions from user.js;
+import { ServerUrl, EHRSystemID } from "./api/consts.js";
+import * as user from './api/user.js' // import all exported functions from user.js;
 
 let session = new Httpx({
     baseURL: ServerUrl,
