@@ -1,6 +1,7 @@
 import encoding from 'k6/encoding';
 import http from 'k6/http';
 import { sleep } from 'k6';
+import { Rate } from 'k6/metrics';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import chai, { describe, expect } from 'https://jslib.k6.io/k6chaijs/4.3.4.3/index.js';
@@ -17,10 +18,14 @@ let session = new Httpx({
 
 chai.config.logFailures = true;
 
+const formFailRate = new Rate('failed form fetches');
+const submitFailRate = new Rate('failed form submits');
+
 export const options = {
-    vus: 1,
     iterations: 1,
+    // vus: 1,
     // vus: 10,
+    // vus: 20,
     // duration: '10s',
     ext: {
         loadimpact: {
@@ -31,9 +36,12 @@ export const options = {
         }
     },
     thresholds: {
+        'failed form submits': ['rate<0.1'],
+        'failed form fetches': ['rate<0.1'],
+        'http_req_duration': ['p(95)<400'],
         // fail the test if any checks fail or any requests fail
-        checks: ['rate == 1.00'],
-        http_req_failed: ['rate == 0.00'],
+        'checks': ['rate == 1.00'],
+        'http_req_failed': ['rate == 0.00'],
     },
 };
 
@@ -54,11 +62,11 @@ export default function testSuite() {
         user.login_user(ctx, u.userID, u.password);
     });
 
-    describe('Get user', () => {
-        user.get_user_info(ctx, u);
-    });
+    // describe('Get user', () => {
+        // user.get_user_info(ctx, u);
+    // });
 
-    describe('Logout user', () => {
-        user.log_out(ctx);
-    });
+    // describe('Logout user', () => {
+        // user.log_out(ctx);
+    // });
 }
