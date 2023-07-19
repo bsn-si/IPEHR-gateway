@@ -46,6 +46,7 @@ func computeApproximateRequestSize(r *http.Request) int64 {
 
 	size += int64(len(r.Method))
 	size += int64(len(r.Proto))
+
 	for name, values := range r.Header {
 		size += int64(len(name))
 		for _, value := range values {
@@ -54,8 +55,6 @@ func computeApproximateRequestSize(r *http.Request) int64 {
 	}
 
 	size += int64(len(r.Host))
-
-	// N.B. r.Form and r.MultipartForm are assumed to be included in r.URL.
 
 	if r.ContentLength != -1 {
 		size += r.ContentLength

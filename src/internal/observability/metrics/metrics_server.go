@@ -21,9 +21,11 @@ func RunMetricsServer(port int) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
+
 	server = &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {
@@ -38,9 +40,10 @@ func Stop(ctx context.Context) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	cCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
+
+	if err := server.Shutdown(cCtx); err != nil {
 		log.Fatal(err)
 	}
 }

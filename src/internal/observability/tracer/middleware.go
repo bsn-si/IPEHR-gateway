@@ -40,6 +40,7 @@ func Middleware(c *gin.Context) {
 
 	status := c.Writer.Status()
 	span.SetStatus(httpconv.ServerStatus(status))
+
 	if status != 0 {
 		span.SetAttributes(semconv.HTTPStatusCodeKey.Int(status))
 	}
