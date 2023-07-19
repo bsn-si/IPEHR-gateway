@@ -3,7 +3,6 @@ package gateway
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -71,14 +70,6 @@ func NewUserHandler(handlerService UserService) *UserHandler {
 //	@Failure	500			"Is returned when an unexpected error occurs while processing a request"
 //	@Router		/user/register [post]
 func (h *UserHandler) Register(c *gin.Context) {
-	// TODO can users register by themselves, or does it have to be an already authorized user?
-	data, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Request body error"})
-		return
-	}
-	defer c.Request.Body.Close()
-
 	reqID := c.GetString("reqID")
 	if reqID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "requestId is empty"})
@@ -92,11 +83,13 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
+	// TODO can users register by themselves, or does it have to be an already authorized user?
 	var userCreateRequest model.UserCreateRequest
-	if err = json.Unmarshal(data, &userCreateRequest); err != nil {
+	if err := json.NewDecoder(c.Request.Body).Decode(&userCreateRequest); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Request validation error"})
 		return
 	}
+	defer c.Request.Body.Close()
 
 	if ok, err := userCreateRequest.Validate(); !ok {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err})
