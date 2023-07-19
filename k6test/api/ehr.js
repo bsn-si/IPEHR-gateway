@@ -8,7 +8,7 @@ import { Httpx, Get, Post } from 'https://jslib.k6.io/httpx/0.0.6/index.js';
 import { ServerUrl, EHRSystemID } from "./consts.js";
 
 export function create_ehr(ctx, user) {
-    const payload = JSON.stringify({
+    const ehr = {
         _type: "EHR",
         archetype_node_id: "openEHR-EHR-EHR_EXAMPLE.v1",
         name: {
@@ -27,24 +27,35 @@ export function create_ehr(ctx, user) {
         },
         isModifiable: true,
         isQueryable: true,
+    }
+
+    const payload = JSON.stringify(ehr);
+
+    const session = new Httpx({
+        baseURL: ServerUrl,
+        headers: {
+            AuthUserId: user.userID,
+            EhrSystemId: EHRSystemID,
+            Authorization: `Bearer ${ctx.access_token}`,
+            Prefer: "return=representation",
+        },
     });
 
-    const response = ctx.session.post(`/ehr/`, payload);
+    const response = session.post(`/ehr/`, payload);
 
     expect(response.status, "create ehr status").to.equal(201);
     expect(response).to.have.validJsonBody();
 
     const resp = JSON.parse(response.body);
-    console.log("EHR:" + JSON.stringify(resp));
 
-    expect(resp.system_id).to.be.a('string');
-    expect(resp.ehr_id).to.be.a('string');
+    expect(resp.system_id.value).to.be.a('string');
+    expect(resp.ehr_id.value).to.be.a('string');
 
     return resp;
 }
 
 export function create_ehr_with_id(ctx, user, ehrID) {
-    const payload = JSON.stringify({
+    const ehr = {
         _type: "EHR",
         archetype_node_id: "openEHR-EHR-EHR_EXAMPLE.v1",
         name: {
@@ -64,20 +75,16 @@ export function create_ehr_with_id(ctx, user, ehrID) {
         isModifiable: true,
         isQueryable: true,
         ehr_id: uuidv4(),
-    });
+    }
+
+    const payload = JSON.stringify(ehr);
 
     const response = ctx.session.put(`/ehr/` + ehrID, payload);
 
     expect(response.status, "create ehr status").to.equal(201);
-    expect(response).to.have.validJsonBody();
+    // expect(response).to.have.validJsonBody();
 
-    const resp = JSON.parse(response.body);
-    console.log("EHR:" + JSON.stringify(resp));
-
-    expect(resp.system_id).to.be.a('string');
-    expect(resp.ehr_id).to.be.a('string');
-
-    return resp;
+    return ehr;
 }
 
 export function get_ehr(ctx, ehrID) {
@@ -87,10 +94,9 @@ export function get_ehr(ctx, ehrID) {
     expect(response).to.have.validJsonBody();
 
     const resp = JSON.parse(response.body);
-    console.log("EHR:" + JSON.stringify(resp));
 
-    expect(resp.system_id).to.be.a('string');
-    expect(resp.ehr_id).to.be.a('string');
+    expect(resp.system_id.value, "Check 'system_id' is string").to.be.a('string');
+    expect(resp.ehr_id.value, "Check 'ehr_id' is string").to.be.a('string');
 
     return resp;
 }

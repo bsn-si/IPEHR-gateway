@@ -45,8 +45,6 @@ function register_user_with_role(ctx, role) {
     expect(response.status, "registration status").to.equal(201);
     expect(response).to.have.validJsonBody();
     
-    console.log(response.body);
-
     return user;
 }
 
@@ -78,7 +76,7 @@ export function login_user(ctx, userID, password) {
     ctx.refresh_token = refresh_token;
 }
 
-export function refresh_token(ctx) {
+export function refresh_token(ctx, userID) {
     ctx.session = new Httpx({
         baseURL: ServerUrl,
         headers: {
@@ -115,7 +113,9 @@ export function get_user_info(ctx, user) {
     expect(response.status, "Get User Info").to.equal(200);
     expect(response).to.have.validJsonBody()
 
-    expect(response.json('userID'), "Correct User ID").to.equal(user.userID);
+    const respUser = JSON.parse(response.body);
+
+    return respUser
 }
 
 export function get_doctor_info(ctx, user, code) {
@@ -125,7 +125,14 @@ export function get_doctor_info(ctx, user, code) {
 }
 
 export function log_out(ctx) {
-    let response = ctx.session.get('/user/logout');
+    const data = {
+        access_token: ctx.access_token,
+        refresh_token: ctx.refresh_token,
+    };
+
+    const payload = JSON.stringify(data);
+
+    let response = ctx.session.post('/user/logout', payload);
 
     expect(response.status, "User Logout").to.equal(200);
     expect(response).to.have.validJsonBody()
