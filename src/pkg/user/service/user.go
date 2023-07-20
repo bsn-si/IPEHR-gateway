@@ -15,9 +15,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/golang-jwt/jwt"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
@@ -70,6 +73,11 @@ func (s *Service) NewProcRequest(reqID, userID string, kind processing.RequestKi
 }
 
 func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, systemID, reqID string) (err error) {
+	attr := attribute.String("user_id", user.UserID)
+
+	ctx, span := tracer.GetTracer().Start(ctx, "user_server.register", trace.WithAttributes(attr))
+	defer span.End()
+
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(user.UserID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, user.UserID)
@@ -80,30 +88,9 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 		return fmt.Errorf("generateHashFromPassword error: %w", err)
 	}
 
-	var content []byte
-
-	switch roles.Role(user.Role) {
-	case roles.Patient:
-	case roles.Doctor:
-		info := model.UserInfo{
-			UserID:      user.UserID,
-			Name:        user.Name,
-			Address:     user.Address,
-			Description: user.Description,
-			PictuteURL:  user.PictuteURL,
-		}
-
-		content, err = msgpack.Marshal(info)
-		if err != nil {
-			return fmt.Errorf("msgpack.Marshal error: %w", err)
-		}
-
-		content, err = compressor.New(compressor.BestCompression).Compress(content)
-		if err != nil {
-			return fmt.Errorf("UserInfo content compression error: %w", err)
-		}
-	default:
-		return errors.ErrFieldIsIncorrect("user.Role")
+	content, err := getConteneForRole(user)
+	if err != nil {
+		return err
 	}
 
 	procRequest, err := s.NewProcRequest(reqID, user.UserID, processing.RequestUserRegister)
@@ -121,35 +108,9 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 	multiCallTx.Add(uint8(proc.TxUserNew), userNewPacked)
 
 	if user.Role == uint8(roles.Patient) {
-		// 'doctors' userGroup creating
-		groupName := common.DefaultGroupDoctors
-		groupDescription := ""
-
-		userGroupDoctors, err := s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
-		if err != nil {
-			return fmt.Errorf("service.GroupCreate error: %w", err)
+		if err := s.createUserGroupAndSetAccess(ctx, user, systemID, userPubKey, userPrivKey, multiCallTx); err != nil {
+			return fmt.Errorf("createUserGroupAndSetAccess error: %w", err)
 		}
-
-		multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupDoctors.Packed)
-
-		//Granting access to the group 'doctors' for user
-		userIDHash := sha3.Sum256([]byte(user.UserID + systemID))
-		doctorsGroupIDHash := indexer.Keccak256(userGroupDoctors.GroupID[:])
-
-		accessObj := indexer.AccessObject{
-			Kind:    access.UserGroup,
-			IdHash:  *doctorsGroupIDHash,
-			IdEncr:  userGroupDoctors.IDEncr,
-			KeyEncr: userGroupDoctors.KeyEncr,
-			Level:   access.Owner,
-		}
-
-		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
-		if err != nil {
-			return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
-		}
-
-		multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), setAccessPacked)
 	}
 
 	txHash, err := multiCallTx.Commit()
@@ -174,8 +135,86 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 	return nil
 }
 
+func (s *Service) createUserGroupAndSetAccess(ctx context.Context, user *model.UserCreateRequest, systemID string, userPubKey, userPrivKey *[32]byte, multiCallTx *indexer.MultiCallTx) error {
+	attr := []attribute.KeyValue{
+		attribute.String("user_id", user.UserID),
+		attribute.String("system_id", systemID),
+	}
+
+	ctx, span := tracer.GetTracer().Start(ctx, "user_server.createUserGroupAndSetAccess", trace.WithAttributes(attr...))
+	defer span.End()
+
+	// 'doctors' userGroup creating
+	groupName := common.DefaultGroupDoctors
+	groupDescription := ""
+
+	userGroupDoctors, err := s.groupCreate(ctx, groupName, groupDescription, userPubKey, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("service.GroupCreate error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroupDoctors.Packed)
+
+	//Granting access to the group 'doctors' for user
+	userIDHash := sha3.Sum256([]byte(user.UserID + systemID))
+	doctorsGroupIDHash := indexer.Keccak256(userGroupDoctors.GroupID[:])
+
+	accessObj := indexer.AccessObject{
+		Kind:    access.UserGroup,
+		IdHash:  *doctorsGroupIDHash,
+		IdEncr:  userGroupDoctors.IDEncr,
+		KeyEncr: userGroupDoctors.KeyEncr,
+		Level:   access.Owner,
+	}
+
+	setAccessPacked, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
+	if err != nil {
+		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
+	}
+
+	multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), setAccessPacked)
+	return nil
+}
+
+func getConteneForRole(user *model.UserCreateRequest) ([]byte, error) {
+	switch roles.Role(user.Role) {
+	case roles.Patient:
+		return nil, nil
+	case roles.Doctor:
+		info := model.UserInfo{
+			UserID:      user.UserID,
+			Name:        user.Name,
+			Address:     user.Address,
+			Description: user.Description,
+			PictuteURL:  user.PictuteURL,
+		}
+
+		data, err := msgpack.Marshal(info)
+		if err != nil {
+			return nil, fmt.Errorf("msgpack.Marshal error: %w", err)
+		}
+
+		content, err := compressor.New(compressor.BestCompression).Compress(data)
+		if err != nil {
+			return nil, fmt.Errorf("UserInfo content compression error: %w", err)
+		}
+
+		return content, nil
+	default:
+		return nil, errors.ErrFieldIsIncorrect("user.Role")
+	}
+}
+
 func (s *Service) Login(ctx context.Context, userID, systemID, password string) (err error) {
-	address, err := s.getUserAddress(userID)
+	attr := []attribute.KeyValue{
+		attribute.String("user_id", userID),
+		attribute.String("system_id", systemID),
+	}
+
+	ctx, span := tracer.GetTracer().Start(ctx, "user_server.login", trace.WithAttributes(attr...))
+	defer span.End()
+
+	address, err := s.getUserAddress(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("Login s.getUserAddress error: %w", err)
 	}
@@ -201,7 +240,10 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 }
 
 func (s *Service) Info(ctx context.Context, userID, systemID string) (*model.UserInfo, error) {
-	address, err := s.getUserAddress(userID)
+	ctx, span := tracer.GetTracer().Start(ctx, "user_server.info")
+	defer span.End()
+
+	address, err := s.getUserAddress(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("s.getUserAddress error: %w", err)
 	}
@@ -232,6 +274,9 @@ func (s *Service) Info(ctx context.Context, userID, systemID string) (*model.Use
 }
 
 func (s *Service) InfoByCode(ctx context.Context, code int) (*model.UserInfo, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_server.infoByCode", trace.WithAttributes(attribute.Int("code", code)))
+	defer span.End()
+
 	user, err := s.Infra.Index.GetUserByCode(ctx, uint64(code))
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
@@ -286,7 +331,10 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 	return &userInfo, nil
 }
 
-func (s *Service) getUserAddress(userID string) (eth_common.Address, error) {
+func (s *Service) getUserAddress(ctx context.Context, userID string) (eth_common.Address, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_server.getUserAddress", trace.WithAttributes(attribute.String("user_id", userID))) //nolint
+	defer span.End()
+
 	_, userPrivateKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return eth_common.Address{}, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)

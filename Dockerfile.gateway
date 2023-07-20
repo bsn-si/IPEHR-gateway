@@ -26,5 +26,6 @@ COPY --from=build /srv/bin/ /srv
 COPY --from=build /srv/config.json /srv/config.json
 COPY --from=build /srv/data /srv/data
 COPY --from=build /srv/pkg/indexer /srv/inbexer
+COPY ./ci/gateway-config.json /srv/config.json
 
 ENTRYPOINT [ "/srv/ipehr-gateway", "-config=/srv/config.json"]

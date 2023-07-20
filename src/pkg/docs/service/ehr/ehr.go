@@ -144,7 +144,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Owner,
 		}
 
-		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 		}
@@ -210,7 +210,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Read,
 		}
 
-		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(doctorsGroupIDHash, &accessObj, userPrivKey)
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(ctx, doctorsGroupIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess doctorsGroup to allDocsGroup error: %w", err)
 		}
@@ -289,7 +289,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	err = s.setDocAccess(multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	err = s.setDocAccess(ctx, multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
@@ -344,7 +344,7 @@ func (s *Service) addEhrMetaData(multiCallTx *indexer.MultiCallTx, key *chachaPo
 	return nil
 }
 
-func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) setDocAccess(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	docIDHash := indexer.Keccak256(CID.Bytes())
 
@@ -366,7 +366,7 @@ func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemI
 		Level:   accessLevel,
 	}
 
-	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}

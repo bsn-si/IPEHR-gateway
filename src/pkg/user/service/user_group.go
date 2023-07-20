@@ -9,6 +9,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/compressor"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -21,6 +22,9 @@ import (
 )
 
 func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, userID, systemID, groupName, groupDescription string) (*model.UserGroup, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_create") //nolint
+	defer span.End()
+
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -35,7 +39,7 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 
 	multiCallTx.Add(uint8(proc.TxUserGroupCreate), userGroup.Packed)
 
-	packed, err := s.setGroupAccess(userGroup, userID, systemID, access.Owner, userPrivKey)
+	packed, err := s.setGroupAccess(ctx, userGroup, userID, systemID, access.Owner, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("setGroupAccess error: %w", err)
 	}
@@ -59,7 +63,8 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 }
 
 func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*model.UserGroup, error) {
-	var err error
+	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_get_by_id") //nolint
+	defer span.End()
 
 	if groupKey == nil {
 		userIDHash := sha3.Sum256([]byte(userID + systemID))
@@ -122,6 +127,9 @@ func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, gro
 }
 
 func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID, addSystemID, reqID string, level access.Level, groupID *uuid.UUID) error {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_add_user") //nolint
+	defer span.End()
+
 	var auID [32]byte
 
 	copy(auID[:], addUserID)
@@ -183,6 +191,9 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID,
 }
 
 func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeUserID, removeSystemID, reqID string, groupID *uuid.UUID) error {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_remove_user") //nolint
+	defer span.End()
+
 	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -197,7 +208,7 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 
 	multiCallTx.Add(uint8(proc.TxUserGroupRemoveUser), packed)
 
-	packed, err = s.setGroupAccess(&model.UserGroup{GroupID: groupID}, removeUserID, removeSystemID, access.NoAccess, userPrivKey)
+	packed, err = s.setGroupAccess(ctx, &model.UserGroup{GroupID: groupID}, removeUserID, removeSystemID, access.NoAccess, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setGroupAccess error: %w", err)
 	}
@@ -269,6 +280,9 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 }
 
 func (s *Service) groupCreate(ctx context.Context, name, description string, userPubKey, userPrivKey *[32]byte) (*model.UserGroup, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_create") //nolint
+	defer span.End()
+
 	groupID := uuid.New()
 
 	userGroup := &model.UserGroup{
@@ -314,7 +328,10 @@ func (s *Service) groupCreate(ctx context.Context, name, description string, use
 	return userGroup, nil
 }
 
-func (s *Service) setGroupAccess(userGroup *model.UserGroup, userID, systemID string, accessLevel access.Level, userPrivKey *[32]byte) ([]byte, error) {
+func (s *Service) setGroupAccess(ctx context.Context, userGroup *model.UserGroup, userID, systemID string, accessLevel access.Level, userPrivKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_service.set_group_access") //nolint
+	defer span.End()
+
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	groupIDHash := indexer.Keccak256(userGroup.GroupID[:])
 
@@ -326,7 +343,7 @@ func (s *Service) setGroupAccess(userGroup *model.UserGroup, userID, systemID st
 		Level:   accessLevel,
 	}
 
-	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("Index.SetAccess user to composition error: %w", err)
 	}

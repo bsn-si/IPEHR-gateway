@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/users"
@@ -20,6 +21,9 @@ import (
 )
 
 func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_index.user_new") //nolint
+	defer span.End()
+
 	i.Lock()
 	defer i.Unlock()
 
@@ -69,6 +73,9 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_user_password_hash") //nolint
+	defer span.End()
+
 	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
 		return nil, fmt.Errorf("ehrIndex.Users error: %w userAddr %s", err, userAddr.String())
@@ -87,6 +94,9 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 }
 
 func (i *Index) GetUser(ctx context.Context, userAddr common.Address) (*userModel.User, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_user") //nolint
+	defer span.End()
+
 	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
 	if err != nil {
 		return nil, fmt.Errorf("users.GetUser error: %w userAddr %s", err, userAddr.String())
@@ -100,6 +110,9 @@ func (i *Index) GetUser(ctx context.Context, userAddr common.Address) (*userMode
 }
 
 func (i *Index) GetUserByCode(ctx context.Context, code uint64) (*userModel.User, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_user_by_code") //nolint
+	defer span.End()
+
 	user, err := i.users.GetUserByCode(&bind.CallOpts{Context: ctx}, code)
 	if err != nil {
 		return nil, fmt.Errorf("users.GetUserByCode error: %w code %d", err, code)
@@ -112,7 +125,10 @@ func (i *Index) GetUserByCode(ctx context.Context, code uint64) (*userModel.User
 	return &user, nil
 }
 
-func (i *Index) SetAccessWrapper(subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) ([]byte, error) {
+func (i *Index) SetAccessWrapper(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_index.set_access_wrapper") //nolint
+	defer span.End()
+
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)

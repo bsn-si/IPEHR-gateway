@@ -41,7 +41,7 @@ type (
 		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, error)
 		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
 		DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, error)
-		SetAccessWrapper(subjectIDHash *[32]byte, accessObj *indexer.AccessObject, userPrivKey *[32]byte) ([]byte, error)
+		SetAccessWrapper(ctx context.Context, subjectIDHash *[32]byte, accessObj *indexer.AccessObject, userPrivKey *[32]byte) ([]byte, error)
 	}
 
 	IpfsService interface {
@@ -267,7 +267,7 @@ func (s *Service) save(ctx context.Context, multiCallTx *indexer.MultiCallTx, pr
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	err = s.setDocAccess(multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	err = s.setDocAccess(ctx, multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
@@ -329,7 +329,7 @@ func (s *Service) addMetaData(multiCallTx *indexer.MultiCallTx, key *chachaPoly.
 	return nil
 }
 
-func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) setDocAccess(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	docIDHash := indexer.Keccak256(CID.Bytes())
 
@@ -351,7 +351,7 @@ func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemI
 		Level:   accessLevel,
 	}
 
-	packed, err := s.indexer.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+	packed, err := s.indexer.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to composition error: %w", err)
 	}

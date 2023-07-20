@@ -19,6 +19,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
@@ -164,6 +165,9 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 }
 
 func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, privKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "indexer.SetEhrUser") //nolint
+	defer span.End()
+
 	var eID [32]byte
 
 	copy(eID[:], ehrUUID[:])
@@ -200,6 +204,9 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 }
 
 func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "indexer.GetEhrUUIDByUserID")
+	defer span.End()
+
 	IDHash := sha3.Sum256([]byte(userID + systemID))
 
 	ehrUUIDRaw, err := i.ehrIndex.GetEhrUser(&bind.CallOpts{Context: ctx}, IDHash)
@@ -220,6 +227,9 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string)
 }
 
 func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string, CID []byte) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "indexer.GetDocKeyEncrypted")
+	defer span.End()
+
 	IDHash := sha3.Sum256([]byte(userID + systemID))
 
 	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(IDHash, access.Doc)
@@ -247,6 +257,9 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string,
 }
 
 func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "indexer.SetAllowed") //nolint
+	defer span.End()
+
 	i.Lock()
 	defer i.Unlock()
 

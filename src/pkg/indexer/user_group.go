@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
@@ -20,6 +21,9 @@ import (
 )
 
 func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_group_index.user_group_create") //nolint
+	defer span.End()
+
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)
@@ -56,6 +60,9 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 }
 
 func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*userModel.UserGroup, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_group_index.user_group_get_by_id") //nolint
+	defer span.End()
+
 	groupIDHash := Keccak256(groupID[:])
 
 	ug, err := i.users.UserGroupGetByID(&bind.CallOpts{Context: ctx}, *groupIDHash)
@@ -94,6 +101,9 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 }
 
 func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte) (string, error) {
+	ctx, span := tracer.GetTracer().Start(ctx, "user_group_index.user_group_add_user") //nolint
+	defer span.End()
+
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
 		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)

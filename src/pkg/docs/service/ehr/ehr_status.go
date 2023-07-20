@@ -114,7 +114,7 @@ func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCall
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	err = s.setDocAccess(multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	err = s.setDocAccess(ctx, multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}

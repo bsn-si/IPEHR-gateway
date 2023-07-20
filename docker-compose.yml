@@ -6,7 +6,8 @@ networks:
 
 services: 
   ipehr-index:
-    image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
+    image: ipehr-index:v2
+    # image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
     ports:
       - 8545:8545
     networks:
@@ -29,9 +30,9 @@ services:
         condition: service_healthy
     ports:
       - 8081:8080
-    configs:
-      - source: stats-config
-        target: /srv/config.json
+    # configs:
+      # - source: stats-config
+        # target: /srv/config.json
     networks:
       - ipehr-network
 
@@ -43,9 +44,9 @@ services:
     pull_policy: never
     environment:
       - GIN_MODE=release
-    configs:
-      - source: gateway-config
-        target: /srv/config.json
+    # configs:
+      # - source: gateway-config
+        # target: /srv/config.json
 
     depends_on:
       ipehr-index:
@@ -57,8 +58,8 @@ services:
     networks:
       - ipehr-network
 
-configs:
-  gateway-config:
-    file: ./ci/gateway-config.json
-  stats-config:
-    file: ./ci/stats-config.json
+# configs:
+  # gateway-config:
+    # file: ./ci/gateway-config.json
+  # stats-config:
+    # file: ./ci/stats-config.json
