@@ -385,22 +385,16 @@ func (c *Client) FindMiner(ctx context.Context) (*address.Address, error) {
 	// _ = blackList
 
 	for i := 0; i < 10; i++ {
-		minderAddr, err := c.findMiner(ctx)
-		if err != nil {
-			return nil, err
+		minderAddr := c.findMiner(ctx)
+		if minderAddr != nil {
+			return minderAddr, nil
 		}
-
-		if minderAddr == nil {
-			continue
-		}
-
-		return minderAddr, nil
 	}
 
 	return nil, fmt.Errorf("%w: No eligible miner was found", errors.ErrNotFound)
 }
 
-func (c *Client) findMiner(ctx context.Context) (*address.Address, error) {
+func (c *Client) findMiner(ctx context.Context) *address.Address {
 	ctx, span := tracer.Start(ctx, "filecoin_client.findMiner")
 	defer span.End()
 
@@ -411,26 +405,26 @@ func (c *Client) findMiner(ctx context.Context) (*address.Address, error) {
 	minerAddr, err := address.NewFromString(addr)
 	if err != nil {
 		log.Printf("Filecoin findMiner address parse error: %v addr: %s", err, addr)
-		return nil, nil
+		return nil
 	}
 
 	minerInfo, err := c.api.StateMinerInfo(ctx, minerAddr, types.EmptyTSK)
 	if err != nil {
 		log.Println("Lotus api.StateMinerInfo error:", err)
-		return nil, nil
+		return nil
 	}
 
-	cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	_, err = c.api.ClientQueryAsk(cctx, *minerInfo.PeerId, minerAddr)
+	_, err = c.api.ClientQueryAsk(ctx, *minerInfo.PeerId, minerAddr)
 	if err != nil {
 		log.Println("Lotus api.ClientQueryAsk error:", err)
 
-		return nil, nil
+		return nil
 	}
 
-	return &minerAddr, nil
+	return &minerAddr
 }
 
 func (c *Client) BaseURL() string {
