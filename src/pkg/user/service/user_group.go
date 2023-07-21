@@ -22,7 +22,7 @@ import (
 )
 
 func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, userID, systemID, groupName, groupDescription string) (*model.UserGroup, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_create") //nolint
+	ctx, span := tracer.Start(ctx, "user_service.group_create") //nolint
 	defer span.End()
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
@@ -63,7 +63,7 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 }
 
 func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID, groupKey *chachaPoly.Key) (*model.UserGroup, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_get_by_id") //nolint
+	ctx, span := tracer.Start(ctx, "user_service.group_get_by_id") //nolint
 	defer span.End()
 
 	if groupKey == nil {
@@ -127,7 +127,7 @@ func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, gro
 }
 
 func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID, addSystemID, reqID string, level access.Level, groupID *uuid.UUID) error {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_add_user") //nolint
+	ctx, span := tracer.Start(ctx, "user_service.group_add_user") //nolint
 	defer span.End()
 
 	var auID [32]byte
@@ -191,7 +191,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID,
 }
 
 func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeUserID, removeSystemID, reqID string, groupID *uuid.UUID) error {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_remove_user") //nolint
+	ctx, span := tracer.Start(ctx, "user_service.group_remove_user") //nolint
 	defer span.End()
 
 	_, userPrivKey, err := s.Infra.Keystore.Get(userID)
@@ -235,6 +235,9 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 }
 
 func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]*model.UserGroup, error) {
+	ctx, span := tracer.Start(ctx, "user_service.group_get_list") //nolint
+	defer span.End()
+
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
@@ -280,7 +283,7 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 }
 
 func (s *Service) groupCreate(ctx context.Context, name, description string, userPubKey, userPrivKey *[32]byte) (*model.UserGroup, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_service.group_create") //nolint
+	ctx, span := tracer.Start(ctx, "user_service.group_create") //nolint
 	defer span.End()
 
 	groupID := uuid.New()
@@ -329,7 +332,7 @@ func (s *Service) groupCreate(ctx context.Context, name, description string, use
 }
 
 func (s *Service) setGroupAccess(ctx context.Context, userGroup *model.UserGroup, userID, systemID string, accessLevel access.Level, userPrivKey *[32]byte) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_service.set_group_access") //nolint
+	ctx, span := tracer.Start(ctx, "user_service.set_group_access") //nolint
 	defer span.End()
 
 	userIDHash := sha3.Sum256([]byte(userID + systemID))

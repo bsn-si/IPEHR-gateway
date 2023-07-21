@@ -15,6 +15,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -47,7 +48,7 @@ type (
 
 	Client struct {
 		sync.Mutex
-		endpoints  []*endpoint
+		endpoints  []endpoint
 		httpClient *http.Client
 		done       chan bool
 	}
@@ -65,7 +66,7 @@ func NewClient(apiURLs []string) (*Client, error) {
 			return nil, fmt.Errorf("IPFS endpoint get version error: %w", err)
 		}
 
-		client.endpoints = append(client.endpoints, &endpoint{
+		client.endpoints = append(client.endpoints, endpoint{
 			APIURL:    url,
 			Status:    active,
 			LastCheck: time.Now(),
@@ -124,6 +125,9 @@ func (i *Client) getVersion(url string) (string, error) {
 // Add file to an IPFS node with CID version 0
 // Returns CID or error
 func (i *Client) Add(ctx context.Context, fileContent []byte) (*cid.Cid, error) {
+	ctx, span := tracer.Start(ctx, "IPFSClient.Add")
+	defer span.End()
+
 	var (
 		requestBody     bytes.Buffer
 		multiPartWriter = multipart.NewWriter(&requestBody)
@@ -141,58 +145,20 @@ func (i *Client) Add(ctx context.Context, fileContent []byte) (*cid.Cid, error) 
 	multiPartWriter.Close()
 
 	for _, endpoint := range i.endpoints {
+		cid, err := i.addData(ctx, requestBody, multiPartWriter, endpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		if cid == nil {
+			continue
+		}
+
 		if endpoint.Status != active {
 			continue
 		}
 
-		url := endpoint.APIURL + "/add?cid-version=0"
-
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &requestBody)
-		if err != nil {
-			return nil, fmt.Errorf("http.NewRequest add error: %w", err)
-		}
-
-		req.Header.Add("Content-Type", multiPartWriter.FormDataContentType())
-
-		resp, err := i.httpClient.Do(req)
-		if err != nil {
-			log.Printf("[IPFS] add request error: %v URL: %s", err, url)
-
-			endpoint.Status = inactive
-
-			endpoint.LastCheck = time.Now()
-
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("[IPFS] add request status %s", resp.Status)
-
-			endpoint.Status = inactive
-
-			endpoint.LastCheck = time.Now()
-
-			resp.Body.Close()
-
-			continue
-		}
-
-		result := &ipfsAddResult{}
-
-		if err = json.NewDecoder(resp.Body).Decode(result); err != nil {
-			resp.Body.Close()
-			return nil, fmt.Errorf("IPFS add response decode error: %w URL: %s", err, url)
-		}
-
-		CID, err := cid.Parse(result.Hash)
-		if err != nil {
-			resp.Body.Close()
-			return nil, fmt.Errorf("IPFS add response CID parse error: %w URL: %s", err, url)
-		}
-
-		resp.Body.Close()
-
-		return &CID, nil
+		return cid, nil
 	}
 
 	return nil, fmt.Errorf("%w IPFS endpoints are not available", errors.ErrCustom)
@@ -202,43 +168,118 @@ func (i *Client) Add(ctx context.Context, fileContent []byte) (*cid.Cid, error) 
 // Returns ReadCloser or error
 // Need to Close()
 func (i *Client) Get(ctx context.Context, CID *cid.Cid) (io.ReadCloser, error) {
-	for _, endpoint := range i.endpoints {
-		if endpoint.Status != active {
-			continue
-		}
+	ctx, span := tracer.Start(ctx, "IPFSClient.Get")
+	defer span.End()
 
-		url := endpoint.APIURL + "/cat?arg=" + CID.String()
-
-		request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	for index := range i.endpoints {
+		resp, err := i.getData(ctx, CID, i.endpoints[index])
 		if err != nil {
-			return nil, fmt.Errorf("http.NewRequestWithContext error: %w", err)
+			return nil, fmt.Errorf("IPFS get request error: %w", err)
 		}
 
-		resp, err := i.httpClient.Do(request)
-		if err != nil {
-			if !strings.Contains(err.Error(), "context deadline exceeded") {
-				log.Printf("[IPFS] get request error: %v URL: %s", err, url)
-			}
-
+		if resp == nil {
 			continue
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			log.Printf("[IPFS] get request error: %v status %s", errors.ErrCustom, resp.Status)
-
-			endpoint.Status = inactive
-
-			endpoint.LastCheck = time.Now()
-
-			resp.Body.Close()
-
-			continue
-		}
-
-		return resp.Body, nil
+		return resp, nil
 	}
 
 	return nil, errors.ErrNotFound
+}
+
+func (i *Client) addData(ctx context.Context, requestBody bytes.Buffer, multiPartWriter *multipart.Writer, endpoint endpoint) (*cid.Cid, error) {
+	ctx, span := tracer.Start(ctx, "IPFSClient.Add.addData")
+	defer span.End()
+
+	if endpoint.Status != active {
+		return nil, nil
+	}
+
+	url := endpoint.APIURL + "/add?cid-version=0"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, &requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("http.NewRequest add error: %w", err)
+	}
+
+	req.Header.Add("Content-Type", multiPartWriter.FormDataContentType())
+
+	resp, err := i.httpClient.Do(req)
+	if err != nil {
+		log.Printf("[IPFS] add request error: %v URL: %s", err, url)
+
+		endpoint.Status = inactive
+		endpoint.LastCheck = time.Now()
+
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[IPFS] add request status %s", resp.Status)
+
+		endpoint.Status = inactive
+		endpoint.LastCheck = time.Now()
+
+		resp.Body.Close()
+
+		return nil, nil
+	}
+
+	result := ipfsAddResult{}
+
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		resp.Body.Close()
+		return nil, fmt.Errorf("IPFS add response decode error: %w URL: %s", err, url)
+	}
+
+	CID, err := cid.Parse(result.Hash)
+	if err != nil {
+		resp.Body.Close()
+		return nil, fmt.Errorf("IPFS add response CID parse error: %w URL: %s", err, url)
+	}
+
+	resp.Body.Close()
+
+	return &CID, nil
+}
+
+func (i *Client) getData(ctx context.Context, CID *cid.Cid, endpoint endpoint) (io.ReadCloser, error) {
+	ctx, span := tracer.Start(ctx, "IPFSClient.Get.getData")
+	defer span.End()
+
+	if endpoint.Status != active {
+		return nil, nil
+	}
+
+	url := endpoint.APIURL + "/cat?arg=" + CID.String()
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("http.NewRequestWithContext error: %w", err)
+	}
+
+	resp, err := i.httpClient.Do(request)
+	if err != nil {
+		if !strings.Contains(err.Error(), "context deadline exceeded") {
+			log.Printf("[IPFS] get request error: %v URL: %s", err, url)
+		}
+
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[IPFS] get request error: %v status %s", errors.ErrCustom, resp.Status)
+
+		endpoint.Status = inactive
+
+		endpoint.LastCheck = time.Now()
+
+		resp.Body.Close()
+
+		return nil, nil
+	}
+
+	return resp.Body, nil
 }
 
 func (i *Client) checkEndpointStatus() {

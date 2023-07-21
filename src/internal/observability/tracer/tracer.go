@@ -20,6 +20,10 @@ func GetTracer(opts ...trace.TracerOption) trace.Tracer {
 	return otel.Tracer(svcName, opts...)
 }
 
+func Start(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	return GetTracer().Start(ctx, name, opts...)
+}
+
 func Setup(serviceName, url string) {
 	if tracerProvider != nil {
 		return

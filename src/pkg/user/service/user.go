@@ -75,7 +75,7 @@ func (s *Service) NewProcRequest(reqID, userID string, kind processing.RequestKi
 func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, systemID, reqID string) (err error) {
 	attr := attribute.String("user_id", user.UserID)
 
-	ctx, span := tracer.GetTracer().Start(ctx, "user_server.register", trace.WithAttributes(attr))
+	ctx, span := tracer.Start(ctx, "user_server.register", trace.WithAttributes(attr))
 	defer span.End()
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(user.UserID)
@@ -141,7 +141,7 @@ func (s *Service) createUserGroupAndSetAccess(ctx context.Context, user *model.U
 		attribute.String("system_id", systemID),
 	}
 
-	ctx, span := tracer.GetTracer().Start(ctx, "user_server.createUserGroupAndSetAccess", trace.WithAttributes(attr...))
+	ctx, span := tracer.Start(ctx, "user_server.createUserGroupAndSetAccess", trace.WithAttributes(attr...))
 	defer span.End()
 
 	// 'doctors' userGroup creating
@@ -211,7 +211,7 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 		attribute.String("system_id", systemID),
 	}
 
-	ctx, span := tracer.GetTracer().Start(ctx, "user_server.login", trace.WithAttributes(attr...))
+	ctx, span := tracer.Start(ctx, "user_server.login", trace.WithAttributes(attr...))
 	defer span.End()
 
 	address, err := s.getUserAddress(ctx, userID)
@@ -240,7 +240,7 @@ func (s *Service) Login(ctx context.Context, userID, systemID, password string) 
 }
 
 func (s *Service) Info(ctx context.Context, userID, systemID string) (*model.UserInfo, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_server.info")
+	ctx, span := tracer.Start(ctx, "user_server.info")
 	defer span.End()
 
 	address, err := s.getUserAddress(ctx, userID)
@@ -274,7 +274,7 @@ func (s *Service) Info(ctx context.Context, userID, systemID string) (*model.Use
 }
 
 func (s *Service) InfoByCode(ctx context.Context, code int) (*model.UserInfo, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_server.infoByCode", trace.WithAttributes(attribute.Int("code", code)))
+	ctx, span := tracer.Start(ctx, "user_server.infoByCode", trace.WithAttributes(attribute.Int("code", code)))
 	defer span.End()
 
 	user, err := s.Infra.Index.GetUserByCode(ctx, uint64(code))
@@ -332,7 +332,9 @@ func extractUserInfo(user *users.IUsersUser) (*model.UserInfo, error) {
 }
 
 func (s *Service) getUserAddress(ctx context.Context, userID string) (eth_common.Address, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_server.getUserAddress", trace.WithAttributes(attribute.String("user_id", userID))) //nolint
+	ctx, span := tracer.Start(ctx, "user_server.getUserAddress", trace.WithAttributes( //nolint
+		attribute.String("user_id", userID),
+	))
 	defer span.End()
 
 	_, userPrivateKey, err := s.Infra.Keystore.Get(userID)

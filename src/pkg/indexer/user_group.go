@@ -21,7 +21,7 @@ import (
 )
 
 func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr, keyEncr, contentEncr []byte, privKey *[32]byte) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_group_index.user_group_create") //nolint
+	ctx, span := tracer.Start(ctx, "user_group_index.user_group_create") //nolint
 	defer span.End()
 
 	userKey, err := crypto.ToECDSA(privKey[:])
@@ -60,7 +60,7 @@ func (i *Index) UserGroupCreate(ctx context.Context, groupID *uuid.UUID, idEncr,
 }
 
 func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*userModel.UserGroup, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_group_index.user_group_get_by_id") //nolint
+	ctx, span := tracer.Start(ctx, "user_group_index.user_group_get_by_id") //nolint
 	defer span.End()
 
 	groupIDHash := Keccak256(groupID[:])
@@ -101,7 +101,7 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 }
 
 func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte) (string, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_group_index.user_group_add_user") //nolint
+	ctx, span := tracer.Start(ctx, "user_group_index.user_group_add_user") //nolint
 	defer span.End()
 
 	userKey, err := crypto.ToECDSA(privKey[:])

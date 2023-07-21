@@ -71,7 +71,7 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 }
 
 func (i *Index) GetAccessKey(ctx context.Context, userIDHash *[32]byte, kind access.Kind, accessID []byte, userPubKey, userPrivKey *[32]byte) (*chachaPoly.Key, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_access_key") //nolint
+	ctx, span := tracer.Start(ctx, "user_index.get_access_key") //nolint
 	defer span.End()
 
 	keyEncr, level, err := i.GetUserAccess(ctx, userIDHash, kind, accessID)

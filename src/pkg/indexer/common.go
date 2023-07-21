@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -21,6 +22,9 @@ func Keccak256(data []byte) *[32]byte {
 }
 
 func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {
+	ctx, span := tracer.Start(ctx, "indexer.tx_wait") //nolint
+	defer span.End()
+
 	h := common.HexToHash(hash)
 
 	ticker := time.NewTicker(5 * time.Second)
@@ -44,6 +48,9 @@ func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {
 }
 
 func (i *Index) GetTxStatus(ctx context.Context, hash string) (uint64, error) {
+	ctx, span := tracer.Start(ctx, "indexer.GetTxStatus") //nolint
+	defer span.End()
+
 	h := common.HexToHash(hash)
 
 	receipt, err := i.client.TransactionReceipt(ctx, h)

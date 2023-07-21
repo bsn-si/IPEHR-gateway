@@ -21,7 +21,7 @@ import (
 )
 
 func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8, pwdHash, content []byte, userPrivKey *[32]byte) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_index.user_new") //nolint
+	ctx, span := tracer.Start(ctx, "user_index.user_new") //nolint
 	defer span.End()
 
 	i.Lock()
@@ -73,7 +73,7 @@ func (i *Index) UserNew(ctx context.Context, userID, systemID string, role uint8
 }
 
 func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_user_password_hash") //nolint
+	ctx, span := tracer.Start(ctx, "user_index.get_user_password_hash") //nolint
 	defer span.End()
 
 	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
@@ -94,7 +94,7 @@ func (i *Index) GetUserPasswordHash(ctx context.Context, userAddr common.Address
 }
 
 func (i *Index) GetUser(ctx context.Context, userAddr common.Address) (*userModel.User, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_user") //nolint
+	ctx, span := tracer.Start(ctx, "user_index.get_user") //nolint
 	defer span.End()
 
 	user, err := i.users.GetUser(&bind.CallOpts{Context: ctx}, userAddr)
@@ -110,7 +110,7 @@ func (i *Index) GetUser(ctx context.Context, userAddr common.Address) (*userMode
 }
 
 func (i *Index) GetUserByCode(ctx context.Context, code uint64) (*userModel.User, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_index.get_user_by_code") //nolint
+	ctx, span := tracer.Start(ctx, "user_index.get_user_by_code") //nolint
 	defer span.End()
 
 	user, err := i.users.GetUserByCode(&bind.CallOpts{Context: ctx}, code)
@@ -126,7 +126,7 @@ func (i *Index) GetUserByCode(ctx context.Context, code uint64) (*userModel.User
 }
 
 func (i *Index) SetAccessWrapper(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "user_index.set_access_wrapper") //nolint
+	ctx, span := tracer.Start(ctx, "user_index.set_access_wrapper") //nolint
 	defer span.End()
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])

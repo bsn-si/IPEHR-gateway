@@ -5,8 +5,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/service"
@@ -24,7 +27,12 @@ func NewService(docService *service.DefaultDocumentService) *Service {
 }
 
 func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, groupID *uuid.UUID) (*model.DocumentGroup, error) {
-	var err error
+	ctx, span := tracer.Start(ctx, "doc_group_service.GroupGetByID", trace.WithAttributes(
+		attribute.String("userID", userID),
+		attribute.String("systemID", systemID),
+		attribute.String("groupID", groupID.String()),
+	))
+	defer span.End()
 
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
@@ -44,6 +52,12 @@ func (s *Service) GroupGetByID(ctx context.Context, userID, systemID string, gro
 }
 
 func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]*model.DocumentGroup, error) {
+	ctx, span := tracer.Start(ctx, "doc_group_service.GroupGetList", trace.WithAttributes(
+		attribute.String("userID", userID),
+		attribute.String("systemID", systemID),
+	))
+	defer span.End()
+
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return nil, fmt.Errorf("keystore.Get error: %w userID %s", err, userID)
@@ -85,7 +99,12 @@ func (s *Service) GroupGetList(ctx context.Context, userID, systemID string) ([]
 }
 
 func (s *Service) GroupGetByName(ctx context.Context, groupName, userID, systemID string) (*model.DocumentGroup, error) {
-	var allDocGroup *model.DocumentGroup
+	ctx, span := tracer.Start(ctx, "doc_group_service.GroupGetByName", trace.WithAttributes(
+		attribute.String("groupName", groupName),
+		attribute.String("userID", userID),
+		attribute.String("systemID", systemID),
+	))
+	defer span.End()
 
 	docGroups, err := s.GroupGetList(ctx, userID, systemID)
 	if err != nil {
@@ -94,14 +113,10 @@ func (s *Service) GroupGetByName(ctx context.Context, groupName, userID, systemI
 
 	for _, dg := range docGroups {
 		if dg.Name == groupName {
-			allDocGroup = dg
-			break
+			return dg, nil
 		}
 	}
 
-	if allDocGroup == nil {
-		return nil, fmt.Errorf("user '%s' group not found: %w", groupName, errors.ErrNotFound)
-	}
+	return nil, fmt.Errorf("user '%s' group not found: %w", groupName, errors.ErrNotFound)
 
-	return allDocGroup, nil
 }

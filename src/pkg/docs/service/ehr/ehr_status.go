@@ -10,6 +10,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -49,6 +50,9 @@ func (s *Service) CreateStatus(ehrStatusID string, subject base.PartySelf) (doc 
 }
 
 func (s *Service) SaveStatus(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus, allDocsGroup *model.DocumentGroup) error {
+	ctx, span := tracer.Start(ctx, "ehr_service.SaveStatus")
+	defer span.End()
+
 	userPubKey, userPrivKey, err := s.Infra.Keystore.Get(userID)
 	if err != nil {
 		return fmt.Errorf("Keystore.Get error: %w userID %s", err, userID)
@@ -173,6 +177,9 @@ func (s *Service) addEhrStatusMetaData(multiCallTx *indexer.MultiCallTx, key *ch
 }
 
 func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus) error {
+	ctx, span := tracer.Start(ctx, "ehr_service.UpdateStatus")
+	defer span.End()
+
 	// Searching 'all documents' group
 	var allDocGroup *model.DocumentGroup
 	{
@@ -219,6 +226,9 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 
 // GetStatus Get current (last) status of EHR document
 func (s *Service) GetStatus(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) (*model.EhrStatus, error) {
+	ctx, span := tracer.Start(ctx, "ehr_service.GetStatus")
+	defer span.End()
+
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.EhrStatus)
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -250,6 +260,9 @@ func (s *Service) GetStatus(ctx context.Context, userID, systemID string, ehrUUI
 }
 
 func (s *Service) GetStatusByVersionID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, versionID *base.ObjectVersionID) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "ehr_service.GetStatusByVersionID")
+	defer span.End()
+
 	baseDocumentUID := versionID.BasedID()
 	baseDocumentUIDHash := sha3.Sum256([]byte(baseDocumentUID))
 
@@ -287,6 +300,9 @@ func (s *Service) GetStatusByVersionID(ctx context.Context, userID, systemID str
 }
 
 func (s *Service) GetStatusByNearestTime(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, nearestTime time.Time) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "ehr_service.GetStatusByNearestTime")
+	defer span.End()
+
 	docMeta, err := s.Infra.Index.GetDocByTime(ctx, ehrUUID, types.EhrStatus, uint32(nearestTime.Unix()))
 	if err != nil && errors.Is(err, errors.ErrNotFound) {
 		return nil, err

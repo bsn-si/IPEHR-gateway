@@ -17,6 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
@@ -165,7 +167,7 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 }
 
 func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, privKey *[32]byte) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "indexer.SetEhrUser") //nolint
+	ctx, span := tracer.Start(ctx, "indexer.SetEhrUser") //nolint
 	defer span.End()
 
 	var eID [32]byte
@@ -204,7 +206,10 @@ func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID
 }
 
 func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string) (*uuid.UUID, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "indexer.GetEhrUUIDByUserID")
+	ctx, span := tracer.Start(ctx, "indexer.GetEhrUUIDByUserID", trace.WithAttributes(
+		attribute.String("userID", userID),
+		attribute.String("systemID", systemID),
+	))
 	defer span.End()
 
 	IDHash := sha3.Sum256([]byte(userID + systemID))
@@ -227,7 +232,10 @@ func (i *Index) GetEhrUUIDByUserID(ctx context.Context, userID, systemID string)
 }
 
 func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string, CID []byte) ([]byte, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "indexer.GetDocKeyEncrypted")
+	ctx, span := tracer.Start(ctx, "indexer.GetDocKeyEncrypted", trace.WithAttributes(
+		attribute.String("userID", userID),
+		attribute.String("systemID", systemID),
+	))
 	defer span.End()
 
 	IDHash := sha3.Sum256([]byte(userID + systemID))
@@ -257,7 +265,9 @@ func (i *Index) GetDocKeyEncrypted(ctx context.Context, userID, systemID string,
 }
 
 func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) {
-	ctx, span := tracer.GetTracer().Start(ctx, "indexer.SetAllowed") //nolint
+	ctx, span := tracer.Start(ctx, "indexer.SetAllowed", trace.WithAttributes( //nolint
+		attribute.String("address", address),
+	))
 	defer span.End()
 
 	i.Lock()

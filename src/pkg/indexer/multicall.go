@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -67,6 +68,9 @@ func (m *MultiCallTx) Commit() (string, error) {
 }
 
 func (i *Index) SendSingle(ctx context.Context, data []byte, kind MulticallKind) (string, error) {
+	ctx, span := tracer.Start(ctx, "indexer.SendSingle") //nolint
+	defer span.End()
+
 	var (
 		tx  *types.Transaction
 		err error
