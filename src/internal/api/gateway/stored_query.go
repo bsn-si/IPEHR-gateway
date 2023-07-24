@@ -41,7 +41,7 @@ func (h *QueryHandler) ListStored(c *gin.Context) {
 	// But otherwise it is not clear how the client can get the full list of stored queries
 	qName := c.Param("qualified_query_name")
 
-	queryList, err := h.service.List(c, userID, systemID, qName)
+	queryList, err := h.service.List(c.Request.Context(), userID, systemID, qName)
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -96,7 +96,7 @@ func (h *QueryHandler) GetStoredByVersion(c *gin.Context) {
 		return
 	}
 
-	sq, err := h.service.GetByVersion(c, userID, systemID, qName, v)
+	sq, err := h.service.GetByVersion(c.Request.Context(), userID, systemID, qName, v)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -169,7 +169,7 @@ func (h *QueryHandler) Store(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	sQ, err := h.service.Store(c, userID, systemID, reqID, qType, qName, string(data))
+	sQ, err := h.service.Store(c.Request.Context(), userID, systemID, reqID, qType, qName, string(data))
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -229,7 +229,7 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 		return
 	}
 
-	query, err := h.service.GetByVersion(c, userID, systemID, qName, v)
+	query, err := h.service.GetByVersion(c.Request.Context(), userID, systemID, qName, v)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		log.Printf("GetByVersion error: %v", err) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -261,7 +261,7 @@ func (h *QueryHandler) StoreVersion(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	sQ, err := h.service.StoreVersion(c, userID, systemID, reqID, qType, qName, v, string(data))
+	sQ, err := h.service.StoreVersion(c.Request.Context(), userID, systemID, reqID, qType, qName, v, string(data))
 	if err != nil {
 		log.Printf("StoredQuery service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 

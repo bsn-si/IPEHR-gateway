@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 var Middleware func(c *gin.Context) = func(c *gin.Context) {
@@ -28,14 +29,17 @@ func middleware(c *gin.Context) {
 		attribute.Int("status_code", c.Writer.Status()),
 	}
 
+	opt := metric.WithAttributes(attrs...)
+
 	elapsed := time.Since(startTime).Milliseconds()
 	respSize := int64(c.Writer.Size())
 
-	requestCounter.Add(c.Request.Context(), 1, attrs...)
-	requestDuration.Record(c.Request.Context(), elapsed, append(attrs, attribute.String("handler", c.HandlerName()))...)
+	ctx := c.Request.Context()
+	requestCounter.Add(ctx, 1, opt)
+	requestDuration.Record(ctx, elapsed, metric.WithAttributes(append(attrs, attribute.String("handler", c.HandlerName()))...))
 
-	requestSize.Record(c.Request.Context(), reqSize, attrs...)
-	responseSize.Record(c.Request.Context(), respSize, attrs...)
+	requestSize.Record(ctx, reqSize, opt)
+	responseSize.Record(ctx, respSize, opt)
 }
 
 func computeApproximateRequestSize(r *http.Request) int64 {

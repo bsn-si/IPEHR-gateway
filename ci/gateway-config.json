@@ -37,5 +37,12 @@
     },
     "db": {
         "filePath": "/srv/data/local.db"
+    }, 
+    "observability": {
+        "service_name": "ipehr-gateway",
+        "collect_metrics": false,
+        "metrics_port": 8081,
+        "collect_traces": true,
+        "jaeger_endpoint": "http://jaeger:14268/api/traces"
     }
 }

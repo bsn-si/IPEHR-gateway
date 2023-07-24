@@ -10,7 +10,11 @@ import (
 	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
-func Middleware(c *gin.Context) {
+var Middleware = func(c *gin.Context) {
+	c.Next()
+}
+
+func middleware(c *gin.Context) {
 	savedCtx := c.Request.Context()
 	defer func() {
 		c.Request = c.Request.WithContext(savedCtx)

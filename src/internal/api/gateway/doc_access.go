@@ -48,7 +48,7 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	resp, err := h.service.List(c, userID, systemID)
+	resp, err := h.service.List(c.Request.Context(), userID, systemID)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
 		log.Println(err)
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -114,7 +114,7 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Set(c, userID, systemID, req.UserID, reqID, &CID, level); err != nil {
+	if err := h.service.Set(c.Request.Context(), userID, systemID, req.UserID, reqID, &CID, level); err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
 			return

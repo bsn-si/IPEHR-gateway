@@ -96,7 +96,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Register(c, &userCreateRequest, systemID, reqID); err != nil {
+	if err := h.service.Register(c.Request.Context(), &userCreateRequest, systemID, reqID); err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		} else {
@@ -150,7 +150,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Login(c, u.UserID, systemID, u.Password)
+	err := h.service.Login(c.Request.Context(), u.UserID, systemID, u.Password)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.JSON(http.StatusNotFound, err.Error())
@@ -288,7 +288,7 @@ func (h *UserHandler) Info(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	userInfo, err := h.service.Info(c, userID, systemID)
+	userInfo, err := h.service.Info(c.Request.Context(), userID, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) || errors.Is(err, errors.ErrIsNotExist) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -333,7 +333,7 @@ func (h *UserHandler) InfoByCode(c *gin.Context) {
 		return
 	}
 
-	userInfo, err := h.service.InfoByCode(c, codeInt)
+	userInfo, err := h.service.InfoByCode(c.Request.Context(), codeInt)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

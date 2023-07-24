@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/jaeger"
@@ -42,6 +43,10 @@ func Setup(serviceName, url string) {
 	)
 
 	otel.SetTracerProvider(tracerProvider)
+
+	Middleware = otelgin.Middleware(serviceName,
+		otelgin.WithTracerProvider(tracerProvider),
+	)
 }
 
 func Stop(ctx context.Context) {

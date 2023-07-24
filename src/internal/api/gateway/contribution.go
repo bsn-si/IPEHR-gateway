@@ -73,7 +73,7 @@ func (h *ContributionHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	con, err := h.service.GetByID(c, userID, cUID)
+	con, err := h.service.GetByID(c.Request.Context(), userID, cUID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -119,7 +119,7 @@ func (h *ContributionHandler) Create(ctx *gin.Context) {
 	}
 
 	ehrID := ctx.Param("ehrid")
-	// TODO do we need checking userID by EHRid because it can be summary data with different users (GetEhrUUIDByUserID(c, userID, systemID))
+	// TODO do we need checking userID by EHRid because it can be summary data with different users (GetEhrUUIDByUserID(c.Request.Context(),userID, systemID))
 
 	ehrUUID, err := uuid.Parse(ehrID)
 	if err != nil {

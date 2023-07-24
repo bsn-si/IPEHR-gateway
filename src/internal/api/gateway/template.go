@@ -64,7 +64,7 @@ func (h *TemplateHandler) GetByID(c *gin.Context) {
 
 	tID := c.Param("template_id")
 
-	t, err := h.service.GetByID(c, userID, systemID, tID)
+	t, err := h.service.GetByID(c.Request.Context(), userID, systemID, tID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -107,7 +107,7 @@ func (h *TemplateHandler) ListStored(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	l, err := h.service.GetList(c, userID, systemID)
+	l, err := h.service.GetList(c.Request.Context(), userID, systemID)
 	if err != nil {
 		log.Printf("Template service error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
@@ -184,7 +184,7 @@ func (h *TemplateHandler) Store(c *gin.Context) {
 	}
 
 	reqID := c.GetString("reqID")
-	if err := h.service.Store(c, userID, systemID, reqID, m); err != nil {
+	if err := h.service.Store(c.Request.Context(), userID, systemID, reqID, m); err != nil {
 		log.Printf("Template service store error: %s", err.Error()) // TODO replace to ErrorF after merge IPEHR-32
 
 		c.AbortWithStatus(http.StatusInternalServerError)

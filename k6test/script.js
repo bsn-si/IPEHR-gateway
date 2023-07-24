@@ -23,9 +23,9 @@ const formFailRate = new Rate('failed form fetches');
 const submitFailRate = new Rate('failed form submits');
 
 export const options = {
-    iterations: 1,
+    iterations: 10,
     // vus: 1,
-    // vus: 10,
+    vus: 3,
     // vus: 20,
     duration: '100s',
     ext: {
