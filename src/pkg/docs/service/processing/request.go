@@ -3,6 +3,7 @@ package processing
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -16,8 +17,6 @@ type RequestInterface interface {
 }
 
 type (
-	RequestKind uint8
-
 	Request struct {
 		gorm.Model
 		ReqID     string      `gorm:"index:idx_request,unique"`
@@ -27,6 +26,8 @@ type (
 		StatusStr string      `gorm:"-" json:"Status"`
 		UserID    string
 		EhrUUID   string
+		TimeStart time.Time `gorm:"time_start" json:"timeStart"`
+		TimeEnd   time.Time `gorm:"time_end" json:"timeEnd"`
 
 		db     *gorm.DB      `gorm:"-"`
 		ethTxs []*EthereumTx `gorm:"-"`
@@ -56,45 +57,19 @@ type (
 	}
 )
 
-const (
-	RequestUnknown RequestKind = iota
-	RequestEhrCreate
-	RequestEhrCreateWithID
-	RequestEhrGetBySubject
-	RequestEhrGetByID
-	RequestEhrStatusCreate
-	RequestEhrStatusUpdate
-	RequestEhrStatusGetByID
-	RequestEhrStatusGetByTime
-	RequestCompositionCreate
-	RequestCompositionUpdate
-	RequestCompositionGetByID
-	RequestCompositionDelete
-	RequestUserRegister
-	RequestDocAccessSet
-	RequestQueryStore
-	RequestUserGroupCreate
-	RequestUserGroupAddUser
-	RequestUserGroupRemoveUser
-	RequestContributionCreate
-	RequestTemplateCreate
-	RequestDirectoryCreate
-	RequestDirectoryUpdate
-	RequestDirectoryDelete
-)
-
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("%w userID is empty", errors.ErrIncorrectRequest)
 	}
 
 	req := &Request{
-		ReqID:   reqID,
-		Kind:    kind,
-		Status:  StatusProcessing,
-		UserID:  userID,
-		EhrUUID: ehrUUID,
-		db:      p.db,
+		ReqID:     reqID,
+		Kind:      kind,
+		Status:    StatusProcessing,
+		UserID:    userID,
+		EhrUUID:   ehrUUID,
+		db:        p.db,
+		TimeStart: time.Now(),
 	}
 
 	return req, nil
@@ -108,6 +83,8 @@ func (r *Request) Commit() error {
 			dbTx.Rollback()
 		}
 	}()
+
+	r.TimeEnd = time.Now()
 
 	if result := dbTx.Create(r); result.Error != nil {
 		return fmt.Errorf("NewRequest db.Create error: %w", result.Error)

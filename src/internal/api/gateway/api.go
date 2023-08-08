@@ -53,6 +53,7 @@ type API struct {
 	Request      *RequestHandler
 	User         *UserHandler
 	Contribution *ContributionHandler
+	Debug        *DebugHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -89,6 +90,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		User:         NewUserHandler(userSvc),
 		Contribution: NewContributionHandler(contribution, userSvc, templateService, compositionService, cfg.BaseURL),
 		Directory:    NewDirectoryHandler(directory, userSvc, docService.Infra.Index, cfg.BaseURL),
+		Debug:        NewDebugHandler(docService.Proc, docService.Infra.Index),
 	}
 }
 
@@ -103,6 +105,7 @@ func (a *API) Build() *gin.Engine {
 		a.buildQueryAPI(),
 		a.buildDefinitionAPI(),
 		a.buildRequestsAPI(),
+		a.buildDebugAPI(),
 	)
 }
 
@@ -150,6 +153,7 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}))
 
 	r.Use(requestID)
+	// r.Use(middleware)
 
 	v1 := r.Group("v1")
 	for _, b := range apiHandlers {
@@ -160,6 +164,13 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 
 	gin.SetMode(gin.ReleaseMode)
 	return r
+}
+
+func (a *API) buildDebugAPI() handlerBuilder {
+	return func(r *gin.RouterGroup) {
+		r = r.Group("debug")
+		r.GET("/eth_transactions", a.Debug.GetEthTransactions)
+	}
 }
 
 func (a *API) buildEhrAPI() handlerBuilder {
