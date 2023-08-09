@@ -211,6 +211,7 @@ func TestDirectoryHandler_Create(t *testing.T) {
 			api := API{
 				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
 				User:      NewUserHandler(userSvc),
+				Debug:     NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
@@ -405,6 +406,7 @@ func TestDirectoryHandler_Update(t *testing.T) {
 			api := API{
 				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
 				User:      NewUserHandler(userSvc),
+				Debug:     NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
@@ -560,6 +562,7 @@ func TestDirectoryHandler_Delete(t *testing.T) {
 			api := API{
 				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
 				User:      NewUserHandler(userSvc),
+				Debug:     NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
@@ -744,6 +747,7 @@ func TestDirectoryHandler_GetByTimeOrLast(t *testing.T) {
 			api := API{
 				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
 				User:      NewUserHandler(userSvc),
+				Debug:     NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())
@@ -923,6 +927,7 @@ func TestDirectoryHandler_GetByVersion(t *testing.T) {
 			api := API{
 				Directory: NewDirectoryHandler(svc, userSvc, indexer, ""),
 				User:      NewUserHandler(userSvc),
+				Debug:     NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrDirectoryAPI())

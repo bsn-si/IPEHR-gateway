@@ -89,7 +89,8 @@ func TestUserHandler_Info(t *testing.T) {
 			tt.prepare(userSvc)
 
 			api := API{
-				User: NewUserHandler(userSvc),
+				User:  NewUserHandler(userSvc),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildUserAPI())

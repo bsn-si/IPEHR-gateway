@@ -91,6 +91,7 @@ func TestContributionHandler_GetByID(t *testing.T) {
 			api := API{
 				Contribution: NewContributionHandler(svc, userSvc, tplSvc, comSvc, ""),
 				User:         NewUserHandler(userSvc),
+				Debug:        NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrContributionAPI())
@@ -258,6 +259,7 @@ func TestContributionHandler_Create(t *testing.T) {
 			api := API{
 				Contribution: NewContributionHandler(svc, userSvc, tplSvc, comSvc, ""),
 				User:         NewUserHandler(userSvc),
+				Debug:        NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildEhrContributionAPI())

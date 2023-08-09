@@ -53,6 +53,7 @@ type Config struct {
 	} `json:"db"`
 
 	Observability observability.Config `json:"observability"`
+	DebugMode     bool                 `json:"debugMode"`
 
 	path string
 }

@@ -90,7 +90,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		User:         NewUserHandler(userSvc),
 		Contribution: NewContributionHandler(contribution, userSvc, templateService, compositionService, cfg.BaseURL),
 		Directory:    NewDirectoryHandler(directory, userSvc, docService.Infra.Index, cfg.BaseURL),
-		Debug:        NewDebugHandler(docService.Proc, docService.Infra.Index),
+		Debug:        NewDebugHandler(cfg.DebugMode, docService.Proc, docService.Infra.Index),
 	}
 }
 
@@ -105,7 +105,6 @@ func (a *API) Build() *gin.Engine {
 		a.buildQueryAPI(),
 		a.buildDefinitionAPI(),
 		a.buildRequestsAPI(),
-		a.buildDebugAPI(),
 	)
 }
 
@@ -153,9 +152,16 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	}))
 
 	r.Use(requestID)
-	// r.Use(middleware)
 
 	v1 := r.Group("v1")
+	{
+		g := v1.Group("debug")
+		g.GET("/eth_transactions", a.Debug.getEthTransactions)
+		g.GET("/avg_requests_time", a.Debug.getAvgRequestsTime)
+	}
+
+	v1.Use(a.Debug.debugMiddleware)
+
 	for _, b := range apiHandlers {
 		b(v1)
 	}
@@ -164,13 +170,6 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 
 	gin.SetMode(gin.ReleaseMode)
 	return r
-}
-
-func (a *API) buildDebugAPI() handlerBuilder {
-	return func(r *gin.RouterGroup) {
-		r = r.Group("debug")
-		r.GET("/eth_transactions", a.Debug.GetEthTransactions)
-	}
 }
 
 func (a *API) buildEhrAPI() handlerBuilder {

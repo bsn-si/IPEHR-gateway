@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -23,22 +24,63 @@ type EthIndexer interface {
 	GetTxReceipt(ctx context.Context, hash string) (*types.Receipt, error)
 }
 
-type DebugHandler struct {
-	storage Storage
-	indexer EthIndexer
+type req struct {
+	reqID       string
+	handlerName string
+	method      string
+	url         string
+	start       time.Time
+	end         time.Time
 }
 
-func NewDebugHandler(storage Storage, indexer EthIndexer) *DebugHandler {
+type DebugHandler struct {
+	enabled bool
+	storage Storage
+	indexer EthIndexer
+
+	requests map[string]req
+	mx       sync.RWMutex
+}
+
+func NewDebugHandler(enabled bool, storage Storage, indexer EthIndexer) *DebugHandler {
 	return &DebugHandler{
+		enabled: enabled,
 		storage: storage,
 		indexer: indexer,
+
+		requests: make(map[string]req),
+		mx:       sync.RWMutex{},
 	}
 }
 
-func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
+func (d *DebugHandler) addRequest(r req) {
+	d.mx.Lock()
+	d.requests[r.reqID] = r
+	d.mx.Unlock()
+}
+
+func (d *DebugHandler) getRequests() []req {
+	d.mx.RLock()
+
+	rrs := make([]req, 0, len(d.requests))
+
+	for _, r := range d.requests {
+		rrs = append(rrs, r)
+	}
+
+	d.mx.RUnlock()
+
+	sort.Slice(rrs, func(i, j int) bool {
+		return rrs[i].start.Before(rrs[j].start)
+	})
+
+	return rrs
+}
+
+func (d *DebugHandler) getEthTransactions(c *gin.Context) {
 	requests, err := d.storage.GetAllRequests(c.Request.Context())
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -48,9 +90,12 @@ func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
 			"time_start",
 			"time_end",
 			"duration",
+			"handler_name",
+			"method",
 			"full_path",
 			"req_kind",
 			"req_status",
+			"tx_hash",
 			"tx_kind",
 			"tx_status",
 			"tx_cumulativeGasUsed",
@@ -60,15 +105,7 @@ func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
 		},
 	}
 
-	rrs := []req{}
-
-	mx.RLock()
-	for _, rr := range rMap {
-		rrs = append(rrs, rr)
-	}
-	mx.RUnlock()
-
-	for _, rr := range rrs {
+	for _, rr := range d.getRequests() {
 		var req *processing.Request
 
 		for _, r := range requests {
@@ -84,7 +121,10 @@ func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
 				rr.start.Format("2006-01-02 15:04:05"),
 				rr.end.Format("2006-01-02 15:04:05"),
 				fmt.Sprintf("%v", rr.end.Sub(rr.start).Seconds()),
+				rr.handlerName,
+				rr.method,
 				rr.url,
+				"",
 				"",
 				"",
 				"",
@@ -100,14 +140,14 @@ func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
 
 		txs, err := d.storage.GetEthTransactionsForRequest(c.Request.Context(), req.ReqID)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
 		for _, tx := range txs {
 			r, err := d.indexer.GetTxReceipt(c.Request.Context(), tx.Hash)
 			if err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				_ = c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
 
@@ -116,9 +156,12 @@ func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
 				rr.start.Format("2006-01-02 15:04:05"),
 				rr.end.Format("2006-01-02 15:04:05"),
 				fmt.Sprintf("%v", rr.end.Sub(rr.start).Seconds()),
+				rr.handlerName,
+				rr.method,
 				rr.url,
 				req.Kind.String(),
 				req.Status.String(),
+				tx.Hash,
 				tx.Kind.String(),
 				fmt.Sprintf("%d", r.Status),
 				fmt.Sprintf("%d", r.CumulativeGasUsed),
@@ -132,38 +175,81 @@ func (d *DebugHandler) GetEthTransactions(c *gin.Context) {
 	// convert result to csv and send it
 	csvWriter := csv.NewWriter(c.Writer)
 	if err := csvWriter.WriteAll(result); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	csvWriter.Flush()
 
 	if err := csvWriter.Error(); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	c.Status(http.StatusOK)
 }
 
-type req struct {
-	reqID string
-	url   string
-	start time.Time
-	end   time.Time
+func (d *DebugHandler) getAvgRequestsTime(c *gin.Context) {
+	result := [][]string{
+		{
+			"hander",
+			"avg_time",
+		},
+	}
+
+	type t struct {
+		count int
+		sum   time.Duration
+	}
+
+	m := map[string]t{}
+
+	for _, rr := range d.getRequests() {
+		if _, ok := m[rr.handlerName]; !ok {
+			m[rr.handlerName] = t{}
+		}
+
+		m[rr.handlerName] = t{
+			count: m[rr.handlerName].count + 1,
+			sum:   m[rr.handlerName].sum + rr.end.Sub(rr.start),
+		}
+	}
+
+	for url, tt := range m {
+		result = append(result, []string{
+			url,
+			fmt.Sprintf("%v", tt.sum.Seconds()/float64(tt.count)),
+		})
+	}
+
+	csvWriter := csv.NewWriter(c.Writer)
+	if err := csvWriter.WriteAll(result); err != nil {
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	csvWriter.Flush()
+
+	if err := csvWriter.Error(); err != nil {
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
-var (
-	rMap = map[string]req{}
+func (d *DebugHandler) debugMiddleware(c *gin.Context) {
+	if !d.enabled {
+		c.Next()
+		return
+	}
 
-	mx = sync.RWMutex{}
-)
-
-func middleware(c *gin.Context) {
 	r := req{
-		reqID: c.GetString("reqID"),
-		start: time.Now(),
-		url:   c.FullPath(),
+		reqID:       c.GetString("reqID"),
+		start:       time.Now(),
+		handlerName: c.HandlerName(),
+		method:      c.Request.Method,
+		url:         c.FullPath(),
 	}
 
 	// serve the request to the next middleware
@@ -171,7 +257,5 @@ func middleware(c *gin.Context) {
 
 	r.end = time.Now()
 
-	mx.Lock()
-	rMap[r.reqID] = r
-	mx.Unlock()
+	d.addRequest(r)
 }

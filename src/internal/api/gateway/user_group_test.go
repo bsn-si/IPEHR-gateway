@@ -78,7 +78,8 @@ func TestUserHandler_GroupCreate(t *testing.T) {
 	userSvc := mocks.NewMockUserService(ctrl)
 
 	api := API{
-		User: NewUserHandler(userSvc),
+		User:  NewUserHandler(userSvc),
+		Debug: NewDebugHandler(false, nil, nil),
 	}
 
 	router := api.setupRouter(api.buildUserAPI())
@@ -169,7 +170,8 @@ func TestUserHandler_GroupGetByID(t *testing.T) {
 	userSvc := mocks.NewMockUserService(ctrl)
 
 	api := API{
-		User: NewUserHandler(userSvc),
+		User:  NewUserHandler(userSvc),
+		Debug: NewDebugHandler(false, nil, nil),
 	}
 
 	router := api.setupRouter(api.buildUserAPI())

@@ -81,6 +81,7 @@ func TestStoredQueryHandler_List(t *testing.T) {
 			api := API{
 				Query: NewQueryHandler(sqSvc, ""),
 				User:  NewUserHandler(userSvc),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildDefinitionAPI())
@@ -203,6 +204,7 @@ func TestStoredQueryHandler_GetByVersion(t *testing.T) {
 			api := API{
 				Query: NewQueryHandler(sqSvc, ""),
 				User:  NewUserHandler(userSvc),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildDefinitionAPI())
@@ -310,6 +312,7 @@ func TestStoredQueryHandler_Put(t *testing.T) {
 			api := API{
 				Query: NewQueryHandler(sqSvc, ""),
 				User:  NewUserHandler(userSvc),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildDefinitionAPI())
@@ -480,6 +483,7 @@ func TestStoredQueryHandler_PutByVer(t *testing.T) {
 			api := API{
 				Query: NewQueryHandler(sqSvc, ""),
 				User:  NewUserHandler(userSvc),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildDefinitionAPI())
