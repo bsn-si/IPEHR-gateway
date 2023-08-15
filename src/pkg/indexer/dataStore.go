@@ -32,7 +32,7 @@ func (i *Index) DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUI
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.dataStore.DataUpdate(i.transactOpts, gID, dID, eID, data, i.signerAddress, deadline, signature)
+	tx, err := i.dataStore.DataUpdate(i.noncer.GetNewOpts(i.transactOpts), gID, dID, eID, data, i.signerAddress, deadline, signature)
 	if err != nil {
 		return "", fmt.Errorf("dataStore.DataUpdate error: %w", err)
 	}

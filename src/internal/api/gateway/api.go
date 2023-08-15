@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
@@ -151,15 +152,18 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 		)
 	}))
 
+	pprof.Register(r)
+
 	r.Use(requestID)
 
-	v1 := r.Group("v1")
 	{
-		g := v1.Group("debug")
-		g.GET("/eth_transactions", a.Debug.getEthTransactions)
-		g.GET("/avg_requests_time", a.Debug.getAvgRequestsTime)
+		r := r.Group("debug")
+		r.GET("/eth_transactions", a.Debug.getEthTransactions)
+		r.GET("/avg_requests_time", a.Debug.getAvgRequestsTime)
+
 	}
 
+	v1 := r.Group("v1")
 	v1.Use(a.Debug.debugMiddleware)
 
 	for _, b := range apiHandlers {

@@ -171,15 +171,13 @@ func (p *Proc) execEthereum() {
 		StatusProcessing,
 	}
 
-	var txs []struct {
-		EthereumTx
-	}
+	txs := []EthereumTx{}
 
-	result := p.db.Model(&EthereumTx{}).
-		Select("ethereum_txes.req_id, ethereum_txes.hash, ethereum_txes.status").
-		Where("ethereum_txes.status IN ?", statuses).
-		Group("ethereum_txes.hash").
-		Find(&txs)
+	result := p.db.Where("status IN ?", statuses).Find(&txs)
+	// result := p.db.Model(EthereumTx{}).
+	// Select("req_id, hash, status").
+	// Where("status IN ?", statuses).
+	// Find(&txs)
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)
 		return
@@ -217,7 +215,7 @@ func (p *Proc) execEthereum() {
 			continue
 		}
 
-		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
+		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status).Update("updated_at", time.Now()); result.Error != nil {
 			logf("db.Update error: %v", result.Error)
 		}
 	}

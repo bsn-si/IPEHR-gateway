@@ -262,7 +262,7 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.ehrIndex.DeleteDoc(i.transactOpts, eID, uint8(docType), *docBaseUIDHash, *version, userAddress, deadline, sig)
+	tx, err := i.ehrIndex.DeleteDoc(i.noncer.GetNewOpts(i.transactOpts), eID, uint8(docType), *docBaseUIDHash, *version, userAddress, deadline, sig)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return "", errors.ErrNotFound

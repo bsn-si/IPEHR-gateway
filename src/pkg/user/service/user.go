@@ -17,7 +17,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/crypto/scrypt"
 	"golang.org/x/crypto/sha3"
 
 	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
@@ -358,12 +357,13 @@ func generateHashFromPassword(systemID, userID, password string) ([]byte, error)
 
 	password = userID + systemID + password
 
-	pwdHash, err := scrypt.Key([]byte(password), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
-	if err != nil {
-		return nil, fmt.Errorf("generateHash scrypt.Key error: %w", err)
-	}
+	pwdHash := sha3.Sum512([]byte(password + string(salt))) //nolint
+	// pwdHash, err := scrypt.Key([]byte(password), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
+	// if err != nil {
+	// return nil, fmt.Errorf("generateHash scrypt.Key error: %w", err)
+	// }
 
-	return append(pwdHash, salt...), nil
+	return append(pwdHash[:], salt...), nil
 }
 
 func verifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
@@ -375,12 +375,13 @@ func verifyPassphrase(passphrase string, targetKey []byte) (bool, error) {
 	targetMasterKey := targetKey[:keyLenBytes]
 	salt := targetKey[keyLenBytes:]
 
-	sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
-	if err != nil {
-		return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
-	}
+	sourceMasterKey := sha3.Sum512([]byte(passphrase + string(salt))) //nolint
+	// sourceMasterKey, err := scrypt.Key([]byte(passphrase), salt, common.ScryptN, common.ScryptR, common.ScryptP, common.ScryptKeyLen)
+	// if err != nil {
+	// return false, fmt.Errorf("VerifyPassphrase scrypt.Key error: %w", err)
+	// }
 
-	return bytes.Equal(sourceMasterKey, targetMasterKey), nil
+	return bytes.Equal(sourceMasterKey[:], targetMasterKey), nil
 }
 
 func (s *Service) CreateToken(userID string) (*TokenDetails, error) {

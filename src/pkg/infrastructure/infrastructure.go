@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -31,13 +32,28 @@ type Infra struct {
 	CompressionEnabled bool
 }
 
-func New(cfg *config.Config) *Infra {
+func New(ctx context.Context, cfg *config.Config) *Infra {
 	sc := storage.NewConfig(cfg.Storage.Localfile.Path)
 	storage.Init(sc)
 
-	db, err := localDB.New(cfg.DB.FilePath)
-	if err != nil {
-		log.Fatal(err, "DB path:", cfg.DB.FilePath)
+	var db *gorm.DB
+	var err error
+	if cfg.DB.UsePostgres {
+		db, err = localDB.NewForPostgres(
+			cfg.DB.Postgres.Host,
+			cfg.DB.Postgres.Port,
+			cfg.DB.Postgres.User,
+			cfg.DB.Postgres.Password,
+			cfg.DB.Postgres.DBName,
+		)
+		if err != nil {
+			log.Fatal(err, "Postgres Connecton err:", cfg.DB.FilePath)
+		}
+	} else {
+		db, err = localDB.New(cfg.DB.FilePath)
+		if err != nil {
+			log.Fatal(err, "DB path:", cfg.DB.FilePath)
+		}
 	}
 
 	if err = db.AutoMigrate(&processing.Request{}); err != nil {

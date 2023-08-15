@@ -95,6 +95,9 @@ func (d *DebugHandler) getEthTransactions(c *gin.Context) {
 			"full_path",
 			"req_kind",
 			"req_status",
+			"req_created_at",
+			"req_updated_at",
+			"req_duration",
 			"tx_hash",
 			"tx_kind",
 			"tx_status",
@@ -133,6 +136,9 @@ func (d *DebugHandler) getEthTransactions(c *gin.Context) {
 				"",
 				"",
 				"",
+				"",
+				"",
+				"",
 			})
 
 			continue
@@ -161,6 +167,9 @@ func (d *DebugHandler) getEthTransactions(c *gin.Context) {
 				rr.url,
 				req.Kind.String(),
 				req.Status.String(),
+				tx.CreatedAt.Format("2006-01-02 15:04:05"),
+				tx.UpdatedAt.Format("2006-01-02 15:04:05"),
+				fmt.Sprintf("%v", tx.UpdatedAt.Sub(tx.CreatedAt).Seconds()),
 				tx.Hash,
 				tx.Kind.String(),
 				fmt.Sprintf("%d", r.Status),

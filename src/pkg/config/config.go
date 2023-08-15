@@ -49,7 +49,15 @@ type Config struct {
 		GasTipCap          int64 // maxPriorityFeePerGas used for hardhat testing
 	}
 	DB struct {
-		FilePath string `json:"filePath"`
+		FilePath    string `json:"filePath"`
+		UsePostgres bool   `json:"usePostgres"`
+		Postgres    struct {
+			Host     string `json:"host"`
+			Port     int    `json:"port"`
+			User     string `json:"user"`
+			Password string `json:"password"`
+			DBName   string `json:"dbName"`
+		} `json:"postgres"`
 	} `json:"db"`
 
 	Observability observability.Config `json:"observability"`

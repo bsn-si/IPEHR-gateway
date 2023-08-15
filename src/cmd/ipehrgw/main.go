@@ -37,15 +37,15 @@ func main() {
 
 	observability.Setup(cfg.Observability)
 
-	infra := infrastructure.New(cfg)
+	infra := infrastructure.New(ctx, cfg)
 
 	handler := gatewayapi.New(cfg, infra).Build()
 
 	server := http.Server{
 		Addr:              cfg.Host,
 		Handler:           handler,
-		ReadHeaderTimeout: 1 * time.Second,
-		ReadTimeout:       5 * time.Second,
+		ReadHeaderTimeout: 30 * time.Second,
+		ReadTimeout:       30 * time.Second,
 	}
 
 	go func() {

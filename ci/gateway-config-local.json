@@ -1,6 +1,6 @@
 {
     "baseUrl": "http://0.0.0.0:8080",
-    "dataPath": "/srv/data",
+    "dataPath": "./../data",
     "host": "0.0.0.0:8080",
     "keystoreKey": "fb5b72b901e8419969057bc7f73f8731bf3e3599ee3d8fac26b2c4bc6c7b6627",
     "creatingSystemId": "openEHRSys.example.com",
@@ -8,10 +8,10 @@
     "compressionLevel": 5,
     "defaultUserId": "8dc598d2-a3fa-462b-a513-a69a32c5ab4f",
     "defaultGroupAccessId": "6a781f00-82fd-40fc-8777-cc2eda31414b",
-    "statsServiceURL": "http://ipehr-stat:8080",
+    "statsServiceURL": "http://192.168.1.100:8081",
     "storage": {
         "localfile": {
-            "path": "/srv/data/storage"
+            "path": "./../data/storage"
         },
         "ipfs": {
             "endpointURLs": [
@@ -34,17 +34,26 @@
         "addressUsers": "0xe95dB24EA185c7a7D4ED6e8D20Caaa4cCb852AF4",
         "addressDataStore": "0x0d223203D54c453Fb70A1462C3901AC59CE1F103",
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
-        "privKeyPath": "/srv/.blockchain.key",
+        "privKeyPath": "./../.blockchain.key",
         "gasTipCap": 100000
     },
     "db": {
-        "filePath": "/srv/data/local.db"
+        "filePath": "./../data/local.db",
+        "usePostgres": true,
+        "postgres": {
+            "host": "192.168.1.100",
+            "port": 5432,
+            "database": "ipehr",
+            "user": "root",
+            "password": "1234",
+            "dbname": "ipehr"
+        }
     },
     "observability": {
         "service_name": "ipehr-gateway",
         "collect_metrics": false,
         "metrics_port": 8081,
-        "collect_traces": true,
+        "collect_traces": false,
         "jaeger_endpoint": "http://jaeger:14268/api/traces"
     },
     "debugMode": true

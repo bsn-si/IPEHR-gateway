@@ -26,8 +26,6 @@ type (
 		StatusStr string      `gorm:"-" json:"Status"`
 		UserID    string
 		EhrUUID   string
-		TimeStart time.Time `gorm:"time_start" json:"timeStart"`
-		TimeEnd   time.Time `gorm:"time_end" json:"timeEnd"`
 
 		db     *gorm.DB      `gorm:"-"`
 		ethTxs []*EthereumTx `gorm:"-"`
@@ -35,11 +33,13 @@ type (
 	}
 
 	Tx struct {
-		ReqID     string `gorm:"req_id" json:"-"`
-		Kind      TxKind `gorm:"kind" json:"-"`
-		KindStr   string `gorm:"-" json:"Kind"`
-		Status    Status `gorm:"status" json:"-"`
-		StatusStr string `gorm:"-" json:"Status"`
+		CreatedAt time.Time `gorm:"created_at" json:"createdAt"`
+		UpdatedAt time.Time `gorm:"updated_at" json:"updatedAt"`
+		ReqID     string    `gorm:"req_id" json:"-"`
+		Kind      TxKind    `gorm:"kind" json:"-"`
+		KindStr   string    `gorm:"-" json:"Kind"`
+		Status    Status    `gorm:"index:status_idx" json:"-"`
+		StatusStr string    `gorm:"-" json:"Status"`
 		Comment   string
 	}
 
@@ -63,13 +63,12 @@ func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Req
 	}
 
 	req := &Request{
-		ReqID:     reqID,
-		Kind:      kind,
-		Status:    StatusProcessing,
-		UserID:    userID,
-		EhrUUID:   ehrUUID,
-		db:        p.db,
-		TimeStart: time.Now(),
+		ReqID:   reqID,
+		Kind:    kind,
+		Status:  StatusProcessing,
+		UserID:  userID,
+		EhrUUID: ehrUUID,
+		db:      p.db,
 	}
 
 	return req, nil
@@ -83,8 +82,6 @@ func (r *Request) Commit() error {
 			dbTx.Rollback()
 		}
 	}()
-
-	r.TimeEnd = time.Now()
 
 	if result := dbTx.Create(r); result.Error != nil {
 		return fmt.Errorf("NewRequest db.Create error: %w", result.Error)
@@ -115,9 +112,11 @@ func (r *Request) Commit() error {
 func (r *Request) AddEthereumTx(kind TxKind, hash string) {
 	tx := &EthereumTx{
 		Tx: Tx{
-			ReqID:  r.ReqID,
-			Kind:   kind,
-			Status: StatusPending,
+			ReqID:     r.ReqID,
+			Kind:      kind,
+			Status:    StatusPending,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		Hash: hash,
 	}

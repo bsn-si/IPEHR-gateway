@@ -136,7 +136,7 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.users.GroupAddUser(i.transactOpts, params)
+	tx, err := i.users.GroupAddUser(i.noncer.GetNewOpts(i.transactOpts), params)
 	if err != nil {
 		if strings.Contains(err.Error(), "DNY") {
 			return "", errors.ErrAccessDenied

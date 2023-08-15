@@ -47,6 +47,8 @@ type Index struct {
 	usersAbi       *abi.ABI
 	dataStoreAbi   *abi.ABI
 	accessStoreAbi *abi.ABI
+
+	noncer *NoncHolder
 }
 
 const (
@@ -113,6 +115,13 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		log.Fatal("dataStore contract address is incorrect")
 	}
 
+	singleAddressNonce, err := client.PendingNonceAt(ctx, signerAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("Signer address: %s, NONCE: %d", signerAddress.Hex(), singleAddressNonce)
+
 	ehrIndex, err := ehrIndexer.NewEhrIndexer(common.HexToAddress(ehrIndexAddr), client)
 	if err != nil {
 		log.Fatal(err)
@@ -163,6 +172,8 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		usersAbi:       usersAbi,
 		dataStoreAbi:   dataStoreAbi,
 		accessStoreAbi: accessStoreAbi,
+
+		noncer: NewNoncHolder(singleAddressNonce),
 	}
 }
 
@@ -273,7 +284,7 @@ func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) 
 	i.Lock()
 	defer i.Unlock()
 
-	tx, err := i.ehrIndex.SetAllowed(i.transactOpts, common.HexToAddress(address), true)
+	tx, err := i.ehrIndex.SetAllowed(i.noncer.GetNewOpts(i.transactOpts), common.HexToAddress(address), true)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetAllowed error: %w", err)
 	}

@@ -29,7 +29,7 @@ func main() {
 		panic(err)
 	}
 
-	infra := infrastructure.New(cfg)
+	infra := infrastructure.New(context.Background(), cfg)
 
 	_, userPrivKey, err := infra.Keystore.Get(cfg.DefaultUserID)
 	if err != nil {
