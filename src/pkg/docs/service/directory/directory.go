@@ -114,7 +114,7 @@ func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes 
 
 	multiCallTx.Add(uint8(proc.TxDocGroupAddDoc), packed)
 
-	packed, err = s.setDocAccess(patientID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	packed, err = s.setDocAccess(ctx, patientID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
@@ -216,7 +216,7 @@ func (s *Service) addMetaData(key *chachaPoly.Key, objectVersionID *base.ObjectV
 	return packed, nil
 }
 
-func (s *Service) setDocAccess(userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) ([]byte, error) {
+func (s *Service) setDocAccess(ctx context.Context, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) ([]byte, error) {
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	docIDHash := indexer.Keccak256(CID.Bytes())
 
@@ -238,7 +238,7 @@ func (s *Service) setDocAccess(userID, systemID string, CID *cid.Cid, key *chach
 		Level:   accessLevel,
 	}
 
-	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return nil, fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}

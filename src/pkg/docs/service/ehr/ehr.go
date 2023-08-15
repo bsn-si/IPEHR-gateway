@@ -9,8 +9,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/ipfs/go-cid"
 	"github.com/vmihailenco/msgpack/v5"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/sha3"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
@@ -56,17 +59,43 @@ func (s *Service) EhrCreate(ctx context.Context, userID, systemID string, ehrUUI
 }
 
 func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, ehrUUID, groupAccessUUID *uuid.UUID, request *model.EhrCreateRequest, procRequest *proc.Request) (*model.EHR, error) {
-	var ehr model.EHR
+	ctx, span := tracer.Start(ctx, "ehr_service.EhrCreateWithID", trace.WithAttributes([]attribute.KeyValue{
+		attribute.String("userID", userID),
+		attribute.String("ehrUUID", ehrUUID.String()),
+		attribute.String("systemID", systemID),
+	}...))
+	defer span.End()
 
-	ehr.SystemID.Value = systemID
-	ehr.EhrID.Value = ehrUUID.String()
+	ehr := model.EHR{
+		SystemID: base.HierObjectID{
+			UIDBasedID: base.UIDBasedID{
+				ObjectID: base.ObjectID{
+					Type:  "HIER_OBJECT_ID",
+					Value: systemID,
+				},
+			},
+		},
+		EhrID: base.HierObjectID{
+			UIDBasedID: base.UIDBasedID{
+				ObjectID: base.ObjectID{
+					Type:  "HIER_OBJECT_ID",
+					Value: ehrUUID.String(),
+				},
+			},
+		},
+		EhrAccess: base.ObjectRef{
+			Namespace: "local",
+			Type:      "EHR_ACCESS",
+			ID: base.ObjectID{
+				Type:  "OBJECT_VERSION_ID",
+				Value: uuid.New().String() + "::" + systemID + "::1",
+			},
+		},
 
-	ehr.EhrAccess.ID.Type = "OBJECT_VERSION_ID"
-	ehr.EhrAccess.ID.Value = uuid.New().String() + "::" + systemID + "::1"
-	ehr.EhrAccess.Namespace = "local"
-	ehr.EhrAccess.Type = "EHR_ACCESS"
-
-	ehr.TimeCreated.Value = time.Now().Format(common.OpenEhrTimeFormat)
+		TimeCreated: base.DvDateTime{
+			Value: time.Now().Format(common.OpenEhrTimeFormat),
+		},
+	}
 
 	// Creating EHR_STATUS
 	ehrStatusID := uuid.New().String() + "::" + systemID + "::1"
@@ -144,7 +173,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Owner,
 		}
 
-		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 		}
@@ -210,7 +239,7 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 			Level:   access.Read,
 		}
 
-		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(doctorsGroupIDHash, &accessObj, userPrivKey)
+		setAccessPacked, err := s.Infra.Index.SetAccessWrapper(ctx, doctorsGroupIDHash, &accessObj, userPrivKey)
 		if err != nil {
 			return nil, fmt.Errorf("Index.SetAccess doctorsGroup to allDocsGroup error: %w", err)
 		}
@@ -237,6 +266,13 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 }
 
 func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, doc *model.EHR, allDocsGroup *model.DocumentGroup) error {
+	ctx, span := tracer.Start(ctx, "ehr_service.SaveEhr", trace.WithAttributes([]attribute.KeyValue{
+		attribute.String("userID", userID),
+		attribute.String("ehrID", doc.EhrID.Value),
+		attribute.String("systemID", systemID),
+	}...))
+	defer span.End()
+
 	ehrUUID, err := uuid.Parse(doc.EhrID.Value)
 	if err != nil {
 		return fmt.Errorf("ehrUUID parse error: %w ehrID.Value %s", err, doc.EhrID.Value)
@@ -289,7 +325,7 @@ func (s *Service) SaveEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx,
 		return fmt.Errorf("addMetaData error: %w", err)
 	}
 
-	err = s.setDocAccess(multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
+	err = s.setDocAccess(ctx, multiCallTx, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("setDocAccess error: %w", err)
 	}
@@ -344,7 +380,14 @@ func (s *Service) addEhrMetaData(multiCallTx *indexer.MultiCallTx, key *chachaPo
 	return nil
 }
 
-func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+func (s *Service) setDocAccess(ctx context.Context, multiCallTx *indexer.MultiCallTx, userID, systemID string, CID *cid.Cid, key *chachaPoly.Key, accessLevel access.Level, userPubKey, userPrivKey *[32]byte) error {
+	ctx, span := tracer.Start(ctx, "ehr_service.setDocAccess", trace.WithAttributes([]attribute.KeyValue{
+		attribute.String("userID", userID),
+		attribute.String("CID", CID.String()),
+		attribute.String("systemID", systemID),
+	}...))
+	defer span.End()
+
 	userIDHash := sha3.Sum256([]byte(userID + systemID))
 	docIDHash := indexer.Keccak256(CID.Bytes())
 
@@ -366,7 +409,7 @@ func (s *Service) setDocAccess(multiCallTx *indexer.MultiCallTx, userID, systemI
 		Level:   accessLevel,
 	}
 
-	packed, err := s.Infra.Index.SetAccessWrapper(&userIDHash, &accessObj, userPrivKey)
+	packed, err := s.Infra.Index.SetAccessWrapper(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to allDocsGroup error: %w", err)
 	}
@@ -422,6 +465,14 @@ func (s *Service) GetByID(ctx context.Context, userID, systemID string, ehrUUID 
 
 // GetDocBySubject Get decrypted document by subject
 func (s *Service) GetDocBySubject(ctx context.Context, userID, systemID, subjectID, namespace string) (docDecrypted []byte, err error) {
+	ctx, span := tracer.Start(ctx, "ehr_service.GetDocBySubject", trace.WithAttributes([]attribute.KeyValue{
+		attribute.String("userID", userID),
+		attribute.String("systemID", systemID),
+		attribute.String("subjectID", subjectID),
+		attribute.String("namespace", namespace),
+	}...))
+	defer span.End()
+
 	ehrUUID, err := s.Infra.Index.GetEhrUUIDBySubject(ctx, subjectID, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("Index.GetEhrUUIDBySubject error: %w. userID: %s subjectID: %s namespace: %s", err, userID, subjectID, namespace)
@@ -468,6 +519,13 @@ func (s *Service) CreateSubject(subjectID, subjectNamespace, subType string) (su
 }
 
 func (s *Service) UpdateEhr(ctx context.Context, multiCallTx *indexer.MultiCallTx, procRequest *proc.Request, userID, systemID string, ehrUUID *uuid.UUID, status *model.EhrStatus, allDocsGroup *model.DocumentGroup) error {
+	ctx, span := tracer.Start(ctx, "ehr_service.UpdateEhr", trace.WithAttributes([]attribute.KeyValue{
+		attribute.String("userID", userID),
+		attribute.String("ehrUUID", ehrUUID.String()),
+		attribute.String("systemID", systemID),
+	}...))
+	defer span.End()
+
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
 		return fmt.Errorf("Index.GetLastEhrDocByType error: %w. ehrID: %s", err, ehrUUID.String())
@@ -511,6 +569,13 @@ func (s *Service) ValidateEhr(ehr *model.EHR) bool {
 }
 
 func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, dataIndexUUID *uuid.UUID, ehr *model.EHR, procRequest *proc.Request) error {
+	ctx, span := tracer.Start(ctx, "ehr_service.addDataIndex", trace.WithAttributes([]attribute.KeyValue{
+		attribute.String("ehrUUID", ehrUUID.String()),
+		attribute.String("groupAccessUUID", groupAccessUUID.String()),
+		attribute.String("dataIndexUUID", dataIndexUUID.String()),
+	}...))
+	defer span.End()
+
 	ehrNode, err := treeindex.ProcessEHR(ehr)
 	if err != nil {
 		return fmt.Errorf("treeindex.ProcessEHR error: %w", err)

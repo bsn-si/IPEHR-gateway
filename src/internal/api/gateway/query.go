@@ -192,7 +192,7 @@ func (h QueryHandler) ExecStoredQuery(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, req)
+	resp, err := h.service.ExecStoredQuery(c.Request.Context(), userID, systemID, qualifiedQueryName, req)
 	if err != nil {
 		log.Printf("cannot exec stored query: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -240,7 +240,7 @@ func (h QueryHandler) PostExecStoredQuery(c *gin.Context) {
 
 	defer c.Request.Body.Close()
 
-	resp, err := h.service.ExecStoredQuery(c, userID, systemID, qualifiedQueryName, &req)
+	resp, err := h.service.ExecStoredQuery(c.Request.Context(), userID, systemID, qualifiedQueryName, &req)
 	if err != nil {
 		log.Printf("cannot exec stored query: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

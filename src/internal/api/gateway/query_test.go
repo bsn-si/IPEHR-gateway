@@ -110,6 +110,7 @@ func TestQueryHandler_ExecStoredQuery(t *testing.T) {
 			api := API{
 				User:  NewUserHandler(userSvc),
 				Query: NewQueryHandler(querySvc, "base_url"),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildQueryAPI())
@@ -212,6 +213,7 @@ func TestQueryHandler_PostExecStoredQuery(t *testing.T) {
 			api := API{
 				User:  NewUserHandler(userSvc),
 				Query: NewQueryHandler(querySvc, "base_url"),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildQueryAPI())
@@ -340,6 +342,7 @@ func TestQueryHandler_ExecPostQuery(t *testing.T) {
 			api := API{
 				User:  NewUserHandler(userSvc),
 				Query: NewQueryHandler(querySvc, "base_url"),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildQueryAPI())
@@ -548,6 +551,7 @@ func TestQueryHandler_ExecGetQuery(t *testing.T) {
 			api := API{
 				User:  NewUserHandler(userSvc),
 				Query: NewQueryHandler(querySvc, "base_url"),
+				Debug: NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildQueryAPI())

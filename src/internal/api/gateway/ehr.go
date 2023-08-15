@@ -89,7 +89,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 
 	// Checking EHR does not exist?
 	// проверить чему будет равен ehrUUID
-	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID, systemID)
+	ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c.Request.Context(), userID, systemID)
 	switch {
 	case err == nil && ehrUUID != nil:
 		c.AbortWithStatus(http.StatusConflict)
@@ -125,7 +125,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	}
 
 	// EHR document creating
-	doc, err := h.service.EhrCreate(c, userID, systemID, &ehrUUIDnew, groupAccessUUID, &request, procRequest)
+	doc, err := h.service.EhrCreate(c.Request.Context(), userID, systemID, &ehrUUIDnew, groupAccessUUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -204,7 +204,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	systemID := c.GetString("ehrSystemID")
 
 	// Checking EHR does not exist
-	_ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c, userID, systemID)
+	_ehrUUID, err := h.service.Infra.Index.GetEhrUUIDByUserID(c.Request.Context(), userID, systemID)
 	switch {
 	case err == nil && _ehrUUID != nil:
 		c.AbortWithStatus(http.StatusConflict)
@@ -238,7 +238,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	}
 
 	// EHR document creating
-	newDoc, err := h.service.EhrCreateWithID(c, userID, systemID, &ehrUUID, groupAccessUUID, &request, procRequest)
+	newDoc, err := h.service.EhrCreateWithID(c.Request.Context(), userID, systemID, &ehrUUID, groupAccessUUID, &request, procRequest)
 	if err != nil {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
@@ -293,7 +293,7 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	docDecrypted, err := h.service.GetByID(c, userID, systemID, &ehrUUID)
+	docDecrypted, err := h.service.GetByID(c.Request.Context(), userID, systemID, &ehrUUID)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		c.AbortWithStatus(http.StatusAccepted)
 		return
@@ -344,7 +344,7 @@ func (h *EhrHandler) GetBySubjectIDAndNamespace(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	docDecrypted, err := h.service.GetDocBySubject(c, userID, systemID, subjectID, namespace)
+	docDecrypted, err := h.service.GetDocBySubject(c.Request.Context(), userID, systemID, subjectID, namespace)
 	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
 		c.AbortWithStatus(http.StatusAccepted)
 		return

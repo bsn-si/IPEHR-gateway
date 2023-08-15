@@ -23,11 +23,11 @@ const formFailRate = new Rate('failed form fetches');
 const submitFailRate = new Rate('failed form submits');
 
 export const options = {
-    iterations: 1,
+    iterations: 100,
     // vus: 1,
-    // vus: 10,
+    vus: 25,
     // vus: 20,
-    duration: '100s',
+    duration: '10000s',
     ext: {
         loadimpact: {
             // Project: Default project
@@ -58,6 +58,9 @@ export default function testSuite() {
         console.log("USER:" + JSON.stringify(u));
     });
 
+    // wait 30 seconds for the user to be created
+    sleep(120);
+
     describe('Login user', () => {
         user.login_user(ctx, u.userID, u.password);
     });
@@ -68,6 +71,8 @@ export default function testSuite() {
         ehrDoc = ehr.create_ehr(ctx, u);
         console.log("EHR:" + JSON.stringify(ehrDoc));
     });
+
+    sleep(120);
 
     describe('Get EHR', () => {
         const doc = ehr.get_ehr(ctx, ehrDoc.ehr_id.value);

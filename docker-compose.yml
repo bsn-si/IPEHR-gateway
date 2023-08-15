@@ -5,18 +5,19 @@ networks:
     driver: bridge
 
 services: 
-  ipehr-index:
-    image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
-    ports:
-      - 8545:8545
-    networks:
-      - ipehr-network
-    healthcheck:
-      test: 'curl --fail -X POST http://localhost:8545 -H "Content-Type: application/json" --data "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_chainId\",\"params\":[]}" || exit 1'
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
+  # ipehr-index:
+  #   image: ipehr-index:v2
+  #   # image: ghcr.io/bsn-si/ipehr-blockchain-indexes:develop
+  #   ports:
+  #     - 8545:8545
+  #   networks:
+  #     - ipehr-network
+  #   healthcheck:
+  #     test: 'curl --fail -X POST http://localhost:8545 -H "Content-Type: application/json" --data "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"eth_chainId\",\"params\":[]}" || exit 1'
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 5s
 
   ipehr-stat:
     build:
@@ -24,14 +25,14 @@ services:
       dockerfile: Dockerfile.stat
     image: ipehr-stat
     pull_policy: never
-    depends_on:
-      ipehr-index:
-        condition: service_healthy
+    # depends_on:
+      # ipehr-index:
+        # condition: service_healthy
     ports:
       - 8081:8080
-    configs:
-      - source: stats-config
-        target: /srv/config.json
+    # configs:
+      # - source: stats-config
+        # target: /srv/config.json
     networks:
       - ipehr-network
 
@@ -43,22 +44,39 @@ services:
     pull_policy: never
     environment:
       - GIN_MODE=release
-    configs:
-      - source: gateway-config
-        target: /srv/config.json
+    # configs:
+      # - source: gateway-config
+        # target: /srv/config.json
 
     depends_on:
-      ipehr-index:
-        condition: service_healthy
+      # ipehr-index:
+        # condition: service_healthy
       ipehr-stat:
         condition: service_started
+      # jaeger:
+        # condition: service_started
     ports:
       - 8080:8080
     networks:
       - ipehr-network
+  
+  # jaeger:
+  #   image: jaegertracing/all-in-one:1.22
+  #   environment:
+  #     - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+  #   ports:
+  #     - 16686:16686
+  #     - 14268:14268
+  #     - 9411:9411
+  #     - 5775:5775/udp
+  #     - 6831:6831/udp
+  #     - 6832:6832/udp
+  #     - 5778:5778
+  #   networks:
+  #     - ipehr-network
 
-configs:
-  gateway-config:
-    file: ./ci/gateway-config.json
-  stats-config:
-    file: ./ci/stats-config.json
+# configs:
+  # gateway-config:
+    # file: ./ci/gateway-config.json
+  # stats-config:
+    # file: ./ci/stats-config.json

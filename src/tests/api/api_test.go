@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -266,7 +267,7 @@ func prepareTest() (*httptest.Server, storage.Storager, error) {
 
 	cfg.DefaultUserID = uuid.New().String()
 
-	infra := infrastructure.New(cfg)
+	infra := infrastructure.New(context.Background(), cfg)
 
 	apiHandler := gateway.New(cfg, infra)
 

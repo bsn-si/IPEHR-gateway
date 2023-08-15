@@ -10,12 +10,16 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
 )
 
 func (i *Index) GetAccessList(ctx context.Context, IDHash *[32]byte, kind access.Kind) (access.List, error) {
+	ctx, span := tracer.Start(ctx, "indexer.GetAccessList") //nolint
+	defer span.End()
+
 	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*IDHash, kind)
 	if err != nil {
 		return nil, fmt.Errorf("args.Pack error: %w", err)
@@ -52,6 +56,9 @@ func (i *Index) GetAccessList(ctx context.Context, IDHash *[32]byte, kind access
 }
 
 func (i *Index) DocAccessSet(ctx context.Context, CID, CIDEncr, keyEncr []byte, accessLevel uint8, userPrivKey, toUserPrivKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "indexer.DocAccessSet") //nolint
+	defer span.End()
+
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
 		return nil, fmt.Errorf("crypto.ToECDSA error: %w", err)

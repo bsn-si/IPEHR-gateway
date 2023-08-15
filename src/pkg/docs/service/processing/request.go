@@ -3,6 +3,7 @@ package processing
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -16,8 +17,6 @@ type RequestInterface interface {
 }
 
 type (
-	RequestKind uint8
-
 	Request struct {
 		gorm.Model
 		ReqID     string      `gorm:"index:idx_request,unique"`
@@ -34,11 +33,13 @@ type (
 	}
 
 	Tx struct {
-		ReqID     string `gorm:"req_id" json:"-"`
-		Kind      TxKind `gorm:"kind" json:"-"`
-		KindStr   string `gorm:"-" json:"Kind"`
-		Status    Status `gorm:"status" json:"-"`
-		StatusStr string `gorm:"-" json:"Status"`
+		CreatedAt time.Time `gorm:"created_at" json:"createdAt"`
+		UpdatedAt time.Time `gorm:"updated_at" json:"updatedAt"`
+		ReqID     string    `gorm:"req_id" json:"-"`
+		Kind      TxKind    `gorm:"kind" json:"-"`
+		KindStr   string    `gorm:"-" json:"Kind"`
+		Status    Status    `gorm:"index:status_idx" json:"-"`
+		StatusStr string    `gorm:"-" json:"Status"`
 		Comment   string
 	}
 
@@ -54,33 +55,6 @@ type (
 		MinerAddress string
 		DealID       uint
 	}
-)
-
-const (
-	RequestUnknown RequestKind = iota
-	RequestEhrCreate
-	RequestEhrCreateWithID
-	RequestEhrGetBySubject
-	RequestEhrGetByID
-	RequestEhrStatusCreate
-	RequestEhrStatusUpdate
-	RequestEhrStatusGetByID
-	RequestEhrStatusGetByTime
-	RequestCompositionCreate
-	RequestCompositionUpdate
-	RequestCompositionGetByID
-	RequestCompositionDelete
-	RequestUserRegister
-	RequestDocAccessSet
-	RequestQueryStore
-	RequestUserGroupCreate
-	RequestUserGroupAddUser
-	RequestUserGroupRemoveUser
-	RequestContributionCreate
-	RequestTemplateCreate
-	RequestDirectoryCreate
-	RequestDirectoryUpdate
-	RequestDirectoryDelete
 )
 
 func (p *Proc) NewRequest(reqID, userID, ehrUUID string, kind RequestKind) (*Request, error) {
@@ -138,9 +112,11 @@ func (r *Request) Commit() error {
 func (r *Request) AddEthereumTx(kind TxKind, hash string) {
 	tx := &EthereumTx{
 		Tx: Tx{
-			ReqID:  r.ReqID,
-			Kind:   kind,
-			Status: StatusPending,
+			ReqID:     r.ReqID,
+			Kind:      kind,
+			Status:    StatusPending,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		},
 		Hash: hash,
 	}

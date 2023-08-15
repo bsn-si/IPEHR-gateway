@@ -120,6 +120,7 @@ func TestTemplateHandler_GetByID(t *testing.T) {
 	api := API{
 		Template: NewTemplateHandler(tSvc, ""),
 		User:     NewUserHandler(userSvc),
+		Debug:    NewDebugHandler(false, nil, nil),
 	}
 
 	router := api.setupRouter(api.buildDefinitionAPI())
@@ -217,6 +218,7 @@ func TestTemplateHandler_ListStored(t *testing.T) {
 			api := API{
 				Template: NewTemplateHandler(tSvc, ""),
 				User:     NewUserHandler(userSvc),
+				Debug:    NewDebugHandler(false, nil, nil),
 			}
 
 			router := api.setupRouter(api.buildDefinitionAPI())
@@ -353,6 +355,7 @@ func TestTemplateHandler_Store(t *testing.T) {
 	api := API{
 		Template: NewTemplateHandler(tSvc, ""),
 		User:     NewUserHandler(userSvc),
+		Debug:    NewDebugHandler(false, nil, nil),
 	}
 
 	router := api.setupRouter(api.buildDefinitionAPI())

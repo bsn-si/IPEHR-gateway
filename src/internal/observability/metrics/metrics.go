@@ -5,19 +5,18 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/prometheus"
-	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/unit"
+
+	api "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 )
 
 var (
-	requestCounter  instrument.Int64Counter
-	requestDuration instrument.Int64Histogram
-	requestSize     instrument.Int64Histogram
-	responseSize    instrument.Int64Histogram
+	requestCounter  api.Int64Counter
+	requestDuration api.Int64Histogram
+	requestSize     api.Int64Histogram
+	responseSize    api.Int64Histogram
 )
 
 func SetupMetrics(serviceName string) {
@@ -30,35 +29,36 @@ func SetupMetrics(serviceName string) {
 		metric.WithReader(exporter),
 		metric.WithResource(getServiceResource(serviceName)),
 	)
-	global.SetMeterProvider(provider)
-	meter := global.Meter(serviceName)
+	meter := provider.Meter(serviceName)
+	// global.SetMeterProvider(provider)
+	// meter := global.Meter(serviceName)
 
 	requestDuration, err = meter.Int64Histogram("request_duration",
-		instrument.WithDescription("Request duration in milliseconds"),
-		instrument.WithUnit(unit.Milliseconds),
+		api.WithDescription("Request duration in milliseconds"),
+		api.WithUnit("ms"),
 	)
 	if err != nil {
 		log.Fatalf("error on create request_duration histogram: %v", err)
 	}
 
 	requestSize, err = meter.Int64Histogram("request_size",
-		instrument.WithDescription("Request size"),
-		instrument.WithUnit(unit.Dimensionless),
+		api.WithDescription("Request size"),
+		api.WithUnit("bytes"),
 	)
 	if err != nil {
 		log.Fatalf("error on create request_size histogram: %v", err)
 	}
 
 	responseSize, err = meter.Int64Histogram("response_size",
-		instrument.WithDescription("Response size"),
-		instrument.WithUnit(unit.Dimensionless),
+		api.WithDescription("Response size"),
+		api.WithUnit("bytes"),
 	)
 	if err != nil {
 		log.Fatalf("error on create response_size histogram: %v", err)
 	}
 
 	requestCounter, err = meter.Int64Counter("request_counter",
-		instrument.WithDescription("Total requests count"),
+		api.WithDescription("Total requests count"),
 	)
 	if err != nil {
 		log.Fatalf("error on request counter: %v", err)

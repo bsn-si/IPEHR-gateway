@@ -7,8 +7,10 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -21,6 +23,9 @@ func Keccak256(data []byte) *[32]byte {
 }
 
 func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {
+	ctx, span := tracer.Start(ctx, "indexer.tx_wait") //nolint
+	defer span.End()
+
 	h := common.HexToHash(hash)
 
 	ticker := time.NewTicker(5 * time.Second)
@@ -44,16 +49,31 @@ func (i *Index) TxWait(ctx context.Context, hash string) (uint64, error) {
 }
 
 func (i *Index) GetTxStatus(ctx context.Context, hash string) (uint64, error) {
+	ctx, span := tracer.Start(ctx, "indexer.GetTxStatus") //nolint
+	defer span.End()
+
+	r, err := i.client.TransactionReceipt(ctx, common.HexToHash(hash))
+	if err != nil {
+		return 0, err
+	}
+
+	return r.Status, nil
+}
+
+func (i *Index) GetTxReceipt(ctx context.Context, hash string) (*types.Receipt, error) {
+	ctx, span := tracer.Start(ctx, "indexer.GetTxReceipt") //nolint
+	defer span.End()
+
 	h := common.HexToHash(hash)
 
 	receipt, err := i.client.TransactionReceipt(ctx, h)
 	if err != nil {
 		if errors.Is(err, ethereum.NotFound) {
-			return 0, errors.ErrIsNotExist
+			return nil, errors.ErrIsNotExist
 		}
 
-		return 0, fmt.Errorf("GetTxStatus error: %w hash %s", err, hash)
+		return nil, fmt.Errorf("GetTxReceipt error: %w hash %s", err, hash)
 	}
 
-	return receipt.Status, nil
+	return receipt, nil
 }

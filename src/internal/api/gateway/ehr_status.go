@@ -82,7 +82,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 
 	IfMatch := c.Request.Header.Get("If-Match")
 
-	docLast, err := h.service.GetStatus(c, userID, systemID, &ehrUUID)
+	docLast, err := h.service.GetStatus(c.Request.Context(), userID, systemID, &ehrUUID)
 	if err != nil {
 		log.Println("ehrStatusService.Get error:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error getting last EHR document status"})
@@ -131,7 +131,7 @@ func (h *EhrStatusHandler) Update(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateStatus(c, procRequest, userID, systemID, &ehrUUID, &status); err != nil {
+	if err := h.service.UpdateStatus(c.Request.Context(), procRequest, userID, systemID, &ehrUUID, &status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -199,7 +199,7 @@ func (h *EhrStatusHandler) GetStatusByTime(c *gin.Context) {
 		return
 	}
 
-	docDecrypted, err := h.service.GetStatusByNearestTime(c, userID, systemID, &ehrUUID, statusTime)
+	docDecrypted, err := h.service.GetStatusByNearestTime(c.Request.Context(), userID, systemID, &ehrUUID, statusTime)
 	if err != nil {
 		if errors.Is(err, errors.ErrIsInProcessing) {
 			c.AbortWithStatus(http.StatusAccepted)
@@ -261,7 +261,7 @@ func (h *EhrStatusHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	docDecrypted, err := h.service.GetStatusByVersionID(c, userID, systemID, &ehrUUID, objectVersionID)
+	docDecrypted, err := h.service.GetStatusByVersionID(c.Request.Context(), userID, systemID, &ehrUUID, objectVersionID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)

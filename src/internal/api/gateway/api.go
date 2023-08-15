@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
@@ -53,6 +54,7 @@ type API struct {
 	Request      *RequestHandler
 	User         *UserHandler
 	Contribution *ContributionHandler
+	Debug        *DebugHandler
 }
 
 func New(cfg *config.Config, infra *infrastructure.Infra) *API {
@@ -89,6 +91,7 @@ func New(cfg *config.Config, infra *infrastructure.Infra) *API {
 		User:         NewUserHandler(userSvc),
 		Contribution: NewContributionHandler(contribution, userSvc, templateService, compositionService, cfg.BaseURL),
 		Directory:    NewDirectoryHandler(directory, userSvc, docService.Infra.Index, cfg.BaseURL),
+		Debug:        NewDebugHandler(cfg.DebugMode, docService.Proc, docService.Infra.Index),
 	}
 }
 
@@ -149,9 +152,20 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 		)
 	}))
 
+	pprof.Register(r)
+
 	r.Use(requestID)
 
+	{
+		r := r.Group("debug")
+		r.GET("/eth_transactions", a.Debug.getEthTransactions)
+		r.GET("/avg_requests_time", a.Debug.getAvgRequestsTime)
+
+	}
+
 	v1 := r.Group("v1")
+	v1.Use(a.Debug.debugMiddleware)
+
 	for _, b := range apiHandlers {
 		b(v1)
 	}

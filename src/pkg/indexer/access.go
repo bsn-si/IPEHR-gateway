@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
@@ -61,7 +62,7 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 		return "", fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.accessStore.SetAccess(i.transactOpts, *accessID, *accessObj, userAddress, deadline, signature)
+	tx, err := i.accessStore.SetAccess(i.noncer.GetNewOpts(i.transactOpts), *accessID, *accessObj, userAddress, deadline, signature)
 	if err != nil {
 		return "", fmt.Errorf("accessStore.SetAccess error: %w", err)
 	}
@@ -70,6 +71,9 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 }
 
 func (i *Index) GetAccessKey(ctx context.Context, userIDHash *[32]byte, kind access.Kind, accessID []byte, userPubKey, userPrivKey *[32]byte) (*chachaPoly.Key, error) {
+	ctx, span := tracer.Start(ctx, "user_index.get_access_key") //nolint
+	defer span.End()
+
 	keyEncr, level, err := i.GetUserAccess(ctx, userIDHash, kind, accessID)
 	if err != nil {
 		return nil, fmt.Errorf("Index.UserGroupGetByID error: %w", err)

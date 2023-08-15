@@ -21,147 +21,23 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/storage/ipfs"
 )
 
-type (
-	Status            uint8
-	TxKind            uint8
-	BlockChainService uint8
-
-	Proc struct {
-		db               *gorm.DB
-		ethClient        *ethclient.Client
-		filecoinClient   *filecoin.Client
-		ipfsClient       *ipfs.Client
-		httpClient       *http.Client
-		lockEthereum     bool
-		lockFilecoin     bool
-		localStoragePath string
-		done             chan bool
-	}
-
-	Retrieve struct {
-		CID     string `gorm:"primaryKey"`
-		DealID  retrievalmarket.DealID
-		Status  Status
-		Comment string
-	}
-)
-
-const (
-	StatusFailed     Status = 0
-	StatusSuccess    Status = 1
-	StatusPending    Status = 2
-	StatusProcessing Status = 3
-	StatusUnknown    Status = 255
-
-	TxUnknown TxKind = iota
-	TxMultiCall
-	TxSetEhrUser
-	TxSetEhrBySubject
-	TxSetEhrDocs
-	TxSetDocAccess
-	TxSetDocGroupAccess
-	TxSetUserGroupAccess
-	TxDeleteDoc
-	TxFilecoinStartDeal
-	TxEhrCreateWithID
-	TxUpdateEhrStatus
-	TxAddEhrDoc
-	TxSetDocKeyEncrypted
-	TxSaveEhr
-	TxSaveEhrStatus
-	TxSaveComposition
-	TxSaveTemplate
-	TxUserRegister
-	TxUserNew
-	TxUserGroupCreate
-	TxUserGroupAddUser
-	TxUserGroupRemoveUser
-	TxDocGroupCreate
-	TxDocGroupAddDoc
-	TxIndexDataUpdate
-	TxCreateDirectory
-)
-
-var (
-	statuses = map[Status]string{
-		StatusFailed:     "Failed",
-		StatusSuccess:    "Success",
-		StatusPending:    "Pending",
-		StatusProcessing: "Processing",
-		StatusUnknown:    "Unknown",
-	}
-
-	txKinds = map[TxKind]string{
-		TxMultiCall:           "MultiCall",
-		TxSetEhrUser:          "SetEhrUser",
-		TxSetEhrBySubject:     "SetEhrBySubject",
-		TxSetEhrDocs:          "SetEhrDocs",
-		TxSetDocAccess:        "SetDocAccess",
-		TxSetDocGroupAccess:   "SetDocGroupAccess",
-		TxSetUserGroupAccess:  "SetUserGroupAccess",
-		TxDeleteDoc:           "DeleteDoc",
-		TxFilecoinStartDeal:   "FilecoinStartDeal",
-		TxEhrCreateWithID:     "EhrCreateWithID",
-		TxUpdateEhrStatus:     "UpdateEhrStatus",
-		TxAddEhrDoc:           "AddEhrDoc",
-		TxSetDocKeyEncrypted:  "SetDocKeyEncrypted",
-		TxSaveEhr:             "SaveEhr",
-		TxSaveEhrStatus:       "SaveEhrStatus",
-		TxSaveComposition:     "SaveComposition",
-		TxSaveTemplate:        "SaveTemplate",
-		TxCreateDirectory:     "CreateDirectory",
-		TxUserRegister:        "UserRegister",
-		TxUserNew:             "UserNew",
-		TxUserGroupCreate:     "UserGroupCreate",
-		TxUserGroupAddUser:    "UserGroupAddUser",
-		TxUserGroupRemoveUser: "UserGroupRemoveUser",
-		TxDocGroupCreate:      "DocGroupCreate",
-		TxDocGroupAddDoc:      "DocGroupAddDoc",
-		TxIndexDataUpdate:     "IndexDataUpdate",
-		TxUnknown:             "Unknown",
-	}
-
-	reqKinds = map[RequestKind]string{
-		RequestEhrCreate:          "EhrCreate",
-		RequestEhrGetBySubject:    "EhrGetBySubject",
-		RequestEhrGetByID:         "EhrGetByID",
-		RequestEhrStatusCreate:    "EhrStatusCreate",
-		RequestEhrStatusUpdate:    "EhrStatusUpdate",
-		RequestEhrStatusGetByID:   "EhrStatusGetByID",
-		RequestEhrStatusGetByTime: "EhrStatusGetByTime",
-		RequestCompositionCreate:  "CompositionCreate",
-		RequestCompositionUpdate:  "CompositionUpdate",
-		RequestCompositionGetByID: "CompositionGetByID",
-		RequestCompositionDelete:  "CompositionDelete",
-		RequestTemplateCreate:     "TemplateStore",
-		RequestDirectoryCreate:    "DirectoryCreate",
-		RequestDirectoryUpdate:    "DirectoryUpdate",
-		RequestDirectoryDelete:    "DirectoryDelete",
-	}
-)
-
-func (s Status) String() string {
-	if status, ok := statuses[s]; ok {
-		return status
-	}
-
-	return statuses[StatusUnknown]
+type Proc struct {
+	db               *gorm.DB
+	ethClient        *ethclient.Client
+	filecoinClient   *filecoin.Client
+	ipfsClient       *ipfs.Client
+	httpClient       *http.Client
+	lockEthereum     bool
+	lockFilecoin     bool
+	localStoragePath string
+	done             chan bool
 }
 
-func (k TxKind) String() string {
-	if tk, ok := txKinds[k]; ok {
-		return tk
-	}
-
-	return txKinds[TxUnknown]
-}
-
-func (k RequestKind) String() string {
-	if rk, ok := reqKinds[k]; ok {
-		return rk
-	}
-
-	return reqKinds[RequestUnknown]
+type Retrieve struct {
+	CID     string `gorm:"primaryKey"`
+	DealID  retrievalmarket.DealID
+	Status  Status
+	Comment string
 }
 
 func logf(format string, a ...interface{}) {
@@ -209,6 +85,39 @@ func (p *Proc) GetRetrieveStatus(CID *cid.Cid) (Status, error) {
 	}
 
 	return ret.Status, nil
+}
+
+func (p *Proc) GetAllRequests(ctx context.Context) ([]*Request, error) {
+	var requests []*Request
+
+	result := p.db.Model(&Request{}).Find(&requests)
+	if result.Error != nil {
+		return nil, fmt.Errorf("Retrieve get error: %w", result.Error)
+	}
+
+	return requests, nil
+}
+
+func (p *Proc) GetEthTransactionsForRequest(ctx context.Context, reqID string) ([]*EthereumTx, error) {
+	var txs []*EthereumTx
+
+	result := p.db.Model(&EthereumTx{}).Find(&txs, "req_id = ?", reqID)
+	if result.Error != nil {
+		return nil, fmt.Errorf("Retrieve get error: %w", result.Error)
+	}
+
+	return txs, nil
+}
+
+func (p *Proc) GetAllEthTransactions(ctx context.Context) ([]*EthereumTx, error) {
+	var txs []*EthereumTx
+
+	result := p.db.Model(&EthereumTx{}).Find(&txs)
+	if result.Error != nil {
+		return nil, fmt.Errorf("Retrieve get error: %w", result.Error)
+	}
+
+	return txs, nil
 }
 
 func (p *Proc) Start() {
@@ -262,15 +171,13 @@ func (p *Proc) execEthereum() {
 		StatusProcessing,
 	}
 
-	var txs []struct {
-		EthereumTx
-	}
+	txs := []EthereumTx{}
 
-	result := p.db.Model(&EthereumTx{}).
-		Select("ethereum_txes.req_id, ethereum_txes.hash, ethereum_txes.status").
-		Where("ethereum_txes.status IN ?", statuses).
-		Group("ethereum_txes.hash").
-		Find(&txs)
+	result := p.db.Where("status IN ?", statuses).Find(&txs)
+	// result := p.db.Model(EthereumTx{}).
+	// Select("req_id, hash, status").
+	// Where("status IN ?", statuses).
+	// Find(&txs)
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)
 		return
@@ -308,7 +215,7 @@ func (p *Proc) execEthereum() {
 			continue
 		}
 
-		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status); result.Error != nil {
+		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status).Update("updated_at", time.Now()); result.Error != nil {
 			logf("db.Update error: %v", result.Error)
 		}
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/chachaPoly"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/crypto/keybox"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/docs/model"
@@ -18,6 +19,9 @@ import (
 )
 
 func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKeyEncr, gNameEncr []byte, userPrivKey *[32]byte) ([]byte, error) {
+	ctx, span := tracer.Start(ctx, "indexer.DocGroupCreate") //nolint
+	defer span.End()
+
 	gIDHash := Keccak256(gID[:])
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
@@ -61,6 +65,9 @@ func (i *Index) DocGroupCreate(ctx context.Context, gID *uuid.UUID, gIDEncr, gKe
 
 // Returns: []CIDEncr
 func (i *Index) DocGroupGetDocs(ctx context.Context, gID *uuid.UUID) ([][]byte, error) {
+	ctx, span := tracer.Start(ctx, "indexer.DocGroupGetDocs") //nolint
+	defer span.End()
+
 	groupIDHash := Keccak256(gID[:])
 
 	CIDs, err := i.ehrIndex.DocGroupGetDocs(&bind.CallOpts{Context: ctx}, *groupIDHash)
@@ -72,6 +79,7 @@ func (i *Index) DocGroupGetDocs(ctx context.Context, gID *uuid.UUID) ([][]byte, 
 }
 
 func (i *Index) DocGroupAddDoc(gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr []byte, userPrivKey *[32]byte) ([]byte, error) {
+
 	groupIDHash := Keccak256(gID[:])
 
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
@@ -102,6 +110,9 @@ func (i *Index) DocGroupAddDoc(gID *uuid.UUID, docCIDHash *[32]byte, docCIDEncr 
 }
 
 func (i *Index) DocGroupGetByID(ctx context.Context, gID *uuid.UUID, userPubKey, userPrivateKey *[32]byte) (*model.DocumentGroup, error) {
+	ctx, span := tracer.Start(ctx, "indexer.DocGroupGetByID") //nolint
+	defer span.End()
+
 	groupIDHash := Keccak256(gID[:])
 
 	attrs, err := i.ehrIndex.DocGroupGetAttrs(&bind.CallOpts{Context: ctx}, *groupIDHash)

@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/ipfs/go-cid"
 
+	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
@@ -31,6 +32,7 @@ type Client struct {
 	api           *lotusapi.FullNodeStruct
 	closer        jsonrpc.ClientCloser
 	httpClient    *http.Client
+	r             *rand.Rand
 }
 
 type Config struct {
@@ -99,6 +101,7 @@ func NewClient(cfg *Config) (*Client, error) {
 		verified:      cfg.VerifiedDeals,
 		api:           &lotusapi.FullNodeStruct{},
 		httpClient:    http.DefaultClient,
+		r:             rand.New(rand.NewSource(time.Now().UnixNano())), // nolint
 	}
 
 	var err error
@@ -118,6 +121,9 @@ func NewClient(cfg *Config) (*Client, error) {
 }
 
 func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint64) (*cid.Cid, string, error) {
+	ctx, span := tracer.Start(ctx, "filecoin_client.StartDeal")
+	defer span.End()
+
 	walletAddr, err := c.api.WalletDefaultAddress(ctx)
 	if err != nil {
 		return nil, "", fmt.Errorf("Lotus WalletDefaultAddress error: %w", err)
@@ -152,6 +158,9 @@ func (c *Client) StartDeal(ctx context.Context, CID *cid.Cid, dataSizeBytes uint
 }
 
 func (c *Client) GetDealStatus(ctx context.Context, CID *cid.Cid) (storagemarket.StorageDealStatus, uint64, error) {
+	ctx, span := tracer.Start(ctx, "filecoin_client.GetDealStatus")
+	defer span.End()
+
 	dealInfo, err := c.api.ClientGetDealInfo(ctx, *CID)
 	if err != nil {
 		return 0, 0, fmt.Errorf("Lotus ClientGetDealInfo error: %w CID %s", err, CID.String())
@@ -161,6 +170,9 @@ func (c *Client) GetDealStatus(ctx context.Context, CID *cid.Cid) (storagemarket
 }
 
 func (c *Client) StartRetrieve(ctx context.Context, CID *cid.Cid) (retrievalmarket.DealID, error) {
+	ctx, span := tracer.Start(ctx, "filecoin_client.StartRetrieve")
+	defer span.End()
+
 	offers, err := c.api.ClientFindData(ctx, *CID, nil)
 	if err != nil {
 		return 0, fmt.Errorf("Lotus ClientFindData error: %w CID: %s", err, CID.String())
@@ -206,6 +218,9 @@ func (c *Client) StartRetrieve(ctx context.Context, CID *cid.Cid) (retrievalmark
 }
 
 func (c *Client) GetRetrieveStatus(ctx context.Context, dealID retrievalmarket.DealID) (retrievalmarket.DealStatus, error) {
+	ctx, span := tracer.Start(ctx, "filecoin_client.GetRetrieveStatus")
+	defer span.End()
+
 	retrievalInfo, err := c.api.ClientListRetrievals(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("Lotus ClientListRetrievals error: %w", err)
@@ -222,6 +237,9 @@ func (c *Client) GetRetrieveStatus(ctx context.Context, dealID retrievalmarket.D
 }
 
 func (c *Client) SaveFile(ctx context.Context, CID *cid.Cid, dealID retrievalmarket.DealID) error {
+	ctx, span := tracer.Start(ctx, "filecoin_client.SaveFile")
+	defer span.End()
+
 	eref := lotusapi.ExportRef{
 		Root:   *CID,
 		DealID: dealID,
@@ -344,61 +362,69 @@ func (c *Client) FindMiner(ctx context.Context, dataSizeBytes uint64) (*address.
 */
 
 func (c *Client) FindMiner(ctx context.Context) (*address.Address, error) {
-	blackList := []string{
-		"",
-		"f01482290",
-		"f01497836",
-		"f01543586",
-		"f01602479",
-		"f01606849",
-		"f01606675",
-		"f01386984",
-		"f01579009",
-		"f01611097",
-		"f01423116",
-		"f01310564",
-		"f01394448",
-		"f01672748",
-		"f01443744",
-	}
-	_ = blackList
+	ctx, span := tracer.Start(ctx, "filecoin_client.FindMiner")
+	defer span.End()
 
-	rand.Seed(time.Now().UnixNano())
+	// blackList := []string{
+	// 	"",
+	// 	"f01482290",
+	// 	"f01497836",
+	// 	"f01543586",
+	// 	"f01602479",
+	// 	"f01606849",
+	// 	"f01606675",
+	// 	"f01386984",
+	// 	"f01579009",
+	// 	"f01611097",
+	// 	"f01423116",
+	// 	"f01310564",
+	// 	"f01394448",
+	// 	"f01672748",
+	// 	"f01443744",
+	// }
+	// _ = blackList
 
 	for i := 0; i < 10; i++ {
-		// nolint
-		x := rand.Intn(len(c.miners))
-
-		addr := c.miners[x]
-
-		minerAddr, err := address.NewFromString(addr)
-		if err != nil {
-			log.Printf("Filecoin findMiner address parse error: %v addr: %s", err, addr)
-			continue
+		minderAddr := c.findMiner(ctx)
+		if minderAddr != nil {
+			return minderAddr, nil
 		}
-
-		minerInfo, err := c.api.StateMinerInfo(ctx, minerAddr, types.EmptyTSK)
-		if err != nil {
-			log.Println("Lotus api.StateMinerInfo error:", err)
-			continue
-		}
-
-		cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-
-		_, err = c.api.ClientQueryAsk(cctx, *minerInfo.PeerId, minerAddr)
-		if err != nil {
-			cancel()
-			log.Println("Lotus api.ClientQueryAsk error:", err)
-
-			continue
-		}
-
-		cancel()
-
-		return &minerAddr, nil
 	}
 
 	return nil, fmt.Errorf("%w: No eligible miner was found", errors.ErrNotFound)
+}
+
+func (c *Client) findMiner(ctx context.Context) *address.Address {
+	ctx, span := tracer.Start(ctx, "filecoin_client.findMiner")
+	defer span.End()
+
+	x := c.r.Intn(len(c.miners))
+
+	addr := c.miners[x]
+
+	minerAddr, err := address.NewFromString(addr)
+	if err != nil {
+		log.Printf("Filecoin findMiner address parse error: %v addr: %s", err, addr)
+		return nil
+	}
+
+	minerInfo, err := c.api.StateMinerInfo(ctx, minerAddr, types.EmptyTSK)
+	if err != nil {
+		log.Println("Lotus api.StateMinerInfo error:", err)
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	_, err = c.api.ClientQueryAsk(ctx, *minerInfo.PeerId, minerAddr)
+	if err != nil {
+		log.Println("Lotus api.ClientQueryAsk error:", err)
+
+		return nil
+	}
+
+	return &minerAddr
 }
 
 func (c *Client) BaseURL() string {

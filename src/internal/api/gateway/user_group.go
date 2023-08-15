@@ -75,7 +75,7 @@ func (h *UserHandler) GroupCreate(c *gin.Context) {
 		return
 	}
 
-	userGroup, err = h.service.GroupCreate(c, procRequest, userID, systemID, userGroup.Name, userGroup.Description)
+	userGroup, err = h.service.GroupCreate(c.Request.Context(), procRequest, userID, systemID, userGroup.Name, userGroup.Description)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -136,7 +136,7 @@ func (h *UserHandler) GroupGetByID(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	userGroup, err := h.service.GroupGetByID(c, userID, systemID, &groupID, nil)
+	userGroup, err := h.service.GroupGetByID(c.Request.Context(), userID, systemID, &groupID, nil)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			c.AbortWithStatus(http.StatusForbidden)
@@ -210,7 +210,7 @@ func (h *UserHandler) GroupAddUser(c *gin.Context) {
 	reqID := c.GetString("reqID")
 
 	//TODO split systemID and adding user SystemID
-	err = h.service.GroupAddUser(c, userID, systemID, addUserID, systemID, reqID, level, &groupID)
+	err = h.service.GroupAddUser(c.Request.Context(), userID, systemID, addUserID, systemID, reqID, level, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -279,7 +279,7 @@ func (h *UserHandler) GroupRemoveUser(c *gin.Context) {
 
 	reqID := c.GetString("reqID")
 
-	err = h.service.GroupRemoveUser(c, userID, systemID, removeUserID, systemID, reqID, &groupID)
+	err = h.service.GroupRemoveUser(c.Request.Context(), userID, systemID, removeUserID, systemID, reqID, &groupID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
@@ -320,7 +320,7 @@ func (h *UserHandler) GroupGetList(c *gin.Context) {
 
 	systemID := c.GetString("ehrSystemID")
 
-	groupList, err := h.service.GroupGetList(c, userID, systemID)
+	groupList, err := h.service.GroupGetList(c.Request.Context(), userID, systemID)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			c.AbortWithStatus(http.StatusNotFound)
