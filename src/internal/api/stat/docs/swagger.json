@@ -1,21 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "IPEHR Stat is an open API service for providing public statistics from the IPEHR system.",
-        "title": "IPEHR Stat API",
-        "contact": {
-            "name": "API Support",
-            "url": "https://bsn.si/blockchain",
-            "email": "support@bsn.si"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "0.1"
+        "contact": {}
     },
-    "host": "stat.ipehr.org",
-    "basePath": "/",
     "paths": {
         "/": {
             "get": {
@@ -31,8 +18,51 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ResponseTotal"
+                            "$ref": "#/definitions/stat.ResponseTotal"
                         }
+                    },
+                    "500": {
+                        "description": "Is returned when an unexpected error occurs while processing a request"
+                    }
+                }
+            }
+        },
+        "/query/": {
+            "post": {
+                "description": "Performs processing of incoming AQL requests.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "QUERY"
+                ],
+                "summary": "Query",
+                "parameters": [
+                    {
+                        "description": "Query request",
+                        "name": "Request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Indicates that the request has succeeded and transaction about register new user has been created",
+                        "schema": {
+                            "$ref": "#/definitions/model.QueryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "The request could not be understood by the server due to incorrect syntax."
+                    },
+                    "408": {
+                        "description": "The request was canceled due to exceeding the waiting limit."
                     },
                     "500": {
                         "description": "Is returned when an unexpected error occurs while processing a request"
@@ -62,7 +92,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.ResponsePeriod"
+                            "$ref": "#/definitions/stat.ResponsePeriod"
                         }
                     },
                     "500": {
@@ -73,32 +103,108 @@
         }
     },
     "definitions": {
-        "api.ResponsePeriod": {
+        "model.QueryColumn": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.QueryRequest": {
+            "type": "object",
+            "properties": {
+                "ehr_id": {
+                    "type": "string"
+                },
+                "fetch": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "q": {
+                    "type": "string"
+                },
+                "query_parameters": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "model.QueryResponse": {
+            "type": "object",
+            "properties": {
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.QueryColumn"
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "_created": {
+                            "type": "string"
+                        },
+                        "_executed_aql": {
+                            "type": "string"
+                        },
+                        "_generator": {
+                            "type": "string"
+                        },
+                        "_href": {
+                            "type": "string"
+                        },
+                        "_schema_version": {
+                            "type": "string"
+                        },
+                        "_type": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "q": {
+                    "type": "string"
+                },
+                "rows": {
+                    "type": "array",
+                    "items": {}
+                }
+            }
+        },
+        "stat.ResponsePeriod": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/api.Stat"
+                    "$ref": "#/definitions/stat.Stat"
                 },
                 "type": {
                     "type": "string"
                 }
             }
         },
-        "api.ResponseTotal": {
+        "stat.ResponseTotal": {
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/api.Stat"
+                    "$ref": "#/definitions/stat.Stat"
                 },
                 "month": {
-                    "$ref": "#/definitions/api.Stat"
+                    "$ref": "#/definitions/stat.Stat"
                 },
                 "type": {
                     "type": "string"
                 }
             }
         },
-        "api.Stat": {
+        "stat.Stat": {
             "type": "object",
             "properties": {
                 "documents": {

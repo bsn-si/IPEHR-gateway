@@ -87,9 +87,11 @@ func (w *compositionContentWrapper) UnmarshalJSON(data []byte) error {
 
 	switch tmp.Type {
 	case base.SectionItemType:
-		fallthrough
-	case base.EvaluationItemType:
 		w.item = &base.Section{}
+	case base.EvaluationItemType:
+		w.item = &base.Evaluation{}
+	case base.ObservationItemType:
+		w.item = &base.Observation{}
 	default:
 		return errors.Errorf("unexpected composition content item: '%v'", tmp.Type)
 	}

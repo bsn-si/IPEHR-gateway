@@ -1,22 +1,71 @@
-basePath: /
 definitions:
-  api.ResponsePeriod:
+  model.QueryColumn:
+    properties:
+      name:
+        type: string
+      path:
+        type: string
+    type: object
+  model.QueryRequest:
+    properties:
+      ehr_id:
+        type: string
+      fetch:
+        type: integer
+      offset:
+        type: integer
+      q:
+        type: string
+      query_parameters:
+        additionalProperties: true
+        type: object
+    type: object
+  model.QueryResponse:
+    properties:
+      columns:
+        items:
+          $ref: '#/definitions/model.QueryColumn'
+        type: array
+      meta:
+        properties:
+          _created:
+            type: string
+          _executed_aql:
+            type: string
+          _generator:
+            type: string
+          _href:
+            type: string
+          _schema_version:
+            type: string
+          _type:
+            type: string
+        type: object
+      name:
+        type: string
+      q:
+        type: string
+      rows:
+        items: {}
+        type: array
+    type: object
+  stat.ResponsePeriod:
     properties:
       data:
-        $ref: '#/definitions/api.Stat'
+        $ref: '#/definitions/stat.Stat'
       type:
         type: string
     type: object
-  api.ResponseTotal:
+  stat.ResponseTotal:
     properties:
       data:
-        $ref: '#/definitions/api.Stat'
+        $ref: '#/definitions/stat.Stat'
       month:
-        $ref: '#/definitions/api.Stat'
+        $ref: '#/definitions/stat.Stat'
       type:
         type: string
     type: object
-  api.Stat:
+  stat.Stat:
     properties:
       documents:
         type: integer
@@ -25,19 +74,8 @@ definitions:
       time:
         type: integer
     type: object
-host: stat.ipehr.org
 info:
-  contact:
-    email: support@bsn.si
-    name: API Support
-    url: https://bsn.si/blockchain
-  description: IPEHR Stat is an open API service for providing public statistics from
-    the IPEHR system.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  title: IPEHR Stat API
-  version: "0.1"
+  contact: {}
 paths:
   /:
     get:
@@ -48,7 +86,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ResponseTotal'
+            $ref: '#/definitions/stat.ResponseTotal'
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
@@ -69,11 +107,42 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.ResponsePeriod'
+            $ref: '#/definitions/stat.ResponsePeriod'
         "500":
           description: Is returned when an unexpected error occurs while processing
             a request
       summary: Get IPEHR statistics per month
       tags:
       - Stat
+  /query/:
+    post:
+      consumes:
+      - application/json
+      description: Performs processing of incoming AQL requests.
+      parameters:
+      - description: Query request
+        in: body
+        name: Request
+        required: true
+        schema:
+          $ref: '#/definitions/model.QueryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Indicates that the request has succeeded and transaction about
+            register new user has been created
+          schema:
+            $ref: '#/definitions/model.QueryResponse'
+        "400":
+          description: The request could not be understood by the server due to incorrect
+            syntax.
+        "408":
+          description: The request was canceled due to exceeding the waiting limit.
+        "500":
+          description: Is returned when an unexpected error occurs while processing
+            a request
+      summary: Query
+      tags:
+      - QUERY
 swagger: "2.0"
