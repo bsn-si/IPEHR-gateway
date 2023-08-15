@@ -82,6 +82,14 @@ func (t *Tree) processCompositionContent(objects []base.Root) error {
 			if err := t.processSection(obj); err != nil {
 				return errors.Wrap(err, "cannot process section object")
 			}
+		case *base.Observation:
+			if err := addObjectIntoCollection(t.Data[OBSERVATION], obj); err != nil {
+				return errors.Wrap(err, "cannot process OBSERVATION in composition")
+			}
+		case *base.Evaluation:
+			if err := addObjectIntoCollection(t.Data[EVALUATION], obj); err != nil {
+				return errors.Wrap(err, "cannot process EVALUATION in composition")
+			}
 		default:
 			return fmt.Errorf("unexpected node type in COMPOSITION.Content handler: %T", obj) //nolint
 		}
