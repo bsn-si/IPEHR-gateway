@@ -1,0 +1,24 @@
+{
+  "name": "IPEHR-Bettercare",
+  "version": "1.0.0",
+  "description": "IPEHR intergation to Bettercare sandbox",
+  "manifest_version": 3,
+  "author": "Alexander Plekhanov",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "32": "/icons/logo-32.png"
+  },
+  "background": {
+    "service_worker": "serviceWorker.js"
+  },
+  "permissions": [
+    "storage",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "https://sandbox.better.care/*"
+  ]
+}
