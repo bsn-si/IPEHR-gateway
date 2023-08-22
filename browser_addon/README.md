@@ -1,1 +1,1 @@
-# IPEHR Chrome browser extension to demo Better Care integration
+# IPEHR Chrome browser extension for Better Care integration
