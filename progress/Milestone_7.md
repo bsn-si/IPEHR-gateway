@@ -34,7 +34,7 @@ We have integrated the ipEHR gateway with the Better Studio HMS playground to pa
 -   The user's EHR is autmatically created by the HMS in thу blockchain;
 -   A doctor creates a new health record (blood pressure) in the HMS;
 -   The created record is found in the blockchain with added blood pressure values;
--   We use Swagger to check blockchain operations;
+-   We use Swagger API to check ipEHR operations;
 
 Here is the demonstration video:
 
