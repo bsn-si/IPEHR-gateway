@@ -14,6 +14,7 @@ var Middleware = func(c *gin.Context) {
 	c.Next()
 }
 
+// nolint
 func middleware(c *gin.Context) {
 	savedCtx := c.Request.Context()
 	defer func() {

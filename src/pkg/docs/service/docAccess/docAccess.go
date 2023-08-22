@@ -105,7 +105,7 @@ func (s *Service) Set(ctx context.Context, userID, systemID, toUserID, reqID str
 		return fmt.Errorf("Index.DocAccessSet error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.SendSingle(ctx, data, indexer.MulticallEhr)
+	txHash, txNonce, err := s.Infra.Index.SendSingle(ctx, data, indexer.MulticallEhr)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return errors.ErrNotFound
@@ -119,7 +119,7 @@ func (s *Service) Set(ctx context.Context, userID, systemID, toUserID, reqID str
 		return fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxSetDocAccess, txHash)
+	procRequest.AddEthereumTx(proc.TxSetDocAccess, txHash, txNonce)
 
 	return nil
 }

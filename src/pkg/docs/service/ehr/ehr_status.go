@@ -212,13 +212,13 @@ func (s *Service) UpdateStatus(ctx context.Context, procRequest *proc.Request, u
 		return fmt.Errorf("UpdateEhr error: %w", err)
 	}
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		return fmt.Errorf("UpdateStatus commit error: %w", err)
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, txNonce)
 	}
 
 	return nil

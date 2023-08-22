@@ -112,7 +112,7 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 		}
 	}
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return errors.ErrNotFound
@@ -124,7 +124,7 @@ func (s *Service) Register(ctx context.Context, user *model.UserCreateRequest, s
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, txNonce)
 	}
 
 	if err := procRequest.Commit(); err != nil {

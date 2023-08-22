@@ -35,17 +35,17 @@ func (i *Index) GetUserAccess(ctx context.Context, userIDHash *[32]byte, kind ac
 	return acc.KeyEncr, acc.Level, nil
 }
 
-func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) (string, error) {
+func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessObj *AccessObject, userPrivKey *[32]byte) (string, uint64, error) {
 	userKey, err := crypto.ToECDSA(userPrivKey[:])
 	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+		return "", 0, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
 
 	data, err := abi.Arguments{{Type: Bytes32}, {Type: Uint8}}.Pack(*subjectIDHash, accessObj.Kind)
 	if err != nil {
-		return "", fmt.Errorf("args.Pack error: %w", err)
+		return "", 0, fmt.Errorf("args.Pack error: %w", err)
 	}
 
 	accessID := Keccak256(data)
@@ -54,20 +54,20 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 
 	data, err = i.accessStoreAbi.Pack("setAccess", accessID, *accessObj, userAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack1 error: %w", err)
+		return "", 0, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
 	signature, err := makeSignature(data, userKey, deadline)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return "", 0, fmt.Errorf("makeSignature error: %w", err)
 	}
 
 	tx, err := i.accessStore.SetAccess(i.noncer.GetNewOpts(i.transactOpts), *accessID, *accessObj, userAddress, deadline, signature)
 	if err != nil {
-		return "", fmt.Errorf("accessStore.SetAccess error: %w", err)
+		return "", 0, fmt.Errorf("accessStore.SetAccess error: %w", err)
 	}
 
-	return tx.Hash().String(), nil
+	return tx.Hash().String(), tx.Nonce(), nil
 }
 
 func (i *Index) GetAccessKey(ctx context.Context, userIDHash *[32]byte, kind access.Kind, accessID []byte, userPubKey, userPrivKey *[32]byte) (*chachaPoly.Key, error) {

@@ -173,7 +173,7 @@ func (p *Proc) execEthereum() {
 
 	txs := []EthereumTx{}
 
-	result := p.db.Where("status IN ?", statuses).Find(&txs)
+	result := p.db.Where("status IN ?", statuses).Group("hash").Order("nonce asc").Find(&txs)
 	// result := p.db.Model(EthereumTx{}).
 	// Select("req_id, hash, status").
 	// Where("status IN ?", statuses).
@@ -209,10 +209,10 @@ func (p *Proc) execEthereum() {
 
 		cancel()
 
-		logf("Tx: %s status: %s", tx.Hash, status)
+		logf("Tx: %s Nonce: %d status: %s", tx.Hash, tx.Nonce, status)
 
 		if status == tx.Status {
-			continue
+			break // Waiting for the next iteration
 		}
 
 		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status).Update("updated_at", time.Now()); result.Error != nil {

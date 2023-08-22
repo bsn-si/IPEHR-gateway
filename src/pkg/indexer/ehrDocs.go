@@ -165,7 +165,7 @@ func (i *Index) GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType
 }
 
 func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID, subjectNamespace string, privKey *[32]byte) ([]byte, error) {
-	ctx, span := tracer.Start(ctx, "indexer.SetEhrSubject", trace.WithAttributes(
+	_, span := tracer.Start(ctx, "indexer.SetEhrSubject", trace.WithAttributes(
 		attribute.String("ehrUUID", ehrUUID.String()),
 		attribute.String("subjectID", subjectID),
 	))
@@ -206,7 +206,7 @@ func (i *Index) SetEhrSubject(ctx context.Context, ehrUUID *uuid.UUID, subjectID
 }
 
 func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNamespace string) (*uuid.UUID, error) {
-	ctx, span := tracer.Start(ctx, "indexer.GetEhrUUIDBySubject", trace.WithAttributes(
+	_, span := tracer.Start(ctx, "indexer.GetEhrUUIDBySubject", trace.WithAttributes(
 		attribute.String("subjectID", subjectID),
 		attribute.String("subjectNamespace", subjectNamespace),
 	))
@@ -227,8 +227,8 @@ func (i *Index) GetEhrUUIDBySubject(ctx context.Context, subjectID, subjectNames
 	return &ehrUUID, nil
 }
 
-func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, error) {
-	ctx, span := tracer.Start(ctx, "indexer.DeleteDoc", trace.WithAttributes(
+func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, uint64, error) {
+	_, span := tracer.Start(ctx, "indexer.DeleteDoc", trace.WithAttributes(
 		attribute.String("ehrUUID", ehrUUID.String()),
 		attribute.String("docType", docType.String()),
 	))
@@ -240,7 +240,7 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+		return "", 0, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
@@ -254,23 +254,23 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 
 	data, err := i.ehrIndexAbi.Pack("deleteDoc", eID, uint8(docType), *docBaseUIDHash, version, userAddress, deadline, sig)
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack error: %w", err)
+		return "", 0, fmt.Errorf("abi.Pack error: %w", err)
 	}
 
 	sig, err = makeSignature(data, userKey, deadline)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return "", 0, fmt.Errorf("makeSignature error: %w", err)
 	}
 
 	tx, err := i.ehrIndex.DeleteDoc(i.noncer.GetNewOpts(i.transactOpts), eID, uint8(docType), *docBaseUIDHash, *version, userAddress, deadline, sig)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
-			return "", errors.ErrNotFound
+			return "", 0, errors.ErrNotFound
 		} else if strings.Contains(err.Error(), "ADL") {
-			return "", errors.ErrAlreadyDeleted
+			return "", 0, errors.ErrAlreadyDeleted
 		}
-		return "", fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
+		return "", 0, fmt.Errorf("ehrIndex.DeleteDoc error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
 
-	return tx.Hash().Hex(), nil
+	return tx.Hash().Hex(), tx.Nonce(), nil
 }

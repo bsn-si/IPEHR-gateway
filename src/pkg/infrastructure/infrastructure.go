@@ -36,8 +36,11 @@ func New(ctx context.Context, cfg *config.Config) *Infra {
 	sc := storage.NewConfig(cfg.Storage.Localfile.Path)
 	storage.Init(sc)
 
-	var db *gorm.DB
-	var err error
+	var (
+		db  *gorm.DB
+		err error
+	)
+
 	if cfg.DB.UsePostgres {
 		db, err = localDB.NewForPostgres(
 			cfg.DB.Postgres.Host,

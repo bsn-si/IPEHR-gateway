@@ -216,7 +216,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 		return nil, fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
+	txHash, txNonce, err := s.Infra.Index.SendSingle(ctx, packed, indexer.MulticallEhr)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
@@ -227,7 +227,7 @@ func (s *Service) StoreVersion(ctx context.Context, userID, systemID, reqID, qTy
 		return nil, fmt.Errorf("Index.SendSingle error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(processing.TxAddEhrDoc, txHash)
+	procRequest.AddEthereumTx(processing.TxAddEhrDoc, txHash, txNonce)
 
 	if err := procRequest.Commit(); err != nil {
 		return nil, fmt.Errorf("EHR create procRequest commit error: %w", err)

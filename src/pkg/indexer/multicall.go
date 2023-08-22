@@ -47,9 +47,9 @@ func (m *MultiCallTx) GetTxKinds() []uint8 {
 	return m.kinds
 }
 
-func (m *MultiCallTx) Commit() (string, error) {
+func (m *MultiCallTx) Commit() (string, uint64, error) {
 	if len(m.data) == 0 {
-		return "", fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
+		return "", 0, fmt.Errorf("%w MultiCallTx data is empty", errors.ErrCustom)
 	}
 
 	var (
@@ -63,17 +63,17 @@ func (m *MultiCallTx) Commit() (string, error) {
 	case MulticallUsers:
 		tx, err = m.index.users.Multicall(m.index.noncer.GetNewOpts(m.index.transactOpts), m.data)
 	default:
-		return "", fmt.Errorf("%w: unknown kind %d", err, m.kind)
+		return "", 0, fmt.Errorf("%w: unknown kind %d", err, m.kind)
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("Multicall error: %w", err)
+		return "", 0, fmt.Errorf("Multicall error: %w", err)
 	}
 
-	return tx.Hash().Hex(), nil
+	return tx.Hash().Hex(), tx.Nonce(), nil
 }
 
-func (i *Index) SendSingle(ctx context.Context, data []byte, kind MulticallKind) (string, error) {
+func (i *Index) SendSingle(ctx context.Context, data []byte, kind MulticallKind) (string, uint64, error) {
 	ctx, span := tracer.Start(ctx, "indexer.SendSingle") //nolint
 	defer span.End()
 
@@ -90,8 +90,8 @@ func (i *Index) SendSingle(ctx context.Context, data []byte, kind MulticallKind)
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("Multicall error: %w", err)
+		return "", 0, fmt.Errorf("Multicall error: %w", err)
 	}
 
-	return tx.Hash().String(), nil
+	return tx.Hash().String(), tx.Nonce(), nil
 }

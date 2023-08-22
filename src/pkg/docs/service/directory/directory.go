@@ -121,7 +121,7 @@ func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes 
 
 	multiCallTx.Add(uint8(proc.TxSetDocAccess), packed)
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return errors.ErrNotFound
@@ -132,7 +132,7 @@ func (s *Service) save(ctx context.Context, req proc.RequestInterface, docBytes 
 		return fmt.Errorf("multiCallTx.Commit error: %w", err)
 	}
 
-	req.AddEthereumTx(proc.TxCreateDirectory, txHash)
+	req.AddEthereumTx(proc.TxCreateDirectory, txHash, txNonce)
 
 	return nil
 }
@@ -299,7 +299,7 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Directory, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey)
+	txHash, txNonce, err := s.Infra.Index.DeleteDoc(ctx, ehrUUID, types.Directory, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err
@@ -307,7 +307,7 @@ func (s *Service) Delete(ctx context.Context, req processing.RequestInterface, s
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	req.AddEthereumTx(processing.TxDeleteDoc, txHash)
+	req.AddEthereumTx(processing.TxDeleteDoc, txHash, txNonce)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())

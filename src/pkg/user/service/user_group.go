@@ -46,7 +46,7 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 
 	multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), packed)
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return nil, errors.ErrNotFound
@@ -57,7 +57,7 @@ func (s *Service) GroupCreate(ctx context.Context, req proc.RequestInterface, us
 		return nil, fmt.Errorf("multiCallTx.Commit error: %w", err)
 	}
 
-	req.AddEthereumTx(processing.TxUserGroupCreate, txHash)
+	req.AddEthereumTx(processing.TxUserGroupCreate, txHash, txNonce)
 
 	return userGroup, nil
 }
@@ -165,7 +165,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID,
 		return fmt.Errorf("keybox.Seal error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.UserGroupAddUser(ctx, addUserID, addSystemID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey)
+	txHash, txNonce, err := s.Infra.Index.UserGroupAddUser(ctx, addUserID, addSystemID, level, groupID, userIDEncr, groupKeyEncr, userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrAccessDenied) {
 			return err
@@ -181,7 +181,7 @@ func (s *Service) GroupAddUser(ctx context.Context, userID, systemID, addUserID,
 		return fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(processing.TxUserGroupAddUser, txHash)
+	procRequest.AddEthereumTx(processing.TxUserGroupAddUser, txHash, txNonce)
 
 	if err := procRequest.Commit(); err != nil {
 		return fmt.Errorf("Add user to group procRequest commit error: %w", err)
@@ -215,7 +215,7 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 
 	multiCallTx.Add(uint8(proc.TxSetUserGroupAccess), packed)
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		return fmt.Errorf("multiCallTx.Commit error: %w", err)
 	}
@@ -225,7 +225,7 @@ func (s *Service) GroupRemoveUser(ctx context.Context, userID, systemID, removeU
 		return fmt.Errorf("Proc.NewRequest error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(processing.TxUserGroupRemoveUser, txHash)
+	procRequest.AddEthereumTx(processing.TxUserGroupRemoveUser, txHash, txNonce)
 
 	if err := procRequest.Commit(); err != nil {
 		return fmt.Errorf("Remove user from group procRequest commit error: %w", err)

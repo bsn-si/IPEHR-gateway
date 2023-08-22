@@ -247,13 +247,13 @@ func (s *Service) EhrCreateWithID(ctx context.Context, userID, systemID string, 
 		multiCallTx.Add(uint8(proc.TxSetDocAccess), setAccessPacked)
 	}
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		return nil, fmt.Errorf("EhrCreateWithID commit error: %w", err)
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, txNonce)
 	}
 
 	// Adding dataStore index
@@ -591,12 +591,12 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 		return fmt.Errorf("data compressinon error: %w", err)
 	}
 
-	txHash, err := s.Infra.Index.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
+	txHash, txNonce, err := s.Infra.Index.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
 	if err != nil {
 		return fmt.Errorf("Index.DataUpdate error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash)
+	procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash, txNonce)
 
 	return nil
 }

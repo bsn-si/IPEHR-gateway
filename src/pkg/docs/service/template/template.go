@@ -161,13 +161,13 @@ func (s *Service) Store(ctx context.Context, userID, systemID, reqID string, tmp
 		return fmt.Errorf("addDataIndex error: %w", err)
 	}
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		return fmt.Errorf("Create template commit error: %w", err)
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, txNonce)
 	}
 
 	err = s.setDocAccess(ctx, procRequest, userID, systemID, CID, key, access.Owner, userPubKey, userPrivKey)
@@ -264,12 +264,12 @@ func (s *Service) setDocAccess(ctx context.Context, req proc.RequestInterface, u
 		Level:   accessLevel,
 	}
 
-	txHash, err := s.docSvc.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
+	txHash, txNonce, err := s.docSvc.Infra.Index.SetAccess(ctx, &userIDHash, &accessObj, userPrivKey)
 	if err != nil {
 		return fmt.Errorf("Index.SetAccess user to template error: %w", err)
 	}
 
-	req.AddEthereumTx(proc.TxSetDocAccess, txHash)
+	req.AddEthereumTx(proc.TxSetDocAccess, txHash, txNonce)
 
 	return nil
 }

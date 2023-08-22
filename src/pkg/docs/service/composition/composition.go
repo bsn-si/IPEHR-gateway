@@ -38,9 +38,9 @@ type (
 		GetDocByVersion(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version *[32]byte) (*model.DocumentMeta, error)
 		AddEhrDoc(docType types.DocumentType, docMeta *model.DocumentMeta, privKey *[32]byte) ([]byte, error)
 		GetDocLastByBaseID(ctx context.Context, userID, systemID string, docType types.DocumentType, docBaseUIDHash *[32]byte) (*model.DocumentMeta, error)
-		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, error)
+		DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types.DocumentType, docBaseUIDHash, version, privKey *[32]byte) (string, uint64, error)
 		ListDocByType(ctx context.Context, userID, systemID string, docType types.DocumentType) ([]model.DocumentMeta, error)
-		DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, error)
+		DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, uint64, error)
 		SetAccessWrapper(ctx context.Context, subjectIDHash *[32]byte, accessObj *indexer.AccessObject, userPrivKey *[32]byte) ([]byte, error)
 	}
 
@@ -121,13 +121,13 @@ func (s *Service) Create(ctx context.Context, userID, systemID string, ehrUUID, 
 		return nil, fmt.Errorf("Composition %s save error: %w", composition.UID.Value, err)
 	}
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		return nil, fmt.Errorf("Create composition commit error: %w", err)
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, txNonce)
 	}
 
 	err = s.addDataIndex(ctx, ehrUUID, groupAccessUUID, &dataIndexUUID, composition, procRequest)
@@ -181,13 +181,13 @@ func (s *Service) Update(ctx context.Context, procRequest *proc.Request, userID,
 		return nil, fmt.Errorf("Composition save error: %w userID %s ehrUUID %s composition.UID %s", err, userID, ehrUUID.String(), composition.UID.Value)
 	}
 
-	txHash, err := multiCallTx.Commit()
+	txHash, txNonce, err := multiCallTx.Commit()
 	if err != nil {
 		return nil, fmt.Errorf("Update composition commit error: %w", err)
 	}
 
 	for _, txKind := range multiCallTx.GetTxKinds() {
-		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash)
+		procRequest.AddEthereumTx(proc.TxKind(txKind), txHash, txNonce)
 	}
 
 	// TODO what we should do with prev composition?
@@ -461,7 +461,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 	baseDocumentUID := []byte(objectVersionID.BasedID())
 	baseDocumentUIDHash := sha3.Sum256(baseDocumentUID)
 
-	txHash, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey)
+	txHash, txNonce, err := s.indexer.DeleteDoc(ctx, ehrUUID, types.Composition, &baseDocumentUIDHash, objectVersionID.VersionBytes(), userPrivKey)
 	if err != nil {
 		if errors.Is(err, errors.ErrNotFound) {
 			return "", err
@@ -469,7 +469,7 @@ func (s *Service) DeleteByID(ctx context.Context, procRequest *proc.Request, ehr
 		return "", fmt.Errorf("Index.DeleteDoc error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash)
+	procRequest.AddEthereumTx(proc.TxDeleteDoc, txHash, txNonce)
 
 	if _, err = objectVersionID.IncreaseUIDVersion(); err != nil {
 		return "", fmt.Errorf("IncreaseUIDVersion error: %w objectVersionID %s", err, objectVersionID.String())
@@ -600,12 +600,12 @@ func (s *Service) addDataIndex(ctx context.Context, ehrUUID, groupAccessUUID, da
 	//DEBUG
 	fmt.Println("Composition compressed data length: ", len(compressed))
 
-	txHash, err := s.indexer.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
+	txHash, txNonce, err := s.indexer.DataUpdate(ctx, groupAccessUUID, dataIndexUUID, ehrUUID, compressed)
 	if err != nil {
 		return fmt.Errorf("Index.DataUpdate error: %w", err)
 	}
 
-	procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash)
+	procRequest.AddEthereumTx(proc.TxIndexDataUpdate, txHash, txNonce)
 
 	return nil
 }

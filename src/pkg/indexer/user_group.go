@@ -100,13 +100,13 @@ func (i *Index) UserGroupGetByID(ctx context.Context, groupID *uuid.UUID) (*user
 	return userGroup, nil
 }
 
-func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte) (string, error) {
+func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID string, level access.Level, groupID *uuid.UUID, addingUserIDEncr, groupKeyEncr []byte, privKey *[32]byte) (string, uint64, error) {
 	ctx, span := tracer.Start(ctx, "user_group_index.user_group_add_user") //nolint
 	defer span.End()
 
 	userKey, err := crypto.ToECDSA(privKey[:])
 	if err != nil {
-		return "", fmt.Errorf("crypto.ToECDSA error: %w", err)
+		return "", 0, fmt.Errorf("crypto.ToECDSA error: %w", err)
 	}
 
 	userAddress := crypto.PubkeyToAddress(userKey.PublicKey)
@@ -128,26 +128,26 @@ func (i *Index) UserGroupAddUser(ctx context.Context, addUserID, addSystemID str
 
 	data, err := i.usersAbi.Pack("groupAddUser", params)
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack error: %w", err)
+		return "", 0, fmt.Errorf("abi.Pack error: %w", err)
 	}
 
 	params.Signature, err = makeSignature(data, userKey, deadline)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return "", 0, fmt.Errorf("makeSignature error: %w", err)
 	}
 
 	tx, err := i.users.GroupAddUser(i.noncer.GetNewOpts(i.transactOpts), params)
 	if err != nil {
 		if strings.Contains(err.Error(), "DNY") {
-			return "", errors.ErrAccessDenied
+			return "", 0, errors.ErrAccessDenied
 		} else if strings.Contains(err.Error(), "AEX") {
-			return "", errors.ErrAlreadyExist
+			return "", 0, errors.ErrAlreadyExist
 		}
 
-		return "", fmt.Errorf("ehrIndex.UserGroupCreate error: %w", err)
+		return "", 0, fmt.Errorf("ehrIndex.UserGroupCreate error: %w", err)
 	}
 
-	return tx.Hash().Hex(), nil
+	return tx.Hash().Hex(), tx.Nonce(), nil
 }
 
 func (i *Index) UserGroupRemoveUser(removeUserID, removeSystemID string, groupID *uuid.UUID, privKey *[32]byte) ([]byte, error) {

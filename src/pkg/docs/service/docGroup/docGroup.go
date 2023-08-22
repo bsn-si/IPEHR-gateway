@@ -118,5 +118,4 @@ func (s *Service) GroupGetByName(ctx context.Context, groupName, userID, systemI
 	}
 
 	return nil, fmt.Errorf("user '%s' group not found: %w", groupName, errors.ErrNotFound)
-
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (i *Index) DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, error) {
+func (i *Index) DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUID, data []byte) (string, uint64, error) {
 	ctx, span := tracer.Start(ctx, "indexer.DataUpdate") //nolint
 	defer span.End()
 
@@ -24,18 +24,18 @@ func (i *Index) DataUpdate(ctx context.Context, groupID, dataID, ehrID *uuid.UUI
 
 	packed, err := i.dataStoreAbi.Pack("dataUpdate", gID, dID, eID, data, i.signerAddress, deadline, make([]byte, signatureLength))
 	if err != nil {
-		return "", fmt.Errorf("abi.Pack1 error: %w", err)
+		return "", 0, fmt.Errorf("abi.Pack1 error: %w", err)
 	}
 
 	signature, err := makeSignature(packed, i.signerKey, deadline)
 	if err != nil {
-		return "", fmt.Errorf("makeSignature error: %w", err)
+		return "", 0, fmt.Errorf("makeSignature error: %w", err)
 	}
 
 	tx, err := i.dataStore.DataUpdate(i.noncer.GetNewOpts(i.transactOpts), gID, dID, eID, data, i.signerAddress, deadline, signature)
 	if err != nil {
-		return "", fmt.Errorf("dataStore.DataUpdate error: %w", err)
+		return "", 0, fmt.Errorf("dataStore.DataUpdate error: %w", err)
 	}
 
-	return tx.Hash().String(), nil
+	return tx.Hash().String(), tx.Nonce(), nil
 }

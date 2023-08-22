@@ -12,7 +12,7 @@ import (
 
 type RequestInterface interface {
 	Commit() error
-	AddEthereumTx(TxKind, string)
+	AddEthereumTx(TxKind, string, uint64)
 	AddFilecoinTx(TxKind, string, string, string)
 }
 
@@ -38,14 +38,15 @@ type (
 		ReqID     string    `gorm:"req_id" json:"-"`
 		Kind      TxKind    `gorm:"kind" json:"-"`
 		KindStr   string    `gorm:"-" json:"Kind"`
-		Status    Status    `gorm:"index:status_idx" json:"-"`
+		Status    Status    `gorm:"status" json:"-"`
 		StatusStr string    `gorm:"-" json:"Status"`
 		Comment   string
 	}
 
 	EthereumTx struct {
 		Tx
-		Hash string
+		Hash  string
+		Nonce uint64 `gorm:"nonce"`
 	}
 
 	FileCoinTx struct {
@@ -109,7 +110,7 @@ func (r *Request) Commit() error {
 	return nil
 }
 
-func (r *Request) AddEthereumTx(kind TxKind, hash string) {
+func (r *Request) AddEthereumTx(kind TxKind, hash string, nonce uint64) {
 	tx := &EthereumTx{
 		Tx: Tx{
 			ReqID:     r.ReqID,
@@ -118,7 +119,8 @@ func (r *Request) AddEthereumTx(kind TxKind, hash string) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Hash: hash,
+		Hash:  hash,
+		Nonce: nonce,
 	}
 
 	r.ethTxs = append(r.ethTxs, tx)

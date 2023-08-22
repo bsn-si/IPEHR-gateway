@@ -155,12 +155,12 @@ func (a *API) setupRouter(apiHandlers ...handlerBuilder) *gin.Engine {
 	pprof.Register(r)
 
 	r.Use(requestID)
+	r.Use(timeoutMiddleware())
 
 	{
 		r := r.Group("debug")
 		r.GET("/eth_transactions", a.Debug.getEthTransactions)
 		r.GET("/avg_requests_time", a.Debug.getAvgRequestsTime)
-
 	}
 
 	v1 := r.Group("v1")
@@ -242,7 +242,7 @@ func (a *API) buildQueryAPI() handlerBuilder {
 		r = r.Group("query")
 		r.Use(auth(a))
 
-		r.Use(ehrSystemID, timeoutMiddleware())
+		r.Use(ehrSystemID)
 
 		r.GET("/:qualified_query_name", a.Query.ExecStoredQuery)
 		r.POST("/:qualified_query_name", a.Query.PostExecStoredQuery)
