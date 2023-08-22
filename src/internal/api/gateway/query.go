@@ -98,7 +98,7 @@ func (h QueryHandler) ExecPostQuery(c *gin.Context) {
 //	@Description	See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
 //	@Description
 //	@Tags		QUERY
-//	@Accept		json
+//	@Accept		plain
 //	@Produce	json
 //	@Param		Authorization	 header		string				true	"Bearer AccessToken"
 //	@Param		AuthUserId		 header		string				true	"UserId"
