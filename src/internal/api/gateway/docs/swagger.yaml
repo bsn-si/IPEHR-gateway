@@ -2426,7 +2426,7 @@ paths:
   /query/aql:
     get:
       consumes:
-      - application/json
+      - text/plain
       description: |
         Execute a given ad-hoc AQL query, supplied by {q} parameter, fetching {fetch} numbers of rows from {offset} and passing {query_parameters} to the underlying query engine.
         See also details on usage of [query parameters](https://specifications.openehr.org/releases/ITS-REST/Release-1.0.2/query.html#requirements-common-headers-and-query-parameters).
