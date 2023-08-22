@@ -5,7 +5,7 @@
 > Customer: Bela Supernova  
 > Project: ipEHR  
 > Language: Solidity  
-> Performed by: BelSoft Dev DOO, Beograd, Srbija  
+> Performed by: [BelSoft Dev DOO, Beograd, Srbija](https://github.com/Belsoft-rs)  
 > 06/06/2023
 
 ## Executive Summary
