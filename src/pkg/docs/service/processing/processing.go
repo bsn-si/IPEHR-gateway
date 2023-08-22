@@ -173,7 +173,7 @@ func (p *Proc) execEthereum() {
 
 	txs := []EthereumTx{}
 
-	result := p.db.Where("status IN ?", statuses).Group("hash").Order("nonce asc").Find(&txs)
+	result := p.db.Where("status IN ?", statuses).Order("nonce asc").Find(&txs)
 	// result := p.db.Model(EthereumTx{}).
 	// Select("req_id, hash, status").
 	// Where("status IN ?", statuses).

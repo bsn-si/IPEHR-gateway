@@ -14,6 +14,10 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
+const (
+	TxTimeout = 15 * time.Minute
+)
+
 func Keccak256(data []byte) *[32]byte {
 	var b [32]byte
 

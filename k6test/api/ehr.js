@@ -51,6 +51,8 @@ export function create_ehr(ctx, user) {
     expect(resp.system_id.value).to.be.a('string');
     expect(resp.ehr_id.value).to.be.a('string');
 
+    ctx.RequestId = response.headers['Requestid'];
+
     return resp;
 }
 

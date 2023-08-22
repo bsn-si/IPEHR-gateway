@@ -42,9 +42,19 @@ function register_user_with_role(ctx, role) {
 
     let response = ctx.session.post(`/user/register/`, payload);
 
-    expect(response.status, "registration status").to.equal(201);
+    expect(201, "registration status").to.equal(response.status);
     expect(response).to.have.validJsonBody();
-    
+
+    ctx.RequestId = response.headers['Requestid'];
+    if (response.status = 201) {
+        ctx.session = new Httpx({
+            baseURL: ServerUrl,
+            headers: {
+                AuthUserId: user.userID,
+                EhrSystemId: EHRSystemID,
+            },
+        });
+    }
     return user;
 }
 

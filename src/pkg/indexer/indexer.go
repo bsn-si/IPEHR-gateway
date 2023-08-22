@@ -161,7 +161,7 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		transactOpts:  transactOpts,
 		signerKey:     privateKey,
 		signerAddress: signerAddress,
-		txTimeout:     5 * time.Minute,
+		txTimeout:     TxTimeout,
 
 		ehrIndex:    ehrIndex,
 		accessStore: _accessStore,

@@ -1,6 +1,6 @@
 import encoding from 'k6/encoding';
 import http from 'k6/http';
-import { sleep } from 'k6';
+import { sleep, fail } from 'k6';
 import { Rate } from 'k6/metrics';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
@@ -23,11 +23,11 @@ const formFailRate = new Rate('failed form fetches');
 const submitFailRate = new Rate('failed form submits');
 
 export const options = {
-    iterations: 100,
-    // vus: 1,
-    vus: 25,
+    iterations: 1,
+    vus: 1,
+    // vus: 50,
     // vus: 20,
-    duration: '10000s',
+    duration: '100000s',
     ext: {
         loadimpact: {
             // Project: Default project
@@ -53,43 +53,94 @@ export default function testSuite() {
 
     let u = null;
 
-    describe('Register user', () => {
+    let ok = describe('Register user', () => {
         u = user.register_user(ctx);
         console.log("USER:" + JSON.stringify(u));
     });
 
-    // wait 30 seconds for the user to be created
-    sleep(120);
+    // wait up to 10 minutes with 5 seconds interval
+    if (!ok || !retryes(ctx, 300, 5, ctx.RequestId)) {
+        fail('failed to register user');
+        return;
+    }
 
-    describe('Login user', () => {
+    ok = describe('Login user', () => {
         user.login_user(ctx, u.userID, u.password);
     });
 
+    if (!ok) {
+        fail('failed to login user');
+        return;
+    }
+
     let ehrDoc = null;
 
-    describe('Create EHR', () => {
+    ok = describe('Create EHR', () => {
         ehrDoc = ehr.create_ehr(ctx, u);
         console.log("EHR:" + JSON.stringify(ehrDoc));
     });
 
-    sleep(120);
+    // wait up to 10 minutes with 5 seconds interval
+    if (!ok || !retryes(ctx, 300, 5, ctx.RequestId)) {
+        fail('failed to create ehr');
+        return;
+    }
 
-    describe('Get EHR', () => {
+    ok = describe('Get EHR', () => {
         const doc = ehr.get_ehr(ctx, ehrDoc.ehr_id.value);
         console.log("EHR:" + JSON.stringify(doc));
 
         expect(JSON.stringify(ehrDoc), 'try to compare ehrs').to.equal(JSON.stringify(doc));
     });
 
+    if (!ok) {
+        fail('failed to get ehr');
+        return;
+    }
 
-    describe('Get user', () => {
+    ok = describe('Get user', () => {
         const userInfo = user.get_user_info(ctx, u);
 
         console.log("UserInfo:" + JSON.stringify(userInfo));
         expect(ehrDoc.ehr_id.value, 'try to compare ehrs').to.equal(userInfo.ehrID);
     });
 
-    describe('Logout user', () => {
+    if (!ok) {
+        fail('failed to get user info');
+        return;
+    }
+
+    if (!describe('Logout user', () => {
         user.log_out(ctx);
-    });
+    })) {
+        fail('failed to logout user');
+        return;
+    }
+}
+
+function retryes(ctx, retryesCount, timeout, requestId) {
+    while (retryesCount > 0) {
+        const response = ctx.session.get(`/requests/${requestId}`);
+
+        if (response.status !== 200) {
+            return false;
+        }
+        const requestStatus = response.json('status');
+        let body = response.body;
+
+        switch (requestStatus) {
+           case 'Success':
+                return true;
+            case 'Failed':
+                return false;
+            case 'Unknown':
+                return false;
+            default: // 'Processing', 'Pending'
+                retryesCount--;
+                sleep(timeout);
+                continue;
+        }
+    }
+
+    return false;
 }
