@@ -173,7 +173,15 @@ func (p *Proc) execEthereum() {
 
 	txs := []EthereumTx{}
 
-	result := p.db.Where("status IN ?", statuses).Order("nonce asc").Find(&txs)
+	const query = `SELECT hash, nonce, status
+	FROM ethereum_txes
+	WHERE status IN (?, ?)
+	GROUP BY hash, nonce, status
+	ORDER BY nonce ASC`
+
+	result := p.db.Raw(query, statuses[0], statuses[1]).Scan(&txs)
+
+	// result := p.db.Where("status IN ?", statuses).Order("nonce asc").Find(&txs)
 	// result := p.db.Model(EthereumTx{}).
 	// Select("req_id, hash, status").
 	// Where("status IN ?", statuses).
@@ -311,7 +319,7 @@ func (p *Proc) execDealFinisher() {
 		logf("DealFinisher finished")
 	}()
 
-	query := `UPDATE requests SET status = @success 
+	const query = `UPDATE requests SET status = @success 
 				WHERE req_id NOT IN (
 					SELECT req_id 
 						FROM ethereum_txes 
