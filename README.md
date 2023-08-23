@@ -40,10 +40,10 @@ The solution is being developed with 7 milestones:
 * Development of MH-ORM and structure of storage of medical data - **completed**
 * The functionality of encryption and saving/reading personal data to/from Filecoin - **completed**
 * Access rights management on a blockchain - **completed**
-* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **delivery**
+* BsnGateway. Implementation of OpenEHR API, integration with MH-ORM  - **completed**
 * Public data publishing features using the Chainlink network - **completed**
-* Application to manage your own medical data and access - **delivery**
-* Testing, documentation and deployment
+* Application to manage your own medical data and access - **completed**
+* Testing, documentation and deployment - **delivery**
 
 ### Milestone 1
 
@@ -196,6 +196,17 @@ To read more info about access rights management, please visit the ["docs access
 To ensure the quality of the application we developed and showed a test case:
 [![Дизайн без названия (1)](https://user-images.githubusercontent.com/98888366/214616759-e0c84f22-b524-4879-acdd-68b81e775676.png)](https://media.bsn.si/ipehr/v2/how_to_add_doctor_into_app.mp4)
 
+### Milestone 7
+
+We have integrated the ipEHR gateway with the Better Studio HMS playground to pass EHR documents from the HMS to the FIL network. Here is the demonstration video:
+
+[![video preview](https://github.com/bsn-si/IPEHR-gateway/assets/98888366/8f56a41a-fa8d-41fc-a659-0b525e2cb29f)](https://media.bsn.si/ipehr/v2/ipehr_API_3.mp4)
+
+For integration of the ipEHR gateway with the Better Studio HMS SandBox we have developed an ipEHR browser extension, you can download it [here](https://github.com/bsn-si/IPEHR-gateway/raw/develop/browser_addon/ipehr-better-extension.zip)
+
+Here's also a short demo video how to set the extension:
+[![ipEHR better plugin](https://github.com/bsn-si/IPEHR-gateway/assets/98888366/87d0087d-97b1-4d05-9e47-62ac817b1692)](https://media.bsn.si/ipehr/v2/ipehr_API_5.mp4)
+
 ## IPEHR-gateway installation
 
 ### Clone this repo
@@ -310,9 +321,6 @@ server {
 
 Replace \<HOSTNAME\> and <LOTUS_DIR> with your values.
 
-
-
-
 ### Running tests
 
 ```
@@ -350,6 +358,9 @@ For now we have the following methods:
 - Execute AQL request
 - Get a document access list
 - Set user access to the document
+
+### Project Documentation
+You can find the project documentation [here](https://ipehr.gitbook.io/docs/)
 
 ### Related repositories
 A [mobile app](https://github.com/bsn-si/IPEHR-access-control-app) for access management to user's (patient's) EHRs.  
