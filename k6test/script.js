@@ -129,7 +129,7 @@ function retryes(ctx, retryesCount, timeout, requestId) {
         const body = JSON.parse(response.body);
 
         switch (body.status) {
-           case 'Success':
+            case 'Success':
                 return true;
             case 'Failed':
                 return false;
@@ -145,15 +145,15 @@ function retryes(ctx, retryesCount, timeout, requestId) {
                         break;
                     }
                 }
-                
+
                 if (isEtherFinished) {
                     return true;
                 }
-            default: // 'Pending'
-                retryesCount--;
-                sleep(timeout);
-                continue;
         }
+
+        retryesCount--;
+        sleep(timeout);
+        continue;
     }
 
     return false;
