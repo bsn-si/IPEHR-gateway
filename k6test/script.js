@@ -125,17 +125,31 @@ function retryes(ctx, retryesCount, timeout, requestId) {
         if (response.status !== 200) {
             return false;
         }
-        const requestStatus = response.json('status');
-        let body = response.body;
 
-        switch (requestStatus) {
+        const body = JSON.parse(response.body);
+
+        switch (body.status) {
            case 'Success':
                 return true;
             case 'Failed':
                 return false;
             case 'Unknown':
                 return false;
-            default: // 'Processing', 'Pending'
+            case 'Processing':
+                let isEtherFinished = true;
+
+                const ethereum = body.ethereum;
+                for (let i = 0; i < ethereum.length; i++) {
+                    if (ethereum[i].status !== 'Success') {
+                        isEtherFinished = false;
+                        break;
+                    }
+                }
+                
+                if (isEtherFinished) {
+                    return true;
+                }
+            default: // 'Pending'
                 retryesCount--;
                 sleep(timeout);
                 continue;
