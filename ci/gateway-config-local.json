@@ -36,8 +36,8 @@
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
         "privKeyPath": "./../.blockchain.key",
         "gasAutoUpdater": false,
-        "gasFeeCap": 0,
-        "gasTipCap" : 100000
+        "gasFeeCap": 100000,
+        "gasTipCap" : 10000
     },
     "db": {
         "filePath": "./../data/local.db",
