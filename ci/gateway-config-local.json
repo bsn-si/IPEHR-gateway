@@ -35,9 +35,9 @@
         "addressDataStore": "0x0d223203D54c453Fb70A1462C3901AC59CE1F103",
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
         "privKeyPath": "./../.blockchain.key",
-        "gasAutoUpdater": true,
+        "gasAutoUpdater": false,
         "gasFeeCap": 0,
-        "gasTipCap" : 0
+        "gasTipCap" : 100000
     },
     "db": {
         "filePath": "./../data/local.db",
