@@ -166,26 +166,20 @@ func (p *Proc) execEthereum() {
 		p.lockEthereum = false
 	}()
 
-	statuses := []Status{
-		StatusPending,
-		StatusProcessing,
-	}
-
 	txs := []EthereumTx{}
 
 	const query = `SELECT hash, nonce, status
-	FROM ethereum_txes
-	WHERE status IN (?, ?)
-	GROUP BY hash, nonce, status
-	ORDER BY nonce ASC`
+				   FROM ethereum_txes
+				   WHERE status IN (?, ?, ?)
+				   GROUP BY hash, nonce, status
+				   ORDER BY nonce ASC`
 
-	result := p.db.Raw(query, statuses[0], statuses[1]).Scan(&txs)
+	result := p.db.Raw(query,
+		StatusNotFound,
+		StatusPending,
+		StatusProcessing,
+	).Scan(&txs)
 
-	// result := p.db.Where("status IN ?", statuses).Order("nonce asc").Find(&txs)
-	// result := p.db.Model(EthereumTx{}).
-	// Select("req_id, hash, status").
-	// Where("status IN ?", statuses).
-	// Find(&txs)
 	if result.Error != nil {
 		logf("execEthereum get transactions error: %v", result.Error)
 		return
@@ -205,7 +199,7 @@ func (p *Proc) execEthereum() {
 		receipt, err := p.ethClient.TransactionReceipt(ctx, h)
 		if err != nil {
 			if errors.Is(err, ethereum.NotFound) {
-				status = StatusPending
+				status = StatusNotFound
 			} else {
 				cancel()
 				logf("TransactionReceipt error: %v txHash %s", err, h.String())
@@ -223,7 +217,32 @@ func (p *Proc) execEthereum() {
 			break // Waiting for the next iteration
 		}
 
-		if result = p.db.Model(&EthereumTx{}).Where("hash = ?", tx.Hash).Update("status", status).Update("updated_at", time.Now()); result.Error != nil {
+		switch status {
+		case StatusSuccess, StatusFailed:
+			const query = `UPDATE ethereum_txes 
+						   SET updated_at = @updated,
+						   		status = @status, 
+								block_number = @block_num, 
+								tx_index = @tx_index, 
+								gas_used = @gas_used, 
+								cumulative_gas_used = @cum_gas_used
+						   WHERE hash = @hash`
+
+			result = p.db.Exec(query, map[string]interface{}{
+				"updated":      time.Now(),
+				"status":       status,
+				"block_num":    receipt.BlockNumber.Uint64(),
+				"tx_index":     receipt.TransactionIndex,
+				"gas_used":     receipt.GasUsed,
+				"cum_gas_used": receipt.CumulativeGasUsed,
+				"hash":         tx.Hash,
+			})
+		default:
+			const query = "UPDATE ethereum_txes SET updated_at = ?, status = ? WHERE hash = ?"
+			result = p.db.Exec(query, time.Now(), status, tx.Hash)
+		}
+
+		if result.Error != nil {
 			logf("db.Update error: %v", result.Error)
 		}
 	}
@@ -323,7 +342,7 @@ func (p *Proc) execDealFinisher() {
 				WHERE req_id NOT IN (
 					SELECT req_id 
 						FROM ethereum_txes 
-						WHERE status IN (@failed,@pending,@processing) 
+						WHERE status IN (@notfound,@failed,@pending,@processing) 
 						GROUP BY req_id
 					UNION
 					SELECT req_id 
@@ -333,6 +352,7 @@ func (p *Proc) execDealFinisher() {
 				)`
 
 	if err := p.db.Exec(query, map[string]interface{}{
+		"notfound":   StatusNotFound,
 		"failed":     StatusFailed,
 		"success":    StatusSuccess,
 		"pending":    StatusPending,

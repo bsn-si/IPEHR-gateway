@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -151,12 +152,6 @@ func (d *DebugHandler) getEthTransactions(c *gin.Context) {
 		}
 
 		for _, tx := range txs {
-			r, err := d.indexer.GetTxReceipt(c.Request.Context(), tx.Hash)
-			if err != nil {
-				_ = c.AbortWithError(http.StatusInternalServerError, err)
-				return
-			}
-
 			result = append(result, []string{
 				rr.reqID,
 				rr.start.Format("2006-01-02 15:04:05"),
@@ -172,11 +167,11 @@ func (d *DebugHandler) getEthTransactions(c *gin.Context) {
 				fmt.Sprintf("%v", tx.UpdatedAt.Sub(tx.CreatedAt).Seconds()),
 				tx.Hash,
 				tx.Kind.String(),
-				fmt.Sprintf("%d", r.Status),
-				fmt.Sprintf("%d", r.CumulativeGasUsed),
-				fmt.Sprintf("%d", r.GasUsed),
-				r.BlockNumber.Text(10),
-				fmt.Sprintf("%d", r.TransactionIndex),
+				fmt.Sprintf("%d", tx.Status),
+				fmt.Sprintf("%d", tx.CumulativeGasUsed),
+				fmt.Sprintf("%d", tx.GasUsed),
+				strconv.FormatUint(tx.BlockNumber, 10),
+				fmt.Sprintf("%d", tx.TxIndex),
 			})
 		}
 	}
@@ -261,10 +256,10 @@ func (d *DebugHandler) debugMiddleware(c *gin.Context) {
 		url:         c.FullPath(),
 	}
 
-	// serve the request to the next middleware
-	c.Next()
-
 	r.end = time.Now()
 
 	d.addRequest(r)
+
+	// serve the request to the next middleware
+	c.Next()
 }

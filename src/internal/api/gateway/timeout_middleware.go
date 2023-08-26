@@ -10,7 +10,7 @@ import (
 
 func timeoutMiddleware() gin.HandlerFunc {
 	return timeout.New(
-		timeout.WithTimeout(common.QueryExecutionTimeout),
+		timeout.WithTimeout(common.WebRequestTimeout),
 		timeout.WithHandler(func(c *gin.Context) {
 			c.Next()
 		}),
