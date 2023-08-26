@@ -5,14 +5,16 @@ type Status uint8
 const (
 	StatusFailed     Status = 0
 	StatusSuccess    Status = 1
-	StatusPending    Status = 2
-	StatusProcessing Status = 3
+	StatusNotFound   Status = 2
+	StatusPending    Status = 3
+	StatusProcessing Status = 4
 	StatusUnknown    Status = 255
 )
 
 var statuses = map[Status]string{
 	StatusFailed:     "Failed",
 	StatusSuccess:    "Success",
+	StatusNotFound:   "NotFound",
 	StatusPending:    "Pending",
 	StatusProcessing: "Processing",
 	StatusUnknown:    "Unknown",

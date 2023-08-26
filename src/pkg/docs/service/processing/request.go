@@ -45,8 +45,12 @@ type (
 
 	EthereumTx struct {
 		Tx
-		Hash  string
-		Nonce uint64 `gorm:"nonce"`
+		Hash              string
+		Nonce             uint64 `gorm:"nonce"`
+		BlockNumber       uint64
+		TxIndex           uint
+		GasUsed           uint64
+		CumulativeGasUsed uint64
 	}
 
 	FileCoinTx struct {
@@ -115,7 +119,7 @@ func (r *Request) AddEthereumTx(kind TxKind, hash string, nonce uint64) {
 		Tx: Tx{
 			ReqID:     r.ReqID,
 			Kind:      kind,
-			Status:    StatusPending,
+			Status:    StatusNotFound,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
