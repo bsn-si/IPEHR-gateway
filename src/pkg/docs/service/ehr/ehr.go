@@ -440,6 +440,10 @@ func (s *Service) addDocumentToGroup(multiCallTx *indexer.MultiCallTx, CID *cid.
 func (s *Service) GetByID(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID) ([]byte, error) {
 	docMeta, err := s.Infra.Index.GetDocLastByType(ctx, ehrUUID, types.Ehr)
 	if err != nil {
+		if errors.Is(err, errors.ErrNotFound) {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf("GetDocLastByType error: %w", err)
 	}
 

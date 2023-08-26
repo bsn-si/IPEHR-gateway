@@ -294,10 +294,15 @@ func (h *EhrHandler) GetByID(c *gin.Context) {
 	systemID := c.GetString("ehrSystemID")
 
 	docDecrypted, err := h.service.GetByID(c.Request.Context(), userID, systemID, &ehrUUID)
-	if err != nil && errors.Is(err, errors.ErrIsInProcessing) {
-		c.AbortWithStatus(http.StatusAccepted)
-		return
-	} else if err != nil {
+	if err != nil {
+		if errors.Is(err, errors.ErrIsInProcessing) {
+			c.AbortWithStatus(http.StatusAccepted)
+			return
+		} else if errors.Is(err, errors.ErrNotFound) {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
 		log.Printf("service.GetByID error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Document getting from storage error"})
 		return
