@@ -75,9 +75,7 @@ func New(ctx context.Context, cfg *config.Config) *Infra {
 		log.Fatal(err)
 	}
 
-	ks := keystore.New(cfg.KeystoreKey)
-
-	ethClient, err := ethclient.Dial(cfg.Contract.Endpoint)
+	ethClient, err := ethclient.Dial(cfg.Blockchain.Endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,21 +93,13 @@ func New(ctx context.Context, cfg *config.Config) *Infra {
 	}
 
 	return &Infra{
-		LocalDB:        db,
-		Keystore:       ks,
-		HTTPClient:     http.DefaultClient,
-		EthClient:      ethClient,
-		IpfsClient:     ipfsClient,
-		FilecoinClient: filecoinClient,
-		Index: indexer.New(
-			cfg.Contract.AddressEhrIndex,
-			cfg.Contract.AddressAccessStore,
-			cfg.Contract.AddressUsers,
-			cfg.Contract.AddressDataStore,
-			cfg.Contract.PrivKeyPath,
-			ethClient,
-			cfg.Contract.GasTipCap,
-		),
+		LocalDB:            db,
+		Keystore:           keystore.New(cfg.KeystoreKey),
+		HTTPClient:         http.DefaultClient,
+		EthClient:          ethClient,
+		IpfsClient:         ipfsClient,
+		FilecoinClient:     filecoinClient,
+		Index:              indexer.New(cfg.Blockchain, ethClient),
 		LocalStorage:       storage.Storage(),
 		Compressor:         compressor.New(cfg.CompressionLevel),
 		CompressionEnabled: cfg.CompressionEnabled,

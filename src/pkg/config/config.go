@@ -12,6 +12,18 @@ import (
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 )
 
+type Blockchain struct {
+	AddressEhrIndex    string
+	AddressAccessStore string
+	AddressUsers       string
+	AddressDataStore   string
+	Endpoint           string
+	PrivKeyPath        string
+	GasAutoUpdater     bool
+	GasFeeCap          int64
+	GasTipCap          int64 // maxPriorityFeePerGas
+}
+
 type Config struct {
 	BaseURL string `json:"baseUrl"`
 	//DataPath             string `json:"dataPath"`
@@ -39,16 +51,8 @@ type Config struct {
 			VerifiedDeals    bool
 		}
 	}
-	Contract struct {
-		AddressEhrIndex    string
-		AddressAccessStore string
-		AddressUsers       string
-		AddressDataStore   string
-		Endpoint           string
-		PrivKeyPath        string
-		GasTipCap          int64 // maxPriorityFeePerGas used for hardhat testing
-	}
-	DB struct {
+	Blockchain Blockchain
+	DB         struct {
 		FilePath    string `json:"filePath"`
 		UsePostgres bool   `json:"usePostgres"`
 		Postgres    struct {
@@ -139,7 +143,7 @@ func (c *Config) pathNormalize() {
 	paths := []*string{
 		&c.Storage.Localfile.Path,
 		&c.DB.FilePath,
-		&c.Contract.PrivKeyPath,
+		&c.Blockchain.PrivKeyPath,
 	}
 
 	for _, path := range paths {

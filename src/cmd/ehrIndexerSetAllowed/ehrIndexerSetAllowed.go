@@ -26,22 +26,17 @@ func main() {
 		panic(err)
 	}
 
-	ehtClient, err := ethclient.Dial(cfg.Contract.Endpoint)
+	ehtClient, err := ethclient.Dial(cfg.Blockchain.Endpoint)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	index := indexer.New(
-		cfg.Contract.AddressEhrIndex,
-		cfg.Contract.AddressAccessStore,
-		cfg.Contract.AddressUsers,
-		cfg.Contract.AddressDataStore,
-		cfg.Contract.PrivKeyPath,
+		cfg.Blockchain,
 		ehtClient,
-		cfg.Contract.GasTipCap,
 	)
 
-	key, err := os.ReadFile(cfg.Contract.PrivKeyPath)
+	key, err := os.ReadFile(cfg.Blockchain.PrivKeyPath)
 	if err != nil {
 		log.Fatal(err)
 	}
