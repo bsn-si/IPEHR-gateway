@@ -23,11 +23,11 @@ const formFailRate = new Rate('failed form fetches');
 const submitFailRate = new Rate('failed form submits');
 
 export const options = {
-    iterations: 1,
-    vus: 1,
+    iterations: 100,
+    vus: 20,
     // vus: 50,
     // vus: 20,
-    duration: '100000s',
+    duration: '3600s',
     ext: {
         loadimpact: {
             // Project: Default project
@@ -58,11 +58,13 @@ export default function testSuite() {
         console.log("USER:" + JSON.stringify(u));
     });
 
-    // wait up to 10 minutes with 5 seconds interval
-    if (!ok || !retryes(ctx, 300, 5, ctx.RequestId)) {
+    // wait up to 15 minutes with 10 seconds interval
+    if (!ok || !retries(ctx, 90, 10, ctx.RequestId)) {
         fail('failed to register user');
         return;
     }
+
+    sleep(10);
 
     ok = describe('Login user', () => {
         user.login_user(ctx, u.userID, u.password);
@@ -80,9 +82,21 @@ export default function testSuite() {
         console.log("EHR:" + JSON.stringify(ehrDoc));
     });
 
-    // wait up to 10 minutes with 5 seconds interval
-    if (!ok || !retryes(ctx, 300, 5, ctx.RequestId)) {
+    // wait up to 15 minutes with 10 seconds interval
+    if (!ok || !retries(ctx, 90, 10, ctx.RequestId)) {
         fail('failed to create ehr');
+        return;
+    }
+
+    sleep(10);
+
+    ok = describe('Login user after EHR created', () => {
+        ctx.session.clearHeader('Authorization');
+        user.login_user(ctx, u.userID, u.password);
+    });
+
+    if (!ok) {
+        fail('failed to login user');
         return;
     }
 
@@ -118,8 +132,8 @@ export default function testSuite() {
     }
 }
 
-function retryes(ctx, retryesCount, timeout, requestId) {
-    while (retryesCount > 0) {
+function retries(ctx, retriesCount, interval, requestId) {
+    while (retriesCount > 0) {
         const response = ctx.session.get(`/requests/${requestId}`);
 
         if (response.status !== 200) {
@@ -135,12 +149,12 @@ function retryes(ctx, retryesCount, timeout, requestId) {
                 return false;
             case 'Unknown':
                 return false;
-            case 'Processing':
+            case 'Pending', 'Processing':
                 let isEtherFinished = true;
 
                 const ethereum = body.ethereum;
                 for (let i = 0; i < ethereum.length; i++) {
-                    if (ethereum[i].status !== 'Success') {
+                    if (ethereum[i].Status !== 'Success') {
                         isEtherFinished = false;
                         break;
                     }
@@ -151,8 +165,8 @@ function retryes(ctx, retryesCount, timeout, requestId) {
                 }
         }
 
-        retryesCount--;
-        sleep(timeout);
+        retriesCount--;
+        sleep(interval);
         continue;
     }
 

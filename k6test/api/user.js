@@ -28,7 +28,7 @@ function register_user_with_role(ctx, role) {
         password: randomString(10, `aeioubcdfghijpqrstuv`),
     }
 
-    ctx.session.addHeader('AuthYserId', user.userID);
+    ctx.session.addHeader('AuthUserId', user.userID);
 
     const payload = JSON.stringify({
         role: role,
@@ -65,7 +65,7 @@ export function login_user(ctx, userID, password) {
         password: password,
     });
 
-    let response = ctx.session.post(`/user/login/`, payload);
+    let response = ctx.session.post(`/user/login`, payload);
 
     expect(response.status, "login status").to.equal(200);
     expect(response).to.have.validJsonBody()
