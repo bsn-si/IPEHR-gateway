@@ -26,16 +26,19 @@
             "miners": ["t017840"]
         }
     },
-    "contract": {
+    "blockchain": {
         "addressEhrIndex": "0x9944D37bFeC481868baad7b6E05b76Db01cA0865",
         "addressAccessStore": "0x946e8BB742AAe895F9D369Fa44eF41414607A0CA",
         "addressUsers": "0xe95dB24EA185c7a7D4ED6e8D20Caaa4cCb852AF4",
         "addressDataStore": "0x0d223203D54c453Fb70A1462C3901AC59CE1F103",
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
         "privKeyPath": "~/.ipehr/.blockchain.key",
-        "gasTipCap" : 100000
+        "gasAutoUpdater": false,
+        "gasFeeCap": 100000000,
+        "gasTipCap" : 10000000
     },
     "db": {
         "filePath": "~/.ipehr/data/local.db"
-    }
+    },
+    "debugMode": true
 }

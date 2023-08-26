@@ -17,6 +17,8 @@ const (
 	DefaultGroupDoctors              = "doctors"
 	QueryExecutionTimeout            = time.Second * 60
 	WebRequestTimeout                = time.Second * 60
+	GasPriceUpdateInterval           = time.Second * 5
+	GasPriceMultiplier               = 1.0
 
 	ScryptKeyLen  = 32
 	ScryptSaltLen = 16

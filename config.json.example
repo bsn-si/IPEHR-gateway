@@ -27,16 +27,19 @@
             "verifiedDeals": false
         }
     },
-    "contract": {
+    "blockchain": {
         "addressEhrIndex": "0xF1DD803076184aFA468d09535A89316502F75f07",
         "addressAccessStore": "0x23d6152faD9AF8C6E762201884071B60eeE44960",
         "addressUsers": "0x589F60f143AC5A7ab62738c3A8f66A7556Bc6041",
         "addressDataStore": "0x911C8b389FFD8f5Ae93004B2e19a1aC8A7e7963a",
         "endpoint": "https://goerli.infura.io/v3/a1fe02a4f1be4fadb5a393992e211b19",
         "privKeyPath": "~/.ipehr/.blockchain.key",
-        "gasTipCap" : 100000
+        "gasAutoUpdater": true,
+        "gasFeeCap": 0,
+        "gasTipCap" : 0
     },
     "db": {
         "filePath": "~/.ipehr/data/local.db"
-    }
+    },
+    "debugMode": false
 }
