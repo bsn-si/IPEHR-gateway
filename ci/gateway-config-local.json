@@ -28,14 +28,16 @@
             ]
         }
     },
-    "contract": {
+    "blockchain": {
         "addressEhrIndex": "0x9944D37bFeC481868baad7b6E05b76Db01cA0865",
         "addressAccessStore": "0x946e8BB742AAe895F9D369Fa44eF41414607A0CA",
         "addressUsers": "0xe95dB24EA185c7a7D4ED6e8D20Caaa4cCb852AF4",
         "addressDataStore": "0x0d223203D54c453Fb70A1462C3901AC59CE1F103",
         "endpoint": "https://api.calibration.node.glif.io/rpc/v1",
         "privKeyPath": "./../.blockchain.key",
-        "gasTipCap": 100000
+        "gasAutoUpdater": true,
+        "gasFeeCap": 0,
+        "gasTipCap" : 0
     },
     "db": {
         "filePath": "./../data/local.db",
