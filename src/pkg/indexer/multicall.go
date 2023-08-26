@@ -59,9 +59,9 @@ func (m *MultiCallTx) Commit() (string, uint64, error) {
 
 	switch m.kind {
 	case MulticallEhr:
-		tx, err = m.index.ehrIndex.Multicall(m.index.noncer.GetNewOpts(m.index.transactOpts), m.data)
+		tx, err = m.index.ehrIndex.Multicall(m.index.GetNewOpts(m.index.transactOpts), m.data)
 	case MulticallUsers:
-		tx, err = m.index.users.Multicall(m.index.noncer.GetNewOpts(m.index.transactOpts), m.data)
+		tx, err = m.index.users.Multicall(m.index.GetNewOpts(m.index.transactOpts), m.data)
 	default:
 		return "", 0, fmt.Errorf("%w: unknown kind %d", err, m.kind)
 	}
@@ -84,9 +84,9 @@ func (i *Index) SendSingle(ctx context.Context, data []byte, kind MulticallKind)
 
 	switch kind {
 	case MulticallEhr:
-		tx, err = i.ehrIndex.Multicall(i.noncer.GetNewOpts(i.transactOpts), [][]byte{data})
+		tx, err = i.ehrIndex.Multicall(i.GetNewOpts(i.transactOpts), [][]byte{data})
 	case MulticallUsers:
-		tx, err = i.users.Multicall(i.noncer.GetNewOpts(i.transactOpts), [][]byte{data})
+		tx, err = i.users.Multicall(i.GetNewOpts(i.transactOpts), [][]byte{data})
 	}
 
 	if err != nil {

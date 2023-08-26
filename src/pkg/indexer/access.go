@@ -62,7 +62,7 @@ func (i *Index) SetAccess(ctx context.Context, subjectIDHash *[32]byte, accessOb
 		return "", 0, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.accessStore.SetAccess(i.noncer.GetNewOpts(i.transactOpts), *accessID, *accessObj, userAddress, deadline, signature)
+	tx, err := i.accessStore.SetAccess(i.GetNewOpts(i.transactOpts), *accessID, *accessObj, userAddress, deadline, signature)
 	if err != nil {
 		return "", 0, fmt.Errorf("accessStore.SetAccess error: %w", err)
 	}

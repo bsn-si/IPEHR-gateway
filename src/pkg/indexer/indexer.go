@@ -13,7 +13,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/google/uuid"
@@ -23,6 +23,8 @@ import (
 
 	"github.com/bsn-si/IPEHR-gateway/src/internal/observability/tracer"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/access"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/common"
+	"github.com/bsn-si/IPEHR-gateway/src/pkg/config"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/errors"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/accessStore"
 	"github.com/bsn-si/IPEHR-gateway/src/pkg/indexer/dataStore"
@@ -35,7 +37,7 @@ type Index struct {
 	client        *ethclient.Client
 	transactOpts  *bind.TransactOpts
 	signerKey     *ecdsa.PrivateKey
-	signerAddress common.Address
+	signerAddress ethCommon.Address
 	txTimeout     time.Duration
 
 	ehrIndex    *ehrIndexer.EhrIndexer
@@ -47,8 +49,6 @@ type Index struct {
 	usersAbi       *abi.ABI
 	dataStoreAbi   *abi.ABI
 	accessStoreAbi *abi.ABI
-
-	noncer *NoncHolder
 }
 
 const (
@@ -84,10 +84,10 @@ var (
 	})
 )
 
-func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string, client *ethclient.Client, gasTipCap int64) *Index {
+func New(cfg config.Blockchain, client *ethclient.Client) *Index {
 	ctx := context.Background()
 
-	key, err := os.ReadFile(keyPath)
+	key, err := os.ReadFile(cfg.PrivKeyPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -105,39 +105,39 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 	}
 
 	switch {
-	case !common.IsHexAddress(accessStoreAddr):
+	case !ethCommon.IsHexAddress(cfg.AddressEhrIndex):
 		log.Fatal("ehrIndex contract address is incorrect")
-	case !common.IsHexAddress(accessStoreAddr):
+	case !ethCommon.IsHexAddress(cfg.AddressAccessStore):
 		log.Fatal("accessStore contract address is incorrect")
-	case !common.IsHexAddress(usersAddr):
+	case !ethCommon.IsHexAddress(cfg.AddressUsers):
 		log.Fatal("users contract address is incorrect")
-	case !common.IsHexAddress(dataStoreAddr):
+	case !ethCommon.IsHexAddress(cfg.AddressDataStore):
 		log.Fatal("dataStore contract address is incorrect")
 	}
 
-	singleAddressNonce, err := client.PendingNonceAt(ctx, signerAddress)
+	signerAddressNonce, err := client.PendingNonceAt(ctx, signerAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Signer address: %s, NONCE: %d", signerAddress.Hex(), singleAddressNonce)
+	log.Printf("Signer address: %s, NONCE: %d", signerAddress.Hex(), signerAddressNonce)
 
-	ehrIndex, err := ehrIndexer.NewEhrIndexer(common.HexToAddress(ehrIndexAddr), client)
+	ehrIndex, err := ehrIndexer.NewEhrIndexer(ethCommon.HexToAddress(cfg.AddressEhrIndex), client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_accessStore, err := accessStore.NewAccessStore(common.HexToAddress(accessStoreAddr), client)
+	_accessStore, err := accessStore.NewAccessStore(ethCommon.HexToAddress(cfg.AddressAccessStore), client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_users, err := users.NewUsers(common.HexToAddress(usersAddr), client)
+	_users, err := users.NewUsers(ethCommon.HexToAddress(cfg.AddressUsers), client)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	_dataStore, err := dataStore.NewDataStore(common.HexToAddress(dataStoreAddr), client)
+	_dataStore, err := dataStore.NewDataStore(ethCommon.HexToAddress(cfg.AddressDataStore), client)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -152,11 +152,9 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		log.Fatal(err)
 	}
 
-	if gasTipCap > 0 {
-		transactOpts.GasTipCap = big.NewInt(gasTipCap)
-	}
+	transactOpts.Nonce = new(big.Int).SetUint64(signerAddressNonce)
 
-	return &Index{
+	index := &Index{
 		client:        client,
 		transactOpts:  transactOpts,
 		signerKey:     privateKey,
@@ -172,9 +170,16 @@ func New(ehrIndexAddr, accessStoreAddr, usersAddr, dataStoreAddr, keyPath string
 		usersAbi:       usersAbi,
 		dataStoreAbi:   dataStoreAbi,
 		accessStoreAbi: accessStoreAbi,
-
-		noncer: NewNoncHolder(singleAddressNonce),
 	}
+
+	if cfg.GasAutoUpdater {
+		go index.gasPriceUpdater(common.GasPriceMultiplier)
+	} else {
+		transactOpts.GasFeeCap = big.NewInt(cfg.GasFeeCap)
+		transactOpts.GasTipCap = big.NewInt(cfg.GasTipCap)
+	}
+
+	return index
 }
 
 func (i *Index) SetEhrUser(ctx context.Context, userID, systemID string, ehrUUID *uuid.UUID, privKey *[32]byte) ([]byte, error) {
@@ -284,7 +289,7 @@ func (i *Index) SetAllowed(ctx context.Context, address string) (string, error) 
 	i.Lock()
 	defer i.Unlock()
 
-	tx, err := i.ehrIndex.SetAllowed(i.noncer.GetNewOpts(i.transactOpts), common.HexToAddress(address), true)
+	tx, err := i.ehrIndex.SetAllowed(i.GetNewOpts(i.transactOpts), ethCommon.HexToAddress(address), true)
 	if err != nil {
 		return "", fmt.Errorf("ehrIndex.SetAllowed error: %w", err)
 	}

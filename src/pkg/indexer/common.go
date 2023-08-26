@@ -3,9 +3,11 @@ package indexer
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -80,4 +82,29 @@ func (i *Index) GetTxReceipt(ctx context.Context, hash string) (*types.Receipt, 
 	}
 
 	return receipt, nil
+}
+
+func (i *Index) GetNewOpts(opts *bind.TransactOpts) *bind.TransactOpts {
+	i.Lock()
+	defer i.Unlock()
+
+	opts = &bind.TransactOpts{
+		From:   opts.From,
+		Nonce:  big.NewInt(opts.Nonce.Int64()),
+		Signer: opts.Signer,
+
+		Value:     opts.Value,
+		GasPrice:  opts.GasPrice,
+		GasFeeCap: opts.GasFeeCap,
+		GasTipCap: opts.GasTipCap,
+		GasLimit:  opts.GasLimit,
+
+		Context: opts.Context,
+
+		NoSend: opts.NoSend,
+	}
+
+	i.transactOpts.Nonce.Add(opts.Nonce, big.NewInt(1))
+
+	return opts
 }

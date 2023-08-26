@@ -71,7 +71,7 @@ func (i *Index) GetDocLastByType(ctx context.Context, ehrUUID *uuid.UUID, docTyp
 	docMeta, err := i.ehrIndex.GetLastEhrDocByType(&bind.CallOpts{Context: ctx}, eID, uint8(docType))
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
-			return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w", errors.ErrNotFound)
+			return nil, errors.ErrNotFound
 		}
 		return nil, fmt.Errorf("ehrIndex.GetLastEhrDocByType error: %w ehrUUID %s docType %s", err, ehrUUID.String(), docType.String())
 	}
@@ -262,7 +262,7 @@ func (i *Index) DeleteDoc(ctx context.Context, ehrUUID *uuid.UUID, docType types
 		return "", 0, fmt.Errorf("makeSignature error: %w", err)
 	}
 
-	tx, err := i.ehrIndex.DeleteDoc(i.noncer.GetNewOpts(i.transactOpts), eID, uint8(docType), *docBaseUIDHash, *version, userAddress, deadline, sig)
+	tx, err := i.ehrIndex.DeleteDoc(i.GetNewOpts(i.transactOpts), eID, uint8(docType), *docBaseUIDHash, *version, userAddress, deadline, sig)
 	if err != nil {
 		if strings.Contains(err.Error(), "NFD") {
 			return "", 0, errors.ErrNotFound
