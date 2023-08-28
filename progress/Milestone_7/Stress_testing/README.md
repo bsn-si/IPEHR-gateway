@@ -4,9 +4,9 @@
 
 [opentelemetry.io](https://opentelemetry.io) tools were used to measure the speed of request processing and collect metrics  
 [k6.io](https://k6.io) tools was used for load testing   
-Были предварительно разработаны [скрипты](https://github.com/bsn-si/IPEHR-gateway/tree/develop/k6test) для тестирования API ipEHR Gateway.
+[Scripts](https://github.com/bsn-si/IPEHR-gateway/tree/develop/k6test) have been pre-developed to test the ipEHR Gateway API.
 
-Testing was performed on a laptop with the following specifications:
+The tests were run on a laptop with the following specifications:  
 
 **MacBook Pro (16-inch, 2019)**  
 **Processor:**   2.6GHz 6‑core Intel Core i7, with 12MB shared L3 cache  
