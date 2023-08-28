@@ -109,7 +109,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
 		if err != nil {
-			log.Println(err)
+			log.Println("GroupAccessId header uuid.Parse error:", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
 			return
 		}
@@ -130,7 +130,7 @@ func (h *EhrHandler) Create(c *gin.Context) {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "EHR already exists"})
 		} else {
-			log.Println(err)
+			log.Println("service.EhrCreate error:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "EHR creating error"})
 		}
 
@@ -221,7 +221,7 @@ func (h *EhrHandler) CreateWithID(c *gin.Context) {
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
 		if err != nil {
-			log.Println(err)
+			log.Println("GroupAccessId header uuid.Parse error:", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
 			return
 		}

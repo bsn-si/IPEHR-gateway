@@ -50,7 +50,7 @@ func (h *DocAccessHandler) List(c *gin.Context) {
 
 	resp, err := h.service.List(c.Request.Context(), userID, systemID)
 	if err != nil && !errors.Is(err, errors.ErrNotFound) {
-		log.Println(err)
+		log.Println("DocAccess service.List error:", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -120,7 +120,7 @@ func (h *DocAccessHandler) Set(c *gin.Context) {
 			return
 		}
 
-		log.Println(err)
+		log.Println("DocAccess service.Set error:", err)
 
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

@@ -100,7 +100,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 		if errors.Is(err, errors.ErrAlreadyExist) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		} else {
-			log.Println(err)
+			log.Println("service.Register error:", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "User creation error"})
 		}
 

@@ -41,7 +41,7 @@ func auth(a *API, exceptions ...string) func(*gin.Context) {
 
 		err := userService.VerifyAccess(userID, tokenString)
 		if err != nil {
-			log.Println(err)
+			log.Println("userService.VerifyAccess error:", err)
 
 			_ = c.AbortWithError(http.StatusForbidden, errors.ErrAuthorization)
 

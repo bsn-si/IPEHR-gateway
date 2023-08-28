@@ -119,7 +119,7 @@ func (h *CompositionHandler) Create(c *gin.Context) {
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
 		if err != nil {
-			log.Println(err)
+			log.Println("Composition create GroupAccessId header uuid.Parse error:", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
 			return
 		}
@@ -232,7 +232,7 @@ func (h *CompositionHandler) GetByID(c *gin.Context) {
 		} else if errors.Is(err, errors.ErrIsInProcessing) {
 			c.AbortWithStatus(http.StatusAccepted)
 		} else {
-			log.Println(err)
+			log.Println("Composition GetById service.GetByID error:", err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 		}
 		return
@@ -410,7 +410,7 @@ func (h CompositionHandler) Update(c *gin.Context) {
 	if c.GetHeader("GroupAccessId") != "" {
 		UUID, err := uuid.Parse(c.GetHeader("GroupAccessId"))
 		if err != nil {
-			log.Println(err)
+			log.Println("Composition Update GroupAccessId header uuid.Parse error:", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "GroupAccessId parsing error"})
 			return
 		}
