@@ -36,7 +36,7 @@
         "endpoint": "http://ipehr-index:8545",
         "privKeyPath": "/srv/.blockchain.key",
         "gasAutoUpdater": false,
-        "gasFeeCap": 0,
+        "gasFeeCap": 100000,
         "gasTipCap" : 100000
     },
     "db": {
