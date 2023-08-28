@@ -46,8 +46,8 @@
         "service_name": "ipehr-gateway",
         "collect_metrics": false,
         "metrics_port": 8081,
-        "collect_traces": true,
+        "collect_traces": false,
         "jaeger_endpoint": "http://jaeger:14268/api/traces"
     },
-    "debugMode": true
+    "debugMode": false
 }
