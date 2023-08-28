@@ -24,6 +24,5 @@ WORKDIR /srv
 COPY --from=build /srv/bin/ /srv
 COPY --from=build /srv/config.json /srv/config.json
 COPY --from=build /srv/db /srv/db
-COPY ./ci/stats-config.json /srv/config.json
 
-CMD ["./ipehr-stats", "-config=/srv/config.json"]
+CMD ["./ipehr-stats", "-config=./config.json"]
