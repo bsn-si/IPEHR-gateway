@@ -64,7 +64,7 @@ export default function testSuite() {
         return;
     }
 
-    sleep(10);
+    sleep(60);
 
     ok = describe('Login user', () => {
         user.login_user(ctx, u.userID, u.password);
@@ -88,7 +88,7 @@ export default function testSuite() {
         return;
     }
 
-    sleep(10);
+    sleep(60);
 
     ok = describe('Login user after EHR created', () => {
         ctx.session.clearHeader('Authorization');

@@ -35,9 +35,9 @@
         "addressDataStore": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
         "endpoint": "http://ipehr-index:8545",
         "privKeyPath": "/srv/.blockchain.key",
-        "gasAutoUpdater": false,
-        "gasFeeCap": 100000,
-        "gasTipCap" : 10000
+        "gasAutoUpdater": true,
+        "gasFeeCap": 0,
+        "gasTipCap" : 0
     },
     "db": {
         "filePath": "/srv/data/local.db"
