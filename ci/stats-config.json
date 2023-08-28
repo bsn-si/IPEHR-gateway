@@ -1,27 +1,27 @@
 {
-	"host": "0.0.0.0:8080",
-	"baseURL": "http://0.0.0.0:8080",
-	"localDB": {
-		"path": "/srv/db/local.db",
-		"migrations": "/srv/db/migrations"
-	},
+    "host": "0.0.0.0:8080",
+    "baseURL": "http://0.0.0.0:8080",
+    "localDB": {
+        "path": "/srv/db/local.db",
+        "migrations": "/srv/db/migrations"
+    },
     "sync": {
         "endpoint": "http://ipehr-index:8545",
         "startBlock": 1,
         "contracts": [
             {
                 "name": "ehrIndex",
-                "address": "0x9944D37bFeC481868baad7b6E05b76Db01cA0865",
+                "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
                 "abiPath": "/srv/contracts/ehrIndexer/EhrIndexer.abi"
             },
             {
                 "name": "users",
-                "address": "0xe95dB24EA185c7a7D4ED6e8D20Caaa4cCb852AF4",
+                "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
                 "abiPath": "/srv/contracts/users/Users.abi"
             },
             {
                 "name": "dataStore",
-                "address": "0x0d223203D54c453Fb70A1462C3901AC59CE1F103",
+                "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
                 "abiPath": "/srv/contracts/dataStore/dataStore.abi"
             }
         ]

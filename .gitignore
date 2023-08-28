@@ -9,3 +9,5 @@ data/local.db
 .blockchain.key
 
 db/local.db
+ci/gateway-config-remote.json
+ci/stats-config-remote.json
