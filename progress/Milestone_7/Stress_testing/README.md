@@ -4,7 +4,7 @@
 
 [opentelemetry.io](https://opentelemetry.io) tools were used to measure the speed of request processing and collect metrics  
 [k6.io](https://k6.io) tools was used for load testing   
-Были предварительно разработаны [скрипты]() для тестирования API ipEHR Gateway.
+Были предварительно разработаны [скрипты](https://github.com/bsn-si/IPEHR-gateway/tree/develop/k6test) для тестирования API ipEHR Gateway.
 
 Testing was performed on a laptop with the following specifications:
 
@@ -53,15 +53,15 @@ In the process of testing, a number of problems were identified and eliminated
 
 ### Calibration
 
-[ipehr\_gateway\_log]()  
-[k6\_test\_report]()  
-[requests_statistics]()
+[ipehr\_gateway\_log](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_7/Stress_testing/calibration_100x20_test2_ipehrgw.log)  
+[k6\_test\_report](https://github.com/bsn-si/IPEHR-gateway/tree/develop/progress/Milestone_7/Stress_testing/k6_calibration_100x20_test2.log)  
+[requests_statistics](calibration_100x20_test2_eth_transactions.csv)
 
 ### Sepolia
 
-[ipehr\_gateway\_log]()  
-[k6\_test\_report]()  
-[requests_statistics]()
+[ipehr\_gateway\_log](sepolia_100x20_test2_ipehr.log)  
+[k6\_test\_report](k6_sepolia_100x20_test2.log)  
+[requests_statistics](sepolia_100x20_test2_eth_transactions.csv)
 
 *Summary table:*
 
