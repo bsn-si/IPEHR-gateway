@@ -198,6 +198,24 @@ To ensure the quality of the application we developed and showed a test case:
 
 ### Milestone 7
 
+Final throughput metrics of the ipEHR smart contracts:
+
+|      Metric         |   Calibration   |  Sepolia  |
+|:-------------------:|:---------------:|:---------:|
+| block_time          | 30 sec | 12 sec   |
+| iterations          | 100    | 100      |
+| threads             | 20     | 20       |
+| time_total          | 39m14s | 23m53s   |
+| http_reqs           | 4180   | 3545     |
+| iteration_time      | 14m13s | 6m37s |
+| user\_register_time | 2m20s | 3m57s |
+| user\_login_time    | 112ms | 139ms |
+| ehr\_create_time    | 4m14s | 3m34s |
+| ehr\_get_time       | 119ms | 107ms |
+| user\_logout_time   | 124ms | 130ms |
+| user\_create\_gas\_used | 258304636 | 943537 |
+| ehr\_create\_gas\_used | 1094164389 | 3168824 |
+
 We have integrated the ipEHR gateway with the Better Studio HMS playground to pass EHR documents from the HMS to the FIL network. Here is the demonstration video:
 
 [![video preview](https://github.com/bsn-si/IPEHR-gateway/assets/98888366/8f56a41a-fa8d-41fc-a659-0b525e2cb29f)](https://media.bsn.si/ipehr/v2/ipehr_API_3.mp4)
