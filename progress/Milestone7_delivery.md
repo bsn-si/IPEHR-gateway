@@ -38,4 +38,4 @@ We have integrated the ipEHR gateway with the Better Studio HMS playground to pa
 
 Here is the demonstration video:
 
-[![video preview](https://github.com/bsn-si/IPEHR-gateway/assets/98888366/8f56a41a-fa8d-41fc-a659-0b525e2cb29f)](https://media.bsn.si/ipehr/v2/ipehr_API_3.mp4)
+[![video preview](https://github-production-user-asset-6210df.s3.amazonaws.com/98888366/262045194-8f56a41a-fa8d-41fc-a659-0b525e2cb29f.png)](https://media.bsn.si/ipehr/v2/ipehr_API_3.mp4)
